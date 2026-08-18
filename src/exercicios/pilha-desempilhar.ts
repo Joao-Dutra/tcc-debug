@@ -93,5 +93,3 @@ var segundaSaida = desempilhar();`,
     'A leitura do elemento precisa acontecer enquanto topo ainda aponta para ele.',
   ],
 };
-
-export const catalogo: Exercicio[] = [pilhaDesempilhar];
