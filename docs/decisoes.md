@@ -139,3 +139,50 @@ navegador: `linhaDoDefeito` e `codigoCorreto` estão no pacote e podem ser lidos
 com as ferramentas de desenvolvedor. A interface não revela nada, mas a resposta
 está ao alcance de quem procurar. Fechar isso exigiria mover a verificação para
 o servidor.
+
+## D8 — Navegação por hash e uma sessão por abertura
+
+**Decisão.** A aplicação passa a ter duas telas — lista de exercícios e
+exercício — com roteamento por hash: `#/` e `#/exercicio/<id>`.
+
+**Alternativa descartada.** React Router.
+
+**Justificativa.** A única exigência é que cada exercício tenha URL própria,
+para que um link direto possa ser enviado a um participante do estudo. O hash
+entrega isso sem dependência nova e sem exigir configuração de servidor para
+reescrever rotas, o que importa para a publicação estática prevista. Se um dia
+for preciso rota aninhada ou navegação programática, a troca fica contida em
+`usar-rota.ts`.
+
+**A tela do exercício não conhece exercício nenhum.** Ela recebe o exercício por
+propriedade e descobre o visualizador em um registro que mapeia
+`TipoEstrutura` para componente. O mapa é parcial de propósito: vetor e lista
+encadeada ainda não têm visualizador, e a tela trata a ausência em vez de
+fingir que existe. Com isso, acrescentar exercício ou visualizador não toca em
+`App.tsx`.
+
+**Uma sessão de métricas por abertura.** Abrir um exercício inicia a sessão;
+sair encerra. Reabrir o mesmo exercício começa outra, com id próprio — duas
+tentativas do mesmo exercício são eventos diferentes do ponto de vista do
+estudo e não podem ser somadas.
+
+**Por que existe um arquivo de sessões em memória.** "Encerrar ao sair" só tem
+sentido se a sessão sobreviver à navegação. Sem isso, trocar de exercício
+apagaria o registro do anterior e a exportação enxergaria apenas o exercício
+aberto no momento. As sessões encerradas ficam em uma lista de módulo, que é
+exatamente "a memória" desta etapa (ver D6) e some junto com a página. Arquivar
+é idempotente por id, o que atualiza o retrato em vez de duplicá-lo e cobre de
+quebra o ciclo monta/desmonta/monta do StrictMode.
+
+**O campo `tutorial` é dado do catálogo.** Marcar o exercício de entrada por um
+campo em `Exercicio`, e não por um identificador fixo dentro da tela, mantém a
+tela genérica e deixa a escolha onde ela pertence.
+
+**Nada de progresso na lista.** Sem marcação de resolvido, pontuação ou
+histórico. Saber de antemão quais exercícios já caíram muda a forma como o
+estudante encara os que faltam, e não há hipótese no trabalho que justifique
+esse efeito.
+
+**Limitação conhecida.** O botão de exportar métricas vive dentro da tela do
+exercício. Depois de voltar para a lista não há como exportar sem entrar em
+algum exercício de novo. As sessões continuam guardadas; falta o acesso.

@@ -16,6 +16,7 @@ export const pilhaDesempilhar: Exercicio = {
   estrutura: 'pilha',
   categoriaDefeito: 'indice-deslocado',
   dificuldade: 1,
+  tutorial: true,
   linhaDoDefeito: 16,
   variaveisObservadas: ['itens', 'topo'],
 

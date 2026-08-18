@@ -59,3 +59,17 @@ button.primario { background: var(--acento); border-color: var(--acento); color:
 /* O número da linha é o alvo da declaração de localização. Nenhuma linha
    recebe destaque próprio: só o cursor indica que dá para apontar. */
 .cm-lineNumbers .cm-gutterElement { cursor: pointer; }
+
+.lista-exercicios { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.cartao-exercicio { border: 1px solid var(--borda); border-radius: 10px; }
+.cartao-exercicio:hover { border-color: var(--acento); }
+.cartao-exercicio a { display: block; padding: 14px 16px; text-decoration: none; color: inherit; }
+.cartao-exercicio h3 { margin: 0 0 6px; font-size: 16px; }
+.meta-exercicio { margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  font-size: 13px; color: var(--tinta-suave); }
+.etiqueta { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+  padding: 2px 8px; border-radius: 999px; border: 1px solid var(--acento); color: var(--acento); }
+
+.voltar { display: inline-block; margin-bottom: 10px; font-size: 13px;
+  color: var(--tinta-suave); text-decoration: none; }
+.voltar:hover { color: var(--acento); }

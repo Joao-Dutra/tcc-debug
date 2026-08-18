@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { criarSessao, exportarSessoes, localizacoesDe } from '../nucleo/metricas';
+import {
+  arquivarSessao,
+  criarSessao,
+  exportarSessoes,
+  localizacoesDe,
+  sessoesArquivadas,
+} from '../nucleo/metricas';
 import type { EventoDeLocalizacao, OrigemDaExecucao, Sessao } from '../nucleo/metricas';
 import type { ResultadoExecucao } from '../nucleo/tipos';
 
@@ -33,9 +39,16 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number) {
     }
   }, []);
 
-  // Uma rajada em andamento no fim da sessão é uma edição que aconteceu de
-  // verdade; perdê-la seria perder dado.
-  useEffect(() => fecharRajada, [fecharRajada]);
+  // Sair do exercício encerra a sessão. Os dois passos ficam no mesmo cleanup
+  // para garantir a ordem: uma rajada em andamento é uma edição que aconteceu
+  // de verdade e precisa entrar no log antes do retrato final.
+  useEffect(
+    () => () => {
+      fecharRajada();
+      if (sessao.current) arquivarSessao(sessao.current.registro());
+    },
+    [fecharRajada]
+  );
 
   const registrarEdicao = useCallback(
     (codigo: string) => {
@@ -72,9 +85,13 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number) {
     [fecharRajada]
   );
 
+  // Arquiva antes de exportar em vez de concatenar: como arquivar é idempotente
+  // por id, existe um caminho só para montar a lista e nenhuma sessão sai
+  // duplicada nem de fora.
   const exportar = useCallback(() => {
     fecharRajada();
-    return exportarSessoes(sessao.current ? [sessao.current.registro()] : []);
+    if (sessao.current) arquivarSessao(sessao.current.registro());
+    return exportarSessoes(sessoesArquivadas());
   }, [fecharRajada]);
 
   return {

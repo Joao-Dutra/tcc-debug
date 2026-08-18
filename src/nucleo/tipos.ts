@@ -54,6 +54,8 @@ export interface Exercicio {
   estrutura: TipoEstrutura;
   categoriaDefeito: CategoriaDefeito;
   dificuldade: 1 | 2 | 3;
+  /** Marca o exercício de entrada do catálogo, apresentado antes dos demais. */
+  tutorial?: boolean;
   /** Código com o defeito implantado — é o que o estudante vê. */
   codigoComDefeito: string;
   /** Versão correta, usada apenas para conferência interna. Nunca exibir. */

@@ -204,6 +204,31 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
   };
 }
 
+/**
+ * Sessões já encerradas, guardadas enquanto a página estiver aberta.
+ *
+ * Existe porque o estudante troca de exercício: ao sair de um, a sessão dele
+ * precisa sobreviver à desmontagem da tela, senão o dado morre na navegação.
+ * É estado de módulo de propósito — é justamente "a memória" desta fatia, e
+ * some junto com a página, como está registrado em D6.
+ */
+const encerradas: RegistroDeSessao[] = [];
+
+/**
+ * Arquiva uma sessão. Idempotente por id: arquivar a mesma sessão de novo
+ * atualiza o retrato em vez de duplicá-lo, o que também protege do ciclo
+ * monta/desmonta/monta que o StrictMode faz em desenvolvimento.
+ */
+export function arquivarSessao(registro: RegistroDeSessao): void {
+  const i = encerradas.findIndex((s) => s.id === registro.id);
+  if (i >= 0) encerradas[i] = registro;
+  else encerradas.push(registro);
+}
+
+export function sessoesArquivadas(): RegistroDeSessao[] {
+  return [...encerradas];
+}
+
 export function exportarSessoes(registros: RegistroDeSessao[]): string {
   const exportacao: ExportacaoDeMetricas = {
     versao: VERSAO_DO_REGISTRO,
