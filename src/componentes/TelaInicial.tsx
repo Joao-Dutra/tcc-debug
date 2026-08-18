@@ -1,4 +1,6 @@
 import { catalogo } from '../exercicios/catalogo';
+import { exportarMetricas } from '../nucleo/metricas';
+import { baixarMetricas } from './usar-metricas';
 import { caminhoDoExercicio } from './usar-rota';
 import type { TipoEstrutura } from '../nucleo/tipos';
 
@@ -50,6 +52,18 @@ export function TelaInicial() {
           ))}
         </ul>
       </section>
+
+      {/* O botão aparece mesmo sem sessão nenhuma guardada. Escondê-lo quando
+          não há nada contaria ao estudante que ele ainda não abriu exercício
+          algum, que é o tipo de progresso que esta tela não mostra. */}
+      <footer className="rodape-inicial">
+        <button
+          className="discreto"
+          onClick={() => baixarMetricas(exportarMetricas(), 'metricas.json')}
+        >
+          Exportar métricas (JSON)
+        </button>
+      </footer>
     </div>
   );
 }

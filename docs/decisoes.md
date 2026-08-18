@@ -183,6 +183,10 @@ histórico. Saber de antemão quais exercícios já caíram muda a forma como o
 estudante encara os que faltam, e não há hipótese no trabalho que justifique
 esse efeito.
 
-**Limitação conhecida.** O botão de exportar métricas vive dentro da tela do
-exercício. Depois de voltar para a lista não há como exportar sem entrar em
-algum exercício de novo. As sessões continuam guardadas; falta o acesso.
+**Exportação alcançável das duas telas.** A tela inicial também exporta, para
+que as sessões arquivadas não fiquem inacessíveis depois que o participante
+volta do exercício. As duas telas chamam a mesma função do núcleo
+(`exportarMetricas`), de modo que existe uma exportação só. O botão da tela
+inicial não mostra contagem nem resumo, e aparece mesmo quando não há sessão
+guardada: escondê-lo revelaria que o participante ainda não abriu exercício
+algum, que é exatamente o progresso que esta tela não exibe.

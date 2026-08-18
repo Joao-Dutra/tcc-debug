@@ -2,9 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   arquivarSessao,
   criarSessao,
-  exportarSessoes,
+  exportarMetricas,
   localizacoesDe,
-  sessoesArquivadas,
 } from '../nucleo/metricas';
 import type { EventoDeLocalizacao, OrigemDaExecucao, Sessao } from '../nucleo/metricas';
 import type { ResultadoExecucao } from '../nucleo/tipos';
@@ -91,7 +90,7 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number) {
   const exportar = useCallback(() => {
     fecharRajada();
     if (sessao.current) arquivarSessao(sessao.current.registro());
-    return exportarSessoes(sessoesArquivadas());
+    return exportarMetricas();
   }, [fecharRajada]);
 
   return {

@@ -237,3 +237,15 @@ export function exportarSessoes(registros: RegistroDeSessao[]): string {
   };
   return JSON.stringify(exportacao, null, 2);
 }
+
+/**
+ * Exporta tudo o que está na memória.
+ *
+ * Ponto de entrada único das telas que exportam. A tela do exercício arquiva a
+ * sessão em curso antes de chamar; a tela inicial chama direto, porque ao sair
+ * do exercício a sessão dele já foi arquivada. Assim existe uma exportação só,
+ * e não uma por tela.
+ */
+export function exportarMetricas(): string {
+  return exportarSessoes(sessoesArquivadas());
+}

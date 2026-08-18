@@ -73,3 +73,8 @@ button.primario { background: var(--acento); border-color: var(--acento); color:
 .voltar { display: inline-block; margin-bottom: 10px; font-size: 13px;
   color: var(--tinta-suave); text-decoration: none; }
 .voltar:hover { color: var(--acento); }
+
+.rodape-inicial { margin-top: 4px; }
+button.discreto { font-size: 13px; padding: 5px 11px; background: transparent;
+  color: var(--tinta-suave); }
+button.discreto:hover { color: var(--acento); border-color: var(--acento); }
