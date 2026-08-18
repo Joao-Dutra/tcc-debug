@@ -1,0 +1,29 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+dist-ssr/
+*.local
+
+# Variáveis de ambiente — nunca versionar credenciais do Supabase
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editores
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+
+# Claude Code — configuração local da máquina, não do projeto
+.claude/settings.local.json
+
+# Artefatos de teste do núcleo
+instr.test.mjs
+coverage/
