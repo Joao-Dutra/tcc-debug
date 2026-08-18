@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef } from 'react';
-import { criarSessao, exportarSessoes } from '../nucleo/metricas';
-import type { OrigemDaExecucao, Sessao } from '../nucleo/metricas';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { criarSessao, exportarSessoes, localizacoesDe } from '../nucleo/metricas';
+import type { EventoDeLocalizacao, OrigemDaExecucao, Sessao } from '../nucleo/metricas';
 import type { ResultadoExecucao } from '../nucleo/tipos';
 
 /**
@@ -11,14 +11,18 @@ import type { ResultadoExecucao } from '../nucleo/tipos';
 /** Silêncio de digitação que fecha uma rajada de edição. */
 const PAUSA_DA_RAJADA_MS = 2000;
 
-export function useMetricas(exercicioId: string) {
+export function useMetricas(exercicioId: string, linhaDoDefeito: number) {
   // Criada uma única vez: o instante de início é o instante em que o estudante
   // passou a encarar o exercício, não o de um render qualquer.
   const sessao = useRef<Sessao | null>(null);
-  if (sessao.current === null) sessao.current = criarSessao({ exercicioId });
+  if (sessao.current === null) sessao.current = criarSessao({ exercicioId, linhaDoDefeito });
 
   const temporizador = useRef<number | undefined>(undefined);
   const rascunho = useRef<string | null>(null);
+
+  // Espelho das tentativas para a tela poder redesenhar. É preenchido lendo o
+  // log da sessão, nunca montado à parte: o log é a única versão do dado.
+  const [localizacoes, setLocalizacoes] = useState<EventoDeLocalizacao[]>([]);
 
   const fecharRajada = useCallback(() => {
     window.clearTimeout(temporizador.current);
@@ -56,12 +60,31 @@ export function useMetricas(exercicioId: string) {
     sessao.current?.registrarDica(indice);
   }, []);
 
+  const declararLocalizacao = useCallback(
+    (linha: number) => {
+      // Mesma razão da execução: uma edição em curso vem antes do palpite na
+      // sequência, senão a ordem da estratégia sai trocada no registro.
+      fecharRajada();
+      sessao.current?.registrarLocalizacao(linha);
+      const registro = sessao.current?.registro();
+      setLocalizacoes(registro ? localizacoesDe(registro.eventos) : []);
+    },
+    [fecharRajada]
+  );
+
   const exportar = useCallback(() => {
     fecharRajada();
     return exportarSessoes(sessao.current ? [sessao.current.registro()] : []);
   }, [fecharRajada]);
 
-  return { registrarExecucao, registrarEdicao, registrarDica, exportar };
+  return {
+    registrarExecucao,
+    registrarEdicao,
+    registrarDica,
+    declararLocalizacao,
+    localizacoes,
+    exportar,
+  };
 }
 
 /** Entrega o JSON como arquivo. Vive aqui porque mexe no DOM. */

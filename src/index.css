@@ -55,3 +55,7 @@ button.primario { background: var(--acento); border-color: var(--acento); color:
 .sucesso { color: var(--ok); font-size: 14px; }
 .dica { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 12px;
   font-size: 14px; margin: 0 0 8px; }
+
+/* O número da linha é o alvo da declaração de localização. Nenhuma linha
+   recebe destaque próprio: só o cursor indica que dá para apontar. */
+.cm-lineNumbers .cm-gutterElement { cursor: pointer; }

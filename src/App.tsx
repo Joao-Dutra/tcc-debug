@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import CodeMirror from '@uiw/react-codemirror';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import CodeMirror, { lineNumbers } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { executar } from './nucleo/executor';
 import { pilhaDesempilhar } from './exercicios/pilha-desempilhar';
@@ -22,8 +22,32 @@ export default function App() {
   const [dicasAbertas, setDicasAbertas] = useState(0);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
-  const metricas = useMetricas(exercicio.id);
+  const metricas = useMetricas(exercicio.id, exercicio.linhaDoDefeito);
   const jaAbriu = useRef(false);
+
+  // O manipulador do gutter é criado uma vez só, junto da extensão; o ref
+  // mantém a versão atual da função sem forçar o CodeMirror a reconfigurar.
+  const declarar = useRef<(linha: number) => void>(() => {});
+  useEffect(() => {
+    declarar.current = metricas.declararLocalizacao;
+  }, [metricas.declararLocalizacao]);
+
+  const extensoes = useMemo(
+    () => [
+      javascript(),
+      // Clicar no número da linha declara a suspeita. É um alvo separado do
+      // texto de propósito: apontar não pode atrapalhar quem quer digitar.
+      lineNumbers({
+        domEventHandlers: {
+          mousedown: (view, bloco) => {
+            declarar.current(view.state.doc.lineAt(bloco.from).number);
+            return true;
+          },
+        },
+      }),
+    ],
+    []
+  );
 
   const rodar = async (origem: OrigemDaExecucao) => {
     setRodando(true);
@@ -79,9 +103,14 @@ export default function App() {
           <CodeMirror
             value={codigo}
             height="420px"
-            extensions={[javascript()]}
+            basicSetup={{ lineNumbers: false, foldGutter: false }}
+            extensions={extensoes}
             onChange={aoEditar}
           />
+          <p className="rodape-painel">
+            Clique no número de uma linha para apontar onde você acredita que está o
+            defeito. Pode tentar quantas vezes quiser, antes ou depois de editar.
+          </p>
           {linhaAtual !== undefined && (
             <p className="rodape-painel">Executando a linha {linhaAtual}</p>
           )}
@@ -93,6 +122,20 @@ export default function App() {
           <ControlesReprodutor reprodutor={reprodutor} />
         </section>
       </main>
+
+      {metricas.localizacoes.length > 0 && (
+        <section className="painel">
+          <h2>Onde você apontou</h2>
+          <ul className="casos">
+            {metricas.localizacoes.map((l, i) => (
+              <li key={i} className={l.correta ? 'passou' : 'falhou'}>
+                <strong>{l.correta ? '✓' : '✗'}</strong> Linha {l.linha} —{' '}
+                {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="painel">
         <h2>Casos de teste</h2>

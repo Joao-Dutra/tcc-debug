@@ -23,10 +23,9 @@ export const VERSAO_DO_REGISTRO = 1;
 export type OrigemDaExecucao = 'estudante' | 'automatica';
 
 /**
- * O evento 'localizacao' já faz parte do formato, mas nada o produz ainda: o
- * mecanismo de o estudante apontar a linha suspeita é a próxima fatia. Está
- * declarado para que o formato do dado — e o resumo que o consome — nasçam
- * prontos para recebê-lo.
+ * Toda tentativa de localização vira um evento 'localizacao', acertando ou
+ * errando. É de propósito: a sequência de palpites é o registro da estratégia
+ * de investigação do estudante, e uma tentativa descartada some para sempre.
  */
 export type Evento =
   | {
@@ -79,13 +78,23 @@ export interface ExportacaoDeMetricas {
 }
 
 type EventoDeExecucao = Extract<Evento, { tipo: 'execucao' }>;
+export type EventoDeLocalizacao = Extract<Evento, { tipo: 'localizacao' }>;
+
+/**
+ * Leitura das tentativas de localização direto do log. A interface consome
+ * esta função em vez de manter uma lista própria: duas cópias do mesmo dado
+ * divergem, e a que vale é sempre a que será exportada.
+ */
+export function localizacoesDe(eventos: Evento[]): EventoDeLocalizacao[] {
+  return eventos.filter((e): e is EventoDeLocalizacao => e.tipo === 'localizacao');
+}
 
 export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
   const doEstudante = eventos.filter(
     (e): e is EventoDeExecucao => e.tipo === 'execucao' && e.origem === 'estudante'
   );
-  const localizacoes = eventos.filter((e) => e.tipo === 'localizacao');
-  const primeiraCorreta = eventos.find((e) => e.tipo === 'localizacao' && e.correta);
+  const localizacoes = localizacoesDe(eventos);
+  const primeiraCorreta = localizacoes.find((e) => e.correta);
   const primeiraCorrecao = doEstudante.find((e) => e.todosPassaram);
 
   return {
@@ -103,6 +112,12 @@ export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
 
 export interface OpcoesDaSessao {
   exercicioId: string;
+  /**
+   * Serve apenas para julgar a declaração de localização, dentro do núcleo.
+   * Não entra no registro exportado e não é devolvida a quem desenha a tela —
+   * a interface pergunta e recebe o veredito, sem nunca ver a resposta.
+   */
+  linhaDoDefeito: number;
   participanteId?: string | null;
   /** Relógio monotônico. Injetável para teste. */
   agora?: () => number;
@@ -113,6 +128,8 @@ export interface Sessao {
   registrarExecucao(origem: OrigemDaExecucao, codigo: string, resultado: ResultadoExecucao): void;
   registrarEdicao(codigo: string): void;
   registrarDica(indice: number): void;
+  /** Registra a tentativa e devolve se ela acertou. Tentativas são ilimitadas. */
+  registrarLocalizacao(linha: number): boolean;
   /** Retrato do registro no instante da chamada; pode ser pedido quantas vezes for. */
   registro(): RegistroDeSessao;
 }
@@ -164,6 +181,12 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
 
     registrarDica(indice) {
       eventos.push({ tipo: 'dica', t: t(), indice });
+    },
+
+    registrarLocalizacao(linha) {
+      const correta = linha === opcoes.linhaDoDefeito;
+      eventos.push({ tipo: 'localizacao', t: t(), linha, correta });
+      return correta;
     },
 
     registro() {

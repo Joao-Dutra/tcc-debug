@@ -88,8 +88,7 @@ quebrou o código antes de acertar. O experimento não tem segunda chance.
   "corrigiu instantaneamente".
 - O registro carrega `versao`, porque o formato vai mudar quando a persistência
   entrar (ver D3) e os dados da versão 1 precisam continuar legíveis.
-- O evento `localizacao` já está no formato, mas nada o produz ainda: o
-  mecanismo de apontar a linha suspeita é fatia seguinte.
+- Toda tentativa de localização entra no log, tendo acertado ou errado (ver D7).
 - Nenhum contador da sessão é exibido ao estudante. Mostrar quantas vezes ele
   executou ou quantas dicas abriu muda o comportamento que o estudo quer medir.
 
@@ -100,3 +99,43 @@ persistência.
 
 **A registrar no termo de consentimento.** O registro contém o código escrito
 pelo participante, e não apenas tempos e contagens.
+
+## D7 — Declaração de localização com veredito imediato
+
+**Decisão.** O estudante clica no número da linha para declarar onde acredita
+estar o defeito. O sistema compara com `linhaDoDefeito` e informa na hora se
+acertou. As tentativas são ilimitadas, e todas — certas e erradas — viram
+eventos `localizacao` na sequência da sessão, com a linha apontada e o
+resultado.
+
+**Justificativa.** Localizar e corrigir são duas etapas distintas do trabalho de
+depuração, e o estudo precisa medi-las em separado: um estudante pode enxergar
+o defeito rápido e demorar para consertar, ou o contrário. Sem a declaração, só
+existe o instante da correção, e as duas etapas ficam indistinguíveis.
+
+**Por que o alvo é o número da linha, e não o texto.** A edição não é bloqueada
+pela declaração — o estudante pode mexer no código antes de apontar, se essa for
+a estratégia dele, e registrar a estratégia é justamente o objetivo. Se apontar
+fosse clicar no código, cada vez que ele posicionasse o cursor para digitar
+estaria declarando um palpite. O gutter é um alvo separado que não disputa com
+a digitação.
+
+**Nada é destacado antes da declaração.** Nem cor, nem ícone, nem console. A
+comparação acontece dentro do núcleo, que devolve apenas o veredito; a interface
+nunca recebe a linha do defeito. A tela só ecoa as linhas que o próprio
+estudante apontou.
+
+**Risco aceito: o veredito é um oráculo.** Com resposta imediata e tentativas
+ilimitadas, é possível varrer as linhas até acertar sem investigar nada — o
+exercício da pilha tem 24 linhas. A contrapartida é que a varredura fica
+registrada: como toda tentativa entra no log com carimbo de tempo, a análise
+distingue quem investigou de quem varreu, pelo número de tentativas, pelo
+intervalo entre elas e pelo que aconteceu no meio. Se o piloto mostrar
+varredura, dá para limitar as tentativas ou atrasar o veredito sem alterar o
+formato do dado.
+
+**Limitação conhecida.** Sem backend (D3), o catálogo inteiro é entregue ao
+navegador: `linhaDoDefeito` e `codigoCorreto` estão no pacote e podem ser lidos
+com as ferramentas de desenvolvedor. A interface não revela nada, mas a resposta
+está ao alcance de quem procurar. Fechar isso exigiria mover a verificação para
+o servidor.
