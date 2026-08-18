@@ -54,3 +54,49 @@ tempo.
 
 **Justificativa.** Laços infinitos são resultado provável de uma edição errada
 do estudante. Sem isolamento, isso trava a interface e o trabalho dele se perde.
+
+## D6 — Métricas como log de eventos, com agregados derivados
+
+**Decisão.** O registro da sessão é um log de eventos com carimbo de tempo
+(`execucao`, `edicao`, `dica`, `localizacao`). As métricas pedidas — tempo até a
+primeira execução, até a localização, até a correção, número de execuções,
+dicas reveladas e edições — são **derivadas** desse log em `resumirSessao`, e
+não armazenadas em separado. O resumo acompanha o JSON exportado por
+conveniência da análise, mas nunca é a única cópia do dado.
+
+**Alternativa descartada.** Guardar apenas os contadores e os tempos agregados.
+
+**Justificativa.** O agregado só responde às perguntas que já sabíamos formular
+na hora de escrever o código. O log responde também às que surgirem ao olhar os
+dados — se o estudante executou logo depois de abrir uma dica, quantas vezes
+quebrou o código antes de acertar. O experimento não tem segunda chance.
+
+**Detalhes que decorrem disso.**
+
+- Durações vêm de relógio monotônico (`performance.now()`), com um único carimbo
+  de relógio de parede no início. `Date.now()` salta se o relógio do computador
+  se ajustar durante a sessão, e o salto corromperia em silêncio justamente as
+  medidas que sustentam o estudo.
+- A execução disparada ao abrir o exercício é registrada com
+  `origem: 'automatica'` e fica fora das métricas. Sem essa separação, "tempo
+  até a primeira execução" seria zero para todo participante.
+- Cada evento de execução guarda o **código completo** executado. Como os casos
+  de teste são avaliados contra o código do estudante, é possível satisfazê-los
+  sem corrigir defeito algum; só o código guardado permite separar, na análise,
+  correção de teste satisfeito na marra.
+- Ausência de um marco é `null`, nunca `0` — "não corrigiu" não pode colidir com
+  "corrigiu instantaneamente".
+- O registro carrega `versao`, porque o formato vai mudar quando a persistência
+  entrar (ver D3) e os dados da versão 1 precisam continuar legíveis.
+- O evento `localizacao` já está no formato, mas nada o produz ainda: o
+  mecanismo de apontar a linha suspeita é fatia seguinte.
+- Nenhum contador da sessão é exibido ao estudante. Mostrar quantas vezes ele
+  executou ou quantas dicas abriu muda o comportamento que o estudo quer medir.
+
+**Limitação aceita.** Nesta fatia o registro vive só na memória do navegador e
+se perde ao recarregar a página. Fixar quais dados são coletados e em que
+formato é o que importa agora; onde eles ficam é problema da fatia de
+persistência.
+
+**A registrar no termo de consentimento.** O registro contém o código escrito
+pelo participante, e não apenas tempos e contagens.

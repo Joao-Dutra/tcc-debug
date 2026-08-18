@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { executar } from './nucleo/executor';
 import { pilhaDesempilhar } from './exercicios/pilha-desempilhar';
 import { VisualizadorPilha } from './visualizacao/VisualizadorPilha';
 import { ControlesReprodutor, useReprodutor } from './componentes/Reprodutor';
+import { baixarMetricas, useMetricas } from './componentes/usar-metricas';
+import type { OrigemDaExecucao } from './nucleo/metricas';
 import type { ResultadoExecucao } from './nucleo/tipos';
 
 /**
@@ -20,15 +22,34 @@ export default function App() {
   const [dicasAbertas, setDicasAbertas] = useState(0);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
+  const metricas = useMetricas(exercicio.id);
+  const jaAbriu = useRef(false);
 
-  const rodar = async () => {
+  const rodar = async (origem: OrigemDaExecucao) => {
     setRodando(true);
-    setResultado(await executar(exercicio, codigo));
+    const saida = await executar(exercicio, codigo);
+    metricas.registrarExecucao(origem, codigo, saida);
+    setResultado(saida);
     setRodando(false);
   };
 
+  const aoEditar = (valor: string) => {
+    if (valor === codigo) return;
+    setCodigo(valor);
+    metricas.registrarEdicao(valor);
+  };
+
+  const revelarDica = () => {
+    metricas.registrarDica(dicasAbertas);
+    setDicasAbertas((n) => n + 1);
+  };
+
   useEffect(() => {
-    void rodar();
+    // O StrictMode remonta o efeito em desenvolvimento; sem a trava, a abertura
+    // do exercício entraria duas vezes no registro da sessão.
+    if (jaAbriu.current) return;
+    jaAbriu.current = true;
+    void rodar('automatica');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -47,7 +68,11 @@ export default function App() {
         <section className="painel">
           <div className="cabecalho-painel">
             <h2>Código</h2>
-            <button className="primario" onClick={rodar} disabled={rodando}>
+            <button
+              className="primario"
+              onClick={() => void rodar('estudante')}
+              disabled={rodando}
+            >
               {rodando ? 'Executando…' : 'Executar'}
             </button>
           </div>
@@ -55,7 +80,7 @@ export default function App() {
             value={codigo}
             height="420px"
             extensions={[javascript()]}
-            onChange={setCodigo}
+            onChange={aoEditar}
           />
           {linhaAtual !== undefined && (
             <p className="rodape-painel">Executando a linha {linhaAtual}</p>
@@ -93,10 +118,24 @@ export default function App() {
           <p key={d} className="dica">{d}</p>
         ))}
         {dicasAbertas < exercicio.dicas.length && (
-          <button onClick={() => setDicasAbertas((n) => n + 1)}>
-            Revelar dica {dicasAbertas + 1}
-          </button>
+          <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
         )}
+      </section>
+
+      {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
+          estudante quantas vezes ele executou ou quantas dicas abriu muda o
+          comportamento que o estudo quer medir. */}
+      <section className="painel">
+        <h2>Sessão</h2>
+        <p className="rodape-painel">
+          As métricas desta sessão ficam apenas na memória do navegador e se perdem ao
+          recarregar a página.
+        </p>
+        <button
+          onClick={() => baixarMetricas(metricas.exportar(), `metricas-${exercicio.id}.json`)}
+        >
+          Exportar métricas (JSON)
+        </button>
       </section>
     </div>
   );
