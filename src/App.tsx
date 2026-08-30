@@ -1,4 +1,5 @@
 import { catalogo } from './exercicios/catalogo';
+import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { TelaExercicio } from './componentes/TelaExercicio';
 import { TelaInicial } from './componentes/TelaInicial';
 import { CAMINHO_INICIAL, useRota } from './componentes/usar-rota';
@@ -14,6 +15,9 @@ export default function App() {
   const rota = useRota();
 
   if (rota.tela === 'inicial') return <TelaInicial />;
+
+  // Rota do pesquisador (D11). Nenhuma tela do participante aponta para ela.
+  if (rota.tela === 'metricas') return <PainelDeMetricas />;
 
   const exercicio = catalogo.find((e) => e.id === rota.id);
 

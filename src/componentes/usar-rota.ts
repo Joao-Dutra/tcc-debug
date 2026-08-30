@@ -9,9 +9,18 @@ import { useEffect, useState } from 'react';
  * publicação estática prevista no cronograma.
  */
 
-export type Rota = { tela: 'inicial' } | { tela: 'exercicio'; id: string };
+export type Rota =
+  | { tela: 'inicial' }
+  | { tela: 'exercicio'; id: string }
+  | { tela: 'metricas' };
 
 export const CAMINHO_INICIAL = '#/';
+
+/**
+ * Painel do pesquisador (D11). Não é referenciada por nenhum elemento de
+ * navegação: quem chega aqui digita a rota.
+ */
+export const CAMINHO_METRICAS = '#/metricas';
 
 export function caminhoDoExercicio(id: string): string {
   return `#/exercicio/${encodeURIComponent(id)}`;
@@ -32,6 +41,8 @@ export function interpretarHash(hash: string): Rota {
     .replace(/^#\/?/, '')
     .split('/')
     .filter((parte) => parte !== '');
+
+  if (partes[0] === 'metricas') return { tela: 'metricas' };
 
   if (partes[0] === 'exercicio' && partes[1]) {
     return { tela: 'exercicio', id: decodificar(partes[1]) };

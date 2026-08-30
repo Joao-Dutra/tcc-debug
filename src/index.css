@@ -78,3 +78,15 @@ button.primario { background: var(--acento); border-color: var(--acento); color:
 button.discreto { font-size: 13px; padding: 5px 11px; background: transparent;
   color: var(--tinta-suave); }
 button.discreto:hover { color: var(--acento); border-color: var(--acento); }
+
+.rolagem { overflow-x: auto; }
+.tabela-metricas { border-collapse: collapse; width: 100%; font-size: 13px; white-space: nowrap; }
+.tabela-metricas th { text-align: left; font-weight: 600; color: var(--tinta-suave);
+  font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+  padding: 6px 10px 6px 0; border-bottom: 1px solid var(--borda); }
+.tabela-metricas td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--borda); }
+.sequencia { white-space: normal; padding: 4px 0 10px; }
+.eventos { margin: 0; padding-left: 20px; font-size: 13px; color: var(--tinta); }
+.eventos li { padding: 2px 0; }
+.carimbo { display: inline-block; min-width: 78px; color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums; }
