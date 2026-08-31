@@ -1,4 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
+import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
+import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
 /**
@@ -20,11 +22,15 @@ const BASE_Y = 320;
 
 interface Props {
   instantaneo?: Instantaneo;
+  nivelAndaime?: NivelDeAndaime;
 }
 
-export function VisualizadorPilha({ instantaneo }: Props) {
+export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }: Props) {
   const itens = (instantaneo?.variaveis.itens as unknown[] | undefined) ?? [];
   const topo = instantaneo?.variaveis.topo as number | undefined;
+
+  const legendas = mostrarLegendas(nivelAndaime);
+  const rotulos = mostrarRotulos(nivelAndaime);
 
   const yDaPosicao = (i: number) => BASE_Y - (i + 1) * (ALTURA_CAIXA + ESPACO);
 
@@ -32,9 +38,11 @@ export function VisualizadorPilha({ instantaneo }: Props) {
     <svg viewBox="0 0 360 360" width="100%" style={{ maxHeight: 380 }}>
       {/* Base da pilha */}
       <line x1="80" y1={BASE_Y + 4} x2="240" y2={BASE_Y + 4} stroke="#94a3b8" strokeWidth="3" />
-      <text x="160" y={BASE_Y + 26} textAnchor="middle" fontSize="12" fill="#64748b">
-        base
-      </text>
+      {legendas && (
+        <text x="160" y={BASE_Y + 26} textAnchor="middle" fontSize="12" fill="#64748b">
+          base
+        </text>
+      )}
 
       <AnimatePresence>
         {itens.map((valor, i) => (
@@ -64,23 +72,38 @@ export function VisualizadorPilha({ instantaneo }: Props) {
             >
               {String(valor)}
             </text>
-            <text x={88} y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4} textAnchor="end" fontSize="11" fill="#94a3b8">
-              {i}
-            </text>
+            {rotulos && (
+              <text
+                x={88}
+                y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4}
+                textAnchor="end"
+                fontSize="11"
+                fill="#94a3b8"
+              >
+                {i}
+              </text>
+            )}
           </motion.g>
         ))}
       </AnimatePresence>
 
       {/* Marcador do topo — desenhado mesmo quando aponta para fora do conteúdo,
-          porque essa divergência é o sintoma visível de vários defeitos. */}
+          porque essa divergência é o sintoma visível de vários defeitos.
+
+          A seta é forma, não texto: no apoio mínimo o rótulo some, e sem ela o
+          marcador sumiria junto, deixando a cor da caixa como único portador
+          da informação. */}
       {topo !== undefined && (
         <motion.g
           animate={{ y: topo < 0 ? BASE_Y - 20 : yDaPosicao(topo) + ALTURA_CAIXA / 2 - 8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
         >
-          <text x={236} y={12} fontSize="13" fill="#dc2626" fontWeight="600">
-            ◀ topo = {topo}
-          </text>
+          <path d="M 240 5 L 240 19 L 228 12 Z" fill="#dc2626" />
+          {rotulos && (
+            <text x={248} y={17} fontSize="13" fill="#dc2626" fontWeight="600">
+              topo = {topo}
+            </text>
+          )}
         </motion.g>
       )}
     </svg>

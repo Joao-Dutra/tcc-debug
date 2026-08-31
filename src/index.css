@@ -90,3 +90,5 @@ button.discreto:hover { color: var(--acento); border-color: var(--acento); }
 .eventos li { padding: 2px 0; }
 .carimbo { display: inline-block; min-width: 78px; color: var(--tinta-suave);
   font-variant-numeric: tabular-nums; }
+
+.aviso-falha { color: var(--erro); font-size: 14px; margin: 0; }

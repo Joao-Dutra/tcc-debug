@@ -6,6 +6,8 @@ import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { baixarMetricas, useMetricas } from './usar-metricas';
 import { CAMINHO_INICIAL } from './usar-rota';
+import { detalheDosCasos, dicasDisponiveis } from './andaime';
+import type { DetalheDosCasos, NivelDeAndaime } from './andaime';
 import type { OrigemDaExecucao } from '../nucleo/metricas';
 import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 
@@ -18,18 +20,67 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
  * Não conhece exercício nenhum em particular.
  */
 
-interface Props {
-  exercicio: Exercicio;
+/**
+ * Painel dos casos de teste, nos três graus de revelação de D9.
+ *
+ * Componente próprio para poder ser verificado com um resultado fabricado:
+ * a tela inteira só produz resultado depois de executar no Worker.
+ *
+ * O que é avaliado não muda com o nível — muda só o quanto disso aparece.
+ */
+export function PainelDeCasos({
+  resultado,
+  detalhe,
+}: {
+  resultado: ResultadoExecucao | null;
+  detalhe: DetalheDosCasos;
+}) {
+  const todosPassaram = resultado?.casos.length
+    ? resultado.casos.every((c) => c.passou)
+    : false;
+  const algumFalhou = (resultado?.casos.length ?? 0) > 0 && !todosPassaram;
+
+  return (
+    <section className="painel">
+      <h2>Casos de teste</h2>
+      {/* O erro de execução aparece em qualquer nível: sem ele o estudante
+          não saberia que o próprio código deixou de rodar, e isso não é
+          apoio para encontrar o defeito implantado. */}
+      {resultado?.erro && <p className="erro">{resultado.erro}</p>}
+      {detalhe === 'apenas-que-falhou' ? (
+        algumFalhou && <p className="aviso-falha">Algum caso de teste falhou.</p>
+      ) : (
+        <ul className="casos">
+          {resultado?.casos.map((c) => (
+            <li key={c.descricao} className={c.passou ? 'passou' : 'falhou'}>
+              <strong>{c.passou ? '✓' : '✗'}</strong> {c.descricao}
+              {!c.passou && detalhe === 'esperado-e-obtido' && (
+                <span className="detalhe">
+                  esperado {JSON.stringify(c.esperado)}, obtido {JSON.stringify(c.obtido)}
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {todosPassaram && <p className="sucesso">Todos os casos passaram.</p>}
+    </section>
+  );
 }
 
-export function TelaExercicio({ exercicio }: Props) {
+interface Props {
+  exercicio: Exercicio;
+  andaime: NivelDeAndaime;
+}
+
+export function TelaExercicio({ exercicio, andaime }: Props) {
   const [codigo, setCodigo] = useState(exercicio.codigoComDefeito);
   const [resultado, setResultado] = useState<ResultadoExecucao | null>(null);
   const [rodando, setRodando] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(0);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
-  const metricas = useMetricas(exercicio.id, exercicio.linhaDoDefeito);
+  const metricas = useMetricas(exercicio.id, exercicio.linhaDoDefeito, andaime);
   const jaAbriu = useRef(false);
 
   const Visualizador = visualizadores[exercicio.estrutura];
@@ -87,8 +138,10 @@ export function TelaExercicio({ exercicio }: Props) {
   }, []);
 
   const linhaAtual = reprodutor.atual?.linha;
-  const todosPassaram =
-    resultado?.casos.length ? resultado.casos.every((c) => c.passou) : false;
+  // O andaime é consultado só aqui e na visualização. O que é executado e o
+  // que é registrado não muda com ele (D9).
+  const detalhe = detalheDosCasos(andaime);
+  const dicasPermitidas = Math.min(dicasDisponiveis(andaime), exercicio.dicas.length);
 
   return (
     <div className="pagina">
@@ -131,7 +184,7 @@ export function TelaExercicio({ exercicio }: Props) {
         <section className="painel">
           <h2>Visualização</h2>
           {Visualizador ? (
-            <Visualizador instantaneo={reprodutor.atual} />
+            <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
           ) : (
             <p className="rodape-painel">
               Ainda não há visualizador para esta estrutura de dados.
@@ -155,33 +208,19 @@ export function TelaExercicio({ exercicio }: Props) {
         </section>
       )}
 
-      <section className="painel">
-        <h2>Casos de teste</h2>
-        {resultado?.erro && <p className="erro">{resultado.erro}</p>}
-        <ul className="casos">
-          {resultado?.casos.map((c) => (
-            <li key={c.descricao} className={c.passou ? 'passou' : 'falhou'}>
-              <strong>{c.passou ? '✓' : '✗'}</strong> {c.descricao}
-              {!c.passou && (
-                <span className="detalhe">
-                  esperado {JSON.stringify(c.esperado)}, obtido {JSON.stringify(c.obtido)}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-        {todosPassaram && <p className="sucesso">Todos os casos passaram.</p>}
-      </section>
+      <PainelDeCasos resultado={resultado} detalhe={detalhe} />
 
-      <section className="painel">
-        <h2>Dicas</h2>
-        {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
-          <p key={d} className="dica">{d}</p>
-        ))}
-        {dicasAbertas < exercicio.dicas.length && (
-          <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
-        )}
-      </section>
+      {dicasPermitidas > 0 && (
+        <section className="painel">
+          <h2>Dicas</h2>
+          {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
+            <p key={d} className="dica">{d}</p>
+          ))}
+          {dicasAbertas < dicasPermitidas && (
+            <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
+          )}
+        </section>
+      )}
 
       {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
           estudante quantas vezes ele executou ou quantas dicas abriu muda o

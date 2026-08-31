@@ -67,9 +67,12 @@ export interface RegistroDeSessao {
   /**
    * Nível de andaime sob o qual a sessão foi apresentada (ver D9). Segue a
    * mesma regra de participanteId: ausência é null, nunca um valor arbitrário,
-   * para que a análise não confunda "não registrado" com "nível máximo".
+   * para que a análise não confunda "não registrado" com um nível de verdade.
+   *
+   * Guardado como texto opaco: o núcleo registra o rótulo que a interface
+   * informou e não conhece os níveis nem o que cada um revela.
    */
-  andaime: number | null;
+  andaime: string | null;
   /** Relógio de parede, ISO 8601 — única âncora absoluta do registro. */
   instanteDeInicio: string;
   duracaoTotalMs: number;
@@ -118,8 +121,8 @@ export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
 
 export interface OpcoesDaSessao {
   exercicioId: string;
-  /** Nível de andaime da sessão (D9). Ausente enquanto o mecanismo não existir. */
-  andaime?: number;
+  /** Rótulo do nível de andaime da sessão (D9), definido pela interface. */
+  andaime?: string;
   /**
    * Serve apenas para julgar a declaração de localização, dentro do núcleo.
    * Não entra no registro exportado e não é devolvida a quem desenha a tela —

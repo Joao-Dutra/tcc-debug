@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { interpretarAndaime } from './andaime';
+import type { NivelDeAndaime } from './andaime';
 
 /**
  * Roteamento por hash.
@@ -11,7 +13,7 @@ import { useEffect, useState } from 'react';
 
 export type Rota =
   | { tela: 'inicial' }
-  | { tela: 'exercicio'; id: string }
+  | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' };
 
 export const CAMINHO_INICIAL = '#/';
@@ -37,15 +39,19 @@ function decodificar(valor: string): string {
 
 /** Separada do hook para poder ser verificada sem navegador. */
 export function interpretarHash(hash: string): Rota {
-  const partes = hash
-    .replace(/^#\/?/, '')
-    .split('/')
-    .filter((parte) => parte !== '');
+  // A consulta vem dentro do hash, então window.location.search fica vazio e
+  // é aqui que ela precisa ser separada do caminho.
+  const [caminho, consulta = ''] = hash.replace(/^#\/?/, '').split('?');
+  const partes = caminho.split('/').filter((parte) => parte !== '');
 
   if (partes[0] === 'metricas') return { tela: 'metricas' };
 
   if (partes[0] === 'exercicio' && partes[1]) {
-    return { tela: 'exercicio', id: decodificar(partes[1]) };
+    return {
+      tela: 'exercicio',
+      id: decodificar(partes[1]),
+      andaime: interpretarAndaime(new URLSearchParams(consulta).get('andaime')),
+    };
   }
   return { tela: 'inicial' };
 }

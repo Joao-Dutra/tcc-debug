@@ -38,6 +38,14 @@ export default function App() {
   }
 
   // A `key` faz cada abertura montar uma tela nova, e com ela uma sessão de
-  // métricas nova — inclusive ao reabrir o mesmo exercício.
-  return <TelaExercicio key={exercicio.id} exercicio={exercicio} />;
+  // métricas nova — inclusive ao reabrir o mesmo exercício. O nível de andaime
+  // entra na chave porque é parâmetro da sessão: trocá-lo na URL começa outra
+  // sessão, em vez de continuar a anterior sob outro apoio.
+  return (
+    <TelaExercicio
+      key={`${exercicio.id}:${rota.andaime}`}
+      exercicio={exercicio}
+      andaime={rota.andaime}
+    />
+  );
 }

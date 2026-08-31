@@ -190,3 +190,118 @@ volta do exercício. As duas telas chamam a mesma função do núcleo
 inicial não mostra contagem nem resumo, e aparece mesmo quando não há sessão
 guardada: escondê-lo revelaria que o participante ainda não abriu exercício
 algum, que é exatamente o progresso que esta tela não exibe.
+
+## D9 — Andaime como parâmetro independente do exercício
+
+**Decisão.** O nível de andaime (*scaffolding*) é um parâmetro da sessão, e não
+uma propriedade do exercício. O mesmo exercício pode ser apresentado com apoio
+`completo`, `parcial` ou `minimo`. O nível vem da URL
+(`#/exercicio/<id>?andaime=<nivel>`), é registrado na sessão de métricas e,
+quando ausente ou inválido, assume `completo`.
+
+**Alternativa descartada.** Embutir o nível de apoio em cada exercício, de modo
+que os exercícios iniciais fossem naturalmente mais assistidos e os finais menos.
+
+**Justificativa teórica.** A noção de andaime descreve o apoio que um agente
+mais capaz oferece ao aprendiz para que este realize uma tarefa além da sua
+competência atual, apoio que deve ser progressivamente retirado à medida que a
+competência se estabelece (Wood, Bruner e Ross, 1976). A retirada gradual —
+*fading* — é parte constitutiva do conceito: andaime que não é removido deixa de
+ser andaime e passa a ser muleta.
+
+**Justificativa metodológica, que é a razão principal.** Se o nível de apoio
+estivesse embutido no exercício, ele variaria junto com a dificuldade
+intrínseca da tarefa, e as duas coisas ficariam confundidas: um desempenho pior
+nos exercícios finais não poderia ser atribuído nem à retirada do apoio nem ao
+aumento da dificuldade. Como parâmetro independente, o mesmo exercício pode ser
+comparado consigo mesmo sob apoios diferentes, o que permite ao estudo tratar a
+retirada do andaime como variável, e não apenas descrevê-la.
+
+**O que varia com o nível.**
+
+| Andaime | `completo` | `parcial` | `minimo` |
+|---|---|---|---|
+| Dicas disponíveis | três | uma | nenhuma |
+| Casos de teste | esperado e obtido | apenas passou ou falhou | apenas que algo falhou |
+| Legendas de orientação no desenho | sim | não | não |
+| Índices e rótulos dos marcadores | sim | sim | não |
+
+A visualização tem três degraus, e não dois. Retirar de uma vez as legendas e
+os rótulos dos marcadores faria o apoio parcial cair quase ao mínimo, e as duas
+condições deixariam de se distinguir na análise. No apoio mínimo restam o valor
+guardado em cada posição e a forma e a posição dos marcadores: relacionar o
+marcador à variável do código volta a ser trabalho do estudante.
+
+**Por que os níveis têm nome e não número.** A numeração media quantidade de
+apoio e portanto crescia na direção contrária à da dificuldade — o nível 3 era
+o mais fácil. É uma inversão fácil de aplicar errado ao ler os dados, e o erro
+seria silencioso. Além disso "nível" já designa a dificuldade intrínseca do
+exercício, que é propriedade dele e não da sessão; manter as duas escalas com o
+mesmo vocabulário convidava a confundir justamente o que a análise precisa
+separar.
+
+**O que não varia com o nível.** O código do exercício, os casos executados, a
+instrumentação e o registro de métricas. O andaime é exclusivamente aquilo que a
+interface revela; o núcleo não o conhece. Essa fronteira é o que garante que
+duas sessões do mesmo exercício sob níveis distintos sejam comparáveis.
+
+**Dificuldade intrínseca continua sendo propriedade do exercício.** O tamanho do
+programa, a distância entre o defeito e o seu sintoma e o fato de o defeito se
+manifestar apenas em entradas de borda pertencem ao exercício e são declarados
+nele. Manter essa separação explícita é o que sustenta a análise.
+
+**Questão em aberto.** O indicador de linha em execução (ver D10) é, ele próprio,
+um andaime: faz pelo estudante o trabalho de relacionar o código à
+representação. Não entra no *fading* nesta etapa, por ser também o principal
+recurso de legibilidade da ferramenta, mas é candidato natural a compor o nível
+mínimo caso o piloto indique que a tarefa está fácil demais.
+
+## D10 — Melhorias na visualização e indicador de linha
+
+**Decisão.** A representação gráfica ganha três recursos: distinção cromática
+entre células ativas e consumidas, destaque animado do elemento apontado pelos
+marcadores, e um indicador da linha em execução exibido junto à animação.
+
+**Justificativa.** A visualização é o instrumento de investigação do estudante e
+precisa ser legível o suficiente para que uma anomalia salte aos olhos. Sem
+distinção visual entre o que está na estrutura e o que já saiu dela, o sintoma
+de um defeito de índice se confunde com o funcionamento normal.
+
+**O indicador de linha resolve o custo de alternância.** Sem ele, o estudante
+precisa manter mentalmente a correspondência entre a instrução que está sendo
+executada e o quadro que vê. Esse esforço não é o objeto de estudo do trabalho —
+o objeto é a formulação de hipóteses sobre a causa do defeito — e consumir
+memória de trabalho com a sincronização atrapalha justamente a atividade que se
+quer observar.
+
+**Regra que os recursos novos não podem violar.** Todo destaque deriva do estado
+real da execução, nunca do comportamento correto. Se um marcador aponta para
+fora da estrutura ou para um elemento já consumido, é isso que a animação
+mostra. A ferramenta não sabe qual seria o elemento certo, e não deve dar a
+entender que sabe: o estado inválido é o conteúdo pedagógico (ver a skill
+`criar-visualizador`).
+
+**Limite deliberado.** O destaque indica *qual elemento o programa vai tratar em
+seguida*, segundo os marcadores atuais — não *qual elemento deveria ser tratado*.
+A diferença entre as duas coisas é exatamente o que o estudante precisa
+descobrir sozinho.
+
+## D11 — Painel de métricas em rota própria, fora da navegação
+
+**Decisão.** As sessões arquivadas são inspecionadas em `#/metricas`, rota não
+referenciada por nenhum elemento de navegação das demais telas.
+
+**Justificativa.** O painel é instrumento de análise do pesquisador, não parte da
+experiência do participante. Exibir contagens, tempos ou histórico a quem está
+resolvendo os exercícios introduziria efeito de placar sobre o comportamento
+medido, o que contraria D6 e D8.
+
+**Por que não uma exportação apenas.** A exportação em JSON continua sendo a via
+de saída dos dados, mas conferir se a coleta está correta durante o piloto exige
+olhar os dados enquanto se usa a ferramenta. Sem o painel, um defeito de
+instrumentação só apareceria depois do experimento, quando não há remédio.
+
+**Acesso.** Não há autenticação. A rota é obscura, não protegida — o que basta
+para o cenário de uso, em que a sessão do participante é acompanhada
+presencialmente. Se a ferramenta vier a ser distribuída sem acompanhamento, a
+proteção passa a depender da fatia de persistência (ver D3).

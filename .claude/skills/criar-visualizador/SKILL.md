@@ -10,13 +10,43 @@ Um visualizador desenha **um** instantâneo de **uma** estrutura de dados.
 ## Contrato
 
 ```tsx
-interface Props { instantaneo?: Instantaneo }
+interface Props {
+  instantaneo?: Instantaneo;
+  nivelAndaime?: NivelDeAndaime;
+}
 ```
 
 Nada além disso. O componente **não** executa código, **não** recebe o
 exercício, **não** decide qual passo mostrar e **não** guarda estado próprio
 sobre a execução. Quebrar isso acopla a visualização ao núcleo e inviabiliza
 reaproveitar o mesmo visualizador em exercícios diferentes.
+
+Receber o nível de andaime não fere nenhuma dessas restrições: o componente
+continua sendo função do que recebe. Quando a propriedade vier ausente, assuma
+`ANDAIME_PADRAO` — apoio nunca é retirado por engano.
+
+### O que o nível controla no desenho
+
+| Nível | Legendas de orientação | Índices e rótulos dos marcadores |
+|---|---|---|
+| `completo` | sim | sim |
+| `parcial` | não | sim |
+| `minimo` | não | não |
+
+Use `mostrarLegendas(nivel)` e `mostrarRotulos(nivel)` de
+`src/componentes/andaime.ts` em vez de comparar o nível na mão: a tabela de D9
+mora lá e não deve ser reescrita em cada visualizador.
+
+**Não gere o texto que o nível não prevê — não o esconda depois.** Texto
+escondido por CSS continua no DOM e é anunciado por leitor de tela, o que
+devolveria o apoio que se quis retirar. Pela mesma razão, `aria-label` e
+`<title>` seguem o mesmo corte que o texto visível.
+
+**O que nunca some, em nenhum nível:** o valor guardado em cada posição, a
+forma e a posição dos marcadores, e qualquer indicação de que o desenho está
+truncado. Some o rótulo do marcador, não o marcador — se hoje ele é só texto,
+dê forma a ele antes de esconder o rótulo, senão a informação passa a depender
+só da cor.
 
 ## Princípio de desenho
 

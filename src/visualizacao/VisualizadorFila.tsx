@@ -1,4 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
+import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
+import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
 /**
@@ -51,6 +53,8 @@ interface PropsMarcador {
   desenhadas: number;
   acima: boolean;
   cor: string;
+  /** Rótulo com o nome e o valor do marcador; some no apoio mínimo (D9). */
+  rotulos: boolean;
 }
 
 /**
@@ -59,7 +63,7 @@ interface PropsMarcador {
  * horizontal do triângulo é limitada, e apenas quando o índice ficaria fora do
  * viewBox. Assim nenhum estado é escondido do estudante.
  */
-function Marcador({ nome, indice, desenhadas, acima, cor }: PropsMarcador) {
+function Marcador({ nome, indice, desenhadas, acima, cor, rotulos }: PropsMarcador) {
   // Deixamos o marcador ir até uma posição além de cada ponta: é lá que ele
   // aparece quando aponta para fora da fileira, e isso precisa ser visível.
   const limitado = Math.min(Math.max(indice, -1), desenhadas);
@@ -73,20 +77,24 @@ function Marcador({ nome, indice, desenhadas, acima, cor }: PropsMarcador) {
     >
       {acima ? (
         <>
-          <text y={40} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
-            {nome} = {indice}
-          </text>
+          {rotulos && (
+            <text y={40} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
+              {nome} = {indice}
+            </text>
+          )}
           <path d="M -6 48 L 6 48 L 0 60 Z" fill={cor} />
         </>
       ) : (
         <>
           <path d="M -6 130 L 6 130 L 0 118 Z" fill={cor} />
-          <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
-            {nome} = {indice}
-          </text>
+          {rotulos && (
+            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
+              {nome} = {indice}
+            </text>
+          )}
         </>
       )}
-      {fora && (
+      {fora && rotulos && (
         <text
           y={acima ? 22 : 160}
           textAnchor="middle"
@@ -102,9 +110,10 @@ function Marcador({ nome, indice, desenhadas, acima, cor }: PropsMarcador) {
 
 interface Props {
   instantaneo?: Instantaneo;
+  nivelAndaime?: NivelDeAndaime;
 }
 
-export function VisualizadorFila({ instantaneo }: Props) {
+export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }: Props) {
   const bruto = instantaneo?.variaveis.itens;
   const itens = Array.isArray(bruto) ? (bruto as unknown[]) : [];
   const inicio =
@@ -115,6 +124,9 @@ export function VisualizadorFila({ instantaneo }: Props) {
     typeof instantaneo?.variaveis.fim === 'number'
       ? (instantaneo.variaveis.fim as number)
       : undefined;
+
+  const legendas = mostrarLegendas(nivelAndaime);
+  const rotulos = mostrarRotulos(nivelAndaime);
 
   const desenhadas = Math.min(itens.length, LIMITE_DE_CELULAS);
   const ocultas = itens.length - desenhadas;
@@ -131,7 +143,13 @@ export function VisualizadorFila({ instantaneo }: Props) {
       width="100%"
       style={{ maxHeight: 300 }}
       role="img"
-      aria-label={`Fila com ${itens.length} células; início = ${inicio ?? 'indefinido'}, fim = ${fim ?? 'indefinido'}`}
+      // O rótulo acessível segue o mesmo corte: anunciar os marcadores para
+      // leitor de tela devolveria o apoio que o nível acabou de retirar.
+      aria-label={
+        rotulos
+          ? `Fila com ${itens.length} células; início = ${inicio ?? 'indefinido'}, fim = ${fim ?? 'indefinido'}`
+          : `Fila com ${itens.length} células`
+      }
     >
       {/* Contorno da fileira: mantém o lugar da estrutura visível mesmo quando
           ainda não há célula alguma para desenhar. */}
@@ -159,7 +177,7 @@ export function VisualizadorFila({ instantaneo }: Props) {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
             >
-              <title>{`índice ${i}: ${completo}`}</title>
+              <title>{rotulos ? `índice ${i}: ${completo}` : completo}</title>
               <rect
                 x={xDaCelula(i)}
                 y={Y_CELULA}
@@ -170,14 +188,16 @@ export function VisualizadorFila({ instantaneo }: Props) {
                 stroke={ativa ? 'var(--acento)' : 'var(--borda)'}
                 strokeWidth={2}
               />
-              <text
-                x={xDaCelula(i) + 5}
-                y={Y_CELULA + 12}
-                fontSize="9"
-                fill="var(--tinta-suave)"
-              >
-                {i}
-              </text>
+              {rotulos && (
+                <text
+                  x={xDaCelula(i) + 5}
+                  y={Y_CELULA + 12}
+                  fontSize="9"
+                  fill="var(--tinta-suave)"
+                >
+                  {i}
+                </text>
+              )}
               <text
                 x={centroDaCelula(i)}
                 y={Y_CELULA + ALTURA_CELULA / 2 + 8}
@@ -210,18 +230,30 @@ export function VisualizadorFila({ instantaneo }: Props) {
           desenhadas={desenhadas}
           acima
           cor="var(--acento)"
+          rotulos={rotulos}
         />
       )}
       {fim !== undefined && (
-        <Marcador nome="fim" indice={fim} desenhadas={desenhadas} acima={false} cor="var(--tinta)" />
+        <Marcador
+          nome="fim"
+          indice={fim}
+          desenhadas={desenhadas}
+          acima={false}
+          cor="var(--tinta)"
+          rotulos={rotulos}
+        />
       )}
 
-      <text x={X_INICIAL - 6} y={182} fontSize="10" fill="var(--tinta-suave)">
-        ◀ sai pelo início
-      </text>
-      <text x={474} y={182} textAnchor="end" fontSize="10" fill="var(--tinta-suave)">
-        entra pelo fim ▶
-      </text>
+      {legendas && (
+        <>
+          <text x={X_INICIAL - 6} y={182} fontSize="10" fill="var(--tinta-suave)">
+            ◀ sai pelo início
+          </text>
+          <text x={474} y={182} textAnchor="end" fontSize="10" fill="var(--tinta-suave)">
+            entra pelo fim ▶
+          </text>
+        </>
+      )}
     </svg>
   );
 }
