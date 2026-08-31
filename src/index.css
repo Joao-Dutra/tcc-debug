@@ -5,6 +5,9 @@
   --fundo: #f8fafc;
   --acento: #2563eb;
   --erro: #dc2626;
+  /* Destaque do elemento apontado pelos marcadores (D10). Ambar, e nao a cor
+     de erro: o anel diz o que vem em seguida, nao que algo esta errado. */
+  --destaque: #f59e0b;
   --ok: #16a34a;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   color: var(--tinta);
@@ -92,3 +95,6 @@ button.discreto:hover { color: var(--acento); border-color: var(--acento); }
   font-variant-numeric: tabular-nums; }
 
 .aviso-falha { color: var(--erro); font-size: 14px; margin: 0; }
+
+.indicador-linha { margin: 10px 0 0; font-size: 13px; color: var(--tinta-suave);
+  font-variant-numeric: tabular-nums; }

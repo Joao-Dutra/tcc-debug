@@ -59,6 +59,35 @@ Corolário: **desenhe o estado inválido.** Se `topo` aponta para fora do vetor,
 mostre isso — é o sintoma. Não sanitize, não use `Math.max(0, ...)`, não esconda
 valores fora de faixa. O estado errado é o conteúdo pedagógico.
 
+## Estados da estrutura (D10)
+
+Use `CELULA` e `DESTAQUE` de `src/visualizacao/estilos.ts` em vez de escolher
+cores dentro do componente. Pilha, fila e os próximos precisam desenhar o mesmo
+estado do mesmo jeito, senão o estudante reaprende a ler o desenho a cada
+exercício.
+
+| Estado | Como desenhar |
+|---|---|
+| ativa | dentro do intervalo dos marcadores: borda contínua, opacidade cheia |
+| consumida | fora do intervalo: borda tracejada, opacidade reduzida |
+| apontada | a posição que o marcador indica: ganha um anel âmbar em volta |
+
+**Cor nunca é o único portador.** O traço da borda separa ativa de consumida e
+o anel separa a apontada das demais. As duas distinções sobrevivem em escala de
+cinza e — o que pesa mais aqui — sobrevivem ao apoio mínimo de D9, onde não há
+rótulo nenhum para socorrer. Por isso o anel é forma, e não uma tinta de fundo.
+
+**O anel diz o que vem em seguida, não o que deveria vir.** Ele acompanha o
+marcador, inclusive quando o marcador aponta para uma posição já consumida. Se
+o marcador aponta para fora da estrutura, não há anel, e essa ausência é o
+sintoma. A ferramenta não conhece o comportamento correto e não pode dar a
+entender que conhece — usar a cor de erro no anel daria justamente essa
+impressão.
+
+**O indicador da linha em execução não é do visualizador.** Ele mora na tela do
+exercício, junto à animação. Vale para qualquer estrutura e fica fora do fading
+de D9, então não se repete dentro de cada componente.
+
 ## Técnica
 
 - **SVG**, não Canvas. Cada elemento da estrutura tem identidade própria, o que

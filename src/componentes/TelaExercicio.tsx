@@ -176,9 +176,6 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
             Clique no número de uma linha para apontar onde você acredita que está o
             defeito. Pode tentar quantas vezes quiser, antes ou depois de editar.
           </p>
-          {linhaAtual !== undefined && (
-            <p className="rodape-painel">Executando a linha {linhaAtual}</p>
-          )}
         </section>
 
         <section className="painel">
@@ -189,6 +186,16 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
             <p className="rodape-painel">
               Ainda não há visualizador para esta estrutura de dados.
             </p>
+          )}
+          {/* Junto à animação de propósito (D10): manter de cabeça a
+              correspondência entre a instrução e o quadro consome memória de
+              trabalho, e não é esse o esforço que o estudo quer observar.
+
+              Fica fora do fading de D9 — aparece em todos os níveis, por ser
+              também o principal recurso de legibilidade da ferramenta. Por
+              isso mora na tela, e não no visualizador. */}
+          {linhaAtual !== undefined && (
+            <p className="indicador-linha">Executando a linha {linhaAtual}</p>
           )}
           <ControlesReprodutor reprodutor={reprodutor} />
         </section>

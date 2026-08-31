@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
+import { CELULA, DESTAQUE } from './estilos';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
@@ -19,6 +20,7 @@ const LARGURA_CAIXA = 120;
 const ALTURA_CAIXA = 46;
 const ESPACO = 8;
 const BASE_Y = 320;
+const X_CAIXA = 100;
 
 interface Props {
   instantaneo?: Instantaneo;
@@ -34,6 +36,15 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
 
   const yDaPosicao = (i: number) => BASE_Y - (i + 1) * (ALTURA_CAIXA + ESPACO);
 
+  // Tudo acima do topo já saiu da pilha. Sem marcador ainda, nada foi
+  // consumido: instantâneos iniciais não têm todas as variáveis declaradas.
+  const estadoDa = (i: number) => (topo === undefined || i <= topo ? 'ativa' : 'consumida');
+
+  // O anel marca o elemento que o topo aponta — mesmo que seja uma caixa já
+  // consumida. Se o topo aponta para fora do vetor, não há anel nenhum, e essa
+  // ausência é o sintoma. Nada aqui sabe qual caixa deveria ser a certa.
+  const apontada = topo !== undefined && topo >= 0 && topo < itens.length ? topo : null;
+
   return (
     <svg viewBox="0 0 360 360" width="100%" style={{ maxHeight: 380 }}>
       {/* Base da pilha */}
@@ -45,62 +56,85 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
       )}
 
       <AnimatePresence>
-        {itens.map((valor, i) => (
-          <motion.g
-            key={i}
-            initial={{ opacity: 0, y: yDaPosicao(i) + 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.25 }}
-          >
-            <rect
-              x={100}
-              y={yDaPosicao(i)}
-              width={LARGURA_CAIXA}
-              height={ALTURA_CAIXA}
-              rx={6}
-              fill={i === topo ? '#dbeafe' : '#f1f5f9'}
-              stroke={i === topo ? '#2563eb' : '#cbd5e1'}
-              strokeWidth={2}
-            />
-            <text
-              x={100 + LARGURA_CAIXA / 2}
-              y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 5}
-              textAnchor="middle"
-              fontSize="16"
-              fill="#0f172a"
+        {itens.map((valor, i) => {
+          const estilo = CELULA[estadoDa(i)];
+          return (
+            <motion.g
+              key={i}
+              initial={{ opacity: 0, y: yDaPosicao(i) + 30 }}
+              animate={{ opacity: estilo.opacidade, y: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.25 }}
             >
-              {String(valor)}
-            </text>
-            {rotulos && (
+              <rect
+                x={X_CAIXA}
+                y={yDaPosicao(i)}
+                width={LARGURA_CAIXA}
+                height={ALTURA_CAIXA}
+                rx={6}
+                fill={estilo.fill}
+                stroke={estilo.stroke}
+                strokeDasharray={estilo.strokeDasharray}
+                strokeWidth={2}
+              />
               <text
-                x={88}
-                y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4}
-                textAnchor="end"
-                fontSize="11"
-                fill="#94a3b8"
+                x={X_CAIXA + LARGURA_CAIXA / 2}
+                y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 5}
+                textAnchor="middle"
+                fontSize="16"
+                fill="var(--tinta)"
               >
-                {i}
+                {String(valor)}
               </text>
-            )}
-          </motion.g>
-        ))}
+              {rotulos && (
+                <text
+                  x={88}
+                  y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4}
+                  textAnchor="end"
+                  fontSize="11"
+                  fill="var(--tinta-suave)"
+                >
+                  {i}
+                </text>
+              )}
+            </motion.g>
+          );
+        })}
       </AnimatePresence>
+
+      {/* Anel do próximo elemento a ser tratado, segundo o topo atual. */}
+      {apontada !== null && (
+        <motion.g
+          initial={false}
+          animate={{ y: yDaPosicao(apontada) }}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        >
+          <rect
+            x={X_CAIXA - DESTAQUE.folga}
+            y={-DESTAQUE.folga}
+            width={LARGURA_CAIXA + DESTAQUE.folga * 2}
+            height={ALTURA_CAIXA + DESTAQUE.folga * 2}
+            rx={10}
+            fill="none"
+            stroke={DESTAQUE.cor}
+            strokeWidth={DESTAQUE.espessura}
+          />
+        </motion.g>
+      )}
 
       {/* Marcador do topo — desenhado mesmo quando aponta para fora do conteúdo,
           porque essa divergência é o sintoma visível de vários defeitos.
 
           A seta é forma, não texto: no apoio mínimo o rótulo some, e sem ela o
-          marcador sumiria junto, deixando a cor da caixa como único portador
-          da informação. */}
+          marcador sumiria junto, deixando a cor como único portador. */}
       {topo !== undefined && (
         <motion.g
           animate={{ y: topo < 0 ? BASE_Y - 20 : yDaPosicao(topo) + ALTURA_CAIXA / 2 - 8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
         >
-          <path d="M 240 5 L 240 19 L 228 12 Z" fill="#dc2626" />
+          <path d="M 268 5 L 268 19 L 256 12 Z" fill="var(--erro)" />
           {rotulos && (
-            <text x={248} y={17} fontSize="13" fill="#dc2626" fontWeight="600">
+            <text x={276} y={17} fontSize="13" fill="var(--erro)" fontWeight="600">
               topo = {topo}
             </text>
           )}

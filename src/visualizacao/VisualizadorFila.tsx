@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
+import { CELULA, DESTAQUE } from './estilos';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
@@ -131,11 +132,20 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
   const desenhadas = Math.min(itens.length, LIMITE_DE_CELULAS);
   const ocultas = itens.length - desenhadas;
 
-  // Uma célula está sob os marcadores quando nenhum dos dois a deixou de fora.
+  // Uma célula está ativa quando nenhum dos dois marcadores a deixou de fora.
   // Marcador ausente não restringe nada — instantâneos iniciais não têm todas
-  // as variáveis declaradas ainda.
-  const sobOsMarcadores = (i: number) =>
-    (inicio === undefined || i >= inicio) && (fim === undefined || i <= fim);
+  // as variáveis declaradas ainda. O que sobra à esquerda do início já saiu da
+  // fila; o que sobra à direita do fim ainda não entrou.
+  const estadoDa = (i: number) =>
+    (inicio === undefined || i >= inicio) && (fim === undefined || i <= fim)
+      ? 'ativa'
+      : 'consumida';
+
+  // O anel marca a célula que o início aponta como a próxima a sair — mesmo
+  // que ela já esteja fora do intervalo dos marcadores. Se o início aponta
+  // para fora da fileira, não há anel, e essa ausência é o sintoma. Nada aqui
+  // sabe qual célula deveria ser a certa.
+  const apontada = inicio !== undefined && inicio >= 0 && inicio < desenhadas ? inicio : null;
 
   return (
     <svg
@@ -167,13 +177,13 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
 
       <AnimatePresence>
         {itens.slice(0, LIMITE_DE_CELULAS).map((valor, i) => {
-          const ativa = sobOsMarcadores(i);
+          const estilo = CELULA[estadoDa(i)];
           const completo = textoDoValor(valor);
           return (
             <motion.g
               key={i}
               initial={{ opacity: 0 }}
-              animate={{ opacity: ativa ? 1 : 0.45 }}
+              animate={{ opacity: estilo.opacidade }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
             >
@@ -184,8 +194,9 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
                 width={LARGURA_CELULA}
                 height={ALTURA_CELULA}
                 rx={6}
-                fill={ativa ? '#fff' : 'var(--fundo)'}
-                stroke={ativa ? 'var(--acento)' : 'var(--borda)'}
+                fill={estilo.fill}
+                stroke={estilo.stroke}
+                strokeDasharray={estilo.strokeDasharray}
                 strokeWidth={2}
               />
               {rotulos && (
@@ -211,6 +222,26 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
           );
         })}
       </AnimatePresence>
+
+      {/* Anel da próxima célula a ser tratada, segundo o início atual. */}
+      {apontada !== null && (
+        <motion.g
+          initial={false}
+          animate={{ x: xDaCelula(apontada) }}
+          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+        >
+          <rect
+            x={-DESTAQUE.folga}
+            y={Y_CELULA - DESTAQUE.folga}
+            width={LARGURA_CELULA + DESTAQUE.folga * 2}
+            height={ALTURA_CELULA + DESTAQUE.folga * 2}
+            rx={10}
+            fill="none"
+            stroke={DESTAQUE.cor}
+            strokeWidth={DESTAQUE.espessura}
+          />
+        </motion.g>
+      )}
 
       {ocultas > 0 && (
         <text
