@@ -3,6 +3,7 @@ import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo, TipoEstrutura } from '../nucleo/tipos';
 import { VisualizadorPilha } from './VisualizadorPilha';
 import { VisualizadorFila } from './VisualizadorFila';
+import { VisualizadorVetor } from './VisualizadorVetor';
 
 /**
  * Registro de qual visualizador desenha cada estrutura.
@@ -27,12 +28,13 @@ export interface PropsVisualizador {
 }
 
 /**
- * Parcial de propósito: vetor e lista encadeada ainda não têm visualizador, e
- * fingir que têm quebraria a tela. Quem consome trata a ausência.
+ * Parcial de propósito: lista encadeada ainda não tem visualizador, e fingir
+ * que tem quebraria a tela. Quem consome trata a ausência.
  */
 export const visualizadores: Partial<
   Record<TipoEstrutura, ComponentType<PropsVisualizador>>
 > = {
+  vetor: VisualizadorVetor,
   pilha: VisualizadorPilha,
   fila: VisualizadorFila,
 };
