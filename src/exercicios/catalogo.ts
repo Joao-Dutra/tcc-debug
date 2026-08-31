@@ -1,5 +1,6 @@
 import type { Exercicio } from '../nucleo/tipos';
 import { pilhaDesempilhar } from './pilha-desempilhar';
+import { vetorZerarNegativos } from './vetor-zerar-negativos';
 import { filaAtenderTodos } from './fila-atender-todos';
 
 /**
@@ -8,4 +9,8 @@ import { filaAtenderTodos } from './fila-atender-todos';
  * Vive em arquivo próprio para que cada exercício continue sendo um módulo
  * independente: nenhum exercício precisa conhecer os outros.
  */
-export const catalogo: Exercicio[] = [pilhaDesempilhar, filaAtenderTodos];
+export const catalogo: Exercicio[] = [
+  pilhaDesempilhar,
+  vetorZerarNegativos,
+  filaAtenderTodos,
+];
