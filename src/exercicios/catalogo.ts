@@ -1,6 +1,7 @@
 import type { Exercicio } from '../nucleo/tipos';
 import { pilhaDesempilhar } from './pilha-desempilhar';
 import { vetorZerarNegativos } from './vetor-zerar-negativos';
+import { vetorDobrar } from './vetor-dobrar';
 import { filaAtenderTodos } from './fila-atender-todos';
 
 /**
@@ -12,5 +13,6 @@ import { filaAtenderTodos } from './fila-atender-todos';
 export const catalogo: Exercicio[] = [
   pilhaDesempilhar,
   vetorZerarNegativos,
+  vetorDobrar,
   filaAtenderTodos,
 ];
