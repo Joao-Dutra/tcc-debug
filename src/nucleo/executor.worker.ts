@@ -85,11 +85,6 @@ function criarPercurso(comIdentidade: boolean) {
   return (valor: unknown) => percorrer(valor, 0);
 }
 
-/** Estado observado num instantâneo: preserva a identidade dos nós. */
-function serializarInstantaneo(valor: unknown): unknown {
-  return criarPercurso(true)(valor);
-}
-
 /**
  * Resultado de um caso de teste. Sem identidade de propósito: o valor esperado
  * é escrito à mão no exercício, e um `__id` no obtido impediria a comparação.
@@ -110,9 +105,14 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
         'Limite de passos excedido — o programa provavelmente entrou em laço infinito.'
       );
     }
+    // Um percurso por instantâneo, e não por variável: é o que faz cabeca e
+    // atual compartilharem os mesmos __id. Serializadas em chamadas separadas,
+    // as duas ganhariam espaços de identidade independentes, e o ponteiro
+    // voltaria a ser uma cópia sem relação nenhuma com a cadeia.
+    const percorrer = criarPercurso(true);
     const filtradas: Record<string, unknown> = {};
     for (const nome of variaveisObservadas) {
-      if (nome in variaveis) filtradas[nome] = serializarInstantaneo(variaveis[nome]);
+      if (nome in variaveis) filtradas[nome] = percorrer(variaveis[nome]);
     }
     instantaneos.push({ ordem: instantaneos.length, linha, variaveis: filtradas });
   };
