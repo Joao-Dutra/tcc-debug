@@ -12,8 +12,16 @@ import type { ResultadoExecucao } from './tipos';
  * Sem React e sem DOM aqui. Quem exibe e quem baixa o arquivo é a interface.
  */
 
-/** Muda quando a forma dos dados muda, para que registros antigos continuem legíveis. */
-export const VERSAO_DO_REGISTRO = 1;
+/**
+ * Muda quando a forma dos dados muda, para que registros antigos continuem
+ * legíveis.
+ *
+ * 2 — o instantâneo passou a preservar a identidade dos objetos (ver D12). Os
+ * campos do registro exportado não mudaram: instantâneos não entram nele. A
+ * versão marca o ambiente de coleta, e é o que permite saber, na análise, se
+ * uma sessão foi gravada antes ou depois da mudança.
+ */
+export const VERSAO_DO_REGISTRO = 2;
 
 /**
  * A execução disparada ao abrir o exercício não é uma tentativa do estudante.

@@ -305,3 +305,46 @@ instrumentação só apareceria depois do experimento, quando não há remédio.
 para o cenário de uso, em que a sessão do participante é acompanhada
 presencialmente. Se a ferramenta vier a ser distribuída sem acompanhamento, a
 proteção passa a depender da fatia de persistência (ver D3).
+## D12 — Identidade dos nós no instantâneo
+
+**Decisão.** A serialização do instantâneo passa a preservar a identidade dos
+objetos: cada objeto visitado recebe `__id`, e uma segunda visita ao mesmo
+objeto vira `{ __ref: id }`. O limite de profundidade sobe de 5 para 200 e
+deixa de ser o que termina a recursão — disso passa a cuidar a detecção de
+ciclo. O resultado dos casos de teste é serializado **sem** identidade, em
+função própria.
+
+**O que motivou.** Uma estrutura encadeada é um grafo, não uma árvore, e a
+cópia profunda anterior perdia as duas propriedades que importam. Medido antes
+de mexer:
+
+- **Listas legítimas eram corrompidas.** Com o limite em 5, uma lista de seis
+  nós produzia cinco nós reais mais um sexto com `valor: "…"` e
+  `proximo: "…"`. Não era truncamento silencioso: a reticência ocupava o campo
+  de valor, e o desenho a exibiria como se fosse o conteúdo guardado ali.
+- **Ciclo virava lista reta.** Um ciclo entre dois nós não travava — o limite
+  de profundidade barrava a recursão em 0 ms —, mas serializava como
+  `1 → 2 → 1 → 2 → 1 → (fantasma)`, indistinguível de uma lista de cinco nós
+  com valores repetidos. Um `proximo` mal atribuído pelo estudante ficaria
+  escondido pela própria ferramenta, que é o oposto do que o trabalho defende.
+- **A identidade sumia.** No programa, `cabeca.proximo.proximo === atual`; no
+  instantâneo, os dois viravam cópias independentes. Resolver para onde um
+  ponteiro aponta virava inferência por comparação de subárvore — que funciona
+  para referência perdida e para nó removido, mas não para ciclo.
+
+**Por que os casos de teste ficam de fora.** O valor esperado é escrito à mão
+no exercício. Um `__id` no valor obtido impediria a comparação com um literal
+simples, e exigiria que todo exercício com expectativa de objeto conhecesse o
+formato interno da serialização. Essa função mantém a cópia profunda de antes,
+acrescentando apenas o corte de ciclo.
+
+**O que não muda, e foi verificado.** Vetores continuam vetores, sem campo
+acrescentado, porque os visualizadores de vetor, pilha e fila dependem desse
+formato. A conferência foi feita executando os quatro exercícios do catálogo
+antes e depois da alteração e comparando instantâneos e resultados: idênticos
+byte a byte.
+
+**Versão do registro.** `VERSAO_DO_REGISTRO` vai a 2 (ver D6). Vale registrar
+que os campos do registro exportado não mudaram — instantâneos não entram nele,
+só eventos e resumo. A versão marca o ambiente de coleta, para que uma sessão
+gravada antes da mudança continue distinguível na análise.
