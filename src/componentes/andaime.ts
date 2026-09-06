@@ -20,10 +20,26 @@ export type NivelDeAndaime = 'completo' | 'parcial' | 'minimo';
 /** Ausente ou inválido cai aqui: apoio nunca é retirado por engano. */
 export const ANDAIME_PADRAO: NivelDeAndaime = 'completo';
 
-const NIVEIS: readonly NivelDeAndaime[] = ['completo', 'parcial', 'minimo'];
+/** Do apoio maior para o menor, que é a ordem em que a interface os oferece. */
+export const NIVEIS_DE_ANDAIME: readonly NivelDeAndaime[] = ['completo', 'parcial', 'minimo'];
 
 export function interpretarAndaime(valor: string | null | undefined): NivelDeAndaime {
-  return NIVEIS.find((nivel) => nivel === valor) ?? ANDAIME_PADRAO;
+  return NIVEIS_DE_ANDAIME.find((nivel) => nivel === valor) ?? ANDAIME_PADRAO;
+}
+
+/**
+ * Como o nível é escrito para o estudante. O valor que viaja na URL fica sem
+ * acento, para o link ser fácil de digitar e de colar; o rótulo visível segue
+ * a ortografia normal.
+ */
+const ROTULOS: Record<NivelDeAndaime, string> = {
+  completo: 'completo',
+  parcial: 'parcial',
+  minimo: 'mínimo',
+};
+
+export function rotuloDoAndaime(nivel: NivelDeAndaime): string {
+  return ROTULOS[nivel];
 }
 
 /** Quantas dicas ficam disponíveis. O exercício pode ter menos do que isso. */

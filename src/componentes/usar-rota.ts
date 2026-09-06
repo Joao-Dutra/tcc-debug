@@ -24,8 +24,14 @@ export const CAMINHO_INICIAL = '#/';
  */
 export const CAMINHO_METRICAS = '#/metricas';
 
-export function caminhoDoExercicio(id: string): string {
-  return `#/exercicio/${encodeURIComponent(id)}`;
+/**
+ * O nível vai explícito no link quando informado, mesmo sendo `completo` o
+ * padrão: é este endereço que será enviado a um participante, e ele precisa
+ * dizer sozinho sob qual apoio a sessão foi aberta.
+ */
+export function caminhoDoExercicio(id: string, andaime?: NivelDeAndaime): string {
+  const caminho = `#/exercicio/${encodeURIComponent(id)}`;
+  return andaime === undefined ? caminho : `${caminho}?andaime=${andaime}`;
 }
 
 /** Um link colado errado não pode derrubar a aplicação. */

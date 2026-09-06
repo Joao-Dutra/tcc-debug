@@ -1,5 +1,6 @@
 import { catalogo } from '../exercicios/catalogo';
 import { exportarMetricas } from '../nucleo/metricas';
+import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
 import { baixarMetricas } from './usar-metricas';
 import { caminhoDoExercicio } from './usar-rota';
 import type { TipoEstrutura } from '../nucleo/tipos';
@@ -37,17 +38,38 @@ export function TelaInicial() {
 
       <section className="painel">
         <h2>Exercícios</h2>
+        {/* As duas escalas são fáceis de confundir, então a tela diz qual é
+            qual antes de mostrá-las. A complexidade descreve o exercício e não
+            muda; o apoio é escolhido a cada abertura. */}
+        <p className="rodape-painel">
+          A complexidade é do exercício e não muda. O apoio é escolhido a cada
+          abertura: quanto menor, menos a ferramenta adianta.
+        </p>
         <ul className="lista-exercicios">
           {exercicios.map((exercicio) => (
             <li key={exercicio.id} className="cartao-exercicio">
-              <a href={caminhoDoExercicio(exercicio.id)}>
-                <h3>{exercicio.titulo}</h3>
-                <p className="meta-exercicio">
-                  {exercicio.tutorial && <span className="etiqueta">tutorial</span>}
-                  <span>{NOME_DA_ESTRUTURA[exercicio.estrutura]}</span>
-                  <span>nível {exercicio.dificuldade} de 3</span>
-                </p>
-              </a>
+              <h3>{exercicio.titulo}</h3>
+              <p className="meta-exercicio">
+                {exercicio.tutorial && <span className="etiqueta">tutorial</span>}
+                <span>{NOME_DA_ESTRUTURA[exercicio.estrutura]}</span>
+                <span className="complexidade">
+                  complexidade {exercicio.dificuldade} de 3
+                </span>
+              </p>
+              {/* Um cartão por exercício, com as três aberturas dentro dele.
+                  Três cartões separados sugeririam três exercícios. */}
+              <p className="abertura">
+                <span className="rotulo-abertura">abrir com apoio</span>
+                {NIVEIS_DE_ANDAIME.map((nivel) => (
+                  <a
+                    key={nivel}
+                    className="nivel"
+                    href={caminhoDoExercicio(exercicio.id, nivel)}
+                  >
+                    {rotuloDoAndaime(nivel)}
+                  </a>
+                ))}
+              </p>
             </li>
           ))}
         </ul>

@@ -5,8 +5,13 @@ import { executar } from '../nucleo/executor';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { baixarMetricas, useMetricas } from './usar-metricas';
-import { CAMINHO_INICIAL } from './usar-rota';
-import { detalheDosCasos, dicasDisponiveis } from './andaime';
+import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
+import {
+  detalheDosCasos,
+  dicasDisponiveis,
+  NIVEIS_DE_ANDAIME,
+  rotuloDoAndaime,
+} from './andaime';
 import type { DetalheDosCasos, NivelDeAndaime } from './andaime';
 import type { OrigemDaExecucao } from '../nucleo/metricas';
 import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
@@ -151,6 +156,28 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
         </a>
         <h1>{exercicio.titulo}</h1>
         <p>{exercicio.enunciado}</p>
+        {/* Trocar de nível troca de sessão (D8), e por isso o exercício
+            recomeça: duas tentativas sob apoios diferentes não podem ser
+            somadas, então nem o código editado atravessa a troca. */}
+        <p className="abertura">
+          <span className="rotulo-abertura">apoio</span>
+          {NIVEIS_DE_ANDAIME.map((nivel) =>
+            nivel === andaime ? (
+              <span key={nivel} className="nivel ativo" aria-current="true">
+                {rotuloDoAndaime(nivel)}
+              </span>
+            ) : (
+              <a
+                key={nivel}
+                className="nivel"
+                href={caminhoDoExercicio(exercicio.id, nivel)}
+              >
+                {rotuloDoAndaime(nivel)}
+              </a>
+            )
+          )}
+          <span className="aviso-troca">trocar o apoio recomeça o exercício</span>
+        </p>
       </header>
 
       <main>

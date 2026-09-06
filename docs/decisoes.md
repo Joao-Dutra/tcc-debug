@@ -250,6 +250,27 @@ programa, a distância entre o defeito e o seu sintoma e o fato de o defeito se
 manifestar apenas em entradas de borda pertencem ao exercício e são declarados
 nele. Manter essa separação explícita é o que sustenta a análise.
 
+**O nível passou a ser escolhível pela interface.** Cada exercício da lista
+oferece as três aberturas dentro de um único cartão, e a tela do exercício
+mostra qual está ativo e permite trocar. Trocar encerra a sessão e começa
+outra, conforme D8 — inclusive descartando o código já editado, porque duas
+tentativas sob apoios diferentes não podem ser somadas e um código carregado de
+uma para a outra contaminaria a comparação.
+
+**Consequência para o estudo, que é o que importa aqui.** A escolha pela
+interface serve ao uso livre da ferramenta e ao piloto, não ao experimento. No
+experimento o nível é **fixado pelo link enviado ao participante**
+(`#/exercicio/<id>?andaime=<nivel>`), e não escolhido por ele: se o participante
+pudesse escolher, o nível deixaria de ser variável manipulada e viraria
+resultado da decisão dele, confundido com a competência que se quer medir.
+Quem escolhe o apoio é quem monta a sequência de exercícios.
+
+**Consequência para a leitura da lista.** O campo `dificuldade` continua com
+esse nome no modelo, mas é exibido como *complexidade*, em linha e tratamento
+visual distintos dos das aberturas. Chamar as duas escalas de "nível" fazia a
+dificuldade do exercício ser lida como se fosse o apoio, que é exatamente a
+confusão que D9 existe para evitar.
+
 **Questão em aberto.** O indicador de linha em execução (ver D10) é, ele próprio,
 um andaime: faz pelo estudante o trabalho de relacionar o código à
 representação. Não entra no *fading* nesta etapa, por ser também o principal

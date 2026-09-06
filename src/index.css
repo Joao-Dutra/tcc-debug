@@ -98,3 +98,18 @@ button.discreto:hover { color: var(--acento); border-color: var(--acento); }
 
 .indicador-linha { margin: 10px 0 0; font-size: 13px; color: var(--tinta-suave);
   font-variant-numeric: tabular-nums; }
+
+/* Escolha do apoio (D9). Deliberadamente diferente da complexidade: esta e
+   texto corrido na linha de metadados, aquela sao pilulas clicaveis numa
+   linha propria e rotulada, para as duas escalas nao se confundirem. */
+.abertura { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin: 10px 0 0; font-size: 13px; }
+.rotulo-abertura { font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+  color: var(--tinta-suave); }
+.nivel { padding: 3px 11px; border: 1px solid var(--borda); border-radius: 999px;
+  text-decoration: none; color: var(--tinta-suave); }
+a.nivel:hover { border-color: var(--acento); color: var(--acento); }
+.nivel.ativo { background: var(--acento); border-color: var(--acento); color: #fff;
+  font-weight: 600; }
+.aviso-troca { font-size: 11px; color: var(--tinta-suave); }
+.complexidade { font-variant-numeric: tabular-nums; }
