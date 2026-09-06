@@ -53,7 +53,7 @@ interface PropsMarcador {
   /** Quantidade de células realmente desenhadas, para saber até onde ir. */
   desenhadas: number;
   acima: boolean;
-  cor: string;
+  classe: string;
   /** Rótulo com o nome e o valor do marcador; some no apoio mínimo (D9). */
   rotulos: boolean;
 }
@@ -64,7 +64,7 @@ interface PropsMarcador {
  * horizontal do triângulo é limitada, e apenas quando o índice ficaria fora do
  * viewBox. Assim nenhum estado é escondido do estudante.
  */
-function Marcador({ nome, indice, desenhadas, acima, cor, rotulos }: PropsMarcador) {
+function Marcador({ nome, indice, desenhadas, acima, classe, rotulos }: PropsMarcador) {
   // Deixamos o marcador ir até uma posição além de cada ponta: é lá que ele
   // aparece quando aponta para fora da fileira, e isso precisa ser visível.
   const limitado = Math.min(Math.max(indice, -1), desenhadas);
@@ -79,17 +79,17 @@ function Marcador({ nome, indice, desenhadas, acima, cor, rotulos }: PropsMarcad
       {acima ? (
         <>
           {rotulos && (
-            <text y={40} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
+            <text y={40} textAnchor="middle" fontSize="11" fontWeight="600" className={classe}>
               {nome} = {indice}
             </text>
           )}
-          <path d="M -6 48 L 6 48 L 0 60 Z" fill={cor} />
+          <path d="M -6 48 L 6 48 L 0 60 Z" className={classe} />
         </>
       ) : (
         <>
-          <path d="M -6 130 L 6 130 L 0 118 Z" fill={cor} />
+          <path d="M -6 130 L 6 130 L 0 118 Z" className={classe} />
           {rotulos && (
-            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
+            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" className={classe}>
               {nome} = {indice}
             </text>
           )}
@@ -100,7 +100,7 @@ function Marcador({ nome, indice, desenhadas, acima, cor, rotulos }: PropsMarcad
           y={acima ? 22 : 160}
           textAnchor="middle"
           fontSize="9"
-          fill="var(--tinta-suave)"
+          className="svg-rotulo"
         >
           fora da fileira
         </text>
@@ -170,7 +170,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
         height={ALTURA_CELULA + 12}
         rx={8}
         fill="none"
-        stroke="var(--borda)"
+        className="svg-contorno"
         strokeWidth={1}
         strokeDasharray="4 4"
       />
@@ -194,8 +194,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
                 width={LARGURA_CELULA}
                 height={ALTURA_CELULA}
                 rx={6}
-                fill={estilo.fill}
-                stroke={estilo.stroke}
+                className={estilo.classe}
                 strokeDasharray={estilo.strokeDasharray}
                 strokeWidth={2}
               />
@@ -204,7 +203,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
                   x={xDaCelula(i) + 5}
                   y={Y_CELULA + 12}
                   fontSize="9"
-                  fill="var(--tinta-suave)"
+                  className="svg-rotulo"
                 >
                   {i}
                 </text>
@@ -214,7 +213,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
                 y={Y_CELULA + ALTURA_CELULA / 2 + 8}
                 textAnchor="middle"
                 fontSize="12"
-                fill="var(--tinta)"
+                className="svg-valor"
               >
                 {encurtar(completo)}
               </text>
@@ -237,7 +236,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
             height={ALTURA_CELULA + DESTAQUE.folga * 2}
             rx={10}
             fill="none"
-            stroke={DESTAQUE.cor}
+            className={DESTAQUE.classe}
             strokeWidth={DESTAQUE.espessura}
           />
         </motion.g>
@@ -248,7 +247,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
           x={xDaCelula(LIMITE_DE_CELULAS) + 4}
           y={Y_CELULA + ALTURA_CELULA / 2 + 5}
           fontSize="11"
-          fill="var(--tinta-suave)"
+          className="svg-rotulo"
         >
           +{ocultas}
         </text>
@@ -260,7 +259,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
           indice={inicio}
           desenhadas={desenhadas}
           acima
-          cor="var(--acento)"
+          classe="svg-marcador-primario"
           rotulos={rotulos}
         />
       )}
@@ -270,17 +269,17 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
           indice={fim}
           desenhadas={desenhadas}
           acima={false}
-          cor="var(--tinta)"
+          classe="svg-marcador-secundario"
           rotulos={rotulos}
         />
       )}
 
       {legendas && (
         <>
-          <text x={X_INICIAL - 6} y={182} fontSize="10" fill="var(--tinta-suave)">
+          <text x={X_INICIAL - 6} y={182} fontSize="10" className="svg-rotulo">
             ◀ sai pelo início
           </text>
-          <text x={474} y={182} textAnchor="end" fontSize="10" fill="var(--tinta-suave)">
+          <text x={474} y={182} textAnchor="end" fontSize="10" className="svg-rotulo">
             entra pelo fim ▶
           </text>
         </>

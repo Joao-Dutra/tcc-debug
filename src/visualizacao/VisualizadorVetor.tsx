@@ -100,7 +100,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         height={ALTURA_CELULA + 12}
         rx={8}
         fill="none"
-        stroke="var(--borda)"
+        className="svg-contorno"
         strokeWidth={1}
         strokeDasharray="4 4"
       />
@@ -123,8 +123,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                 width={LARGURA_CELULA}
                 height={ALTURA_CELULA}
                 rx={6}
-                fill={CELULA.ativa.fill}
-                stroke={CELULA.ativa.stroke}
+                className={CELULA.ativa.classe}
                 strokeWidth={2}
               />
               {rotulos && (
@@ -132,7 +131,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                   x={xDaCelula(i) + 5}
                   y={Y_CELULA + 12}
                   fontSize="9"
-                  fill="var(--tinta-suave)"
+                  className="svg-rotulo"
                 >
                   {i}
                 </text>
@@ -142,7 +141,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                 y={Y_CELULA + ALTURA_CELULA / 2 + 8}
                 textAnchor="middle"
                 fontSize="12"
-                fill="var(--tinta)"
+                className="svg-valor"
               >
                 {encurtar(completo)}
               </text>
@@ -165,7 +164,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
             height={ALTURA_CELULA + DESTAQUE.folga * 2}
             rx={10}
             fill="none"
-            stroke={DESTAQUE.cor}
+            className={DESTAQUE.classe}
             strokeWidth={DESTAQUE.espessura}
           />
         </motion.g>
@@ -176,7 +175,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           x={xDaCelula(LIMITE_DE_CELULAS) + 4}
           y={Y_CELULA + ALTURA_CELULA / 2 + 5}
           fontSize="11"
-          fill="var(--tinta-suave)"
+          className="svg-rotulo"
         >
           +{ocultas}
         </text>
@@ -190,14 +189,14 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           initial={false}
           transition={{ type: 'spring', stiffness: 320, damping: 28 }}
         >
-          <path d="M -6 130 L 6 130 L 0 118 Z" fill="var(--acento)" />
+          <path d="M -6 130 L 6 130 L 0 118 Z" className="svg-marcador-primario" />
           {rotulos && (
-            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" fill="var(--acento)">
+            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" className="svg-marcador-primario">
               índice = {indice}
             </text>
           )}
           {indiceForaDaFileira && rotulos && (
-            <text y={160} textAnchor="middle" fontSize="9" fill="var(--tinta-suave)">
+            <text y={160} textAnchor="middle" fontSize="9" className="svg-rotulo">
               fora da fileira
             </text>
           )}
@@ -205,7 +204,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
       )}
 
       {legendas && (
-        <text x={X_INICIAL - 6} y={182} fontSize="10" fill="var(--tinta-suave)">
+        <text x={X_INICIAL - 6} y={182} fontSize="10" className="svg-rotulo">
           as posições são numeradas a partir de 0
         </text>
       )}

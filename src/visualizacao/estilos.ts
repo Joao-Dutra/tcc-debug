@@ -19,29 +19,32 @@
 export type EstadoDaCelula = 'ativa' | 'consumida';
 
 export interface EstiloDaCelula {
-  fill: string;
-  stroke: string;
+  /** Classe que pinta a célula; a cor mora na variável que ela usa. */
+  classe: string;
   /** Ausente na célula ativa: traço contínuo é o estado normal. */
   strokeDasharray?: string;
   opacidade: number;
 }
 
 /**
- * As cores vêm das variáveis de significado declaradas em src/index.css, que é
- * onde estão documentadas. O traço e a opacidade ficam aqui porque são
- * consumidos como número — um pela animação, outro pelo atributo do SVG — e
- * variável CSS não atende nenhum dos dois. São, ainda assim, parte do mesmo
- * significado: é o traço que impede a cor de ser o único portador.
+ * As cores vêm das classes declaradas em src/index.css, que é onde estão
+ * documentadas junto das variáveis de significado. Classe, e não atributo de
+ * apresentação: `var()` em atributo tem suporte irregular fora de Chrome e
+ * Firefox, e onde falha o desenho não fica com a cor errada — fica sem cor
+ * nenhuma.
+ *
+ * O traço e a opacidade continuam aqui porque são consumidos como número, um
+ * pela animação e outro pelo atributo do SVG, e variável CSS não atende
+ * nenhum dos dois. São, ainda assim, parte do mesmo significado: é o traço que
+ * impede a cor de ser o único portador.
  */
 export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
   ativa: {
-    fill: 'var(--celula-ativa-fundo)',
-    stroke: 'var(--celula-ativa-traco)',
+    classe: 'svg-celula-ativa',
     opacidade: 1,
   },
   consumida: {
-    fill: 'var(--celula-consumida-fundo)',
-    stroke: 'var(--celula-consumida-traco)',
+    classe: 'svg-celula-consumida',
     strokeDasharray: '4 3',
     opacidade: 0.45,
   },
@@ -55,7 +58,7 @@ export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
  * ferramenta não conhece o comportamento correto.
  */
 export const DESTAQUE = {
-  cor: 'var(--elemento-apontado)',
+  classe: 'svg-anel',
   espessura: 3,
   /** Folga entre a borda da célula e o anel, para os dois ficarem legíveis. */
   folga: 5,

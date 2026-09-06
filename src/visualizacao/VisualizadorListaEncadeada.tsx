@@ -170,8 +170,7 @@ export function VisualizadorListaEncadeada({
           width={LARGURA_NO}
           height={ALTURA_NO}
           rx={6}
-          fill={estilo.fill}
-          stroke={estilo.stroke}
+          className={estilo.classe}
           strokeDasharray={estilo.strokeDasharray}
           strokeWidth={2}
         />
@@ -180,7 +179,7 @@ export function VisualizadorListaEncadeada({
           y={y + ALTURA_NO / 2 + 6}
           textAnchor="middle"
           fontSize="14"
-          fill="var(--tinta)"
+          className="svg-valor"
         >
           {encurtar(texto)}
         </text>
@@ -210,12 +209,12 @@ export function VisualizadorListaEncadeada({
             y1={MEIO_DO_NO}
             x2={xDoNo(i + 1) - 8}
             y2={MEIO_DO_NO}
-            stroke="var(--tinta-suave)"
+            className="svg-ligacao"
             strokeWidth={2}
           />
           <path
             d={'M ' + (xDoNo(i + 1) - 8) + ' ' + (MEIO_DO_NO - 5) + ' L ' + xDoNo(i + 1) + ' ' + MEIO_DO_NO + ' L ' + (xDoNo(i + 1) - 8) + ' ' + (MEIO_DO_NO + 5) + ' Z'}
-            fill="var(--tinta-suave)"
+            className="svg-ligacao-seta"
           />
         </g>
       ))}
@@ -223,8 +222,8 @@ export function VisualizadorListaEncadeada({
       {/* Fim da cadeia: barra de aterramento quando o último proximo é nulo. */}
       {cadeia.length > 0 && cicloPara === null && !excedeu && (
         <g>
-          <line x1={fimDaCadeia} y1={MEIO_DO_NO} x2={fimDaCadeia + 16} y2={MEIO_DO_NO} stroke="var(--tinta-suave)" strokeWidth={2} />
-          <line x1={fimDaCadeia + 16} y1={Y_NO + 10} x2={fimDaCadeia + 16} y2={BASE_DO_NO - 10} stroke="var(--tinta-suave)" strokeWidth={2} />
+          <line x1={fimDaCadeia} y1={MEIO_DO_NO} x2={fimDaCadeia + 16} y2={MEIO_DO_NO} className="svg-ligacao" strokeWidth={2} />
+          <line x1={fimDaCadeia + 16} y1={Y_NO + 10} x2={fimDaCadeia + 16} y2={BASE_DO_NO - 10} className="svg-ligacao" strokeWidth={2} />
         </g>
       )}
 
@@ -235,15 +234,15 @@ export function VisualizadorListaEncadeada({
           <path
             d={'M ' + xSaida + ' ' + BASE_DO_NO + ' Q ' + controleDoCiclo + ' ' + (BASE_DO_NO + 42) + ' ' + xVolta + ' ' + (BASE_DO_NO + 6)}
             fill="none"
-            stroke="var(--ligacao-ciclica)"
+            className="svg-ciclo"
             strokeWidth={2}
           />
           <path
             d={'M ' + (xVolta - 5) + ' ' + (BASE_DO_NO + 12) + ' L ' + xVolta + ' ' + (BASE_DO_NO + 2) + ' L ' + (xVolta + 5) + ' ' + (BASE_DO_NO + 12) + ' Z'}
-            fill="var(--ligacao-ciclica)"
+            className="svg-ciclo-seta"
           />
           {rotulos && (
-            <text x={xSaida} y={BASE_DO_NO + 56} textAnchor="middle" fontSize="10" fill="var(--ligacao-ciclica)">
+            <text x={xSaida} y={BASE_DO_NO + 56} textAnchor="middle" fontSize="10" className="svg-ciclo-seta">
               volta para um no ja visitado
             </text>
           )}
@@ -251,7 +250,7 @@ export function VisualizadorListaEncadeada({
       )}
 
       {excedeu && (
-        <text x={xDoNo(LIMITE_DE_NOS) - GAP + 6} y={MEIO_DO_NO + 4} fontSize="12" fill="var(--tinta-suave)">
+        <text x={xDoNo(LIMITE_DE_NOS) - GAP + 6} y={MEIO_DO_NO + 4} fontSize="12" className="svg-rotulo">
           …
         </text>
       )}
@@ -269,7 +268,7 @@ export function VisualizadorListaEncadeada({
                 y1={Y_SOLTO}
                 x2={centroDoNo(posDestino)}
                 y2={BASE_DO_NO}
-                stroke="var(--tinta-suave)"
+                className="svg-ligacao"
                 strokeWidth={2}
                 strokeDasharray="4 3"
               />
@@ -292,7 +291,7 @@ export function VisualizadorListaEncadeada({
             height={ALTURA_NO + DESTAQUE.folga * 2}
             rx={10}
             fill="none"
-            stroke={DESTAQUE.cor}
+            className={DESTAQUE.classe}
             strokeWidth={DESTAQUE.espessura}
           />
         </motion.g>
@@ -302,7 +301,8 @@ export function VisualizadorListaEncadeada({
       {ponteiros.map(([nome, valor], p) => {
         const alvo = alvoDoPonteiro(valor);
         const apice = alvo.yBase - 8 - p * 24;
-        const cor = nome === 'cabeca' ? 'var(--acento)' : 'var(--tinta)';
+        const classe =
+          nome === 'cabeca' ? 'svg-marcador-primario' : 'svg-marcador-secundario';
         return (
           <motion.g
             key={'ponteiro-' + nome}
@@ -310,9 +310,9 @@ export function VisualizadorListaEncadeada({
             animate={{ x: alvo.x }}
             transition={{ type: 'spring', stiffness: 320, damping: 28 }}
           >
-            <path d={'M -6 ' + (apice - 12) + ' L 6 ' + (apice - 12) + ' L 0 ' + apice + ' Z'} fill={cor} />
+            <path d={'M -6 ' + (apice - 12) + ' L 6 ' + (apice - 12) + ' L 0 ' + apice + ' Z'} className={classe} />
             {rotulos && (
-              <text y={apice - 18} textAnchor="middle" fontSize="11" fontWeight="600" fill={cor}>
+              <text y={apice - 18} textAnchor="middle" fontSize="11" fontWeight="600" className={classe}>
                 {nome}
                 {alvo.perdido ? ' = null' : ''}
               </text>
@@ -322,7 +322,7 @@ export function VisualizadorListaEncadeada({
       })}
 
       {legendas && (
-        <text x={8} y={242} fontSize="10" fill="var(--tinta-suave)">
+        <text x={8} y={242} fontSize="10" className="svg-rotulo">
           no tracejado saiu da cadeia; a barra a direita marca o fim
         </text>
       )}

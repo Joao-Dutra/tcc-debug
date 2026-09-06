@@ -232,3 +232,30 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
   font-weight: var(--peso-forte); }
 .aviso-troca { font-size: var(--fonte-etiqueta); color: var(--tinta-suave); }
 .complexidade { font-variant-numeric: tabular-nums; }
+
+/* ---------------------------------------------------------------------------
+   Cores dentro do SVG
+
+   Ficam em classe, e não em atributo de apresentação. `var()` em atributo de
+   apresentação tem suporte irregular fora de Chrome e Firefox, e onde falha o
+   desenho não fica com a cor errada: fica sem cor nenhuma, e a sessão do
+   participante se perde. Em classe é CSS comum, e funciona em toda parte.
+
+   Cada classe nomeia um papel do desenho, não uma cor. As que têm significado
+   apontam para as variáveis documentadas no topo deste arquivo.
+--------------------------------------------------------------------------- */
+.svg-valor { fill: var(--tinta); }
+.svg-rotulo { fill: var(--tinta-suave); }
+.svg-contorno { stroke: var(--borda); }
+.svg-base { stroke: var(--traco-estrutura); }
+.svg-ligacao { stroke: var(--tinta-suave); }
+.svg-ligacao-seta { fill: var(--tinta-suave); }
+.svg-marcador-primario { fill: var(--acento); }
+.svg-marcador-secundario { fill: var(--tinta); }
+.svg-marcador-topo { fill: var(--erro); }
+.svg-celula-ativa { fill: var(--celula-ativa-fundo); stroke: var(--celula-ativa-traco); }
+.svg-celula-consumida { fill: var(--celula-consumida-fundo);
+  stroke: var(--celula-consumida-traco); }
+.svg-anel { stroke: var(--elemento-apontado); }
+.svg-ciclo { stroke: var(--ligacao-ciclica); }
+.svg-ciclo-seta { fill: var(--ligacao-ciclica); }

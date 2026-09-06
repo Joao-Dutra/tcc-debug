@@ -48,9 +48,9 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
   return (
     <svg viewBox="0 0 360 360" width="100%" style={{ maxHeight: 380 }}>
       {/* Base da pilha */}
-      <line x1="80" y1={BASE_Y + 4} x2="240" y2={BASE_Y + 4} stroke="var(--traco-estrutura)" strokeWidth="3" />
+      <line x1="80" y1={BASE_Y + 4} x2="240" y2={BASE_Y + 4} className="svg-base" strokeWidth="3" />
       {legendas && (
-        <text x="160" y={BASE_Y + 26} textAnchor="middle" fontSize="12" fill="var(--tinta-suave)">
+        <text x="160" y={BASE_Y + 26} textAnchor="middle" fontSize="12" className="svg-rotulo">
           base
         </text>
       )}
@@ -72,8 +72,7 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                 width={LARGURA_CAIXA}
                 height={ALTURA_CAIXA}
                 rx={6}
-                fill={estilo.fill}
-                stroke={estilo.stroke}
+                className={estilo.classe}
                 strokeDasharray={estilo.strokeDasharray}
                 strokeWidth={2}
               />
@@ -82,7 +81,7 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                 y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 5}
                 textAnchor="middle"
                 fontSize="16"
-                fill="var(--tinta)"
+                className="svg-valor"
               >
                 {String(valor)}
               </text>
@@ -92,7 +91,7 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                   y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4}
                   textAnchor="end"
                   fontSize="11"
-                  fill="var(--tinta-suave)"
+                  className="svg-rotulo"
                 >
                   {i}
                 </text>
@@ -116,7 +115,7 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
             height={ALTURA_CAIXA + DESTAQUE.folga * 2}
             rx={10}
             fill="none"
-            stroke={DESTAQUE.cor}
+            className={DESTAQUE.classe}
             strokeWidth={DESTAQUE.espessura}
           />
         </motion.g>
@@ -132,9 +131,9 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           animate={{ y: topo < 0 ? BASE_Y - 20 : yDaPosicao(topo) + ALTURA_CAIXA / 2 - 8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
         >
-          <path d="M 268 5 L 268 19 L 256 12 Z" fill="var(--erro)" />
+          <path d="M 268 5 L 268 19 L 256 12 Z" className="svg-marcador-topo" />
           {rotulos && (
-            <text x={276} y={17} fontSize="13" fill="var(--erro)" fontWeight="600">
+            <text x={276} y={17} fontSize="13" className="svg-marcador-topo" fontWeight="600">
               topo = {topo}
             </text>
           )}
