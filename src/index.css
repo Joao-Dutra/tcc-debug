@@ -1,15 +1,107 @@
+/* ---------------------------------------------------------------------------
+   Cores com significado (D10)
+
+   As cores desta seção não são escolha estética. Cada uma nomeia um estado que
+   o estudante precisa distinguir para investigar o defeito, e trocar uma pela
+   outra troca o que o desenho afirma. Quem for mexer na aparência pode trocar
+   as cores de base logo abaixo; estas exigem rever D10 antes.
+
+   Nenhuma delas carrega o significado sozinha. Cor não pode ser o único
+   portador, então cada caso vem acompanhado de uma forma ou de um rótulo — e
+   essa forma é parte do significado tanto quanto a cor é. As formas que são
+   número (traço, opacidade, espessura do anel) moram em
+   src/visualizacao/estilos.ts: são consumidas como número pelo cálculo de
+   coordenada e pela animação, e variável CSS não serve para isso.
+
+   célula ativa
+     está dentro do intervalo que os marcadores delimitam.
+     forma: borda contínua, opacidade cheia.
+
+   célula consumida
+     saiu desse intervalo — o que já foi desempilhado, atendido ou destacado da
+     cadeia.
+     forma: borda tracejada, opacidade reduzida.
+
+   elemento apontado pelo marcador
+     a posição que o marcador indica agora, segundo o estado atual.
+     forma: anel em volta da célula.
+     é âmbar de propósito, e não a cor de erro: o anel diz o que o programa vai
+     tratar em seguida, nunca que aquilo está errado.
+
+   marcador fora da estrutura
+     aponta para onde não existe elemento.
+     não tem cor própria: o marcador mantém a dele. O significado está na
+     posição — estacionado além da ponta — e no rótulo que o acompanha.
+
+   ligação perdida
+     ponteiro nulo numa lista encadeada.
+     também sem cor própria: a seta fica estacionada fora da fileira e o rótulo
+     diz que é nula.
+
+   ligação cíclica
+     o próximo volta para um nó já visitado.
+     forma: arco por baixo da fileira, com seta de retorno e rótulo dizendo que
+     volta a um nó já visitado.
+--------------------------------------------------------------------------- */
+
 :root {
+  /* Cores de base. Trocáveis por escolha estética. */
   --tinta: #0f172a;
   --tinta-suave: #64748b;
   --borda: #e2e8f0;
   --fundo: #f8fafc;
+  --superficie: #fff;
   --acento: #2563eb;
   --erro: #dc2626;
-  /* Destaque do elemento apontado pelos marcadores (D10). Ambar, e nao a cor
-     de erro: o anel diz o que vem em seguida, nao que algo esta errado. */
-  --destaque: #f59e0b;
   --ok: #16a34a;
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --destaque: #f59e0b;
+  --traco-estrutura: #94a3b8;
+  --fundo-dica: #fffbeb;
+
+  /* Cores com significado. Ver a nota acima antes de trocar qualquer uma. */
+  --celula-ativa-fundo: var(--superficie);
+  --celula-ativa-traco: var(--acento);
+  --celula-consumida-fundo: var(--fundo);
+  --celula-consumida-traco: var(--tinta-suave);
+  --elemento-apontado: var(--destaque);
+  --ligacao-ciclica: var(--erro);
+
+  /* Tipografia. */
+  --familia: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fonte-titulo: 22px;
+  --fonte-cartao: 16px;
+  --fonte-corpo: 14px;
+  --fonte-apoio: 13px;
+  --fonte-etiqueta: 11px;
+  --fonte-minima: 10px;
+  --peso-forte: 600;
+  --entreletras-secao: .04em;
+  --entreletras-etiqueta: .05em;
+  --entreletras-larga: .07em;
+
+  /* Espaçamentos. A escala é nomeada pelo valor em pixels de propósito: assim
+     um passo novo entra sem renumerar os outros. Valor que aparece uma vez só
+     continua escrito na própria regra — dar nome a ele não centralizaria nada. */
+  --esp-4: 4px;
+  --esp-6: 6px;
+  --esp-7: 7px;
+  --esp-8: 8px;
+  --esp-10: 10px;
+  --esp-12: 12px;
+  --esp-16: 16px;
+  --esp-18: 18px;
+  --esp-20: 20px;
+  --esp-24: 24px;
+
+  /* Raios e larguras. Separados da escala de espaçamento porque respondem a
+     outra pergunta, ainda que algum valor coincida. */
+  --raio-caixa: 10px;
+  --raio-botao: 7px;
+  --raio-pilula: 999px;
+  --largura-pagina: 1180px;
+  --largura-texto: 70ch;
+
+  font-family: var(--familia);
   color: var(--tinta);
   background: var(--fundo);
 }
@@ -17,99 +109,126 @@
 * { box-sizing: border-box; }
 body { margin: 0; }
 
-.pagina { max-width: 1180px; margin: 0 auto; padding: 24px 20px 60px; }
-header h1 { font-size: 22px; margin: 0 0 6px; }
-header p { margin: 0 0 20px; color: var(--tinta-suave); max-width: 70ch; }
+.pagina { max-width: var(--largura-pagina); margin: 0 auto;
+  padding: var(--esp-24) var(--esp-20) 60px; }
+header h1 { font-size: var(--fonte-titulo); margin: 0 0 var(--esp-6); }
+header p { margin: 0 0 var(--esp-20); color: var(--tinta-suave);
+  max-width: var(--largura-texto); }
 
-main { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--esp-18);
+  align-items: start; }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 
 .painel {
-  background: #fff;
+  background: var(--superficie);
   border: 1px solid var(--borda);
-  border-radius: 10px;
-  padding: 16px;
-  margin-bottom: 18px;
+  border-radius: var(--raio-caixa);
+  padding: var(--esp-16);
+  margin-bottom: var(--esp-18);
 }
-.painel h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
-  color: var(--tinta-suave); margin: 0 0 12px; }
+.painel h2 { font-size: var(--fonte-corpo); text-transform: uppercase;
+  letter-spacing: var(--entreletras-secao);
+  color: var(--tinta-suave); margin: 0 0 var(--esp-12); }
 .cabecalho-painel { display: flex; justify-content: space-between; align-items: center; }
-.rodape-painel { font-size: 13px; color: var(--tinta-suave); margin: 10px 0 0; }
+.rodape-painel { font-size: var(--fonte-apoio); color: var(--tinta-suave);
+  margin: var(--esp-10) 0 0; }
 
 button {
-  font: inherit; font-size: 14px; padding: 7px 14px; border-radius: 7px;
-  border: 1px solid var(--borda); background: #fff; cursor: pointer;
+  font: inherit; font-size: var(--fonte-corpo); padding: var(--esp-7) 14px;
+  border-radius: var(--raio-botao);
+  border: 1px solid var(--borda); background: var(--superficie); cursor: pointer;
 }
 button:disabled { opacity: .45; cursor: default; }
-button.primario { background: var(--acento); border-color: var(--acento); color: #fff; }
+button.primario { background: var(--acento); border-color: var(--acento);
+  color: var(--superficie); }
 
-.controles { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.controles { display: flex; align-items: center; gap: var(--esp-8);
+  margin-top: var(--esp-12); }
 .controles input[type=range] { flex: 1; }
-.contador { font-size: 13px; color: var(--tinta-suave); white-space: nowrap; }
+.contador { font-size: var(--fonte-apoio); color: var(--tinta-suave); white-space: nowrap; }
 
 .casos { list-style: none; padding: 0; margin: 0; }
-.casos li { padding: 7px 0; border-bottom: 1px solid var(--borda); font-size: 14px; }
+.casos li { padding: var(--esp-7) 0; border-bottom: 1px solid var(--borda);
+  font-size: var(--fonte-corpo); }
 .casos li:last-child { border-bottom: none; }
 .casos .passou strong { color: var(--ok); }
 .casos .falhou strong { color: var(--erro); }
-.detalhe { display: block; color: var(--tinta-suave); font-size: 13px; margin-left: 18px; }
+.detalhe { display: block; color: var(--tinta-suave); font-size: var(--fonte-apoio);
+  margin-left: var(--esp-18); }
 
-.erro { color: var(--erro); font-size: 14px; }
-.sucesso { color: var(--ok); font-size: 14px; }
-.dica { background: #fffbeb; border-left: 3px solid #f59e0b; padding: 8px 12px;
-  font-size: 14px; margin: 0 0 8px; }
+.erro { color: var(--erro); font-size: var(--fonte-corpo); }
+.sucesso { color: var(--ok); font-size: var(--fonte-corpo); }
+.dica { background: var(--fundo-dica); border-left: 3px solid var(--destaque);
+  padding: var(--esp-8) var(--esp-12);
+  font-size: var(--fonte-corpo); margin: 0 0 var(--esp-8); }
 
 /* O número da linha é o alvo da declaração de localização. Nenhuma linha
    recebe destaque próprio: só o cursor indica que dá para apontar. */
 .cm-lineNumbers .cm-gutterElement { cursor: pointer; }
 
-.lista-exercicios { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-.cartao-exercicio { border: 1px solid var(--borda); border-radius: 10px; }
+.lista-exercicios { list-style: none; padding: 0; margin: 0; display: grid;
+  gap: var(--esp-10); }
+.cartao-exercicio { border: 1px solid var(--borda); border-radius: var(--raio-caixa); }
 .cartao-exercicio:hover { border-color: var(--acento); }
-.cartao-exercicio a { display: block; padding: 14px 16px; text-decoration: none; color: inherit; }
-.cartao-exercicio h3 { margin: 0 0 6px; font-size: 16px; }
-.meta-exercicio { margin: 0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
-  font-size: 13px; color: var(--tinta-suave); }
-.etiqueta { font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
-  padding: 2px 8px; border-radius: 999px; border: 1px solid var(--acento); color: var(--acento); }
+.cartao-exercicio a { display: block; padding: 14px var(--esp-16); text-decoration: none;
+  color: inherit; }
+.cartao-exercicio h3 { margin: 0 0 var(--esp-6); font-size: var(--fonte-cartao); }
+.meta-exercicio { margin: 0; display: flex; align-items: center; gap: var(--esp-10);
+  flex-wrap: wrap;
+  font-size: var(--fonte-apoio); color: var(--tinta-suave); }
+.etiqueta { font-size: var(--fonte-etiqueta); text-transform: uppercase;
+  letter-spacing: var(--entreletras-etiqueta);
+  padding: 2px var(--esp-8); border-radius: var(--raio-pilula);
+  border: 1px solid var(--acento); color: var(--acento); }
 
-.voltar { display: inline-block; margin-bottom: 10px; font-size: 13px;
+.voltar { display: inline-block; margin-bottom: var(--esp-10);
+  font-size: var(--fonte-apoio);
   color: var(--tinta-suave); text-decoration: none; }
 .voltar:hover { color: var(--acento); }
 
-.rodape-inicial { margin-top: 4px; }
-button.discreto { font-size: 13px; padding: 5px 11px; background: transparent;
+.rodape-inicial { margin-top: var(--esp-4); }
+button.discreto { font-size: var(--fonte-apoio); padding: 5px 11px; background: transparent;
   color: var(--tinta-suave); }
 button.discreto:hover { color: var(--acento); border-color: var(--acento); }
 
 .rolagem { overflow-x: auto; }
-.tabela-metricas { border-collapse: collapse; width: 100%; font-size: 13px; white-space: nowrap; }
-.tabela-metricas th { text-align: left; font-weight: 600; color: var(--tinta-suave);
-  font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
-  padding: 6px 10px 6px 0; border-bottom: 1px solid var(--borda); }
-.tabela-metricas td { padding: 7px 10px 7px 0; border-bottom: 1px solid var(--borda); }
-.sequencia { white-space: normal; padding: 4px 0 10px; }
-.eventos { margin: 0; padding-left: 20px; font-size: 13px; color: var(--tinta); }
+.tabela-metricas { border-collapse: collapse; width: 100%;
+  font-size: var(--fonte-apoio); white-space: nowrap; }
+.tabela-metricas th { text-align: left; font-weight: var(--peso-forte);
+  color: var(--tinta-suave);
+  font-size: var(--fonte-etiqueta); text-transform: uppercase;
+  letter-spacing: var(--entreletras-secao);
+  padding: var(--esp-6) var(--esp-10) var(--esp-6) 0;
+  border-bottom: 1px solid var(--borda); }
+.tabela-metricas td { padding: var(--esp-7) var(--esp-10) var(--esp-7) 0;
+  border-bottom: 1px solid var(--borda); }
+.sequencia { white-space: normal; padding: var(--esp-4) 0 var(--esp-10); }
+.eventos { margin: 0; padding-left: var(--esp-20); font-size: var(--fonte-apoio);
+  color: var(--tinta); }
 .eventos li { padding: 2px 0; }
 .carimbo { display: inline-block; min-width: 78px; color: var(--tinta-suave);
   font-variant-numeric: tabular-nums; }
 
-.aviso-falha { color: var(--erro); font-size: 14px; margin: 0; }
+.aviso-falha { color: var(--erro); font-size: var(--fonte-corpo); margin: 0; }
 
-.indicador-linha { margin: 10px 0 0; font-size: 13px; color: var(--tinta-suave);
+.indicador-linha { margin: var(--esp-10) 0 0; font-size: var(--fonte-apoio);
+  color: var(--tinta-suave);
   font-variant-numeric: tabular-nums; }
 
 /* Escolha do apoio (D9). Deliberadamente diferente da complexidade: esta e
    texto corrido na linha de metadados, aquela sao pilulas clicaveis numa
    linha propria e rotulada, para as duas escalas nao se confundirem. */
-.abertura { display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin: 10px 0 0; font-size: 13px; }
-.rotulo-abertura { font-size: 10px; text-transform: uppercase; letter-spacing: .07em;
+.abertura { display: flex; align-items: center; gap: var(--esp-8); flex-wrap: wrap;
+  margin: var(--esp-10) 0 0; font-size: var(--fonte-apoio); }
+.rotulo-abertura { font-size: var(--fonte-minima); text-transform: uppercase;
+  letter-spacing: var(--entreletras-larga);
   color: var(--tinta-suave); }
-.nivel { padding: 3px 11px; border: 1px solid var(--borda); border-radius: 999px;
+.nivel { padding: 3px 11px; border: 1px solid var(--borda);
+  border-radius: var(--raio-pilula);
   text-decoration: none; color: var(--tinta-suave); }
 a.nivel:hover { border-color: var(--acento); color: var(--acento); }
-.nivel.ativo { background: var(--acento); border-color: var(--acento); color: #fff;
-  font-weight: 600; }
-.aviso-troca { font-size: 11px; color: var(--tinta-suave); }
+.nivel.ativo { background: var(--acento); border-color: var(--acento);
+  color: var(--superficie);
+  font-weight: var(--peso-forte); }
+.aviso-troca { font-size: var(--fonte-etiqueta); color: var(--tinta-suave); }
 .complexidade { font-variant-numeric: tabular-nums; }

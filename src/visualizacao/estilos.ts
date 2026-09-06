@@ -26,15 +26,22 @@ export interface EstiloDaCelula {
   opacidade: number;
 }
 
+/**
+ * As cores vêm das variáveis de significado declaradas em src/index.css, que é
+ * onde estão documentadas. O traço e a opacidade ficam aqui porque são
+ * consumidos como número — um pela animação, outro pelo atributo do SVG — e
+ * variável CSS não atende nenhum dos dois. São, ainda assim, parte do mesmo
+ * significado: é o traço que impede a cor de ser o único portador.
+ */
 export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
   ativa: {
-    fill: '#fff',
-    stroke: 'var(--acento)',
+    fill: 'var(--celula-ativa-fundo)',
+    stroke: 'var(--celula-ativa-traco)',
     opacidade: 1,
   },
   consumida: {
-    fill: 'var(--fundo)',
-    stroke: 'var(--tinta-suave)',
+    fill: 'var(--celula-consumida-fundo)',
+    stroke: 'var(--celula-consumida-traco)',
     strokeDasharray: '4 3',
     opacidade: 0.45,
   },
@@ -48,7 +55,7 @@ export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
  * ferramenta não conhece o comportamento correto.
  */
 export const DESTAQUE = {
-  cor: 'var(--destaque)',
+  cor: 'var(--elemento-apontado)',
   espessura: 3,
   /** Folga entre a borda da célula e o anel, para os dois ficarem legíveis. */
   folga: 5,

@@ -48,9 +48,9 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
   return (
     <svg viewBox="0 0 360 360" width="100%" style={{ maxHeight: 380 }}>
       {/* Base da pilha */}
-      <line x1="80" y1={BASE_Y + 4} x2="240" y2={BASE_Y + 4} stroke="#94a3b8" strokeWidth="3" />
+      <line x1="80" y1={BASE_Y + 4} x2="240" y2={BASE_Y + 4} stroke="var(--traco-estrutura)" strokeWidth="3" />
       {legendas && (
-        <text x="160" y={BASE_Y + 26} textAnchor="middle" fontSize="12" fill="#64748b">
+        <text x="160" y={BASE_Y + 26} textAnchor="middle" fontSize="12" fill="var(--tinta-suave)">
           base
         </text>
       )}

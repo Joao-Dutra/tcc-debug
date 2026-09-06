@@ -235,15 +235,15 @@ export function VisualizadorListaEncadeada({
           <path
             d={'M ' + xSaida + ' ' + BASE_DO_NO + ' Q ' + controleDoCiclo + ' ' + (BASE_DO_NO + 42) + ' ' + xVolta + ' ' + (BASE_DO_NO + 6)}
             fill="none"
-            stroke="var(--erro)"
+            stroke="var(--ligacao-ciclica)"
             strokeWidth={2}
           />
           <path
             d={'M ' + (xVolta - 5) + ' ' + (BASE_DO_NO + 12) + ' L ' + xVolta + ' ' + (BASE_DO_NO + 2) + ' L ' + (xVolta + 5) + ' ' + (BASE_DO_NO + 12) + ' Z'}
-            fill="var(--erro)"
+            fill="var(--ligacao-ciclica)"
           />
           {rotulos && (
-            <text x={xSaida} y={BASE_DO_NO + 56} textAnchor="middle" fontSize="10" fill="var(--erro)">
+            <text x={xSaida} y={BASE_DO_NO + 56} textAnchor="middle" fontSize="10" fill="var(--ligacao-ciclica)">
               volta para um no ja visitado
             </text>
           )}
