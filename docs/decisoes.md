@@ -265,6 +265,31 @@ pudesse escolher, o nível deixaria de ser variável manipulada e viraria
 resultado da decisão dele, confundido com a competência que se quer medir.
 Quem escolhe o apoio é quem monta a sequência de exercícios.
 
+**Trocar de nível no meio da tarefa é para detectar, não para impedir.** A
+interface não trava a troca, e não vai travar. O participante recebe um link
+com o nível fixo; se ainda assim ele subir o apoio no meio da tarefa — o que a
+interface permite —, isso é um dado sobre o que aconteceu, e não um acidente a
+ser evitado por bloqueio.
+
+A razão é metodológica antes de ser prática. Bloquear esconderia o
+comportamento: o participante que precisou de mais apoio continuaria travado na
+tarefa, e o registro mostraria apenas uma sessão longa e malsucedida, sem
+diferenciar quem não conseguiu de quem teria conseguido com mais apoio. Deixar
+acontecer transforma um confundidor invisível em um evento observável.
+
+**Como detectar.** A troca produz duas sessões do mesmo exercício com `andaime`
+diferente e horários encostados: a primeira encerrada e arquivada, a segunda
+aberta em seguida, ambas com `exercicioId` igual (ver D8). No painel de
+métricas isso aparece como duas linhas vizinhas do mesmo exercício com apoios
+distintos. O critério de análise fica combinado desde já: sessão cujo apoio foi
+elevado durante a tarefa não entra na comparação entre níveis, e é relatada à
+parte — porque o que ela mede é a decisão de pedir ajuda, que é outra pergunta,
+e não menos interessante.
+
+**Consequência prática.** Nada precisa ser implementado agora para sustentar
+isso: o registro já distingue as duas sessões, e a regra de análise existe
+antes de os dados existirem, que é a ordem certa.
+
 **Consequência para a leitura da lista.** O campo `dificuldade` continua com
 esse nome no modelo, mas é exibido como *complexidade*, em linha e tratamento
 visual distintos dos das aberturas. Chamar as duas escalas de "nível" fazia a
