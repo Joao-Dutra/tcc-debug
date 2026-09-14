@@ -102,8 +102,15 @@ significado quanto a cor:
 | Célula consumida | cinza | borda tracejada, opacidade reduzida |
 | Elemento apontado pelo marcador | âmbar | anel em volta da célula |
 | Marcador fora da estrutura | sem cor própria | posição além da ponta, mais rótulo |
-| Ligação perdida (ponteiro nulo) | sem cor própria | seta fora da fileira, mais rótulo |
-| Ligação cíclica | vermelho | arco por baixo, seta de retorno, rótulo |
+| Ponteiro nulo | sem cor própria | seta que termina em aterramento; numa variável, estacionada fora da fileira, mais rótulo |
+| Ligação cíclica | vermelho | gancho por baixo da fileira, seta de retorno, rótulo |
+
+A descrição de cada estado diz o que ele é, e nunca se está certo ou errado: a
+ferramenta desenha o estado e não opina sobre ele. O aterramento — dois traços
+paralelos, o de cima mais longo — marca ausência de destino onde quer que
+apareça, inclusive no fim normal de uma lista correta. Por isso o estado se
+chama *ponteiro nulo*, e não *ligação perdida*: no fim de uma lista, nada se
+perdeu.
 
 Dois pontos delicados:
 
@@ -111,8 +118,8 @@ Dois pontos delicados:
   seguida segundo o estado atual, nunca que aquilo está errado. Se virar
   vermelho, a ferramenta passa a acusar um defeito que ela não sabe onde está.
 - **Estado inválido é desenhado, não escondido.** Marcador apontando para fora da
-  estrutura, ligação que se perde, ciclo — tudo isso é o sintoma que o estudante
-  precisa ver. Não sanitize, não corrija no desenho, não unifique visualmente
+  estrutura, ponteiro sem destino, ciclo — tudo isso pode ser o sintoma que o
+  estudante precisa ver. Não sanitize, não corrija no desenho, não unifique visualmente
   dois estados diferentes.
 
 ### 3. A lista não mostra progresso

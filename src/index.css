@@ -33,13 +33,15 @@
      não tem cor própria: o marcador mantém a dele. O significado está na
      posição — estacionado além da ponta — e no rótulo que o acompanha.
 
-   ligação perdida
-     ponteiro nulo numa lista encadeada.
-     também sem cor própria: a seta fica estacionada fora da fileira e o rótulo
-     diz que é nula.
+   ponteiro nulo
+     um ponteiro sem destino — no fim da cadeia ou numa variável. O desenho
+     registra que não há destino; não diz se isso é certo ou errado.
+     sem cor própria: a seta termina em aterramento, dois traços paralelos com
+     o de cima mais longo. Na variável, a seta fica estacionada fora da fileira
+     e o rótulo diz que ela é nula.
 
    ligação cíclica
-     o próximo volta para um nó já visitado.
+     a ligação volta para um nó já visitado.
      forma: arco por baixo da fileira, com seta de retorno e rótulo dizendo que
      volta a um nó já visitado.
 --------------------------------------------------------------------------- */
@@ -264,3 +266,10 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
 .svg-anel { stroke: var(--elemento-apontado); }
 .svg-ciclo { stroke: var(--ligacao-ciclica); }
 .svg-ciclo-seta { fill: var(--ligacao-ciclica); }
+.svg-divisoria-ativa { stroke: var(--celula-ativa-traco); }
+.svg-divisoria-consumida { stroke: var(--celula-consumida-traco); }
+/* Nome de campo e valor em largura fixa, como no código: é a correspondência
+   entre o que o estudante lê no editor e o que vê no nó. */
+.svg-mono { font-family: var(--familia-mono); }
+.legenda-visualizacao { margin: var(--esp-8) 0 0; font: 400 10.5px/1.5 var(--familia-mono);
+  color: var(--tinta-suave); }

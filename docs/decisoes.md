@@ -332,6 +332,24 @@ seguida*, segundo os marcadores atuais — não *qual elemento deveria ser trata
 A diferença entre as duas coisas é exatamente o que o estudante precisa
 descobrir sozinho.
 
+**Os seis estados.** Cada um é sinalizado por cor e também por forma, e a forma
+é tão parte do significado quanto a cor. A descrição de cada estado diz o que
+ele é, nunca se está certo ou errado — a ferramenta desenha o estado e não
+opina sobre ele.
+
+| Estado | Cor | Forma que acompanha |
+|---|---|---|
+| Célula ativa | azul | borda contínua, opacidade cheia |
+| Célula consumida | cinza | borda tracejada, opacidade reduzida |
+| Elemento apontado pelo marcador | âmbar | anel em volta da célula |
+| Marcador fora da estrutura | sem cor própria | posição além da ponta, mais rótulo |
+| Ponteiro nulo | sem cor própria | seta que termina em aterramento; numa variável, estacionada fora da fileira, mais rótulo |
+| Ligação cíclica | vermelho | gancho por baixo da fileira, seta de retorno, rótulo |
+
+*Ponteiro nulo* se chamava *ligação perdida* até D14. O nome antigo julgava:
+descrevia como perda o fim de uma lista correta, onde nada se perdeu e o último
+nó simplesmente não aponta para lugar nenhum.
+
 ## D11 — Painel de métricas em rota própria, fora da navegação
 
 **Decisão.** As sessões arquivadas são inspecionadas em `#/metricas`, rota não
@@ -422,3 +440,63 @@ vietnamita, cirílico e grego ficariam no pacote sem uso.
 
 **Licença.** As duas famílias são OFL-1.1, que permite empacotá-las e
 redistribuí-las junto com a aplicação.
+
+## D14 — Anatomia rotulada na lista encadeada (direção 2a)
+
+**Decisão.** O nó da lista encadeada passa a ser desenhado com a anatomia
+aberta: dois compartimentos, o do valor e o da ligação, com o nome de cada campo
+na faixa do topo. A ligação é uma seta que sai de dentro do compartimento; um
+ponteiro sem destino termina em aterramento — dois traços paralelos, o de cima
+mais longo. Os ponteiros continuam desenhados fora dos nós.
+
+**Os rótulos vêm do instantâneo, não do componente.** O recurso se justifica
+pela correspondência entre o desenho e o código que o estudante lê. Um
+exercício que chame os campos de `info` e `seguinte` precisa ver `info` e
+`seguinte` no nó; um rótulo fixo em `valor` e `proximo` divergiria do código e
+anularia justamente o que o recurso oferece.
+
+**Como a ligação é reconhecida.** O instantâneo traz os nomes dos campos, mas
+não o papel de cada um. É tratado como ligação o campo que, em algum nó daquele
+instantâneo, aponta para outro nó ou referência; os demais são valor. Um nó com
+exatamente um campo de cada é desenhado nos dois compartimentos.
+
+**Limitação conhecida.** Quando a regra não fecha, o nó é desenhado sem
+compartimentos, como bloco único com uma linha `campo: valor` por campo, em vez
+de adivinhar. Isso acontece em três casos:
+
+- **Nó sozinho.** Um `null` não prova que o campo é ligação, então um nó isolado
+  cuja ligação é nula não tem campo de ligação reconhecível — seja qual for o
+  seu valor.
+- **Mais de um campo de valor**, como `{ valor, prioridade, proximo }`: não cabe
+  nos dois compartimentos. A ligação ainda é seguida.
+- **Mais de uma ligação**, como `anterior` e `proximo`: não há como saber qual
+  caminho a fileira segue. A caminhada para ali, e os nós não alcançados são
+  desenhados sem o traço de consumido, porque não dá para afirmar que saíram da
+  cadeia.
+
+Nenhum dos três ocorre no catálogo atual: o exercício da lista nunca fica com
+menos de dois nós, e todo nó tem um valor e uma ligação.
+
+**Solução definitiva.** O papel de cada campo precisa ser declarado pelo
+exercício e repassado pelo núcleo até o instantâneo. O visualizador não pode
+conhecer o exercício (é componente puro, ver a skill `criar-visualizador`), então
+a informação só pode chegar a ele pelo dado que ele já recebe.
+
+**O aterramento marca ausência de destino, onde quer que apareça.** Inclusive no
+fim normal da cadeia. Por isso o estado passou a se chamar *ponteiro nulo* (ver
+os seis estados em D10): o desenho registra que não há destino e não julga se
+aquilo é certo ou defeituoso. O ponteiro nulo numa variável, como `atual = null`,
+continua distinguível do fim da cadeia pela posição — estacionado fora da
+fileira, com a seta descendo ao aterramento — e pelo rótulo `= null`, que segue
+o fading de D9.
+
+**Espaço: três nós por fileira.** Com o nó de 118 px da 2a, três é o que cabe no
+painel de visualização sem os nomes de campo, em 9 px, ficarem ilegíveis. A
+partir do quarto nó alcançável, a seta do terceiro vai até uma reticência (`…`)
+logo depois dele, e um ponteiro que aponte para um nó além da janela estaciona
+junto dela, com o rótulo "fora da fileira". A reticência não segue o fading; o
+rótulo, sim. Não está resolvido, e precisa estar antes dos próximos exercícios
+de lista, que devem ter quatro ou cinco nós: hoje o estudante veria os dois
+últimos apenas como reticência. Caminhos possíveis — fileira que quebra em duas
+linhas, nó mais estreito, janela que acompanha o ponteiro de trabalho — ficam
+para quando esses exercícios forem escritos.
