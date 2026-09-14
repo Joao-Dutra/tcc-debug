@@ -276,9 +276,8 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
       <section className="painel painel-sessao">
         <h2>Sessão</h2>
         <p className="rodape-painel">
-          As métricas ficam apenas na memória do navegador e se perdem ao recarregar a
-          página. A exportação inclui todas as sessões abertas desde que a página
-          carregou.
+          As métricas ficam guardadas neste navegador e sobrevivem a recarregar a
+          página. A exportação inclui todas as sessões guardadas nele.
         </p>
         <button
           onClick={() => baixarMetricas(metricas.exportar(), `metricas-${exercicio.id}.json`)}

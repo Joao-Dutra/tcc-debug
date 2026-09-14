@@ -225,28 +225,162 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
 }
 
 /**
- * Sessões já encerradas, guardadas enquanto a página estiver aberta.
+ * Sessões já encerradas.
  *
  * Existe porque o estudante troca de exercício: ao sair de um, a sessão dele
  * precisa sobreviver à desmontagem da tela, senão o dado morre na navegação.
- * É estado de módulo de propósito — é justamente "a memória" desta fatia, e
- * some junto com a página, como está registrado em D6.
+ *
+ * A lista em memória continua sendo o arquivo de verdade. Desde D15 ela tem um
+ * espelho durável no navegador: é recuperada dele ao iniciar e gravada nele a
+ * cada arquivamento. O núcleo não sabe qual é o meio — quem o fornece é a
+ * interface, por `ativarEspelho` — e continua sem DOM.
  */
 const encerradas: RegistroDeSessao[] = [];
 
+/** Meio durável onde o arquivo é espelhado. Só texto: o formato é do núcleo. */
+export interface EspelhoDeSessoes {
+  lerBruto(): string | null;
+  gravarBruto(conteudo: string): void;
+  /** Guarda à parte o que não pôde ser lido, para não ser sobrescrito. */
+  preservar(conteudo: string): void;
+  limpar(): void;
+}
+
+export interface EstadoDoEspelho {
+  ativo: boolean;
+  /** Algo guardado não pôde ser recuperado ao iniciar e ficou preservado à parte. */
+  avisoDeLeitura: string | null;
+  /** A última gravação falhou; o arquivo em memória segue inteiro. */
+  falhaDeGravacao: string | null;
+}
+
+let espelho: EspelhoDeSessoes | null = null;
+let avisoDeLeitura: string | null = null;
+let falhaDeGravacao: string | null = null;
+
+const descreverErro = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/** O mínimo que um registro guardado precisa ter para voltar ao arquivo. */
+function pareceRegistro(valor: unknown): valor is RegistroDeSessao {
+  if (typeof valor !== 'object' || valor === null) return false;
+  const r = valor as Record<string, unknown>;
+  return (
+    typeof r.id === 'string' &&
+    typeof r.exercicioId === 'string' &&
+    typeof r.versao === 'number' &&
+    typeof r.instanteDeInicio === 'string' &&
+    Array.isArray(r.eventos) &&
+    typeof r.resumo === 'object' &&
+    r.resumo !== null
+  );
+}
+
 /**
- * Arquiva uma sessão. Idempotente por id: arquivar a mesma sessão de novo
- * atualiza o retrato em vez de duplicá-lo, o que também protege do ciclo
- * monta/desmonta/monta que o StrictMode faz em desenvolvimento.
+ * O conteúdo guardado que não pôde ser lido vai para outra chave em vez de ser
+ * sobrescrito no próximo arquivamento: dado não coletado não volta, e dado
+ * ilegível ainda pode ser recuperado à mão.
+ */
+function preservarIlegivel(bruto: string, motivo: string): void {
+  avisoDeLeitura = motivo;
+  try {
+    espelho?.preservar(bruto);
+  } catch (e) {
+    // Sem cópia à parte, gravar por cima destruiria o original. Melhor desligar
+    // o espelho nesta carga e deixar o conteúdo intacto para ser recuperado.
+    espelho = null;
+    avisoDeLeitura =
+      `o conteúdo guardado não pôde ser lido nem copiado à parte ` +
+      `(${descreverErro(e)}); ficou intacto e o espelho foi desligado`;
+  }
+}
+
+/**
+ * Liga o espelho e recupera o que houver nele. Chamado uma vez, antes da
+ * primeira tela. Os registros voltam como foram gravados, com a `versao` de
+ * quando foram coletados: é ela que distingue coletas de formatos diferentes
+ * (D6, D12), e reescrevê-la apagaria essa distinção.
+ *
+ * Nenhuma falha aqui derruba a aplicação — sem espelho, a coleta continua em
+ * memória como antes de D15.
+ */
+export function ativarEspelho(novo: EspelhoDeSessoes): void {
+  espelho = novo;
+  let bruto: string | null;
+  try {
+    bruto = novo.lerBruto();
+  } catch (e) {
+    avisoDeLeitura = `o armazenamento do navegador não pôde ser lido (${descreverErro(e)})`;
+    return;
+  }
+  if (bruto === null) return;
+
+  let lido: unknown;
+  try {
+    lido = JSON.parse(bruto);
+  } catch {
+    preservarIlegivel(bruto, 'o conteúdo guardado não era JSON e foi preservado à parte');
+    return;
+  }
+
+  const lista: unknown[] = Array.isArray(lido) ? lido : [lido];
+  const validos = lista.filter(pareceRegistro);
+  if (validos.length !== lista.length) {
+    preservarIlegivel(
+      bruto,
+      `${lista.length - validos.length} registro(s) guardado(s) sem o formato esperado foram preservados à parte`
+    );
+  }
+  for (const registro of validos) {
+    if (!encerradas.some((s) => s.id === registro.id)) encerradas.push(registro);
+  }
+}
+
+function espelhar(): void {
+  if (!espelho) return;
+  try {
+    espelho.gravarBruto(JSON.stringify(encerradas));
+    falhaDeGravacao = null;
+  } catch (e) {
+    falhaDeGravacao = descreverErro(e);
+  }
+}
+
+/**
+ * Arquiva uma sessão e grava o arquivo no espelho. Idempotente por id:
+ * arquivar a mesma sessão de novo atualiza o retrato em vez de duplicá-lo, o
+ * que também protege do ciclo monta/desmonta/monta que o StrictMode faz em
+ * desenvolvimento.
  */
 export function arquivarSessao(registro: RegistroDeSessao): void {
   const i = encerradas.findIndex((s) => s.id === registro.id);
   if (i >= 0) encerradas[i] = registro;
   else encerradas.push(registro);
+  espelhar();
 }
 
 export function sessoesArquivadas(): RegistroDeSessao[] {
   return [...encerradas];
+}
+
+export function estadoDoEspelho(): EstadoDoEspelho {
+  return { ativo: espelho !== null, avisoDeLeitura, falhaDeGravacao };
+}
+
+/**
+ * Apaga o arquivo: memória e espelho juntos. Limpar só o espelho não bastaria —
+ * o próximo arquivamento gravaria a memória de volta, e as sessões do
+ * participante anterior reapareceriam misturadas às do seguinte.
+ */
+export function limparArquivo(): void {
+  encerradas.length = 0;
+  avisoDeLeitura = null;
+  falhaDeGravacao = null;
+  if (!espelho) return;
+  try {
+    espelho.limpar();
+  } catch (e) {
+    falhaDeGravacao = descreverErro(e);
+  }
 }
 
 export function exportarSessoes(registros: RegistroDeSessao[]): string {

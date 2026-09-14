@@ -40,16 +40,26 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
     }
   }, []);
 
-  // Sair do exercício encerra a sessão. Os dois passos ficam no mesmo cleanup
-  // para garantir a ordem: uma rajada em andamento é uma edição que aconteceu
-  // de verdade e precisa entrar no log antes do retrato final.
-  useEffect(
-    () => () => {
-      fecharRajada();
-      if (sessao.current) arquivarSessao(sessao.current.registro());
-    },
-    [fecharRajada]
-  );
+  // Arquiva o retrato atual da sessão. Os dois passos juntos, nessa ordem: uma
+  // rajada em andamento é uma edição que aconteceu de verdade e precisa entrar
+  // no log antes do retrato.
+  const arquivarRetrato = useCallback(() => {
+    fecharRajada();
+    if (sessao.current) arquivarSessao(sessao.current.registro());
+  }, [fecharRajada]);
+
+  // Sair do exercício encerra a sessão.
+  useEffect(() => arquivarRetrato, [arquivarRetrato]);
+
+  // Recarregar ou fechar a aba não desmonta a tela — o React não roda o cleanup
+  // quando a página vai embora —, e sem isto a sessão em curso seria justamente
+  // a única que o espelho (D15) não salvaria. `pagehide`, e não `beforeunload`,
+  // porque dispara também quando o navegador guarda a página em cache; se ela
+  // voltar, o arquivamento seguinte atualiza o mesmo registro pelo id.
+  useEffect(() => {
+    window.addEventListener('pagehide', arquivarRetrato);
+    return () => window.removeEventListener('pagehide', arquivarRetrato);
+  }, [arquivarRetrato]);
 
   const registrarEdicao = useCallback(
     (codigo: string) => {
@@ -90,10 +100,9 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
   // por id, existe um caminho só para montar a lista e nenhuma sessão sai
   // duplicada nem de fora.
   const exportar = useCallback(() => {
-    fecharRajada();
-    if (sessao.current) arquivarSessao(sessao.current.registro());
+    arquivarRetrato();
     return exportarMetricas();
-  }, [fecharRajada]);
+  }, [arquivarRetrato]);
 
   return {
     registrarExecucao,

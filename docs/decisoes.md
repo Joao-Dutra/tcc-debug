@@ -97,6 +97,10 @@ se perde ao recarregar a página. Fixar quais dados são coletados e em que
 formato é o que importa agora; onde eles ficam é problema da fatia de
 persistência.
 
+*Substituída por D15:* as sessões arquivadas passaram a ter um espelho no
+navegador e sobrevivem a recarregar a página. A persistência em servidor
+continua sendo outra fatia.
+
 **A registrar no termo de consentimento.** O registro contém o código escrito
 pelo participante, e não apenas tempos e contagens.
 
@@ -170,7 +174,8 @@ estudo e não podem ser somadas.
 sentido se a sessão sobreviver à navegação. Sem isso, trocar de exercício
 apagaria o registro do anterior e a exportação enxergaria apenas o exercício
 aberto no momento. As sessões encerradas ficam em uma lista de módulo, que é
-exatamente "a memória" desta etapa (ver D6) e some junto com a página. Arquivar
+exatamente "a memória" desta etapa (ver D6) e some junto com a página — até
+D15, que lhe deu um espelho no navegador. Arquivar
 é idempotente por id, o que atualiza o retrato em vez de duplicá-lo e cobre de
 quebra o ciclo monta/desmonta/monta do StrictMode.
 
@@ -500,3 +505,52 @@ de lista, que devem ter quatro ou cinco nós: hoje o estudante veria os dois
 últimos apenas como reticência. Caminhos possíveis — fileira que quebra em duas
 linhas, nó mais estreito, janela que acompanha o ponteiro de trabalho — ficam
 para quando esses exercícios forem escritos.
+
+## D15 — Espelho das sessões arquivadas no navegador
+
+**Decisão.** O arquivo de sessões encerradas continua em memória, como em D8, e
+ganha um espelho no `localStorage` do navegador. Ao iniciar, o que houver no
+espelho volta ao arquivo; a cada arquivamento, o arquivo inteiro é gravado nele.
+A memória segue sendo a fonte, e o espelho existe só para sobreviver a recarregar
+ou fechar a aba.
+
+**O que isto substitui.** A limitação anotada em D6: o registro se perdia ao
+recarregar a página.
+
+**O que isto não substitui.** A persistência em servidor (D3), que continua
+condicionada ao formato do estudo. O `localStorage` é da máquina, não do estudo:
+não reúne sessões de máquinas diferentes, não sobrevive a limpar os dados do
+navegador e não é cópia de segurança. A via de saída dos dados continua sendo a
+exportação em JSON.
+
+**O formato não muda.** O espelho guarda a mesma lista de registros que a
+exportação envelopa, e a exportação sai igual. Cada registro volta com a
+`versao` de quando foi coletado — é ela que, como antes, distingue coletas de
+formatos diferentes. `VERSAO_DO_REGISTRO` continua em 2: nenhum campo do
+registro mudou.
+
+**A sessão em curso também.** Recarregar ou fechar a aba não desmonta a tela, e
+o React não roda o encerramento nesse caso. Por isso a sessão aberta é arquivada
+também no evento `pagehide`; sem isso, justamente a sessão em andamento seria a
+única perdida. O limite que resta: se o navegador travar ou a máquina desligar
+sem descarregar a página, a sessão em curso se perde; as já arquivadas, não.
+
+**Limpar entre participantes.** A mesma máquina serve a vários participantes, e o
+espelho faria as sessões de um se misturarem às do seguinte. O painel de
+métricas (D11) ganha um botão que apaga memória e espelho juntos — só o espelho
+não bastaria, porque o próximo arquivamento gravaria a memória de volta. O botão
+pede confirmação, porque apagar é irreversível e é dado de pesquisa. O
+procedimento entre participantes fica: exportar, conferir o arquivo, limpar.
+
+**Falhas não derrubam a coleta.** Se o navegador recusar a gravação — cota
+cheia, armazenamento bloqueado —, o arquivo em memória segue inteiro e o painel
+avisa para exportar antes de recarregar. Se o que estiver guardado não puder ser
+lido ao iniciar, os registros válidos voltam e o conteúdo original é preservado
+numa chave à parte, em vez de ser sobrescrito no próximo arquivamento: dado não
+coletado não volta, e dado ilegível ainda pode ser recuperado à mão. Se nem a
+cópia à parte puder ser feita, o espelho é desligado naquela carga da página, e
+o original fica intacto.
+
+**A registrar no termo de consentimento.** Até ser limpo, o registro — com o
+código escrito pelo participante (D6) — fica gravado no disco da máquina do
+laboratório, e não apenas na memória da página.

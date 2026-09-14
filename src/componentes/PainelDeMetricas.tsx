@@ -1,5 +1,10 @@
 import { Fragment, useState } from 'react';
-import { exportarMetricas, sessoesArquivadas } from '../nucleo/metricas';
+import {
+  estadoDoEspelho,
+  exportarMetricas,
+  limparArquivo,
+  sessoesArquivadas,
+} from '../nucleo/metricas';
 import { baixarMetricas } from './usar-metricas';
 import type { Evento, RegistroDeSessao, ResumoDaSessao } from '../nucleo/metricas';
 
@@ -74,24 +79,66 @@ function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
 
 export function PainelDeMetricas() {
   const sessoes = sessoesArquivadas();
+  const espelho = estadoDoEspelho();
   const [aberta, setAberta] = useState<string | null>(null);
+  // O arquivo mora fora do React; depois de limpá-lo, a tela precisa redesenhar.
+  const [, redesenhar] = useState(0);
+
+  // A mesma máquina serve a vários participantes (D15). Apagar é irreversível e
+  // é dado de pesquisa, então pede confirmação e lembra de exportar antes.
+  const limpar = () => {
+    const confirmado = window.confirm(
+      `Apagar as ${sessoes.length} sessões guardadas neste navegador? ` +
+        'Isto não pode ser desfeito: exporte antes, se ainda não exportou.'
+    );
+    if (!confirmado) return;
+    limparArquivo();
+    setAberta(null);
+    redesenhar((n) => n + 1);
+  };
 
   return (
     <div className="pagina">
       <header>
         <h1>Métricas das sessões</h1>
         <p>
-          Sessões arquivadas desde que a página carregou. Recarregar a página apaga
-          tudo o que não tiver sido exportado.
+          Sessões guardadas neste navegador, inclusive as de cargas anteriores da
+          página. Ficam até serem apagadas aqui: entre um participante e outro,
+          exporte e depois limpe.
         </p>
       </header>
+
+      {!espelho.ativo && (
+        <p className="erro">
+          O armazenamento do navegador não está ligado: as sessões se perdem ao
+          recarregar a página.
+        </p>
+      )}
+      {espelho.falhaDeGravacao && (
+        <p className="erro">
+          O navegador recusou a última gravação ({espelho.falhaDeGravacao}). As
+          sessões seguem na memória desta página: exporte antes de recarregar.
+        </p>
+      )}
+      {espelho.avisoDeLeitura && (
+        <p className="erro">Ao iniciar, {espelho.avisoDeLeitura}.</p>
+      )}
 
       <section className="painel">
         <div className="cabecalho-painel">
           <h2>Sessões ({sessoes.length})</h2>
-          <button onClick={() => baixarMetricas(exportarMetricas(), 'metricas.json')}>
-            Exportar métricas (JSON)
-          </button>
+          <div className="acoes-painel">
+            <button onClick={() => baixarMetricas(exportarMetricas(), 'metricas.json')}>
+              Exportar métricas (JSON)
+            </button>
+            <button
+              className="perigo"
+              onClick={limpar}
+              disabled={sessoes.length === 0 && espelho.avisoDeLeitura === null}
+            >
+              Limpar sessões deste navegador
+            </button>
+          </div>
         </div>
 
         {sessoes.length === 0 ? (

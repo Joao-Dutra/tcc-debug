@@ -377,3 +377,9 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
 .tela-exercicio .detalhe { font: 400 11px var(--familia-mono); margin-top: 3px; }
 .tela-exercicio .casos.apontadas li { font: 400 12.5px var(--familia-mono);
   color: var(--tinta-media); }
+
+/* Painel de métricas: a ação de apagar se distingue da de exportar, porque é
+   irreversível e mexe em dado de pesquisa (D15). */
+.acoes-painel { display: flex; gap: var(--esp-8); flex-wrap: wrap; }
+button.perigo { color: var(--erro); border-color: var(--erro); }
+button.perigo:hover:not(:disabled) { background: var(--erro); color: var(--superficie); }
