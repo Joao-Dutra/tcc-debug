@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import CodeMirror, { lineNumbers } from '@uiw/react-codemirror';
+import type { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { executar } from '../nucleo/executor';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { baixarMetricas, useMetricas } from './usar-metricas';
 import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
+import { linhaEmExecucao, marcarLinhaEmExecucao } from './linha-em-execucao';
 import {
+  destacarLinhaNoEditor,
   detalheDosCasos,
   dicasDisponiveis,
   NIVEIS_DE_ANDAIME,
@@ -87,6 +90,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
   const metricas = useMetricas(exercicio.id, exercicio.linhaDoDefeito, andaime);
   const jaAbriu = useRef(false);
+  const editor = useRef<ReactCodeMirrorRef>(null);
 
   const Visualizador = visualizadores[exercicio.estrutura];
 
@@ -110,6 +114,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           },
         },
       }),
+      linhaEmExecucao,
     ],
     []
   );
@@ -147,6 +152,14 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   // que é registrado não muda com ele (D9).
   const detalhe = detalheDosCasos(andaime);
   const dicasPermitidas = Math.min(dicasDisponiveis(andaime), exercicio.dicas.length);
+
+  // A mesma linha do indicador textual, marcada no editor. Sem execução
+  // carregada, ou no apoio mínimo, não há marca.
+  const linhaNoEditor = destacarLinhaNoEditor(andaime) ? (linhaAtual ?? null) : null;
+  useEffect(() => {
+    const view = editor.current?.view;
+    if (view) marcarLinhaEmExecucao(view, linhaNoEditor);
+  }, [linhaNoEditor]);
 
   return (
     // A direção 2a vale só para esta tela: a classe escopa a paleta e as
@@ -194,10 +207,20 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
               {rodando ? 'Executando…' : 'Executar'}
             </button>
           </div>
+          {/* Sem o destaque da linha do cursor, que viria ligado por padrão: uma
+              segunda faixa que segue o cursor disputaria com a da execução, e
+              a versão dele no gutter, onde se declara a localização, poderia
+              ser lida como marca de um palpite. */}
           <CodeMirror
+            ref={editor}
             value={codigo}
             height="420px"
-            basicSetup={{ lineNumbers: false, foldGutter: false }}
+            basicSetup={{
+              lineNumbers: false,
+              foldGutter: false,
+              highlightActiveLine: false,
+              highlightActiveLineGutter: false,
+            }}
             extensions={extensoes}
             onChange={aoEditar}
           />

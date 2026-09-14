@@ -84,3 +84,12 @@ export function mostrarLegendas(nivel: NivelDeAndaime): boolean {
 export function mostrarRotulos(nivel: NivelDeAndaime): boolean {
   return nivel !== 'minimo';
 }
+
+/**
+ * Destaque, no editor, da linha do passo exibido. Sai no apoio mínimo, junto
+ * com os rótulos e pelo mesmo motivo: fica o indicador textual com o número da
+ * linha, e achar essa linha no código volta a ser trabalho do estudante.
+ */
+export function destacarLinhaNoEditor(nivel: NivelDeAndaime): boolean {
+  return nivel !== 'minimo';
+}

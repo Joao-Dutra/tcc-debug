@@ -300,6 +300,11 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
   --fundo-dica: #f7edd8;
   --fundo-bancada: #ece4d6;
   --traco-estrutura: #a0947f;
+  /* Faixa da linha em execução no editor (D9). Translúcida porque o editor
+     desenha a seleção por baixo do texto, e um fundo opaco a esconderia
+     justamente nessa linha. Quase neutra de propósito: a família bege é a do
+     âmbar do elemento apontado, e o que as separa é a saturação. */
+  --fundo-linha-em-execucao: color-mix(in srgb, var(--traco-estrutura) 24%, transparent);
 
   /* Redeclaradas aqui, e não só herdadas: uma variável que usa var() é
      resolvida no elemento onde foi declarada. Sem repetir, as cores com
@@ -354,6 +359,8 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
    é a correspondência entre os dois que a anatomia rotulada oferece. */
 .tela-exercicio .cm-editor { font-size: 12.5px; }
 .tela-exercicio .cm-scroller { font-family: var(--familia-mono); line-height: 22px; }
+/* Só no conteúdo: o gutter, onde se declara a localização (D7), fica sem faixa. */
+.tela-exercicio .cm-linha-em-execucao { background: var(--fundo-linha-em-execucao); }
 
 /* A bancada é o fundo do desenho, e não do painel: a legenda e os controles
    ficam fora dela. */

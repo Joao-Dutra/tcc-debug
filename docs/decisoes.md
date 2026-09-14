@@ -230,6 +230,8 @@ retirada do andaime como variável, e não apenas descrevê-la.
 | Casos de teste | esperado e obtido | apenas passou ou falhou | apenas que algo falhou |
 | Legendas de orientação no desenho | sim | não | não |
 | Índices e rótulos dos marcadores | sim | sim | não |
+| Linha em execução destacada no editor | sim | sim | não |
+| Indicador textual da linha em execução | sim | sim | sim |
 
 A visualização tem três degraus, e não dois. Retirar de uma vez as legendas e
 os rótulos dos marcadores faria o apoio parcial cair quase ao mínimo, e as duas
@@ -301,11 +303,48 @@ visual distintos dos das aberturas. Chamar as duas escalas de "nível" fazia a
 dificuldade do exercício ser lida como se fosse o apoio, que é exatamente a
 confusão que D9 existe para evitar.
 
-**Questão em aberto.** O indicador de linha em execução (ver D10) é, ele próprio,
-um andaime: faz pelo estudante o trabalho de relacionar o código à
-representação. Não entra no *fading* nesta etapa, por ser também o principal
-recurso de legibilidade da ferramenta, mas é candidato natural a compor o nível
-mínimo caso o piloto indique que a tarefa está fácil demais.
+**A linha em execução tem dois portadores, e só um entra no *fading*.** O
+indicador de linha (ver D10) é, ele próprio, um andaime: faz pelo estudante o
+trabalho de relacionar o código à representação. Por isso ele se divide em
+dois. O indicador textual ("Executando a linha N") aparece em todos os
+níveis. O destaque de marca-texto da mesma linha no editor aparece nos apoios
+`completo` e `parcial` e some no `minimo`.
+
+No apoio mínimo resta o número, e achar essa linha no código — relacionar o
+passo ao programa — volta a ser trabalho do estudante. O texto fica em todos
+os níveis por ser também o principal recurso de legibilidade da ferramenta:
+sem ele, o mínimo deixaria de ser apoio reduzido e viraria um quadro sem
+legenda. O destaque sai junto com os rótulos dos marcadores, pelo mesmo
+motivo: no mínimo sai o que faz a correspondência pelo estudante, e fica o
+que ele precisa para fazê-la sozinho.
+
+O destaque obedece à mesma regra do indicador: deriva do instantâneo exibido
+e nunca conhece a linha do defeito. Marca o número de linha que o indicador
+mostra, mesmo que o código tenha sido editado desde a execução, e some quando
+não há execução carregada — antes da primeira, ou depois de um erro de
+sintaxe. Quando a linha marcada está fora de vista, o editor rola só o
+necessário para mostrá-la. Rola só o editor: a página não se mexe, para
+quem está olhando a visualização não ser levado de volta ao código a cada
+passo.
+
+**Como o destaque se distingue do resto da tela.** Três decisões tomadas junto
+com ele:
+
+- *A cor é uma faixa quase neutra da paleta de base*: `--traco-estrutura` a 24%,
+  translúcida. O bege é da família do âmbar do elemento apontado, e o que
+  separa os dois é a saturação — a faixa tem croma 2,8, o âmbar 52 — e a forma:
+  faixa atrás do texto contra anel em volta de uma célula. A faixa fica a
+  ΔE ≥ 49 de todas as cores com significado de D10 e das cores do veredito de
+  localização. É translúcida porque o editor desenha a seleção por baixo do
+  texto, e um fundo opaco a esconderia na linha destacada.
+- *Só no conteúdo, nunca no gutter.* O gutter é o alvo da declaração de
+  localização (D7). O retorno do palpite fica no painel "Onde você apontou" e
+  não passa pelo editor, então o destaque não tem como se sobrepor a ele nem
+  apagá-lo. E clicar numa linha para declarar não mexe no destaque.
+- *Sai o destaque da linha do cursor*, que o editor liga por padrão. Era uma
+  segunda faixa, azul-clara, seguindo o cursor, e disputaria com a da
+  execução. A versão dela no gutter, justamente onde se declara, poderia ser
+  lida como marca de um palpite.
 
 ## D10 — Melhorias na visualização e indicador de linha
 
