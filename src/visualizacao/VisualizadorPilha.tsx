@@ -62,10 +62,12 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
             <motion.g
               key={i}
               initial={{ opacity: 0, y: yDaPosicao(i) + 30 }}
-              animate={{ opacity: estilo.opacidade, y: 0 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
             >
+              {/* A borda fica fora do esmaecimento (D10): apagam só o fundo e o
+                  conteúdo, e o tracejado mantém o contraste cheio. */}
               <rect
                 x={X_CAIXA}
                 y={yDaPosicao(i)}
@@ -75,27 +77,34 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
                 className={estilo.classe}
                 strokeDasharray={estilo.strokeDasharray}
                 strokeWidth={2}
+                fillOpacity={estilo.opacidadeDoConteudo}
               />
-              <text
-                x={X_CAIXA + LARGURA_CAIXA / 2}
-                y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 5}
-                textAnchor="middle"
-                fontSize="16"
-                className="svg-valor"
+              <motion.g
+                initial={false}
+                animate={{ opacity: estilo.opacidadeDoConteudo }}
+                transition={{ duration: 0.25 }}
               >
-                {String(valor)}
-              </text>
-              {rotulos && (
                 <text
-                  x={88}
-                  y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4}
-                  textAnchor="end"
-                  fontSize="11"
-                  className="svg-rotulo"
+                  x={X_CAIXA + LARGURA_CAIXA / 2}
+                  y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 5}
+                  textAnchor="middle"
+                  fontSize="16"
+                  className="svg-valor"
                 >
-                  {i}
+                  {String(valor)}
                 </text>
-              )}
+                {rotulos && (
+                  <text
+                    x={88}
+                    y={yDaPosicao(i) + ALTURA_CAIXA / 2 + 4}
+                    textAnchor="end"
+                    fontSize="11"
+                    className="svg-rotulo"
+                  >
+                    {i}
+                  </text>
+                )}
+              </motion.g>
             </motion.g>
           );
         })}

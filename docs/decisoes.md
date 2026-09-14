@@ -345,11 +345,20 @@ opina sobre ele.
 | Estado | Cor | Forma que acompanha |
 |---|---|---|
 | Célula ativa | azul | borda contínua, opacidade cheia |
-| Célula consumida | cinza | borda tracejada, opacidade reduzida |
+| Célula consumida | cinza | borda tracejada em opacidade cheia; fundo e valor esmaecidos |
 | Elemento apontado pelo marcador | âmbar | anel em volta da célula |
 | Marcador fora da estrutura | sem cor própria | posição além da ponta, mais rótulo |
 | Ponteiro nulo | sem cor própria | seta que termina em aterramento; numa variável, estacionada fora da fileira, mais rótulo |
 | Ligação cíclica | vermelho | gancho por baixo da fileira, seta de retorno, rótulo |
+
+**A opacidade reduzida não alcança a borda da célula consumida.** Opacidade
+sinaliza "apagado"; o tracejado carrega a forma, e forma não pode perder
+contraste. Com a célula inteira a 0,45, o tracejado caía a 1,8:1 sobre a
+bancada, abaixo dos 3:1 pedidos para elementos gráficos. E a célula consumida é
+justamente o estado que denuncia defeito de índice: a 1,8:1 ela não é
+distinguível por quem tem baixa visão ou está numa tela mal calibrada. Os 0,45
+passam a valer só para o fundo e para o que está dentro da célula — valor,
+índice, rótulos —, e o tracejado fica em opacidade cheia, a 4,6:1.
 
 *Ponteiro nulo* se chamava *ligação perdida* até D14. O nome antigo julgava:
 descrevia como perda o fim de uma lista correta, onde nada se perdeu e o último

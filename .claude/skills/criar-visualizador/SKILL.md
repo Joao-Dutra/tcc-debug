@@ -69,7 +69,7 @@ exercício.
 | Estado | Como desenhar |
 |---|---|
 | ativa | dentro do intervalo dos marcadores: borda contínua, opacidade cheia |
-| consumida | fora do intervalo: borda tracejada, opacidade reduzida |
+| consumida | fora do intervalo: borda tracejada em opacidade cheia; fundo e conteúdo esmaecidos com `opacidadeDoConteudo` — nunca num grupo que envolva a borda |
 | apontada | a posição que o marcador indica: ganha um anel âmbar em volta |
 
 **Cor nunca é o único portador.** O traço da borda separa ativa de consumida e

@@ -112,7 +112,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
             <motion.g
               key={i}
               initial={{ opacity: 0 }}
-              animate={{ opacity: CELULA.ativa.opacidade }}
+              animate={{ opacity: CELULA.ativa.opacidadeDoConteudo }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
             >

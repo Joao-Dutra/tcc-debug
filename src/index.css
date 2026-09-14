@@ -20,7 +20,9 @@
    célula consumida
      saiu desse intervalo — o que já foi desempilhado, atendido ou destacado da
      cadeia.
-     forma: borda tracejada, opacidade reduzida.
+     forma: borda tracejada em opacidade cheia; o fundo e o valor ficam
+     esmaecidos. A opacidade diz "apagado" e não pode alcançar a borda: é o
+     tracejado que carrega a forma, e forma não pode perder contraste.
 
    elemento apontado pelo marcador
      a posição que o marcador indica agora, segundo o estado atual.

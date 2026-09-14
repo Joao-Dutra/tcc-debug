@@ -183,11 +183,13 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
             <motion.g
               key={i}
               initial={{ opacity: 0 }}
-              animate={{ opacity: estilo.opacidade }}
+              animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22 }}
             >
               <title>{rotulos ? `índice ${i}: ${completo}` : completo}</title>
+              {/* A borda fica fora do esmaecimento (D10): apagam só o fundo e o
+                  conteúdo, e o tracejado mantém o contraste cheio. */}
               <rect
                 x={xDaCelula(i)}
                 y={Y_CELULA}
@@ -197,26 +199,33 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
                 className={estilo.classe}
                 strokeDasharray={estilo.strokeDasharray}
                 strokeWidth={2}
+                fillOpacity={estilo.opacidadeDoConteudo}
               />
-              {rotulos && (
-                <text
-                  x={xDaCelula(i) + 5}
-                  y={Y_CELULA + 12}
-                  fontSize="9"
-                  className="svg-rotulo"
-                >
-                  {i}
-                </text>
-              )}
-              <text
-                x={centroDaCelula(i)}
-                y={Y_CELULA + ALTURA_CELULA / 2 + 8}
-                textAnchor="middle"
-                fontSize="12"
-                className="svg-valor"
+              <motion.g
+                initial={false}
+                animate={{ opacity: estilo.opacidadeDoConteudo }}
+                transition={{ duration: 0.22 }}
               >
-                {encurtar(completo)}
-              </text>
+                {rotulos && (
+                  <text
+                    x={xDaCelula(i) + 5}
+                    y={Y_CELULA + 12}
+                    fontSize="9"
+                    className="svg-rotulo"
+                  >
+                    {i}
+                  </text>
+                )}
+                <text
+                  x={centroDaCelula(i)}
+                  y={Y_CELULA + ALTURA_CELULA / 2 + 8}
+                  textAnchor="middle"
+                  fontSize="12"
+                  className="svg-valor"
+                >
+                  {encurtar(completo)}
+                </text>
+              </motion.g>
             </motion.g>
           );
         })}

@@ -288,8 +288,10 @@ export function VisualizadorListaEncadeada({
       const campoValor = anatomia.campoValor as string;
       const campoLigacao = anatomia.campoLigacao as string;
       return (
-        <g key={'no-' + String(no.__id)} opacity={estilo.opacidade}>
+        <g key={'no-' + String(no.__id)}>
           <title>{titulo}</title>
+          {/* A borda fica fora do esmaecimento (D10): apagam só o fundo e o
+              que está dentro do nó, e o tracejado mantém o contraste cheio. */}
           <rect
             className={estilo.classe}
             x={x}
@@ -299,57 +301,60 @@ export function VisualizadorListaEncadeada({
             rx={8}
             strokeDasharray={estilo.strokeDasharray}
             strokeWidth={1.75}
+            fillOpacity={estilo.opacidadeDoConteudo}
           />
-          <line
-            className={divisoria}
-            x1={x + DIVISAO}
-            y1={y}
-            x2={x + DIVISAO}
-            y2={y + ALTURA_NO}
-            strokeWidth={1}
-            opacity={0.4}
-          />
-          <line
-            className={divisoria}
-            x1={x}
-            y1={y + FAIXA_ROTULO}
-            x2={x + LARGURA_NO}
-            y2={y + FAIXA_ROTULO}
-            strokeWidth={1}
-            opacity={0.28}
-          />
-          {rotulos && (
-            <>
-              <text
-                className="svg-rotulo svg-mono"
-                x={x + DIVISAO / 2}
-                y={y + 16}
-                textAnchor="middle"
-                fontSize="9"
-              >
-                {encurtar(campoValor, MAX_ROTULO)}
-              </text>
-              <text
-                className="svg-rotulo svg-mono"
-                x={x + DIVISAO + (LARGURA_NO - DIVISAO) / 2}
-                y={y + 16}
-                textAnchor="middle"
-                fontSize="9"
-              >
-                {encurtar(campoLigacao, MAX_ROTULO)}
-              </text>
-            </>
-          )}
-          <text
-            className="svg-valor svg-mono"
-            x={x + DIVISAO / 2}
-            y={y + 52}
-            textAnchor="middle"
-            fontSize="17"
-            fontWeight="500"
-          >
-            {encurtar(textoDoValor(no[campoValor]), MAX_VALOR)}
-          </text>
+          <g opacity={estilo.opacidadeDoConteudo}>
+            <line
+              className={divisoria}
+              x1={x + DIVISAO}
+              y1={y}
+              x2={x + DIVISAO}
+              y2={y + ALTURA_NO}
+              strokeWidth={1}
+              opacity={0.4}
+            />
+            <line
+              className={divisoria}
+              x1={x}
+              y1={y + FAIXA_ROTULO}
+              x2={x + LARGURA_NO}
+              y2={y + FAIXA_ROTULO}
+              strokeWidth={1}
+              opacity={0.28}
+            />
+            {rotulos && (
+              <>
+                <text
+                  className="svg-rotulo svg-mono"
+                  x={x + DIVISAO / 2}
+                  y={y + 16}
+                  textAnchor="middle"
+                  fontSize="9"
+                >
+                  {encurtar(campoValor, MAX_ROTULO)}
+                </text>
+                <text
+                  className="svg-rotulo svg-mono"
+                  x={x + DIVISAO + (LARGURA_NO - DIVISAO) / 2}
+                  y={y + 16}
+                  textAnchor="middle"
+                  fontSize="9"
+                >
+                  {encurtar(campoLigacao, MAX_ROTULO)}
+                </text>
+              </>
+            )}
+            <text
+              className="svg-valor svg-mono"
+              x={x + DIVISAO / 2}
+              y={y + 52}
+              textAnchor="middle"
+              fontSize="17"
+              fontWeight="500"
+            >
+              {encurtar(textoDoValor(no[campoValor]), MAX_VALOR)}
+            </text>
+          </g>
         </g>
       );
     }
@@ -357,7 +362,7 @@ export function VisualizadorListaEncadeada({
     // Bloco: a inferência não fechou, então nada de compartimentos — uma linha
     // por campo, na ordem do objeto.
     return (
-      <g key={'no-' + String(no.__id)} opacity={estilo.opacidade}>
+      <g key={'no-' + String(no.__id)}>
         <title>{titulo}</title>
         <rect
           className={estilo.classe}
@@ -368,21 +373,24 @@ export function VisualizadorListaEncadeada({
           rx={8}
           strokeDasharray={estilo.strokeDasharray}
           strokeWidth={1.75}
+          fillOpacity={estilo.opacidadeDoConteudo}
         />
-        {anatomia.campos.map((campo, i) => (
-          <text
-            key={campo}
-            className="svg-valor svg-mono"
-            x={x + 8}
-            y={y + 20 + i * ALTURA_LINHA_BLOCO}
-            fontSize="10"
-          >
-            {encurtar(
-              rotulos ? campo + ': ' + descrever(no[campo]) : descrever(no[campo]),
-              MAX_LINHA_BLOCO
-            )}
-          </text>
-        ))}
+        <g opacity={estilo.opacidadeDoConteudo}>
+          {anatomia.campos.map((campo, i) => (
+            <text
+              key={campo}
+              className="svg-valor svg-mono"
+              x={x + 8}
+              y={y + 20 + i * ALTURA_LINHA_BLOCO}
+              fontSize="10"
+            >
+              {encurtar(
+                rotulos ? campo + ': ' + descrever(no[campo]) : descrever(no[campo]),
+                MAX_LINHA_BLOCO
+              )}
+            </text>
+          ))}
+        </g>
       </g>
     );
   };
@@ -519,7 +527,7 @@ export function VisualizadorListaEncadeada({
           const x1 = centroDoNo(i);
           const x2 = centroDoNo(posDestino);
           return (
-            <g key={'solto-liga-' + String(no.__id)} opacity={CELULA[estadoDoSolto].opacidade}>
+            <g key={'solto-liga-' + String(no.__id)} opacity={CELULA[estadoDoSolto].opacidadeDoConteudo}>
               <line
                 className="svg-ligacao"
                 x1={x1}

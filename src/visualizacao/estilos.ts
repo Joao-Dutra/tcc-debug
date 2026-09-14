@@ -23,7 +23,12 @@ export interface EstiloDaCelula {
   classe: string;
   /** Ausente na célula ativa: traço contínuo é o estado normal. */
   strokeDasharray?: string;
-  opacidade: number;
+  /**
+   * Opacidade do fundo e do que está dentro da célula — valor, índice,
+   * rótulos —, e nunca da borda. A opacidade diz "apagado"; é o traço que
+   * carrega a forma, e forma não pode perder contraste (D10).
+   */
+  opacidadeDoConteudo: number;
 }
 
 /**
@@ -37,16 +42,23 @@ export interface EstiloDaCelula {
  * pela animação e outro pelo atributo do SVG, e variável CSS não atende
  * nenhum dos dois. São, ainda assim, parte do mesmo significado: é o traço que
  * impede a cor de ser o único portador.
+ *
+ * Por isso a opacidade não pode ser posta num grupo que envolva a borda: a
+ * opacidade de um grupo SVG vale para todos os filhos. Os visualizadores
+ * aplicam `opacidadeDoConteudo` ao `fill-opacity` do retângulo e a um grupo
+ * só com o conteúdo, e deixam a borda de fora.
  */
 export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
   ativa: {
     classe: 'svg-celula-ativa',
-    opacidade: 1,
+    opacidadeDoConteudo: 1,
   },
   consumida: {
     classe: 'svg-celula-consumida',
     strokeDasharray: '4 3',
-    opacidade: 0.45,
+    // Com a célula inteira a 0,45, o tracejado caía a 1,8:1 sobre a bancada.
+    // Com opacidade cheia fica a 4,6:1, e o apagado continua no fundo e no valor.
+    opacidadeDoConteudo: 0.45,
   },
 };
 
