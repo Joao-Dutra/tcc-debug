@@ -17,17 +17,17 @@ import type { Exercicio, Instantaneo, ResultadoExecucao } from '../nucleo/tipos'
  *    momento o estado muda e fica só com quais estados ocorrem, em ordem.
  *
  * O segundo critério existe porque o primeiro não pegou o caso que motivou a
- * verificação: o defeito da pilha diverge em dois quadros, um por chamada, mas
- * a pilha atravessa exatamente os mesmos estados. O defeito muda quando o topo
- * desce em relação à linha, não o que o desenho mostra.
+ * verificação: o defeito original da pilha divergia em dois quadros, um por
+ * chamada, mas a pilha atravessava exatamente os mesmos estados. O defeito
+ * mudava quando o topo descia em relação à linha, não o que o desenho mostra.
  */
 
 /**
- * Reprovados na auditoria de D16 e ainda não corrigidos. Cada um precisa
- * continuar reprovado: quando for corrigido, o teste falha e pede que saia
- * daqui. Assim a pendência não some em silêncio.
+ * Reprovados numa auditoria e ainda não corrigidos. Cada um precisa continuar
+ * reprovado: quando for corrigido, o teste falha e pede que saia daqui. Assim
+ * a pendência não some em silêncio. Vazia desde a correção da pilha (D16).
  */
-const PENDENTES = new Set(['pilha-desempilhar']);
+const PENDENTES = new Set<string>();
 
 let rodarNoWorker: (pedido: unknown) => ResultadoExecucao;
 

@@ -4,15 +4,22 @@ import type { Exercicio } from '../nucleo/tipos';
  * Exercício de referência do projeto — é a fatia vertical que valida a
  * arquitetura inteira. Use-o como modelo ao criar novos exercícios.
  *
- * Defeito implantado: `desempilhar` devolve o elemento na posição `topo` depois
- * de já ter decrementado o topo, retornando o elemento errado.
+ * Defeito implantado: `desempilhar` trunca o vetor em `topo` posições em vez de
+ * `topo + 1`, e descarta junto o elemento que deveria ficar no topo. O quadro
+ * que denuncia é o topo apontando além do último elemento que restou.
+ *
+ * O defeito anterior — ler o elemento depois de decrementar o topo — foi
+ * reprovado na auditoria de D16: mudava só o valor devolvido, e a pilha
+ * atravessava os mesmos estados com e sem ele.
  */
 export const pilhaDesempilhar: Exercicio = {
   id: 'pilha-desempilhar',
-  titulo: 'Pilha: desempilhar devolve o elemento errado',
+  titulo: 'Pilha: um elemento some sem ter sido desempilhado',
   enunciado:
-    'A pilha deve seguir a política LIFO: o último elemento empilhado é o primeiro a sair. ' +
-    'Empilhe alguns valores e observe o que desempilhar() devolve.',
+    'A pilha deve seguir a política LIFO: o último elemento empilhado é o primeiro a sair, ' +
+    'e cada chamada de desempilhar() retira apenas esse elemento, deixando os demais ' +
+    'guardados. Execute e acompanhe, na visualização, os elementos da pilha e a posição ' +
+    'do topo enquanto os valores são desempilhados.',
   estrutura: 'pilha',
   categoriaDefeito: 'indice-deslocado',
   dificuldade: 1,
@@ -33,9 +40,9 @@ function desempilhar() {
   if (topo < 0) {
     return null;
   }
-  topo = topo - 1;
   var removido = itens[topo];
-  itens.length = topo + 1;
+  topo = topo - 1;
+  itens.length = topo;
   return removido;
 }
 
@@ -89,8 +96,11 @@ var segundaSaida = desempilhar();`,
   ],
 
   dicas: [
-    'Acompanhe o valor de topo na visualização enquanto desempilhar() é executado.',
-    'Repare em que momento o topo muda de valor em relação ao momento em que o elemento é lido.',
-    'A leitura do elemento precisa acontecer enquanto topo ainda aponta para ele.',
+    'Acompanhe, na visualização, quantos elementos restam na pilha e para onde o topo ' +
+      'aponta a cada chamada de desempilhar().',
+    'Repare no quadro logo depois de o primeiro elemento sair: compare a posição do topo ' +
+      'com a do último elemento que continua na pilha.',
+    'Depois de desempilhar, o topo deve apontar para o último elemento que continua na ' +
+      'pilha — nunca para uma posição vazia.',
   ],
 };
