@@ -6,9 +6,9 @@ description: Use ao criar, revisar ou ajustar um exercício do catálogo — qua
 # Criar um exercício
 
 Um exercício é um módulo em `src/exercicios/` que exporta um objeto `Exercicio`
-(ver `src/nucleo/tipos.ts`). Use `pilha-desempilhar.ts` como modelo da forma do
-arquivo — não do defeito, que foi reprovado pela verificação de divergência
-abaixo e está pendente de correção (D16).
+(ver `src/nucleo/tipos.ts`). Use `pilha-desempilhar.ts` como modelo. O defeito
+dele foi trocado depois da auditoria de D16 e serve também de exemplo do que a
+verificação de divergência abaixo exige.
 
 ## Regra principal
 
@@ -78,9 +78,15 @@ auditoria reprovou e que aguardam correção.
 Descreve **o comportamento esperado**, nunca o sintoma nem a região do código.
 Diga o que o programa deveria fazer e convide à observação.
 
-- Bom: "A pilha deve seguir a política LIFO. Empilhe alguns valores e observe o
-  que desempilhar() devolve."
+- Bom: "A pilha deve seguir a política LIFO: o último elemento empilhado é o
+  primeiro a sair, e cada chamada de desempilhar() retira apenas esse elemento.
+  Execute e acompanhe, na visualização, os elementos da pilha e a posição do
+  topo."
 - Ruim: "A função desempilhar() está com o índice errado, corrija."
+
+O convite à observação precisa levar ao quadro-denúncia. Convide a olhar o que
+o desenho mostra — o estado da estrutura —, e não o que ele não mostra, como o
+valor devolvido por uma função.
 
 ## Dicas
 

@@ -629,22 +629,28 @@ a verificação obrigatória.
 
 **O que motivou.** Num teste com usuário, o defeito do exercício
 `pilha-desempilhar` — o tutorial, justamente o que precisa do quadro-denúncia
-mais claro — não aparecia na visualização. `desempilhar()` decrementa o topo
-antes de ler o elemento, e devolve o elemento errado; mas a pilha atravessa os
-mesmos estados, na mesma ordem, com e sem o defeito. Muda só *quando* o topo
-desce em relação à linha, e o valor devolvido, onde o defeito se manifesta,
-não é observado.
+mais claro — não aparecia na visualização. O defeito original decrementava o
+topo antes de ler o elemento, e `desempilhar()` devolvia o elemento errado; mas
+a pilha atravessava os mesmos estados, na mesma ordem, com e sem o defeito.
+Mudava só *quando* o topo descia em relação à linha, e o valor devolvido, onde
+o defeito se manifestava, não é observado.
 
 **Por que o segundo critério.** O primeiro, sozinho, aprovaria a pilha: ela
 diverge em dois quadros, um por chamada de `desempilhar()`. A trajetória é o
 que a separa dos demais — idêntica na pilha, diferente em todos os outros. O
 desenho mostra estado, e o que não chega ao estado não chega ao estudante.
 
+A trajetória é também o critério mais fiel ao que o estudante vê. O desenho da
+estrutura não mostra em que linha a execução está — isso fica no indicador ao
+lado e no editor —, e dois quadros com o mesmo estado em linhas diferentes são,
+para quem olha o desenho, o mesmo quadro. A contagem de quadros conta
+diferenças que o desenho não tem como mostrar.
+
 **Auditoria do catálogo (setembro de 2026).**
 
 | Exercício | Quadros divergentes | Trajetória | Resultado |
 |---|---|---|---|
-| `pilha-desempilhar` | 2 | idêntica; estado final igual | **reprovado** |
+| `pilha-desempilhar` | 2 | idêntica; estado final igual | **reprovado** — corrigido, ver abaixo |
 | `vetor-zerar-negativos` | 12 | diverge; estado final diferente | aprovado |
 | `vetor-dobrar` | 8 | diverge; estado final diferente | aprovado |
 | `fila-atender-todos` | 7 | diverge; estado final diferente | aprovado |
@@ -655,6 +661,23 @@ para sete quadros antes, sem passar por nenhum estado que a correta não
 tenha. É aprovada porque o último quadro — `carla` ainda na fila depois de
 "atender todos" — contradiz o enunciado, e o último quadro é o que fica na tela.
 
-**Pendência.** `pilha-desempilhar` consta no teste como pendente e continua
-reprovado até ser corrigido. A troca do defeito ou a exibição do valor devolvido
-pela operação estão em avaliação.
+**Correção de `pilha-desempilhar`.** Duas saídas foram avaliadas.
+
+- *Exibir na visualização o valor devolvido pela operação*, o que cobriria toda
+  a classe "devolve o elemento errado" em pilha e fila. Fica para depois: o
+  valor devolvido não está no instantâneo, e trazê-lo exige mudar o núcleo e o
+  contrato dos visualizadores; hoje serviria a um exercício só; e mostrar
+  "devolveu 20" no desenho devolveria, no apoio mínimo, o "obtido" que o painel
+  de casos esconde de propósito (D9).
+- *Trocar o defeito por um que diverja no estado* — a escolhida. O defeito
+  passou a ser `itens.length = topo` no lugar de `topo + 1`, na mesma linha e na
+  mesma categoria, índice deslocado: desempilhar retira o elemento do topo e
+  descarta junto o de baixo. Verificado por execução antes da troca: quebra dois
+  dos três casos, diverge em sete quadros, e a trajetória diverge já no
+  primeiro `desempilhar()`. O quadro-denúncia mostra o topo apontando além do
+  último elemento que restou — o estado *marcador fora da estrutura* de D10 —,
+  e se lê sem precisar relacionar o quadro à linha. Título, enunciado e dicas
+  foram reescritos, porque falavam do valor devolvido.
+
+Com a troca, `pilha-desempilhar` saiu da lista de pendentes, e o catálogo
+inteiro passa na verificação.
