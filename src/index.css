@@ -48,17 +48,17 @@
 
 :root {
   /* Cores de base. Trocáveis por escolha estética. */
-  --tinta: #0f172a;
-  --tinta-suave: #64748b;
-  --borda: #e2e8f0;
-  --fundo: #f8fafc;
-  --superficie: #fff;
-  --acento: #2563eb;
-  --erro: #dc2626;
-  --ok: #16a34a;
-  --destaque: #f59e0b;
-  --traco-estrutura: #94a3b8;
-  --fundo-dica: #fffbeb;
+  --tinta: #2b2620;
+  --tinta-suave: #6d6456;
+  --borda: #e0d8c8;
+  --fundo: #f4efe4;
+  --superficie: #fbf7f0;
+  --acento: #2d5f96;
+  --erro: #a8402f;
+  --ok: #4a7340;
+  --destaque: #9a6314;
+  --traco-estrutura: #a0947f;
+  --fundo-dica: #f7edd8;
 
   /* Cores com significado. Ver a nota acima antes de trocar qualquer uma. */
   --celula-ativa-fundo: var(--superficie);
@@ -278,26 +278,26 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
    Tela de exercício — direção 2a, bancada clara
 
    Tudo aqui vale só dentro de .tela-exercicio: a lista de exercícios e o
-   painel de métricas continuam com a aparência de antes, e mudam numa fatia
-   própria.
+   painel de métricas continuam com a tipografia e o arranjo de antes, e mudam
+   numa fatia própria. A paleta de base, esta sim, é a mesma nos dois escopos.
 
    A paleta muda a aparência, não o significado. Os papéis continuam os de
    D10 — azul para a célula ativa, âmbar para o elemento apontado, vermelho
    para o ciclo —, só em outro tom.
 --------------------------------------------------------------------------- */
 .tela-exercicio {
-  --tinta: #10141a;
-  --tinta-suave: #5b6472;
-  --tinta-media: #4a525e;
-  --borda: #e2e6ec;
-  --borda-controle: #d5dae2;
-  --acento: #2f6fd0;
-  --erro: #c4402f;
-  --ok: #2f7d4f;
-  --destaque: #b8781a;
-  --fundo-dica: #fdf6e6;
-  --fundo-bancada: #eef1f5;
-  --traco-estrutura: #9aa3b0;
+  --tinta: #2b2620;
+  --tinta-suave: #6d6456;
+  --tinta-media: #4f473c;
+  --borda: #e0d8c8;
+  --borda-controle: #d3c9b6;
+  --acento: #2d5f96;
+  --erro: #a8402f;
+  --ok: #4a7340;
+  --destaque: #9a6314;
+  --fundo-dica: #f7edd8;
+  --fundo-bancada: #ece4d6;
+  --traco-estrutura: #a0947f;
 
   /* Redeclaradas aqui, e não só herdadas: uma variável que usa var() é
      resolvida no elemento onde foi declarada. Sem repetir, as cores com
