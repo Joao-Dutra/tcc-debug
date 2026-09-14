@@ -394,3 +394,31 @@ byte a byte.
 que os campos do registro exportado não mudaram — instantâneos não entram nele,
 só eventos e resumo. A versão marca o ambiente de coleta, para que uma sessão
 gravada antes da mudança continue distinguível na análise.
+
+## D13 — Nenhum recurso externo em tempo de execução
+
+**Decisão.** A aplicação não carrega nada de fora da própria origem enquanto
+roda: nenhuma fonte, ícone, imagem, folha de estilo ou biblioteca vinda de CDN
+ou de serviço de terceiros. Tudo o que a tela usa entra no pacote do build. As
+fontes da tela de exercício — Space Grotesk e JetBrains Mono — vêm dos pacotes
+`@fontsource`, e o Vite copia os arquivos para dentro do próprio build.
+
+**Justificativa.** A aplicação precisa funcionar com a máquina desconectada. Não
+controlamos a rede do laboratório no dia do experimento, e um recurso que não
+carrega não falha de forma visível: uma fonte que não chega é trocada pela do
+sistema, com outra largura e outra altura de linha, e isso desloca o layout —
+rótulos que cabiam passam a vazar, o código quebra em outro ponto. Seria uma
+diferença de condição entre participantes que nenhum registro mostraria.
+
+**O que a regra cobre, daqui em diante.** Fonte, ícone, imagem, folha de estilo e
+script. Ícone é SVG escrito no próprio componente; biblioteca entra como
+dependência do `package.json`, nunca por `<script src>` ou `<link>` apontando
+para fora.
+
+**Só o subconjunto latino.** São importados apenas os arquivos `latin` dos pesos
+usados — Space Grotesk 400, 500 e 600; JetBrains Mono 400, 500 e 700 —, que
+cobrem o português inteiro, com acento, cedilha e til. Os subconjuntos
+vietnamita, cirílico e grego ficariam no pacote sem uso.
+
+**Licença.** As duas famílias são OFL-1.1, que permite empacotá-las e
+redistribuí-las junto com a aplicação.

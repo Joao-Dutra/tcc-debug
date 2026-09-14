@@ -68,6 +68,11 @@
 
   /* Tipografia. */
   --familia: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Famílias empacotadas no build (D13). O resto da pilha só entra se o
+     arquivo da fonte faltar, o que não deve acontecer fora de um build
+     quebrado. */
+  --familia-texto: "Space Grotesk", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  --familia-mono: "JetBrains Mono", ui-monospace, Consolas, "Courier New", monospace;
   --fonte-titulo: 22px;
   --fonte-cartao: 16px;
   --fonte-corpo: 14px;
