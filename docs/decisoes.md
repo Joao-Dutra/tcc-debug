@@ -609,3 +609,52 @@ o original fica intacto.
 **A registrar no termo de consentimento.** Até ser limpo, o registro — com o
 código escrito pelo participante (D6) — fica gravado no disco da máquina do
 laboratório, e não apenas na memória da página.
+
+## D16 — Quadro-denúncia verificado por execução
+
+**Decisão.** Todo exercício precisa divergir da sua versão correta em estado
+observável, e isso é verificado executando as duas versões, não lendo o código.
+As sequências de instantâneos das duas versões, restritas às
+`variaveisObservadas` — que é tudo o que a visualização recebe —, são
+comparadas, e o exercício é recusado se:
+
+1. as sequências forem idênticas, ou divergirem em um único quadro; ou
+2. as *trajetórias de estados* forem idênticas. A trajetória é a sequência de
+   estados sem as repetições consecutivas: ignora em que linha e em que
+   momento o estado muda, e fica só com quais estados ocorrem, em ordem.
+
+O teste `src/exercicios/quadro-denuncia.test.ts` aplica os dois critérios ao
+catálogo inteiro, pela mesma lógica do Worker. A skill `criar-exercicio` torna
+a verificação obrigatória.
+
+**O que motivou.** Num teste com usuário, o defeito do exercício
+`pilha-desempilhar` — o tutorial, justamente o que precisa do quadro-denúncia
+mais claro — não aparecia na visualização. `desempilhar()` decrementa o topo
+antes de ler o elemento, e devolve o elemento errado; mas a pilha atravessa os
+mesmos estados, na mesma ordem, com e sem o defeito. Muda só *quando* o topo
+desce em relação à linha, e o valor devolvido, onde o defeito se manifesta,
+não é observado.
+
+**Por que o segundo critério.** O primeiro, sozinho, aprovaria a pilha: ela
+diverge em dois quadros, um por chamada de `desempilhar()`. A trajetória é o
+que a separa dos demais — idêntica na pilha, diferente em todos os outros. O
+desenho mostra estado, e o que não chega ao estado não chega ao estudante.
+
+**Auditoria do catálogo (setembro de 2026).**
+
+| Exercício | Quadros divergentes | Trajetória | Resultado |
+|---|---|---|---|
+| `pilha-desempilhar` | 2 | idêntica; estado final igual | **reprovado** |
+| `vetor-zerar-negativos` | 12 | diverge; estado final diferente | aprovado |
+| `vetor-dobrar` | 8 | diverge; estado final diferente | aprovado |
+| `fila-atender-todos` | 7 | diverge; estado final diferente | aprovado |
+| `lista-inserir-depois` | 2 | diverge; estado final diferente | aprovado |
+
+A fila diverge por ausência: a versão com defeito é um prefixo da correta e
+para sete quadros antes, sem passar por nenhum estado que a correta não
+tenha. É aprovada porque o último quadro — `carla` ainda na fila depois de
+"atender todos" — contradiz o enunciado, e o último quadro é o que fica na tela.
+
+**Pendência.** `pilha-desempilhar` consta no teste como pendente e continua
+reprovado até ser corrigido. A troca do defeito ou a exibição do valor devolvido
+pela operação estão em avaliação.

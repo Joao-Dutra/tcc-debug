@@ -6,7 +6,9 @@ description: Use ao criar, revisar ou ajustar um exercício do catálogo — qua
 # Criar um exercício
 
 Um exercício é um módulo em `src/exercicios/` que exporta um objeto `Exercicio`
-(ver `src/nucleo/tipos.ts`). Use `pilha-desempilhar.ts` como modelo.
+(ver `src/nucleo/tipos.ts`). Use `pilha-desempilhar.ts` como modelo da forma do
+arquivo — não do defeito, que foi reprovado pela verificação de divergência
+abaixo e está pendente de correção (D16).
 
 ## Regra principal
 
@@ -16,7 +18,8 @@ exercício não serve ao propósito do trabalho. Se o bug não produz nenhuma
 diferença no desenho da estrutura, também não serve.
 
 Antes de finalizar, responda: *qual quadro da animação denuncia o defeito?*
-Se não houver resposta clara, troque o defeito.
+Se não houver resposta clara, troque o defeito. A resposta vem da execução, e
+não da leitura do código — ver a verificação obrigatória abaixo.
 
 ## Passos
 
@@ -36,6 +39,39 @@ Se não houver resposta clara, troque o defeito.
    silenciosamente sai do lugar.
 7. **Liste em `variaveisObservadas`** apenas o que a visualização precisa. Toda
    variável observada entra em cada instantâneo e infla a execução.
+
+## Verificação obrigatória: divergência de estado (D16)
+
+O quadro-denúncia é verificado **por execução, não por inspeção**. Rode:
+
+```bash
+npx vitest run src/exercicios
+```
+
+O teste `quadro-denuncia.test.ts` executa as duas versões de cada exercício do
+catálogo pela mesma lógica do Worker e compara as sequências de instantâneos
+restritas às `variaveisObservadas` — que é tudo o que a visualização recebe. O
+exercício é **recusado** se:
+
+1. as sequências forem idênticas, ou divergirem em um único quadro; ou
+2. as **trajetórias de estados** forem idênticas. A trajetória é a sequência de
+   estados sem as repetições consecutivas: ignora em que linha e em que momento
+   o estado muda, e fica só com quais estados ocorrem, em ordem.
+
+O segundo critério pega o caso que o primeiro deixa passar: um defeito que só
+muda *quando* o estado muda em relação ao código, e não *qual* estado a
+estrutura atravessa. Foi o caso da pilha: dois quadros divergentes, um por
+chamada, e nenhum estado diferente para desenhar. O desenho mostra estado; o
+que não chega ao estado não chega ao estudante.
+
+Um defeito que só aparece no valor devolvido, numa variável não observada ou na
+ordem entre linha e estado **não serve**, por mais claro que pareça ao ler o
+código. Troque o defeito, ou observe a variável em que ele se manifesta, se a
+visualização souber desenhá-la.
+
+Exercício novo entra no teste sozinho, por estar no `catalogo`. Não o acrescente
+a `PENDENTES`: essa lista existe só para exercícios já publicados que a
+auditoria reprovou e que aguardam correção.
 
 ## Enunciado
 
@@ -63,6 +99,7 @@ por ele.
 - [ ] O código com defeito compila e executa sem lançar exceção.
 - [ ] Ao menos um caso de teste falha, e falha pelo motivo pretendido.
 - [ ] `linhaDoDefeito` confere com o código atual.
-- [ ] Existe um quadro da animação que denuncia o defeito.
+- [ ] `npx vitest run src/exercicios` passa: o defeito diverge da versão correta
+      em estado observável, verificado por execução (D16).
 - [ ] `codigoCorreto` passa em todos os casos.
 - [ ] O exercício foi adicionado ao `catalogo`.
