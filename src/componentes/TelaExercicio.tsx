@@ -149,7 +149,9 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   const dicasPermitidas = Math.min(dicasDisponiveis(andaime), exercicio.dicas.length);
 
   return (
-    <div className="pagina">
+    // A direção 2a vale só para esta tela: a classe escopa a paleta e as
+    // fontes, e a lista de exercícios e o painel de métricas ficam como estão.
+    <div className="pagina tela-exercicio">
       <header>
         <a className="voltar" href={CAMINHO_INICIAL}>
           ◀ todos os exercícios
@@ -180,7 +182,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
         </p>
       </header>
 
-      <main>
+      <main className="grade-exercicio">
         <section className="painel">
           <div className="cabecalho-painel">
             <h2>Código</h2>
@@ -205,61 +207,73 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           </p>
         </section>
 
-        <section className="painel">
-          <h2>Visualização</h2>
-          {Visualizador ? (
-            <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
-          ) : (
-            <p className="rodape-painel">
-              Ainda não há visualizador para esta estrutura de dados.
-            </p>
+        {/* Dicas no alto, junto da visualização (2a): é para lá que elas mandam
+            olhar. No apoio mínimo não há dicas, e a visualização sobe. */}
+        <div className="coluna-direita">
+          {dicasPermitidas > 0 && (
+            <section className="painel">
+              <h2>Dicas</h2>
+              {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
+                <p key={d} className="dica">{d}</p>
+              ))}
+              {dicasAbertas < dicasPermitidas && (
+                <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
+              )}
+            </section>
           )}
-          {/* Junto à animação de propósito (D10): manter de cabeça a
-              correspondência entre a instrução e o quadro consome memória de
-              trabalho, e não é esse o esforço que o estudo quer observar.
 
-              Fica fora do fading de D9 — aparece em todos os níveis, por ser
-              também o principal recurso de legibilidade da ferramenta. Por
-              isso mora na tela, e não no visualizador. */}
-          {linhaAtual !== undefined && (
-            <p className="indicador-linha">Executando a linha {linhaAtual}</p>
-          )}
-          <ControlesReprodutor reprodutor={reprodutor} />
-        </section>
+          <section className="painel">
+            <h2>Visualização</h2>
+            <div className="bancada">
+              {Visualizador ? (
+                <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
+              ) : (
+                <p className="rodape-painel">
+                  Ainda não há visualizador para esta estrutura de dados.
+                </p>
+              )}
+            </div>
+            {/* Junto à animação de propósito (D10): manter de cabeça a
+                correspondência entre a instrução e o quadro consome memória de
+                trabalho, e não é esse o esforço que o estudo quer observar.
+
+                Fica fora do fading de D9 — aparece em todos os níveis, por ser
+                também o principal recurso de legibilidade da ferramenta. Por
+                isso mora na tela, e não no visualizador. */}
+            {linhaAtual !== undefined && (
+              <p className="indicador-linha">Executando a linha {linhaAtual}</p>
+            )}
+            <ControlesReprodutor reprodutor={reprodutor} />
+          </section>
+        </div>
       </main>
 
-      {metricas.localizacoes.length > 0 && (
+      {/* Embaixo, o retorno do que o estudante fez: os casos à esquerda, as
+          linhas que ele apontou à direita. O painel das linhas fica sempre no
+          lugar, mesmo vazio, para o alvo da declaração não aparecer do nada. */}
+      <div className="grade-retorno">
+        <PainelDeCasos resultado={resultado} detalhe={detalhe} />
         <section className="painel">
           <h2>Onde você apontou</h2>
-          <ul className="casos">
-            {metricas.localizacoes.map((l, i) => (
-              <li key={i} className={l.correta ? 'passou' : 'falhou'}>
-                <strong>{l.correta ? '✓' : '✗'}</strong> Linha {l.linha} —{' '}
-                {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      <PainelDeCasos resultado={resultado} detalhe={detalhe} />
-
-      {dicasPermitidas > 0 && (
-        <section className="painel">
-          <h2>Dicas</h2>
-          {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
-            <p key={d} className="dica">{d}</p>
-          ))}
-          {dicasAbertas < dicasPermitidas && (
-            <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
+          {metricas.localizacoes.length === 0 ? (
+            <p className="rodape-painel">Nenhuma linha apontada ainda.</p>
+          ) : (
+            <ul className="casos apontadas">
+              {metricas.localizacoes.map((l, i) => (
+                <li key={i} className={l.correta ? 'passou' : 'falhou'}>
+                  <strong>{l.correta ? '✓' : '✗'}</strong> Linha {l.linha} —{' '}
+                  {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
+                </li>
+              ))}
+            </ul>
           )}
         </section>
-      )}
+      </div>
 
       {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
           estudante quantas vezes ele executou ou quantas dicas abriu muda o
           comportamento que o estudo quer medir. */}
-      <section className="painel">
+      <section className="painel painel-sessao">
         <h2>Sessão</h2>
         <p className="rodape-painel">
           As métricas ficam apenas na memória do navegador e se perdem ao recarregar a

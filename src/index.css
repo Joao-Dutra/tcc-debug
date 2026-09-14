@@ -273,3 +273,107 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
 .svg-mono { font-family: var(--familia-mono); }
 .legenda-visualizacao { margin: var(--esp-8) 0 0; font: 400 10.5px/1.5 var(--familia-mono);
   color: var(--tinta-suave); }
+
+/* ---------------------------------------------------------------------------
+   Tela de exercício — direção 2a, bancada clara
+
+   Tudo aqui vale só dentro de .tela-exercicio: a lista de exercícios e o
+   painel de métricas continuam com a aparência de antes, e mudam numa fatia
+   própria.
+
+   A paleta muda a aparência, não o significado. Os papéis continuam os de
+   D10 — azul para a célula ativa, âmbar para o elemento apontado, vermelho
+   para o ciclo —, só em outro tom.
+--------------------------------------------------------------------------- */
+.tela-exercicio {
+  --tinta: #10141a;
+  --tinta-suave: #5b6472;
+  --tinta-media: #4a525e;
+  --borda: #e2e6ec;
+  --borda-controle: #d5dae2;
+  --acento: #2f6fd0;
+  --erro: #c4402f;
+  --ok: #2f7d4f;
+  --destaque: #b8781a;
+  --fundo-dica: #fdf6e6;
+  --fundo-bancada: #eef1f5;
+  --traco-estrutura: #9aa3b0;
+
+  /* Redeclaradas aqui, e não só herdadas: uma variável que usa var() é
+     resolvida no elemento onde foi declarada. Sem repetir, as cores com
+     significado continuariam apontando para a paleta da raiz, e a tela
+     misturaria os dois azuis. */
+  --celula-ativa-traco: var(--acento);
+  --celula-consumida-traco: var(--tinta-suave);
+  --elemento-apontado: var(--destaque);
+  --ligacao-ciclica: var(--erro);
+
+  font-family: var(--familia-texto);
+  color: var(--tinta);
+}
+
+.tela-exercicio .voltar { font: 500 10.5px var(--familia-mono);
+  letter-spacing: .09em; text-transform: uppercase; }
+.tela-exercicio header h1 { font: 600 27px/1.25 var(--familia-texto);
+  letter-spacing: -.02em; margin: var(--esp-12) 0 var(--esp-8); }
+.tela-exercicio header p { font: 400 14px/1.6 var(--familia-texto);
+  color: var(--tinta-media); margin: 0; }
+.tela-exercicio header .abertura { margin-top: var(--esp-18); }
+.tela-exercicio .rotulo-abertura { font: 500 9.5px var(--familia-mono);
+  letter-spacing: .14em; }
+.tela-exercicio .nivel { font: 400 11.5px var(--familia-mono); padding: 4px 12px;
+  border-color: var(--borda-controle); color: var(--tinta-media); }
+.tela-exercicio .nivel.ativo { font-weight: 500; color: var(--superficie); }
+.tela-exercicio .aviso-troca { font: 400 10px var(--familia-mono); }
+
+/* Arranjo: código à esquerda; dicas e visualização à direita, em cima; o
+   retorno do que o estudante fez, embaixo. */
+.tela-exercicio .grade-exercicio { grid-template-columns: 1.02fr 1fr;
+  gap: var(--esp-20); margin-top: var(--esp-24); }
+.tela-exercicio .coluna-direita { display: flex; flex-direction: column;
+  gap: var(--esp-20); }
+.tela-exercicio .grade-retorno { display: grid; grid-template-columns: 1.15fr 1fr;
+  gap: var(--esp-20); margin-top: var(--esp-20); align-items: start; }
+@media (max-width: 900px) {
+  .tela-exercicio .grade-exercicio,
+  .tela-exercicio .grade-retorno { grid-template-columns: 1fr; }
+}
+.tela-exercicio .painel { margin-bottom: 0; border-color: var(--borda); }
+.tela-exercicio .painel-sessao { margin-top: var(--esp-20); }
+.tela-exercicio .painel h2 { font: 500 10px var(--familia-mono);
+  letter-spacing: .16em; color: var(--tinta-suave); }
+
+.tela-exercicio button { border-color: var(--borda-controle); border-radius: 6px;
+  font: 400 11.5px var(--familia-mono); color: var(--tinta-media); }
+.tela-exercicio button.primario { font: 700 12px var(--familia-mono);
+  padding: var(--esp-7) var(--esp-16); color: var(--superficie); }
+
+/* O editor em largura fixa, na mesma família dos nomes de campo do desenho:
+   é a correspondência entre os dois que a anatomia rotulada oferece. */
+.tela-exercicio .cm-editor { font-size: 12.5px; }
+.tela-exercicio .cm-scroller { font-family: var(--familia-mono); line-height: 22px; }
+
+/* A bancada é o fundo do desenho, e não do painel: a legenda e os controles
+   ficam fora dela. */
+.tela-exercicio .bancada > svg { display: block; background: var(--fundo-bancada);
+  border-radius: 6px; }
+.tela-exercicio .indicador-linha { font: 400 12px var(--familia-mono); }
+
+.tela-exercicio .controles { gap: var(--esp-10); }
+.tela-exercicio .controles button { display: flex; align-items: center;
+  justify-content: center; width: 30px; height: 28px; padding: 0; color: var(--tinta); }
+.tela-exercicio .controles button.primario { color: var(--superficie); }
+.tela-exercicio .controles input[type=range] { accent-color: var(--acento); }
+.tela-exercicio .contador { font: 400 11.5px var(--familia-mono);
+  font-variant-numeric: tabular-nums; }
+
+.tela-exercicio .dica { font: 400 12.5px/1.5 var(--familia-texto); color: #4a4433;
+  border-left-width: 2px; border-radius: 0 6px 6px 0; padding: 9px var(--esp-12); }
+
+.tela-exercicio .casos li { font: 400 13px/1.45 var(--familia-texto);
+  border-bottom: none; padding: 4px 0; }
+.tela-exercicio .casos strong { font-family: var(--familia-mono); font-weight: 400;
+  margin-right: 4px; }
+.tela-exercicio .detalhe { font: 400 11px var(--familia-mono); margin-top: 3px; }
+.tela-exercicio .casos.apontadas li { font: 400 12.5px var(--familia-mono);
+  color: var(--tinta-media); }

@@ -53,17 +53,26 @@ por tratamento — complexidade como texto, apoio como botões.
 
 ### 2. Tela de exercício — a mais importante
 
-Título e enunciado no topo. Abaixo, dois painéis lado a lado:
+Título, enunciado e a escolha do apoio no topo. Abaixo, duas colunas:
 
-- **Código**, com editor, numeração de linhas e botão de executar. O estudante
-  clica no *número* da linha para declarar onde acredita estar o defeito, e
-  recebe na hora se acertou. Pode tentar quantas vezes quiser.
-- **Visualização**, com o desenho animado da estrutura, o indicador da linha que
-  está sendo executada e os controles de reprodução: anterior, tocar, próximo, e
-  uma barra de posição com o contador de passos.
+- À esquerda, o **código**, com editor, numeração de linhas e botão de executar.
+  O estudante clica no *número* da linha para declarar onde acredita estar o
+  defeito, e recebe na hora se acertou. Pode tentar quantas vezes quiser.
+- À direita, em cima, as **dicas**, reveladas uma a uma pelo estudante — junto
+  da visualização, porque é para ela que as dicas mandam olhar. No apoio mínimo
+  não há dicas, e a visualização sobe.
+- À direita, embaixo das dicas, a **visualização**, com o desenho animado da
+  estrutura sobre uma bancada clara, o indicador da linha que está sendo
+  executada e os controles de reprodução: anterior, tocar, próximo, e uma barra
+  de posição com o contador de passos.
 
-Abaixo dos dois, os **casos de teste** com seus resultados, e as **dicas**,
-reveladas uma a uma pelo estudante.
+Embaixo das duas colunas fica o retorno do que o estudante fez: os **casos de
+teste** com seus resultados, à esquerda, e as linhas que ele **apontou** como
+suspeitas, à direita.
+
+Esta tela segue a direção 2a (bancada clara, anatomia de nó rotulada, ponteiro
+em seta, nulo aterrado), com Space Grotesk no texto e JetBrains Mono no código e
+nos rótulos do desenho. As outras duas telas ainda têm a aparência anterior.
 
 Em telas estreitas os painéis empilham.
 

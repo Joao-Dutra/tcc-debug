@@ -53,12 +53,27 @@ export function ControlesReprodutor({ reprodutor }: Props) {
 
   return (
     <div className="controles">
-      <button onClick={voltar} disabled={indice === 0}>
-        ◀
+      {/* Ícones em SVG, e não glifos: glifo depende da fonte instalada na
+          máquina (D13) e muda de tamanho de uma para outra. Sem texto visível,
+          o nome de cada botão vai no aria-label. */}
+      <button onClick={voltar} disabled={indice === 0} aria-label="passo anterior">
+        <svg width="9" height="10" viewBox="0 0 9 10" aria-hidden="true">
+          <path d="M9 0 L9 10 L1 5 Z" fill="currentColor" />
+        </svg>
       </button>
-      <button onClick={alternar}>{tocando ? '❚❚' : '▶'}</button>
-      <button onClick={avancar} disabled={indice >= total - 1}>
-        ▶
+      <button className="primario" onClick={alternar} aria-label={tocando ? 'pausar' : 'tocar'}>
+        <svg width="9" height="10" viewBox="0 0 9 10" aria-hidden="true">
+          {tocando ? (
+            <path d="M0 0 H3 V10 H0 Z M6 0 H9 V10 H6 Z" fill="currentColor" />
+          ) : (
+            <path d="M0 0 L9 5 L0 10 Z" fill="currentColor" />
+          )}
+        </svg>
+      </button>
+      <button onClick={avancar} disabled={indice >= total - 1} aria-label="próximo passo">
+        <svg width="9" height="10" viewBox="0 0 9 10" aria-hidden="true">
+          <path d="M0 0 L8 5 L0 10 Z" fill="currentColor" />
+        </svg>
       </button>
       <input
         type="range"
