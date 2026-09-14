@@ -399,6 +399,13 @@ distinguível por quem tem baixa visão ou está numa tela mal calibrada. Os 0,4
 passam a valer só para o fundo e para o que está dentro da célula — valor,
 índice, rótulos —, e o tracejado fica em opacidade cheia, a 4,6:1.
 
+O mesmo vale para a ligação que um nó fora da cadeia ainda mantém, na lista
+encadeada: tracejada, em opacidade cheia. Ela é só traço e ponta, sem conteúdo
+a esmaecer, e é ela que mostra para onde o nó destacado ainda aponta. Esmaecida
+a 0,45, caía ao mesmo 1,8:1 da célula consumida. As demais referências de fundo
+com contraste baixo — o contorno da fileira, a base da pilha, as divisórias
+internas do nó — ficam como estão: não são fronteira de estado.
+
 *Ponteiro nulo* se chamava *ligação perdida* até D14. O nome antigo julgava:
 descrevia como perda o fim de uma lista correta, onde nada se perdeu e o último
 nó simplesmente não aponta para lugar nenhum.

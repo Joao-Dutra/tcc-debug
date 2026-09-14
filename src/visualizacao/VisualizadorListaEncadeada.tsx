@@ -527,7 +527,10 @@ export function VisualizadorListaEncadeada({
           const x1 = centroDoNo(i);
           const x2 = centroDoNo(posDestino);
           return (
-            <g key={'solto-liga-' + String(no.__id)} opacity={CELULA[estadoDoSolto].opacidadeDoConteudo}>
+            // Tracejada e em opacidade cheia, como a borda do nó solto (D10). A
+            // ligação é só traço e ponta, sem conteúdo a esmaecer, e é ela que
+            // mostra para onde o nó fora da cadeia ainda aponta.
+            <g key={'solto-liga-' + String(no.__id)}>
               <line
                 className="svg-ligacao"
                 x1={x1}
