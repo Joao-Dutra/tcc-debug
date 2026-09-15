@@ -111,13 +111,6 @@ ordem entre linha e estado **não serve**, por mais claro que pareça ao ler o
 código. Troque o defeito, ou observe a variável em que ele se manifesta, se a
 visualização souber desenhá-la.
 
-**Confira também o último quadro da versão correta.** O estado é capturado
-antes de cada instrução (D1), então a última alteração do programa só aparece
-no desenho se houver alguma instrução depois dela. Quando a última coisa
-executada é uma escrita — o `empilhar` final de um laço, por exemplo —, o
-resultado nunca é desenhado, e quem corrigir o defeito vê a estrutura
-"errada" no fim. Um `return` depois da escrita resolve.
-
 Exercício novo entra no teste sozinho, por estar no `catalogo`. Não o acrescente
 a `PENDENTES`: essa lista existe só para exercícios já publicados que a
 auditoria reprovou e que aguardam correção.

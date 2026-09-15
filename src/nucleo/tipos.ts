@@ -13,8 +13,12 @@
 export interface Instantaneo {
   /** Ordem do instantâneo na execução, começando em 0. */
   ordem: number;
-  /** Linha do código-fonte original que estava prestes a ser executada. */
-  linha: number;
+  /**
+   * Linha do código-fonte original que estava prestes a ser executada. Nula no
+   * quadro final, capturado depois que o programa termina (D1): não há mais
+   * linha a executar.
+   */
+  linha: number | null;
   /** Variáveis visíveis naquele ponto, já serializadas. */
   variaveis: Record<string, unknown>;
 }

@@ -263,8 +263,11 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
                 Fica fora do fading de D9 — aparece em todos os níveis, por ser
                 também o principal recurso de legibilidade da ferramenta. Por
                 isso mora na tela, e não no visualizador. */}
+            {/* Linha nula é o quadro final, depois do fim do programa (D1). */}
             {linhaAtual !== undefined && (
-              <p className="indicador-linha">Executando a linha {linhaAtual}</p>
+              <p className="indicador-linha">
+                {linhaAtual === null ? 'Execução terminada' : `Executando a linha ${linhaAtual}`}
+              </p>
             )}
             <ControlesReprodutor reprodutor={reprodutor} />
           </section>

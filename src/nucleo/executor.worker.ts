@@ -99,7 +99,7 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
   const resultados: ResultadoCaso[] = [];
   let erro: string | undefined;
 
-  const passo = (linha: number, variaveis: Record<string, unknown>) => {
+  const passo = (linha: number | null, variaveis: Record<string, unknown>) => {
     if (instantaneos.length >= LIMITE_DE_PASSOS) {
       throw new Error(
         'Limite de passos excedido — o programa provavelmente entrou em laço infinito.'

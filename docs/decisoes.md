@@ -20,6 +20,18 @@ instrumentação entrega o mesmo resultado observável com uma fração do esfor
 **Limitação aceita.** Não capturamos estado dentro de expressões, apenas entre
 instruções. Para os defeitos do catálogo isso é suficiente.
 
+**Quadro final.** Como a sonda vai *antes* de cada instrução, o efeito da
+última instrução executada não chegava a instantâneo nenhum. Quando ela era
+uma escrita, o último quadro mostrava a estrutura antes dessa escrita e mentia
+sobre o resultado do programa. O contorno era cada exercício terminar com
+alguma instrução depois da última escrita, o que dependia de o autor lembrar.
+Por isso a instrumentação passou a acrescentar uma sonda depois da última
+instrução do programa, com `linha` nula: é o quadro final, e o indicador diz
+que a execução terminou. Ele traz as variáveis do escopo do programa; as locais
+a funções já não existem nesse ponto e ficam de fora, como no próprio
+programa. Se o programa lança exceção, não há quadro final, porque a execução
+não terminou.
+
 ## D2 — Código textual, não programação em blocos
 
 **Decisão.** O estudante lê e edita código textual.

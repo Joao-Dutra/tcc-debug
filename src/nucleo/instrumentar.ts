@@ -16,6 +16,11 @@ import type { Node } from 'acorn';
  *
  * Só entram no objeto as variáveis DECLARADAS ANTES da instrução instrumentada,
  * evitando erro de zona morta temporal (TDZ) com let/const.
+ *
+ * Depois da última instrução do programa vai mais uma sonda, com linha nula: é
+ * o quadro final (D1). Sem ela, o efeito da última instrução executada nunca
+ * chegava a instantâneo nenhum, e o último quadro mostrava a estrutura antes
+ * dessa instrução — mentia sobre o resultado do programa.
  */
 
 const NOME_SONDA = '__passo';
@@ -51,8 +56,8 @@ function nomesDoPadrao(padrao: NoQualquer, destino: string[]): void {
   }
 }
 
-/** Monta o nó de AST correspondente à chamada da sonda. */
-function chamadaDaSonda(linha: number, visiveis: string[]): NoQualquer {
+/** Monta o nó de AST correspondente à chamada da sonda. Linha nula: quadro final. */
+function chamadaDaSonda(linha: number | null, visiveis: string[]): NoQualquer {
   return {
     type: 'ExpressionStatement',
     expression: {
@@ -81,8 +86,14 @@ function chamadaDaSonda(linha: number, visiveis: string[]): NoQualquer {
 /**
  * Percorre um corpo de instruções inserindo a sonda antes de cada uma.
  * `herdadas` são as variáveis já visíveis vindas de escopos externos.
+ * `comQuadroFinal` acrescenta a sonda de depois da última instrução — só no
+ * corpo do programa, que é onde a execução termina.
  */
-function instrumentarCorpo(corpo: NoQualquer[], herdadas: Declarada[]): NoQualquer[] {
+function instrumentarCorpo(
+  corpo: NoQualquer[],
+  herdadas: Declarada[],
+  comQuadroFinal = false
+): NoQualquer[] {
   const locais: Declarada[] = [];
   const saida: NoQualquer[] = [];
 
@@ -109,6 +120,12 @@ function instrumentarCorpo(corpo: NoQualquer[], herdadas: Declarada[]): NoQualqu
     } else if (instrucao.type === 'FunctionDeclaration' && instrucao.id) {
       locais.push({ nome: instrucao.id.name, posicao: 0 }); // hoisting
     }
+  }
+
+  // Ao fim do programa, tudo o que foi declarado nele está visível. Variáveis
+  // locais a funções não existem mais aqui e ficam de fora, como no programa.
+  if (comQuadroFinal) {
+    saida.push(chamadaDaSonda(null, [...new Set([...herdadas, ...locais].map((d) => d.nome))]));
   }
 
   return saida;
@@ -138,7 +155,7 @@ function percorrer(no: NoQualquer, herdadas: Declarada[]): NoQualquer {
       const ehCorpo =
         (no.type === 'BlockStatement' || no.type === 'Program') && chave === 'body';
       no[chave] = ehCorpo
-        ? instrumentarCorpo(valor as NoQualquer[], escopo)
+        ? instrumentarCorpo(valor as NoQualquer[], escopo, no.type === 'Program')
         : valor.map((v) => (v && typeof v === 'object' ? percorrer(v, escopo) : v));
     } else if (valor && typeof valor === 'object' && 'type' in valor) {
       no[chave] = percorrer(valor as NoQualquer, escopo);
