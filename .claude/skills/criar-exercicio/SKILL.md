@@ -40,6 +40,40 @@ não da leitura do código — ver a verificação obrigatória abaixo.
 7. **Liste em `variaveisObservadas`** apenas o que a visualização precisa. Toda
    variável observada entra em cada instantâneo e infla a execução.
 
+## Estilo do código (D17)
+
+O código do exercício precisa ser legível por quem estudou algoritmos em Java
+ou em C e não conhece JavaScript. Se o estudante tropeça na sintaxe, a
+ferramenta passa a medir desconhecimento de linguagem em vez de habilidade de
+depuração — e o estudo perde justamente o que quer medir.
+
+Use:
+
+- `var` para toda variável;
+- laços explícitos com índice: `for (var i = 0; i < n; i = i + 1)`, ou `while`
+  com o índice à vista;
+- atribuição direta em posição de vetor: `itens[topo] = valor`;
+- `==` e `!=` nas comparações de igualdade;
+- funções declaradas com `function`.
+
+Não use:
+
+- métodos de vetor: `push`, `pop`, `shift`, `map`, `filter`, `forEach`,
+  `slice`, `splice` e afins;
+- arrow function (`=>`);
+- desestruturação (`var { valor } = no`, `var [a, b] = par`);
+- template literal (`` `...${x}...` ``);
+- `===` e `!==`;
+- `let`, `const` e espalhamento (`...`).
+
+A lista não esgota a regra. O critério é a razão acima: um estudante de Java ou
+C entende a linha sem consultar nada sobre JavaScript? Atribuir a `length` para
+encolher um vetor, por exemplo, não está na lista, mas não tem equivalente em
+nenhuma das duas linguagens.
+
+A regra vale para `codigoComDefeito` e `codigoCorreto`, que é o que o estudante
+lê. As expressões dos casos de teste não aparecem na tela.
+
 ## Verificação obrigatória: divergência de estado (D16)
 
 O quadro-denúncia é verificado **por execução, não por inspeção**. Rode:
@@ -103,6 +137,7 @@ por ele.
 ## Antes de considerar pronto
 
 - [ ] O código com defeito compila e executa sem lançar exceção.
+- [ ] O código segue o estilo de D17: legível para quem estudou Java ou C.
 - [ ] Ao menos um caso de teste falha, e falha pelo motivo pretendido.
 - [ ] `linhaDoDefeito` confere com o código atual.
 - [ ] `npx vitest run src/exercicios` passa: o defeito diverge da versão correta

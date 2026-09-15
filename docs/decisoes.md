@@ -681,3 +681,25 @@ tenha. É aprovada porque o último quadro — `carla` ainda na fila depois de
 
 Com a troca, `pilha-desempilhar` saiu da lista de pendentes, e o catálogo
 inteiro passa na verificação.
+
+## D17 — Código dos exercícios legível para quem estudou Java ou C
+
+**Decisão.** O código que o estudante lê — `codigoComDefeito` e `codigoCorreto`
+— usa só o subconjunto de JavaScript que um estudante de algoritmos em Java ou
+em C lê sem ajuda: `var`, laços explícitos com índice, atribuição direta em
+posição de vetor, `==` e `!=`, funções declaradas com `function`. Ficam de fora
+os métodos de vetor (`push`, `map`, `filter` e afins), arrow function,
+desestruturação, template literal, `===`, `let`, `const` e espalhamento. A
+lista completa, e o critério para o que não está nela, ficam na skill
+`criar-exercicio`.
+
+**Justificativa.** O público são estudantes do ensino superior numa disciplina
+introdutória, que em geral aprenderam algoritmos em Java ou em C (ver D2). Se o
+estudante tropeça na sintaxe, a ferramenta passa a medir desconhecimento de
+linguagem em vez de habilidade de depuração: o tempo até a localização e até a
+correção incorporariam o tempo gasto decifrando JavaScript, e as duas coisas
+não se separam depois nos dados.
+
+**Alternativa descartada.** Oferecer os exercícios em Java ou em C. Exigiria
+executar essas linguagens no navegador, e a instrumentação por AST de D1
+existe justamente para evitar um interpretador próprio.
