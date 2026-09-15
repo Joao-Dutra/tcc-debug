@@ -4,6 +4,7 @@ import { vetorZerarNegativos } from './vetor-zerar-negativos';
 import { vetorDobrar } from './vetor-dobrar';
 import { filaAtenderTodos } from './fila-atender-todos';
 import { listaInserirDepois } from './lista-inserir-depois';
+import { pilhaReverter } from './pilha-reverter';
 
 /**
  * Catálogo de exercícios disponíveis, em ordem crescente de dificuldade.
@@ -17,4 +18,5 @@ export const catalogo: Exercicio[] = [
   vetorDobrar,
   filaAtenderTodos,
   listaInserirDepois,
+  pilhaReverter,
 ];
