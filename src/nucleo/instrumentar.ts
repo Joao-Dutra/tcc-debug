@@ -135,6 +135,13 @@ function instrumentarCorpo(
 function percorrer(no: NoQualquer, herdadas: Declarada[]): NoQualquer {
   if (!no || typeof no !== 'object') return no;
 
+  // Corpo de classe não recebe sonda (D1). A classe vem no topo do programa, e
+  // a sonda dentro do construtor só enxergaria o que foi declarado antes dela
+  // — nenhuma variável da estrutura. Cada `new No(...)` feito dentro de uma
+  // função virava quadros vazios, e o desenho sumia no meio da operação. Sem
+  // sonda, o construtor é um passo só, no ponto do `new`.
+  if (no.type === 'ClassDeclaration' || no.type === 'ClassExpression') return no;
+
   // Ao entrar numa função, os parâmetros passam a ser visíveis.
   let escopo = herdadas;
   if (

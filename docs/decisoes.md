@@ -32,6 +32,15 @@ a funções já não existem nesse ponto e ficam de fora, como no próprio
 programa. Se o programa lança exceção, não há quadro final, porque a execução
 não terminou.
 
+**Corpo de classe não é instrumentado.** Os nós das listas são criados com
+`new No(valor, proximo)` (D17). A classe precisa vir no topo do programa, e a
+sonda dentro do construtor só enxergaria o que foi declarado antes dela —
+nenhuma variável da estrutura. Cada `new No` feito dentro de uma função
+produzia dois quadros sem variável nenhuma, e o desenho sumia no meio da
+operação. Por isso o construtor passou a ser um passo só, no ponto do `new`,
+que é como a construção de um objeto é lida em Java. O nó que ele cria aparece
+no quadro seguinte.
+
 ## D2 — Código textual, não programação em blocos
 
 **Decisão.** O estudante lê e edita código textual.
