@@ -6,6 +6,7 @@ import { filaAtenderTodos } from './fila-atender-todos';
 import { listaInserirDepois } from './lista-inserir-depois';
 import { pilhaReverter } from './pilha-reverter';
 import { filaInverter } from './fila-inverter';
+import { listaInserirPosicao } from './lista-inserir-posicao';
 
 /**
  * Catálogo de exercícios disponíveis, em ordem crescente de dificuldade.
@@ -21,4 +22,5 @@ export const catalogo: Exercicio[] = [
   listaInserirDepois,
   pilhaReverter,
   filaInverter,
+  listaInserirPosicao,
 ];
