@@ -62,7 +62,9 @@ Use:
   com o índice à vista;
 - atribuição direta em posição de vetor: `itens[topo] = valor`;
 - `==` e `!=` nas comparações de igualdade;
-- funções declaradas com `function`.
+- funções declaradas com `function`;
+- pilha como vetor de capacidade fixa mais índice de topo, sem encolher o
+  vetor (D18).
 
 Não use:
 
@@ -120,10 +122,10 @@ auditoria reprovou e que aguardam correção.
 Descreve **o comportamento esperado**, nunca o sintoma nem a região do código.
 Diga o que o programa deveria fazer e convide à observação.
 
-- Bom: "A pilha deve seguir a política LIFO: o último elemento empilhado é o
-  primeiro a sair, e cada chamada de desempilhar() retira apenas esse elemento.
-  Execute e acompanhe, na visualização, os elementos da pilha e a posição do
-  topo."
+- Bom: "A pilha guarda seus elementos no vetor itens, da posição 0 até a
+  posição topo; o que está acima do topo não faz parte dela. Ela deve seguir a
+  política LIFO. Execute e acompanhe, na visualização, a caixa em que cada
+  valor empilhado é guardado e a posição do topo."
 - Ruim: "A função desempilhar() está com o índice errado, corrija."
 
 O convite à observação precisa levar ao quadro-denúncia. Convide a olhar o que

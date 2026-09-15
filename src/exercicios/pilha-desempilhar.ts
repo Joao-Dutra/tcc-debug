@@ -4,35 +4,41 @@ import type { Exercicio } from '../nucleo/tipos';
  * Exercício de referência do projeto — é a fatia vertical que valida a
  * arquitetura inteira. Use-o como modelo ao criar novos exercícios.
  *
- * Defeito implantado: `desempilhar` trunca o vetor em `topo` posições em vez de
- * `topo + 1`, e descarta junto o elemento que deveria ficar no topo. O quadro
- * que denuncia é o topo apontando além do último elemento que restou.
+ * Modelo da pilha (D18): um vetor de capacidade fixa e um índice de topo, como
+ * a estrutura é ensinada em Java. A pilha vai da posição 0 até o topo; o que
+ * está acima dele continua no vetor, mas fora da pilha, e o visualizador
+ * desenha essas posições como células consumidas.
  *
- * O defeito anterior — ler o elemento depois de decrementar o topo — foi
- * reprovado na auditoria de D16: mudava só o valor devolvido, e a pilha
- * atravessava os mesmos estados com e sem ele.
+ * Defeito implantado: empilhar avança o topo e escreve o valor uma posição
+ * acima dele. Cada valor empilhado vai parar fora da pilha, e o topo fica
+ * sobre uma posição que ninguém escreveu. O quadro que denuncia é o do
+ * primeiro empilhar().
+ *
+ * Os dois defeitos anteriores foram trocados: o primeiro mudava só o valor
+ * devolvido (D16), e o segundo dependia de atribuir a `length` para encolher o
+ * vetor, semântica que só existe em JavaScript (D17, D18).
  */
 export const pilhaDesempilhar: Exercicio = {
   id: 'pilha-desempilhar',
-  titulo: 'Pilha: um elemento some sem ter sido desempilhado',
+  titulo: 'Pilha: o valor empilhado fica fora da pilha',
   enunciado:
-    'A pilha deve seguir a política LIFO: o último elemento empilhado é o primeiro a sair, ' +
-    'e cada chamada de desempilhar() retira apenas esse elemento, deixando os demais ' +
-    'guardados. Execute e acompanhe, na visualização, os elementos da pilha e a posição ' +
-    'do topo enquanto os valores são desempilhados.',
+    'A pilha guarda seus elementos no vetor itens, da posição 0 até a posição topo; o que ' +
+    'está acima do topo não faz parte dela. Ela deve seguir a política LIFO: o último ' +
+    'elemento empilhado é o primeiro a sair. Execute e acompanhe, na visualização, a caixa ' +
+    'em que cada valor empilhado é guardado e a posição do topo.',
   estrutura: 'pilha',
   categoriaDefeito: 'indice-deslocado',
   dificuldade: 1,
   tutorial: true,
-  linhaDoDefeito: 16,
+  linhaDoDefeito: 6,
   variaveisObservadas: ['itens', 'topo'],
 
-  codigoComDefeito: `var itens = [];
+  codigoComDefeito: `var itens = [0, 0, 0, 0];
 var topo = -1;
 
 function empilhar(valor) {
   topo = topo + 1;
-  itens[topo] = valor;
+  itens[topo + 1] = valor;
   return topo;
 }
 
@@ -42,7 +48,6 @@ function desempilhar() {
   }
   var removido = itens[topo];
   topo = topo - 1;
-  itens.length = topo;
   return removido;
 }
 
@@ -52,7 +57,7 @@ empilhar(30);
 var primeiraSaida = desempilhar();
 var segundaSaida = desempilhar();`,
 
-  codigoCorreto: `var itens = [];
+  codigoCorreto: `var itens = [0, 0, 0, 0];
 var topo = -1;
 
 function empilhar(valor) {
@@ -67,7 +72,6 @@ function desempilhar() {
   }
   var removido = itens[topo];
   topo = topo - 1;
-  itens.length = topo + 1;
   return removido;
 }
 
@@ -90,17 +94,21 @@ var segundaSaida = desempilhar();`,
     },
     {
       descricao: 'Sobra apenas um elemento na pilha',
-      expressao: 'itens',
-      esperado: [10],
+      expressao: 'topo + 1',
+      esperado: 1,
+    },
+    {
+      descricao: 'O fundo da pilha guarda o primeiro valor empilhado',
+      expressao: 'itens[0]',
+      esperado: 10,
     },
   ],
 
   dicas: [
-    'Acompanhe, na visualização, quantos elementos restam na pilha e para onde o topo ' +
-      'aponta a cada chamada de desempilhar().',
-    'Repare no quadro logo depois de o primeiro elemento sair: compare a posição do topo ' +
-      'com a do último elemento que continua na pilha.',
-    'Depois de desempilhar, o topo deve apontar para o último elemento que continua na ' +
-      'pilha — nunca para uma posição vazia.',
+    'Acompanhe, na visualização, em que caixa cada valor empilhado vai parar e para onde o ' +
+      'topo aponta depois de empilhar().',
+    'Logo depois do primeiro empilhar(), compare a caixa em que o valor foi escrito com a ' +
+      'caixa que o topo indica.',
+    'O valor empilhado precisa ser escrito exatamente na posição que o topo passa a indicar.',
   ],
 };

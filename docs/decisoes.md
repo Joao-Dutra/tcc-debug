@@ -694,6 +694,9 @@ tenha. É aprovada porque o último quadro — `carla` ainda na fila depois de
 Com a troca, `pilha-desempilhar` saiu da lista de pendentes, e o catálogo
 inteiro passa na verificação.
 
+*Superada por D18:* o modelo da pilha mudou, e esse defeito, que dependia de
+atribuir a `length`, deu lugar a outro.
+
 ## D17 — Código dos exercícios legível para quem estudou Java ou C
 
 **Decisão.** O código que o estudante lê — `codigoComDefeito` e `codigoCorreto`
@@ -715,3 +718,32 @@ não se separam depois nos dados.
 **Alternativa descartada.** Oferecer os exercícios em Java ou em C. Exigiria
 executar essas linguagens no navegador, e a instrumentação por AST de D1
 existe justamente para evitar um interpretador próprio.
+
+## D18 — Pilha como vetor de capacidade fixa e índice de topo
+
+**Decisão.** A pilha do exercício de referência é um vetor de capacidade fixa
+(`var itens = [0, 0, 0, 0]`) e um índice `topo`. A pilha vai da posição 0 até o
+topo; o que está acima dele continua no vetor, mas fora da pilha. Desempilhar
+só recua o topo — nada é apagado nem encolhido.
+
+**Justificativa.** É como a estrutura é ensinada em Java, com um vetor de
+tamanho fixo e um índice, e é como o visualizador já desenha: as posições acima
+do topo são células consumidas (D10). O modelo anterior encolhia o vetor
+atribuindo a `length`, semântica que só existe em JavaScript — e o defeito
+dependia dela. Sem saber que atribuir a `length` trunca o vetor, o público-alvo
+não tinha como raciocinar sobre o defeito, e o exercício passava a medir
+conhecimento de JavaScript, justamente o que D17 quer evitar. Mudou o modelo,
+e não só o defeito, para que o próximo defeito não caísse na mesma armadilha.
+
+**O defeito novo.** `empilhar` avança o topo e escreve o valor em `topo + 1`,
+uma posição acima. Foi verificado por execução antes da troca. O valor do
+primeiro `empilhar()` já vai parar numa célula consumida, acima do topo, e o
+topo fica sobre uma posição que ninguém escreveu: o quadro-denúncia é o
+primeiro em que a pilha tem conteúdo. O defeito quebra três dos quatro casos, e
+a trajetória diverge já no primeiro empilhar. A categoria continua a mesma,
+índice deslocado.
+
+**Capacidade fixa, e não vetor que cresce.** Com `var itens = []`, escrever em
+`topo + 1` antes de escrever em `topo` abriria um buraco no vetor — outra
+semântica própria de JavaScript. Com capacidade fixa, toda posição existe desde
+o começo e guarda zero, como num `new int[4]` de Java.
