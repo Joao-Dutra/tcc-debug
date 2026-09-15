@@ -38,7 +38,15 @@ não da leitura do código — ver a verificação obrigatória abaixo.
    partir de 1. Confira depois de qualquer edição no código — esse campo
    silenciosamente sai do lugar.
 7. **Liste em `variaveisObservadas`** apenas o que a visualização precisa. Toda
-   variável observada entra em cada instantâneo e infla a execução.
+   variável observada entra em cada instantâneo e infla a execução. E só o que
+   o visualizador da estrutura de fato desenha: a pilha desenha `itens` e
+   `topo`; a fila, `itens`, `inicio` e `fim`; o vetor, `itens` e `indice`; a
+   lista, `cabeca`, `atual` e qualquer outra variável que seja nó ou `null`.
+   Observar uma variável que o desenho ignora — o vetor auxiliar de um
+   exercício de pilha, por exemplo — faz a verificação de divergência aprovar
+   uma diferença que o estudante não vê. Estrutura auxiliar não é desenhada:
+   o defeito precisa aparecer na estrutura principal. Na lista, a divergência
+   também precisa cair dentro dos três nós que cabem na fileira (D14).
 
 ## Estilo do código (D17)
 
@@ -102,6 +110,13 @@ Um defeito que só aparece no valor devolvido, numa variável não observada ou 
 ordem entre linha e estado **não serve**, por mais claro que pareça ao ler o
 código. Troque o defeito, ou observe a variável em que ele se manifesta, se a
 visualização souber desenhá-la.
+
+**Confira também o último quadro da versão correta.** O estado é capturado
+antes de cada instrução (D1), então a última alteração do programa só aparece
+no desenho se houver alguma instrução depois dela. Quando a última coisa
+executada é uma escrita — o `empilhar` final de um laço, por exemplo —, o
+resultado nunca é desenhado, e quem corrigir o defeito vê a estrutura
+"errada" no fim. Um `return` depois da escrita resolve.
 
 Exercício novo entra no teste sozinho, por estar no `catalogo`. Não o acrescente
 a `PENDENTES`: essa lista existe só para exercícios já publicados que a
