@@ -48,8 +48,10 @@ function desenfileirar() {
 
 function atenderTodos() {
   var saida = [];
+  var quantidade = 0;
   while (!estaVazia()) {
-    saida[saida.length] = desenfileirar();
+    saida[quantidade] = desenfileirar();
+    quantidade = quantidade + 1;
   }
   return saida;
 }
@@ -84,8 +86,10 @@ function desenfileirar() {
 
 function atenderTodos() {
   var saida = [];
+  var quantidade = 0;
   while (!estaVazia()) {
-    saida[saida.length] = desenfileirar();
+    saida[quantidade] = desenfileirar();
+    quantidade = quantidade + 1;
   }
   return saida;
 }
