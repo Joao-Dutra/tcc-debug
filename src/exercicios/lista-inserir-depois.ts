@@ -20,14 +20,21 @@ export const listaInserirDepois: Exercicio = {
   estrutura: 'lista-encadeada',
   categoriaDefeito: 'ordem-de-operacoes',
   dificuldade: 2,
-  linhaDoDefeito: 7,
+  linhaDoDefeito: 14,
   variaveisObservadas: ['cabeca', 'atual'],
 
-  codigoComDefeito: `var cabeca = { valor: 10, proximo: { valor: 30, proximo: null } };
+  codigoComDefeito: `class No {
+  constructor(valor, proximo) {
+    this.valor = valor;
+    this.proximo = proximo;
+  }
+}
+
+var cabeca = new No(10, new No(30, null));
 var atual = null;
 
 function inserirDepois(no, valor) {
-  var novo = { valor: valor, proximo: null };
+  var novo = new No(valor, null);
   atual = novo;
   no.proximo = novo;
   novo.proximo = no.proximo;
@@ -36,11 +43,18 @@ function inserirDepois(no, valor) {
 
 inserirDepois(cabeca, 20);`,
 
-  codigoCorreto: `var cabeca = { valor: 10, proximo: { valor: 30, proximo: null } };
+  codigoCorreto: `class No {
+  constructor(valor, proximo) {
+    this.valor = valor;
+    this.proximo = proximo;
+  }
+}
+
+var cabeca = new No(10, new No(30, null));
 var atual = null;
 
 function inserirDepois(no, valor) {
-  var novo = { valor: valor, proximo: null };
+  var novo = new No(valor, null);
   atual = novo;
   novo.proximo = no.proximo;
   no.proximo = novo;

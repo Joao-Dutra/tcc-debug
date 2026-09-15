@@ -63,6 +63,8 @@ Use:
 - atribuição direta em posição de vetor: `itens[topo] = valor`;
 - `==` e `!=` nas comparações de igualdade;
 - funções declaradas com `function`;
+- nós de lista como instâncias de uma classe `No`, criados com
+  `new No(valor, proximo)`, e não como literal de objeto;
 - pilha como vetor de capacidade fixa mais índice de topo, sem encolher o
   vetor (D18).
 

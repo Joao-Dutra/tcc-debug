@@ -21,10 +21,17 @@ export const listaInserirPosicao: Exercicio = {
   estrutura: 'lista-encadeada',
   categoriaDefeito: 'condicao-de-parada',
   dificuldade: 3,
-  linhaDoDefeito: 10,
+  linhaDoDefeito: 17,
   variaveisObservadas: ['cabeca', 'atual'],
 
-  codigoComDefeito: `var cabeca = { valor: 10, proximo: { valor: 30, proximo: null } };
+  codigoComDefeito: `class No {
+  constructor(valor, proximo) {
+    this.valor = valor;
+    this.proximo = proximo;
+  }
+}
+
+var cabeca = new No(10, new No(30, null));
 var atual = null;
 
 function inserirNaPosicao(posicao, valor) {
@@ -40,7 +47,7 @@ function inserirNaPosicao(posicao, valor) {
   if (atual == null) {
     return false;
   }
-  var novo = { valor: valor, proximo: atual.proximo };
+  var novo = new No(valor, atual.proximo);
   atual.proximo = novo;
   return true;
 }
@@ -48,7 +55,14 @@ function inserirNaPosicao(posicao, valor) {
 var aceitouInvalida = inserirNaPosicao(4, 99);
 var aceitouValida = inserirNaPosicao(1, 20);`,
 
-  codigoCorreto: `var cabeca = { valor: 10, proximo: { valor: 30, proximo: null } };
+  codigoCorreto: `class No {
+  constructor(valor, proximo) {
+    this.valor = valor;
+    this.proximo = proximo;
+  }
+}
+
+var cabeca = new No(10, new No(30, null));
 var atual = null;
 
 function inserirNaPosicao(posicao, valor) {
@@ -64,7 +78,7 @@ function inserirNaPosicao(posicao, valor) {
   if (atual == null) {
     return false;
   }
-  var novo = { valor: valor, proximo: atual.proximo };
+  var novo = new No(valor, atual.proximo);
   atual.proximo = novo;
   return true;
 }
