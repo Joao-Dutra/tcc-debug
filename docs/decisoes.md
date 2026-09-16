@@ -430,6 +430,34 @@ opina sobre ele.
 | Marcador fora da estrutura | sem cor própria | posição além da ponta, mais rótulo |
 | Ponteiro nulo | sem cor própria | seta que termina em aterramento; numa variável, estacionada fora da fileira, mais rótulo |
 | Ligação cíclica | vermelho | gancho por baixo da fileira, seta de retorno, rótulo |
+| Posição vazia da capacidade | cor da moldura | contorno pontilhado, sem preenchimento e sem nada escrito dentro |
+
+**O sétimo estado: posição vazia da capacidade.** É a posição que existe no
+vetor de capacidade fixa e nunca recebeu valor. Não se confunde com a célula
+consumida, e a diferença é conceitual antes de ser visual: uma é espaço que
+nunca foi usado, a outra é elemento que saiu da estrutura.
+
+A distinção é carregada pela forma, e não pela cor: a vazia é pontilhada e não
+tem nada dentro; a consumida é tracejada e mostra o valor esmaecido. É a
+ausência de conteúdo que separa as duas, o que sobrevive à escala de cinza e ao
+apoio mínimo. A cor acompanha: a vazia usa `--posicao-vazia`, um traço de
+estrutura escurecido até 3,2:1 sobre a bancada — da família da moldura, como a
+base da pilha e o contorno da fileira, e não da tinta do conteúdo. Contra a
+consumida ela fica a ΔE 12, que é a contrapartida de escurecer o bastante para
+alcançar contraste; por isso a forma é que decide.
+
+**Capacidade fixa ou dinâmica é propriedade do exercício.** O exercício de
+capacidade fixa declara `capacidade` no próprio código, e a variável é
+observada como `topo`. O visualizador desenha o contorno da capacidade quando
+ela existe, e só os blocos que existem quando ela não existe — em pilha
+dinâmica os blocos simplesmente aparecem conforme entram.
+
+Não é escolha do estudante, e não podia ser: dois participantes no mesmo
+exercício precisam ler o mesmo código e ver o mesmo desenho, senão a
+comparação entre eles deixa de valer. Também não é um campo novo em
+`Exercicio`: o visualizador é puro e não recebe o exercício (ver a skill
+`criar-visualizador`), então a informação chega por onde tudo chega, que é o
+instantâneo.
 
 **A opacidade reduzida não alcança a borda da célula consumida.** Opacidade
 sinaliza "apagado"; o tracejado carrega a forma, e forma não pode perder

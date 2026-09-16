@@ -39,8 +39,9 @@ não da leitura do código — ver a verificação obrigatória abaixo.
    silenciosamente sai do lugar.
 7. **Liste em `variaveisObservadas`** apenas o que a visualização precisa. Toda
    variável observada entra em cada instantâneo e infla a execução. E só o que
-   o visualizador da estrutura de fato desenha: a pilha desenha `itens` e
-   `topo`; a fila, `itens`, `inicio` e `fim`; o vetor, `itens` e `indice`; a
+   o visualizador da estrutura de fato desenha: a pilha desenha `itens`,
+   `topo` e, quando existe, `capacidade`; a fila, `itens`, `inicio` e `fim`; o
+   vetor, `itens` e `indice`; a
    lista, `cabeca`, `atual` e qualquer outra variável que seja nó ou `null`.
    Observar uma variável que o desenho ignora — o vetor auxiliar de um
    exercício de pilha, por exemplo — faz a verificação de divergência aprovar
@@ -65,8 +66,10 @@ Use:
 - funções declaradas com `function`;
 - nós de lista como instâncias de uma classe `No`, criados com
   `new No(valor, proximo)`, e não como literal de objeto;
-- pilha como vetor de capacidade fixa mais índice de topo, sem encolher o
-  vetor (D18).
+- pilha como vetor mais índice de topo, sem encolher o vetor (D18). Pilha de
+  capacidade fixa declara `capacidade` e a observa, e o desenho mostra as
+  posições ainda não usadas; pilha dinâmica não declara capacidade nenhuma. A
+  escolha é do exercício, nunca do estudante (D10).
 
 Não use:
 

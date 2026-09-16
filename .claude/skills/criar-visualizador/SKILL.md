@@ -71,6 +71,12 @@ exercício.
 | ativa | dentro do intervalo dos marcadores: borda contínua, opacidade cheia |
 | consumida | fora do intervalo: borda tracejada em opacidade cheia; fundo e conteúdo esmaecidos com `opacidadeDoConteudo` — nunca num grupo que envolva a borda |
 | apontada | a posição que o marcador indica: ganha um anel âmbar em volta |
+| vazia | posição da capacidade que nunca recebeu valor: contorno pontilhado com `POSICAO_VAZIA`, sem preenchimento e sem nada dentro — não confundir com consumida, que tem valor esmaecido |
+
+**Capacidade fixa é dado do instantâneo, não do componente.** Quando o
+exercício declara `capacidade` e a observa, o desenho mostra as posições ainda
+não usadas; quando não declara, a estrutura é dinâmica e só aparece o que
+existe. O componente não recebe o exercício e não decide isso (D10).
 
 **Cor nunca é o único portador.** O traço da borda separa ativa de consumida e
 o anel separa a apontada das demais. As duas distinções sobrevivem em escala de

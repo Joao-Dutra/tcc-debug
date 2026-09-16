@@ -63,6 +63,26 @@ export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
 };
 
 /**
+ * Posição vazia da capacidade (D10): existe no vetor de capacidade fixa e
+ * nunca recebeu valor. Não é elemento que saiu da estrutura — é espaço que
+ * nunca foi usado, e a diferença entre as duas coisas é o que este estado
+ * sinaliza.
+ *
+ * Por isso o contorno é pontilhado, e não tracejado como o da consumida, e
+ * nada é desenhado dentro: sem preenchimento, sem valor, sem índice. É a
+ * ausência de conteúdo que separa os dois estados, mesmo em escala de cinza e
+ * mesmo no apoio mínimo, onde não há rótulo para socorrer.
+ *
+ * Só aparece onde há capacidade declarada. Pilha dinâmica não tem contorno de
+ * capacidade: os blocos simplesmente aparecem.
+ */
+export const POSICAO_VAZIA = {
+  classe: 'svg-posicao-vazia',
+  strokeDasharray: '1 4',
+  espessura: 1.5,
+};
+
+/**
  * Anel do elemento que os marcadores apontam como o próximo a ser tratado.
  *
  * A cor é deliberadamente âmbar, e não a de erro: o anel diz o que o programa

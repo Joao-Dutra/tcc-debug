@@ -24,6 +24,16 @@
      esmaecidos. A opacidade diz "apagado" e não pode alcançar a borda: é o
      tracejado que carrega a forma, e forma não pode perder contraste.
 
+   posição vazia da capacidade
+     posição que existe no vetor de capacidade fixa e nunca recebeu valor. Não
+     é elemento que saiu da estrutura, é espaço que nunca foi usado.
+     forma: contorno pontilhado, sem preenchimento e sem nada escrito dentro —
+     a consumida é tracejada e mostra o valor esmaecido. É a ausência de
+     conteúdo que separa as duas.
+     cor da moldura, e não a do conteúdo: nem a borda da ativa, nem o traço da
+     consumida. Só aparece onde a capacidade é declarada; pilha dinâmica não
+     tem contorno de capacidade.
+
    elemento apontado pelo marcador
      a posição que o marcador indica agora, segundo o estado atual.
      forma: anel em volta da célula.
@@ -69,6 +79,10 @@
   --celula-consumida-traco: var(--tinta-suave);
   --elemento-apontado: var(--destaque);
   --ligacao-ciclica: var(--erro);
+  /* Moldura da capacidade. Traço de estrutura escurecido até 3:1 sobre a
+     bancada: é da família da base da pilha e do contorno da fileira, e não da
+     tinta do conteúdo. */
+  --posicao-vazia: #8a7d63;
 
   /* Tipografia. */
   --familia: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -268,6 +282,7 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
 .svg-anel { stroke: var(--elemento-apontado); }
 .svg-ciclo { stroke: var(--ligacao-ciclica); }
 .svg-ciclo-seta { fill: var(--ligacao-ciclica); }
+.svg-posicao-vazia { stroke: var(--posicao-vazia); }
 .svg-divisoria-ativa { stroke: var(--celula-ativa-traco); }
 .svg-divisoria-consumida { stroke: var(--celula-consumida-traco); }
 /* Nome de campo e valor em largura fixa, como no código: é a correspondência
