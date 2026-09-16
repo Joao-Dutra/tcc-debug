@@ -3,6 +3,7 @@ import { vetorZerarNegativos } from './vetor-zerar-negativos';
 import { vetorDobrar } from './vetor-dobrar';
 import { pilhaDesempilhar } from './pilha-desempilhar';
 import { pilhaReverter } from './pilha-reverter';
+import { pilhaInverterPalavra } from './pilha-inverter-palavra';
 import { filaAtenderTodos } from './fila-atender-todos';
 import { filaInverter } from './fila-inverter';
 import { listaInserirDepois } from './lista-inserir-depois';
@@ -24,6 +25,7 @@ export const catalogo: Exercicio[] = [
   vetorDobrar,
   pilhaDesempilhar,
   pilhaReverter,
+  pilhaInverterPalavra,
   filaAtenderTodos,
   filaInverter,
   listaInserirDepois,
