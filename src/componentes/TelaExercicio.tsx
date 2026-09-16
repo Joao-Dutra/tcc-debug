@@ -195,6 +195,12 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
         </p>
       </header>
 
+      {/* Os casos vêm logo depois do enunciado: o teste que falha é o que
+          motiva a investigação, e é dele que o estudante parte (D10). */}
+      <div className="faixa-casos">
+        <PainelDeCasos resultado={resultado} detalhe={detalhe} />
+      </div>
+
       <main className="grade-exercicio">
         <section className="painel">
           <div className="cabecalho-painel">
@@ -230,55 +236,50 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           </p>
         </section>
 
-        {/* Dicas no alto, junto da visualização (2a): é para lá que elas mandam
-            olhar. No apoio mínimo não há dicas, e a visualização sobe. */}
-        <div className="coluna-direita">
-          {dicasPermitidas > 0 && (
-            <section className="painel">
-              <h2>Dicas</h2>
-              {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
-                <p key={d} className="dica">{d}</p>
-              ))}
-              {dicasAbertas < dicasPermitidas && (
-                <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
-              )}
-            </section>
-          )}
-
-          <section className="painel">
-            <h2>Visualização</h2>
-            <div className="bancada">
-              {Visualizador ? (
-                <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
-              ) : (
-                <p className="rodape-painel">
-                  Ainda não há visualizador para esta estrutura de dados.
-                </p>
-              )}
-            </div>
-            {/* Junto à animação de propósito (D10): manter de cabeça a
-                correspondência entre a instrução e o quadro consome memória de
-                trabalho, e não é esse o esforço que o estudo quer observar.
-
-                Fica fora do fading de D9 — aparece em todos os níveis, por ser
-                também o principal recurso de legibilidade da ferramenta. Por
-                isso mora na tela, e não no visualizador. */}
-            {/* Linha nula é o quadro final, depois do fim do programa (D1). */}
-            {linhaAtual !== undefined && (
-              <p className="indicador-linha">
-                {linhaAtual === null ? 'Execução terminada' : `Executando a linha ${linhaAtual}`}
+        <section className="painel">
+          <h2>Visualização</h2>
+          <div className="bancada">
+            {Visualizador ? (
+              <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
+            ) : (
+              <p className="rodape-painel">
+                Ainda não há visualizador para esta estrutura de dados.
               </p>
             )}
-            <ControlesReprodutor reprodutor={reprodutor} />
-          </section>
-        </div>
+          </div>
+          {/* Junto à animação de propósito (D10): manter de cabeça a
+              correspondência entre a instrução e o quadro consome memória de
+              trabalho, e não é esse o esforço que o estudo quer observar.
+
+              Fica fora do fading de D9 — aparece em todos os níveis, por ser
+              também o principal recurso de legibilidade da ferramenta. Por
+              isso mora na tela, e não no visualizador. */}
+          {/* Linha nula é o quadro final, depois do fim do programa (D1). */}
+          {linhaAtual !== undefined && (
+            <p className="indicador-linha">
+              {linhaAtual === null ? 'Execução terminada' : `Executando a linha ${linhaAtual}`}
+            </p>
+          )}
+          <ControlesReprodutor reprodutor={reprodutor} />
+        </section>
       </main>
 
-      {/* Embaixo, o retorno do que o estudante fez: os casos à esquerda, as
-          linhas que ele apontou à direita. O painel das linhas fica sempre no
-          lugar, mesmo vazio, para o alvo da declaração não aparecer do nada. */}
+      {/* Embaixo, o que apoia e o que devolve: as dicas, que mandam olhar para
+          a visualização, e as linhas que o estudante apontou. O painel das
+          linhas fica sempre no lugar, mesmo vazio, para o alvo da declaração
+          não aparecer do nada. */}
       <div className="grade-retorno">
-        <PainelDeCasos resultado={resultado} detalhe={detalhe} />
+        {dicasPermitidas > 0 && (
+          <section className="painel">
+            <h2>Dicas</h2>
+            {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
+              <p key={d} className="dica">{d}</p>
+            ))}
+            {dicasAbertas < dicasPermitidas && (
+              <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
+            )}
+          </section>
+        )}
         <section className="painel">
           <h2>Onde você apontou</h2>
           {metricas.localizacoes.length === 0 ? (

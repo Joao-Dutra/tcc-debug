@@ -333,14 +333,18 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
 .tela-exercicio .nivel.ativo { font-weight: 500; color: var(--superficie); }
 .tela-exercicio .aviso-troca { font: 400 10px var(--familia-mono); }
 
-/* Arranjo: código à esquerda; dicas e visualização à direita, em cima; o
-   retorno do que o estudante fez, embaixo. */
+/* Arranjo (D10), de cima para baixo: enunciado e casos de teste em faixas de
+   largura inteira; código e visualização lado a lado, com a mesma altura; as
+   dicas e o retorno da declaração embaixo. */
+.tela-exercicio .faixa-casos { margin-top: var(--esp-24); }
+/* `stretch` no lugar do `start` da regra base: é o que iguala a altura dos
+   dois painéis do meio, pela do editor, que é o mais alto. */
 .tela-exercicio .grade-exercicio { grid-template-columns: 1.02fr 1fr;
-  gap: var(--esp-20); margin-top: var(--esp-24); }
-.tela-exercicio .coluna-direita { display: flex; flex-direction: column;
-  gap: var(--esp-20); }
-.tela-exercicio .grade-retorno { display: grid; grid-template-columns: 1.15fr 1fr;
+  gap: var(--esp-20); margin-top: var(--esp-20); align-items: stretch; }
+.tela-exercicio .grade-retorno { display: grid; grid-template-columns: 1fr 1fr;
   gap: var(--esp-20); margin-top: var(--esp-20); align-items: start; }
+/* No apoio mínimo não há dicas, e o que resta ocupa a faixa inteira. */
+.tela-exercicio .grade-retorno > .painel:only-child { grid-column: 1 / -1; }
 @media (max-width: 900px) {
   .tela-exercicio .grade-exercicio,
   .tela-exercicio .grade-retorno { grid-template-columns: 1fr; }

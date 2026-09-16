@@ -427,6 +427,18 @@ a 0,45, caía ao mesmo 1,8:1 da célula consumida. As demais referências de fun
 com contraste baixo — o contorno da fileira, a base da pilha, as divisórias
 internas do nó — ficam como estão: não são fronteira de estado.
 
+**Arranjo da tela do exercício.** De cima para baixo: enunciado e casos de
+teste em faixas de largura inteira; código e visualização lado a lado, com a
+mesma altura; dicas e o retorno da declaração de localização embaixo. Em telas
+estreitas, código e visualização empilham nessa ordem — primeiro o código, que
+é onde o estudante age.
+
+Os casos de teste passaram a ser o primeiro painel depois do enunciado. O teste
+que falha é o que motiva a investigação: é o ponto de partida, e não o
+resultado dela. Antes ficavam no rodapé, junto do retorno da declaração, o que
+os lia como consequência. O que cada nível de andaime revela deles não muda
+(D9).
+
 *Ponteiro nulo* se chamava *ligação perdida* até D14. O nome antigo julgava:
 descrevia como perda o fim de uma lista correta, onde nada se perdeu e o último
 nó simplesmente não aponta para lugar nenhum.
