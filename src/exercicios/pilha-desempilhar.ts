@@ -4,38 +4,43 @@ import type { Exercicio } from '../nucleo/tipos';
  * Exercício de referência do projeto — é a fatia vertical que valida a
  * arquitetura inteira. Use-o como modelo ao criar novos exercícios.
  *
- * Modelo da pilha (D18): um vetor de capacidade fixa e um índice de topo, como
- * a estrutura é ensinada em Java. A pilha vai da posição 0 até o topo; o que
- * está acima dele continua no vetor, mas fora da pilha, e o visualizador
- * desenha essas posições como células consumidas.
+ * Modelo da pilha (D18): um vetor com índice de topo, sem truncagem. A pilha
+ * vai da posição 0 até o topo; o que está acima dele continua no vetor, mas
+ * fora da pilha, e o visualizador desenha essas posições como células
+ * consumidas.
+ *
+ * Esta pilha é de capacidade fixa, e é o exercício que declara isso: a
+ * variável `capacidade` é observada, e o desenho mostra as posições que ainda
+ * não receberam valor como contorno pontilhado (D10). A pilha dinâmica do
+ * catálogo não declara capacidade, e lá os blocos só aparecem.
  *
  * Defeito implantado: empilhar avança o topo e escreve o valor uma posição
  * acima dele. Cada valor empilhado vai parar fora da pilha, e o topo fica
  * sobre uma posição que ninguém escreveu. O quadro que denuncia é o do
  * primeiro empilhar().
- *
- * Os dois defeitos anteriores foram trocados: o primeiro mudava só o valor
- * devolvido (D16), e o segundo dependia de atribuir a `length` para encolher o
- * vetor, semântica que só existe em JavaScript (D17, D18).
  */
 export const pilhaDesempilhar: Exercicio = {
   id: 'pilha-desempilhar',
   titulo: 'Pilha: o valor empilhado fica fora da pilha',
   enunciado:
-    'A pilha guarda seus elementos no vetor itens, da posição 0 até a posição topo; o que ' +
-    'está acima do topo não faz parte dela. Ela deve seguir a política LIFO: o último ' +
-    'elemento empilhado é o primeiro a sair. Execute e acompanhe, na visualização, a caixa ' +
-    'em que cada valor empilhado é guardado e a posição do topo.',
+    'A pilha guarda seus elementos num vetor de capacidade fixa, da posição 0 até a posição ' +
+    'topo; o que está acima do topo não faz parte dela. Ela deve seguir a política LIFO: o ' +
+    'último elemento empilhado é o primeiro a sair. Execute e acompanhe, na visualização, a ' +
+    'caixa em que cada valor empilhado é guardado e a posição do topo.',
   estrutura: 'pilha',
   categoriaDefeito: 'indice-deslocado',
   dificuldade: 1,
-  linhaDoDefeito: 6,
-  variaveisObservadas: ['itens', 'topo'],
+  linhaDoDefeito: 10,
+  variaveisObservadas: ['itens', 'topo', 'capacidade'],
 
-  codigoComDefeito: `var itens = [0, 0, 0, 0];
+  codigoComDefeito: `var capacidade = 4;
+var itens = [];
 var topo = -1;
 
 function empilhar(valor) {
+  if (topo + 1 == capacidade) {
+    return -1;
+  }
   topo = topo + 1;
   itens[topo + 1] = valor;
   return topo;
@@ -56,10 +61,14 @@ empilhar(30);
 var primeiraSaida = desempilhar();
 var segundaSaida = desempilhar();`,
 
-  codigoCorreto: `var itens = [0, 0, 0, 0];
+  codigoCorreto: `var capacidade = 4;
+var itens = [];
 var topo = -1;
 
 function empilhar(valor) {
+  if (topo + 1 == capacidade) {
+    return -1;
+  }
   topo = topo + 1;
   itens[topo] = valor;
   return topo;
