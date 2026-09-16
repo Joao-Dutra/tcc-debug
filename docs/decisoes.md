@@ -204,6 +204,26 @@ quebra o ciclo monta/desmonta/monta do StrictMode.
 campo em `Exercicio`, e não por um identificador fixo dentro da tela, mantém a
 tela genérica e deixa a escolha onde ela pertence.
 
+**A ordem do catálogo é progressão didática.** Vetor, pilha, fila e lista
+encadeada, e dentro de cada estrutura por complexidade crescente — a ordem em
+que a disciplina apresenta as estruturas, e não a ordem em que os exercícios
+foram escritos.
+
+**O exercício de entrada é de vetor.** É a estrutura mais simples e a única
+sem marcadores próprios: o desenho tem as posições e o índice, e nada mais. O
+estudante aprende a ler a ferramenta antes de precisar acompanhar topo, início
+e fim ao mesmo tempo. Antes o tutorial era o da pilha, que já pedia a leitura
+de um marcador. Por ser o primeiro contato com a ferramenta, o enunciado do
+tutorial também explica a tela: onde ficam os casos de teste, o que os
+controles da visualização fazem, que clicar no número da linha declara a
+suspeita e que o editor aceita correções.
+
+**Ordem de apresentação não é sequência obrigatória.** Nenhum exercício é
+bloqueado, e todos ficam abertos nos três apoios desde o começo. Impor
+sequência criaria progresso — quem parou onde —, que é justamente o que esta
+tela não mostra, e limitaria o participante à ordem prevista quando o estudo
+manda o link direto do exercício (ver D9).
+
 **Nada de progresso na lista.** Sem marcação de resolvido, pontuação ou
 histórico. Saber de antemão quais exercícios já caíram muda a forma como o
 estudante encara os que faltam, e não há hipótese no trabalho que justifique

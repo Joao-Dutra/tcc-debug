@@ -13,10 +13,16 @@ export const vetorZerarNegativos: Exercicio = {
   enunciado:
     'O programa deve percorrer o vetor e substituir por zero todo valor negativo, ' +
     'deixando os demais como estão. Execute e acompanhe o índice na visualização ' +
-    'enquanto as posições são verificadas.',
+    'enquanto as posições são verificadas. ' +
+    'Este é o exercício de entrada, e vale conhecer a tela: os casos de teste, logo ' +
+    'abaixo, dizem o que era esperado e o que o programa devolveu; a visualização anima ' +
+    'a execução, e os controles dela avançam, voltam e param em qualquer passo; clicar ' +
+    'no número de uma linha declara onde você acredita que está o defeito, quantas vezes ' +
+    'quiser; e o editor aceita correções, que valem na execução seguinte.',
   estrutura: 'vetor',
   categoriaDefeito: 'inicializacao-incorreta',
   dificuldade: 1,
+  tutorial: true,
   linhaDoDefeito: 4,
   variaveisObservadas: ['itens', 'indice'],
 

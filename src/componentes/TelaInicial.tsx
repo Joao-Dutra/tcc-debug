@@ -20,7 +20,10 @@ const NOME_DA_ESTRUTURA: Record<TipoEstrutura, string> = {
 
 export function TelaInicial() {
   // O tutorial vem primeiro. A ordenação é estável, então o resto mantém a
-  // ordem do catálogo, que é crescente em dificuldade.
+  // ordem do catálogo: vetor, pilha, fila e lista, e por complexidade dentro
+  // de cada estrutura (D8). Hoje o tutorial já é o primeiro do catálogo, e
+  // esta ordenação é só a garantia de que continue sendo, venha ele de onde
+  // vier.
   const exercicios = [...catalogo].sort(
     (a, b) => Number(b.tutorial ?? false) - Number(a.tutorial ?? false)
   );
