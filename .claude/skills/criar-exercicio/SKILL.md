@@ -149,6 +149,22 @@ linha do defeito**. A progressão pretendida é:
 A terceira dica deixa o estudante a um passo da correção — não faz a correção
 por ele.
 
+## Miniatura da lista (D20)
+
+O campo opcional `miniatura` guarda as variáveis de um instantâneo, que a
+vitrine desenha com o próprio visualizador no cartão do exercício. Sem o campo,
+o cartão aparece sem miniatura — é permitido.
+
+Quando preencher, o estado **nunca** pode ser o quadro que denuncia o defeito:
+tem de ser um estado inicial ou intermediário que as duas versões atravessam
+antes de divergirem. Copie-o da execução, e não o escreva de cabeça — na lista
+encadeada, com os `__id` e `__ref` que o Worker produz (D12). O teste do
+quadro-denúncia confere isso por execução e reprova o exercício se o estado vier
+depois da divergência ou não existir em execução nenhuma.
+
+Prefira um estado que mostre a estrutura com conteúdo, e evite o quadro
+imediatamente anterior à divergência quando ele já sugere onde olhar.
+
 ## Antes de considerar pronto
 
 - [ ] O código com defeito compila e executa sem lançar exceção.
@@ -159,3 +175,5 @@ por ele.
       em estado observável, verificado por execução (D16).
 - [ ] `codigoCorreto` passa em todos os casos.
 - [ ] O exercício foi adicionado ao `catalogo`.
+- [ ] Se tem `miniatura`, o estado é anterior à divergência — o mesmo
+      `npx vitest run src/exercicios` confere.
