@@ -19,6 +19,11 @@ export const vetorDobrar: Exercicio = {
   dificuldade: 2,
   linhaDoDefeito: 6,
   variaveisObservadas: ['itens', 'indice'],
+  // Miniatura da lista: o laço acabando de começar.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: [3, 5, 2, 8], indice: 0 },
+  },
 
   codigoComDefeito: `var itens = [3, 5, 2, 8];
 var indice = 0;

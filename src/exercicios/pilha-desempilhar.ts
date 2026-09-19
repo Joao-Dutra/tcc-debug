@@ -32,6 +32,11 @@ export const pilhaDesempilhar: Exercicio = {
   dificuldade: 1,
   linhaDoDefeito: 10,
   variaveisObservadas: ['itens', 'topo', 'capacidade'],
+  // Miniatura da lista: a pilha vazia, antes do primeiro empilhar().
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: [], topo: -1, capacidade: 4 },
+  },
 
   codigoComDefeito: `var capacidade = 4;
 var itens = [];

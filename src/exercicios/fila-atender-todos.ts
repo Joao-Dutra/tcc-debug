@@ -22,6 +22,11 @@ export const filaAtenderTodos: Exercicio = {
   dificuldade: 2,
   linhaDoDefeito: 12,
   variaveisObservadas: ['itens', 'inicio', 'fim'],
+  // Miniatura da lista: os três na fila, antes do primeiro atendimento.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: ['ana', 'bruno', 'carla'], inicio: 0, fim: 2 },
+  },
 
   codigoComDefeito: `var itens = [];
 var inicio = 0;

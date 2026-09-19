@@ -25,6 +25,11 @@ export const pilhaReverter: Exercicio = {
   dificuldade: 2,
   linhaDoDefeito: 21,
   variaveisObservadas: ['itens', 'topo'],
+  // Miniatura da lista: os três valores empilhados.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: [10, 20, 30], topo: 2 },
+  },
 
   codigoComDefeito: `var itens = [];
 var topo = -1;

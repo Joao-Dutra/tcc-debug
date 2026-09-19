@@ -27,6 +27,11 @@ export const filaInverter: Exercicio = {
   dificuldade: 3,
   linhaDoDefeito: 21,
   variaveisObservadas: ['itens', 'inicio', 'fim'],
+  // Miniatura da lista: a fila com o primeiro já atendido.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: ['ana', 'bruno', 'carla'], inicio: 1, fim: 2 },
+  },
 
   codigoComDefeito: `var itens = [];
 var inicio = 0;

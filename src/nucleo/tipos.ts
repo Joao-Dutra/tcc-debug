@@ -72,7 +72,24 @@ export interface Exercicio {
   casosDeTeste: CasoDeTeste[];
   /** Dicas em ordem crescente de revelação. */
   dicas: string[];
+  /**
+   * Estado desenhado na miniatura do cartão, na lista de exercícios.
+   *
+   * Nunca o quadro que denuncia o defeito: a lista seria o primeiro lugar a
+   * entregar o que o estudante precisa encontrar. Por isso é um estado inicial
+   * ou intermediário, que as duas versões atravessam antes de divergirem — e o
+   * teste de quadro-denúncia confere isso por execução, não por leitura.
+   *
+   * Opcional: o exercício sem ele aparece num cartão sem miniatura.
+   */
+  miniatura?: EstadoDaMiniatura;
 }
+
+/**
+ * Só as variáveis de um instantâneo. Ordem e linha não fazem sentido fora de
+ * uma execução, e escrevê-las à mão seria inventar um quadro.
+ */
+export type EstadoDaMiniatura = Pick<Instantaneo, 'variaveis'>;
 
 export interface CasoDeTeste {
   descricao: string;

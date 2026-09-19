@@ -25,6 +25,11 @@ export const vetorZerarNegativos: Exercicio = {
   tutorial: true,
   linhaDoDefeito: 4,
   variaveisObservadas: ['itens', 'indice'],
+  // Miniatura da lista: o vetor antes do laço.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: [-4, 2, -7, 9] },
+  },
 
   codigoComDefeito: `var itens = [-4, 2, -7, 9];
 

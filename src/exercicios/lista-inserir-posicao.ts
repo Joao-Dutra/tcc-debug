@@ -23,6 +23,14 @@ export const listaInserirPosicao: Exercicio = {
   dificuldade: 3,
   linhaDoDefeito: 17,
   variaveisObservadas: ['cabeca', 'atual'],
+  // Miniatura da lista: a caminhada partindo da cabeça.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: {
+      cabeca: { __id: 0, valor: 10, proximo: { __id: 1, valor: 30, proximo: null } },
+      atual: { __ref: 0 },
+    },
+  },
 
   codigoComDefeito: `class No {
   constructor(valor, proximo) {

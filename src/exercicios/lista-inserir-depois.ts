@@ -22,6 +22,14 @@ export const listaInserirDepois: Exercicio = {
   dificuldade: 2,
   linhaDoDefeito: 14,
   variaveisObservadas: ['cabeca', 'atual'],
+  // Miniatura da lista: o nó novo criado, ainda solto.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: {
+      cabeca: { __id: 0, valor: 10, proximo: { __id: 1, valor: 30, proximo: null } },
+      atual: { __id: 2, valor: 20, proximo: null },
+    },
+  },
 
   codigoComDefeito: `class No {
   constructor(valor, proximo) {

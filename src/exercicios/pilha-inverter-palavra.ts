@@ -21,6 +21,11 @@ export const pilhaInverterPalavra: Exercicio = {
   dificuldade: 2,
   linhaDoDefeito: 23,
   variaveisObservadas: ['itens', 'topo'],
+  // Miniatura da lista: a palavra inteira empilhada.
+  // Estado que as duas versões atravessam antes de divergirem (D20).
+  miniatura: {
+    variaveis: { itens: ['P', 'I', 'L', 'H', 'A'], topo: 4 },
+  },
 
   codigoComDefeito: `var itens = [];
 var topo = -1;
