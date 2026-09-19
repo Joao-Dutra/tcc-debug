@@ -1,5 +1,12 @@
+// Só para este arquivo: o projeto de src/ carrega os tipos do Vite, e este
+// teste lê arquivos do disco. Pelo ?raw do Vite não dá — o vitest desliga o
+// processamento de CSS e o conteúdo chega vazio.
+/// <reference types="node" />
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+
+const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+const main = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
 /**
  * Movimento reduzido, verificado no arquivo (D20).
@@ -14,9 +21,6 @@ import { describe, expect, it } from 'vitest';
  * preferência do sistema chegue até ele, é verificação de navegador e mora nos
  * testes de ponta a ponta.
  */
-
-const css = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
-const main = readFileSync(new URL('../main.tsx', import.meta.url), 'utf8');
 
 interface Regra {
   seletores: string[];
