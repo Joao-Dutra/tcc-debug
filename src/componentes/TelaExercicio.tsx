@@ -327,20 +327,27 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
               </p>
             ) : (
               <ul className="casos apontadas">
-                {metricas.localizacoes.map((l, i) => (
-                  <li key={i} className={l.correta ? 'passou' : 'falhou'}>
-                    <FlagIcon className="icone bandeira" aria-hidden="true" />
-                    <span className="linha">Linha {l.linha}</span>
-                    <span className="veredito">
-                      {l.correta ? (
-                        <CheckIcon className="icone" aria-hidden="true" />
-                      ) : (
-                        <XMarkIcon className="icone" aria-hidden="true" />
-                      )}
-                      {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
-                    </span>
-                  </li>
-                ))}
+                {/* A mais recente em cima: com várias tentativas, o que o
+                    estudante acabou de fazer ficava no fim da lista, fora de
+                    vista. A ordem do registro de métricas não muda — só a
+                    leitura (D20). */}
+                {metricas.localizacoes
+                  .map((l, i) => ({ l, i }))
+                  .reverse()
+                  .map(({ l, i }) => (
+                    <li key={i} className={l.correta ? 'passou' : 'falhou'}>
+                      <FlagIcon className="icone bandeira" aria-hidden="true" />
+                      <span className="linha">Linha {l.linha}</span>
+                      <span className="veredito">
+                        {l.correta ? (
+                          <CheckIcon className="icone" aria-hidden="true" />
+                        ) : (
+                          <XMarkIcon className="icone" aria-hidden="true" />
+                        )}
+                        {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
+                      </span>
+                    </li>
+                  ))}
               </ul>
             )}
           </div>

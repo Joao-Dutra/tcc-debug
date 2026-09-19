@@ -50,3 +50,18 @@ test.describe('continuar sem voltar ao catálogo', () => {
     await expect(page).toHaveURL(/#\/exercicio\/vetor-zerar-negativos\?andaime=com-apoio$/);
   });
 });
+
+test('as linhas apontadas aparecem da mais recente para a mais antiga', async ({ page }) => {
+  await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
+
+  const numeros = page.locator('.cm-lineNumbers .cm-gutterElement');
+  // O gutter tem um elemento de medida antes da primeira linha, então a
+  // linha N é o elemento N.
+  await numeros.nth(3).click();
+  await numeros.nth(7).click();
+
+  const apontadas = page.locator('.apontadas li');
+  await expect(apontadas).toHaveCount(2);
+  await expect(apontadas.first()).toContainText('Linha 7');
+  await expect(apontadas.last()).toContainText('Linha 3');
+});
