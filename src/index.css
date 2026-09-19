@@ -139,11 +139,16 @@
   --acao-forte: var(--anilina-800);  /* hover da ação */
   --acao-rala: var(--anilina-200);   /* fundo sutil da ação */
   --sobre-acao: var(--areia-100);    /* texto e ícone sobre ação e acerto */
+  --foco: var(--anilina-600);
+  --foco-halo: var(--anilina-300);
   --acerto: var(--musgo-700);        /* só o sinal de todos os casos passando */
   --erro: var(--rubi-700);
   --editor-fundo: var(--areia-900);
   --editor-texto: var(--areia-200);
   --editor-suave: var(--areia-500);
+  --rolagem-trilho: var(--areia-300);
+  --rolagem-polegar: var(--areia-500);
+  --rolagem-polegar-ativo: var(--areia-600);
 
   /* Realce de sintaxe do editor (tema em src/componentes/tema-do-editor.ts).
      Uma família por categoria, nenhuma azul, âmbar ou vermelha — são as cores
@@ -223,12 +228,32 @@
   line-height: 1.55;
   color: var(--grafite);
   background: var(--sala);
+  /* Barra de rolagem da página no tom da sala. */
+  scrollbar-color: var(--rolagem-polegar) var(--rolagem-trilho);
 }
 
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--sala); }
 
-:focus-visible { outline: 2px solid var(--acao); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--foco); outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--foco-halo); }
+/* O range desenha o próprio trilho; o anel vai em volta dele, sem halo que
+   engrosse o controle. */
+input[type=range]:focus-visible { box-shadow: none; }
+
+/* Barras de rolagem. `scrollbar-color` é o padrão atual; os pseudo-elementos
+   do WebKit ficam só para navegador que ainda não o entende, porque o Chrome
+   ignora os dois juntos. */
+@supports not (scrollbar-color: auto) {
+  ::-webkit-scrollbar { width: 12px; height: 12px; }
+  ::-webkit-scrollbar-track { background: var(--rolagem-trilho); }
+  ::-webkit-scrollbar-thumb { background: var(--rolagem-polegar); border-radius: 999px;
+    border: 3px solid var(--rolagem-trilho); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--rolagem-polegar-ativo); }
+  .cm-scroller::-webkit-scrollbar-track { background: var(--editor-fundo); }
+  .cm-scroller::-webkit-scrollbar-thumb { background: var(--areia-700);
+    border-color: var(--editor-fundo); }
+}
 
 /* Para quem usa leitor de tela: o ícone some, a palavra fica. */
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -478,7 +503,12 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 /* Editor. O tema de cores está em src/componentes/tema-do-editor.ts; aqui
    fica só o que depende da página. */
 .tela-exercicio .cm-editor { border-radius: var(--raio-placa); color-scheme: dark; }
-.tela-exercicio .cm-scroller { border-radius: var(--raio-placa); }
+.tela-exercicio .cm-scroller { border-radius: var(--raio-placa);
+  scrollbar-color: var(--areia-700) var(--editor-fundo); }
+/* O editor não é um controle nativo, então o anel de foco vem daqui: o
+   mesmo da página, em volta da placa inteira. */
+.tela-exercicio .cm-editor.cm-focused { outline: 2px solid var(--foco); outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--foco-halo); }
 /* O número da linha é o alvo da declaração de localização (D7). Todos se
    comportam igual ao passar o mouse: o convite é para apontar qualquer linha,
    e nenhuma recebe destaque próprio. Sem transição: um realce que esmaece
