@@ -37,6 +37,27 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
  */
 
 /**
+ * Sinal de acerto: todos os casos passaram.
+ *
+ * Não recebe o nível de andaime, e é isso que o torna idêntico nos dois: se a
+ * intensidade do retorno variasse com o apoio, a diferença de desempenho entre
+ * os níveis deixaria de ser atribuível ao apoio (roadmap 1.1). Também não
+ * recebe nada da sessão — responde ao que o estudante acabou de fazer, sem
+ * tempo, contagem ou histórico.
+ */
+export function SinalDeAcerto() {
+  return (
+    <div className="sinal-de-acerto" role="status">
+      <svg viewBox="0 0 72 72" aria-hidden="true">
+        <circle cx="36" cy="36" r="32" />
+        <path d="M22 37 L32 47 L51 27" />
+      </svg>
+      <p>Todos os casos passaram.</p>
+    </div>
+  );
+}
+
+/**
  * Painel dos casos de teste, nos graus de revelação de D9.
  *
  * Componente próprio para poder ser verificado com um resultado fabricado:
@@ -47,9 +68,12 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 export function PainelDeCasos({
   resultado,
   detalhe,
+  rodada = 0,
 }: {
   resultado: ResultadoExecucao | null;
   detalhe: DetalheDosCasos;
+  /** Muda a cada execução, para o selo se traçar de novo a cada acerto. */
+  rodada?: number;
 }) {
   const todosPassaram = resultado?.casos.length
     ? resultado.casos.every((c) => c.passou)
@@ -57,8 +81,9 @@ export function PainelDeCasos({
   const algumFalhou = (resultado?.casos.length ?? 0) > 0 && !todosPassaram;
 
   return (
-    <section className="painel">
-      <h2>Casos de teste</h2>
+    <section className={todosPassaram ? 'painel acertou' : 'painel'}>
+      {/* O sinal fica fora do trecho que varia com o andaime (D9). */}
+      {todosPassaram ? <SinalDeAcerto key={rodada} /> : <h2>Casos de teste</h2>}
       {/* O erro de execução aparece em qualquer nível: sem ele o estudante
           não saberia que o próprio código deixou de rodar, e isso não é
           apoio para encontrar o defeito implantado. */}
@@ -87,7 +112,6 @@ export function PainelDeCasos({
           ))}
         </ul>
       )}
-      {todosPassaram && <p className="sucesso">Todos os casos passaram.</p>}
     </section>
   );
 }
@@ -102,6 +126,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   const [resultado, setResultado] = useState<ResultadoExecucao | null>(null);
   const [rodando, setRodando] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(0);
+  const [rodada, setRodada] = useState(0);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
   const metricas = useMetricas(exercicio.id, exercicio.linhaDoDefeito, andaime);
@@ -140,6 +165,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
     const saida = await executar(exercicio, codigo);
     metricas.registrarExecucao(origem, codigo, saida);
     setResultado(saida);
+    setRodada((r) => r + 1);
     setRodando(false);
   };
 
@@ -213,7 +239,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
       {/* Os casos vêm logo depois do enunciado: o teste que falha é o que
           motiva a investigação, e é dele que o estudante parte (D10). */}
       <div className="faixa-casos">
-        <PainelDeCasos resultado={resultado} detalhe={detalhe} />
+        <PainelDeCasos resultado={resultado} detalhe={detalhe} rodada={rodada} />
       </div>
 
       <main className="grade-exercicio">
