@@ -105,11 +105,12 @@
   --contorno-fileira: var(--regua);
   --sombra-da-peca: var(--regua);
 
-  /* Tipografia. Atkinson Hyperlegible separa 1, l e I, e 0 e O — numa
-     ferramenta cujos defeitos são índice deslocado, é o que a escolha tem de
-     específico (D19). Empacotadas no build (D13); o resto da pilha só entra se
-     o arquivo da fonte faltar. */
-  --familia-texto: "Atkinson Hyperlegible Next", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+  /* Tipografia. Zen Maru Gothic na interface: sans arredondada, de desenho
+     humanista, que tira a frieza sem ficar infantil. Atkinson Hyperlegible
+     Mono no código e nos valores do desenho, onde distinguir 1, l e I, e 0 e
+     O importa — os defeitos são, na maioria, índice deslocado. Empacotadas no
+     build (D13); o resto da pilha só entra se o arquivo da fonte faltar. */
+  --familia-texto: "Zen Maru Gothic", ui-rounded, ui-sans-serif, system-ui, "Segoe UI", sans-serif;
   --familia-mono: "Atkinson Hyperlegible Mono", ui-monospace, Consolas, "Courier New", monospace;
   --fonte-titulo: 32px;
   --fonte-secao: 16px;
@@ -142,7 +143,8 @@
 
   font-family: var(--familia-texto);
   font-size: var(--fonte-corpo);
-  line-height: 1.5;
+  font-weight: 500;
+  line-height: 1.55;
   color: var(--grafite);
   background: var(--sala);
 }

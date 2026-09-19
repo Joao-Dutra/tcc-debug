@@ -13,7 +13,7 @@
     "@codemirror/lang-javascript": "^6.2.5",
     "@codemirror/language": "^6.12.4",
     "@fontsource/atkinson-hyperlegible-mono": "^5.3.0",
-    "@fontsource/atkinson-hyperlegible-next": "^5.3.0",
+    "@fontsource/zen-maru-gothic": "^5.3.0",
     "@heroicons/react": "^2.2.0",
     "@lezer/highlight": "^1.2.3",
     "@uiw/react-codemirror": "^4.25.11",
