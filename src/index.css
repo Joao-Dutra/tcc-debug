@@ -324,33 +324,98 @@ a.nivel:hover { border-color: var(--acao); color: var(--acao); }
 .complexidade { font-variant-numeric: tabular-nums; }
 
 /* ---------------------------------------------------------------------------
-   Lista de exercícios
+   Tela inicial
 
-   Uma régua de linhas, não uma grade de cartões iguais: cada exercício é uma
-   linha com título e metadados à esquerda e as duas aberturas à direita.
-   Nenhuma marca de progresso (D8).
+   Texto pousado na sala, à esquerda, e uma folha de exercício mimeografada à
+   direita, montada em SVG no próprio componente. A folha é a peça ousada da
+   tela; o resto é quieto.
+
+   Três microanimações, com nome: `folha-pousa` roda uma vez, quando a tela
+   abre; `marcador-avanca` e `lupa-investiga` repetem devagar, e são pequenas o
+   bastante para não disputar com a leitura. Com movimento reduzido, nenhuma
+   roda e a folha fica na posição final.
 --------------------------------------------------------------------------- */
-.lista-exercicios { list-style: none; padding: 0; margin: var(--esp-16) 0 0; }
-.cartao-exercicio { display: grid; grid-template-columns: 1fr auto;
-  align-items: center; gap: var(--esp-6) var(--esp-24);
-  padding: 14px 0; border-top: 1px solid var(--regua); }
-.cartao-exercicio:last-child { border-bottom: 1px solid var(--regua); }
-.cartao-exercicio h3 { margin: 0; font-size: 17px; font-weight: 700; }
-.meta-exercicio { grid-column: 1; margin: 0; display: flex; align-items: center;
-  gap: var(--esp-12); flex-wrap: wrap;
-  font-size: var(--fonte-apoio); color: var(--grafite-suave); }
-.cartao-exercicio .abertura { grid-column: 2; grid-row: 1 / span 2; margin: 0; }
-@media (max-width: 640px) {
-  .cartao-exercicio { grid-template-columns: 1fr; }
-  .cartao-exercicio .abertura { grid-column: 1; grid-row: auto; }
-}
-.etiqueta { font-size: var(--fonte-miuda); font-weight: 700;
-  padding: 1px var(--esp-8); border-radius: var(--raio-pilula);
-  background: var(--grafite); color: var(--mesa-de-luz); }
+.inicial { padding-top: var(--esp-20); }
+.marca { display: inline-flex; align-items: center; gap: var(--esp-8); margin: 0;
+  font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
+.marca svg { width: 24px; height: 26px; }
 
-.rodape-inicial { margin-top: var(--esp-4); }
-button.discreto { font-size: var(--fonte-miuda); padding: 5px 11px;
-  background: transparent; color: var(--grafite-suave); }
+.abertura-inicial { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: var(--esp-48); align-items: center; margin-top: var(--esp-32); }
+.chamada h1 { font-size: clamp(34px, 4.4vw, 52px); line-height: 1.06; font-weight: 700;
+  letter-spacing: -.025em; margin: 0 0 var(--esp-20); max-width: 17ch; text-wrap: balance; }
+.chamada p { font-size: 18px; line-height: 1.6; max-width: 46ch; margin: 0 0 var(--esp-32); }
+a.botao { display: inline-flex; align-items: center; gap: var(--esp-8);
+  padding: 12px 22px; border-radius: var(--raio-controle); text-decoration: none;
+  font-weight: 700; font-size: var(--fonte-corpo); }
+a.botao.primario { background: var(--acao); color: var(--sobre-acao); }
+a.botao.primario:hover { background: var(--acao-forte); }
+
+.folha { display: block; width: 100%; height: auto; overflow: visible; }
+.folha-de-baixo { fill: var(--areia-200); stroke: var(--areia-400); }
+.papel { fill: var(--areia-100); stroke: var(--areia-400); }
+.folha-de-cima { transform-box: view-box; transform-origin: 248px 222px;
+  transform: rotate(-2.5deg); animation: folha-pousa .7s cubic-bezier(.2, .7, .2, 1) both; }
+.pauta { stroke: var(--anilina-200); stroke-width: 1; }
+.rasura { stroke: var(--anilina-300); stroke-width: 6; stroke-linecap: round; }
+.rasura.grossa { stroke: var(--anilina-400); stroke-width: 10; }
+/* Tinta de mimeógrafo: anilina clara, nunca a da ação (ver TelaInicial). */
+.tinta { fill: none; stroke: var(--anilina-600); stroke-width: 2.5; stroke-linecap: round;
+  stroke-linejoin: round; }
+.tinta .traco-fino { stroke-width: 1.5; }
+.tinta .tinta-texto { fill: var(--anilina-600); stroke: none; font-family: var(--familia-mono);
+  font-size: 20px; font-weight: 700; }
+.tinta .tinta-cheia { fill: var(--anilina-600); }
+.marcador-avanca { animation: marcador-avanca 8s ease-in-out infinite; }
+.lupa-investiga { animation: lupa-investiga 16s ease-in-out infinite; }
+.lupa-cabo { fill: var(--grafite); }
+.lupa-lente { fill: var(--anilina-100); fill-opacity: .45; }
+.lupa-aro { fill: none; stroke: var(--grafite); stroke-width: 7; }
+.lupa-brilho { fill: none; stroke: var(--areia-100); stroke-width: 3; stroke-linecap: round; }
+.inseto path { fill: none; stroke: var(--grafite); stroke-width: 1.6; stroke-linecap: round; }
+.inseto .inseto-cabeca, .inseto .inseto-corpo { fill: var(--grafite); }
+.inseto .inseto-risca { stroke: var(--areia-400); stroke-width: 1.2; }
+
+/* Pousa uma vez: cai de leve e gira até o ângulo de repouso. */
+@keyframes folha-pousa {
+  from { opacity: 0; transform: translateY(-14px) rotate(-6deg); }
+}
+/* A seta para em cada posição e desliza para a seguinte, como no reprodutor. */
+@keyframes marcador-avanca {
+  0%, 16% { transform: translateX(0); }
+  20%, 36% { transform: translateX(52px); }
+  40%, 56% { transform: translateX(104px); }
+  60%, 76% { transform: translateX(156px); }
+  80%, 96% { transform: translateX(208px); }
+  100% { transform: translateX(0); }
+}
+/* A lente passa pelo vetor, desce até a pilha e volta. */
+@keyframes lupa-investiga {
+  0%, 100% { transform: translate(0, 0); }
+  30% { transform: translate(-110px, -48px); }
+  62% { transform: translate(-150px, 112px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .folha-de-cima, .marcador-avanca, .lupa-investiga { animation: none; }
+}
+
+/* Uma sequência de fato, por isso numerada. */
+.passos { list-style: none; counter-reset: passo; display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--esp-32);
+  margin: var(--esp-48) 0 0; padding: var(--esp-32) 0 0; border-top: 1px solid var(--regua); }
+.passos li { counter-increment: passo; }
+.passos li::before { content: counter(passo); display: grid; place-items: center;
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--grafite);
+  font-size: var(--fonte-apoio); font-weight: 700; margin-bottom: var(--esp-12); }
+.passos h2 { font-size: 18px; font-weight: 700; margin: 0 0 var(--esp-4); }
+.passos p { margin: 0; max-width: 32ch; color: var(--grafite-suave); }
+.rodape-inicial { margin-top: var(--esp-48); font-size: var(--fonte-miuda);
+  color: var(--grafite-suave); }
+@media (max-width: 860px) {
+  .abertura-inicial { grid-template-columns: 1fr; gap: var(--esp-24); }
+  .folha { max-width: 460px; }
+  .passos { grid-template-columns: 1fr; gap: var(--esp-20); }
+}
 
 /* ---------------------------------------------------------------------------
    Lista de exercícios em vitrine (D20)
@@ -393,6 +458,12 @@ button.opcao-filtro[aria-pressed="true"]:hover:not(:disabled) {
 .corpo-cartao .abertura { margin: auto 0 0; padding-top: var(--esp-4); }
 .meta-exercicio { margin: 0; display: flex; align-items: center; gap: var(--esp-12);
   flex-wrap: wrap; font-size: var(--fonte-apoio); color: var(--grafite-suave); }
+.etiqueta { font-size: var(--fonte-miuda); font-weight: 700;
+  padding: 1px var(--esp-8); border-radius: var(--raio-pilula);
+  background: var(--grafite); color: var(--mesa-de-luz); }
+
+button.discreto { font-size: var(--fonte-miuda); padding: 5px 11px;
+  background: transparent; color: var(--grafite-suave); }
 
 /* ---------------------------------------------------------------------------
    Painel de métricas (D11): tela de análise, densidade vale mais que respiro.
