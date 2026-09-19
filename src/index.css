@@ -401,9 +401,12 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    fica só o que depende da página. */
 .tela-exercicio .cm-editor { border-radius: var(--raio-placa); overflow: hidden;
   color-scheme: dark; }
-/* O número da linha é o alvo da declaração de localização. Nenhuma linha
-   recebe destaque próprio: só o cursor indica que dá para apontar. */
-.cm-lineNumbers .cm-gutterElement { cursor: pointer; }
+/* O número da linha é o alvo da declaração de localização (D7). Todos se
+   comportam igual ao passar o mouse: o convite é para apontar qualquer linha,
+   e nenhuma recebe destaque próprio. Sem transição: um realce que esmaece
+   devagar deixa, por um instante, a linha anterior marcada. */
+.cm-lineNumbers .cm-gutterElement { cursor: pointer; border-radius: 3px; }
+.cm-lineNumbers .cm-gutterElement:hover { background: var(--anilina); color: #fff; }
 /* Só no conteúdo: o gutter, onde se declara a localização (D7), fica sem faixa. */
 .tela-exercicio .cm-linha-em-execucao { background: rgba(228, 234, 230, .13); }
 

@@ -342,7 +342,12 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
         <section className="painel">
           <h2>Onde você apontou</h2>
           {metricas.localizacoes.length === 0 ? (
-            <p className="rodape-painel">Nenhuma linha apontada ainda.</p>
+            // Estado vazio como convite: o primeiro piloto registrou zero
+            // declarações em 25 sessões, e o problema era de descoberta.
+            <p className="rodape-painel">
+              Nenhuma linha apontada. Clique no número de uma linha do código para
+              dizer onde você acha que está o defeito.
+            </p>
           ) : (
             <ul className="casos apontadas">
               {metricas.localizacoes.map((l, i) => (
