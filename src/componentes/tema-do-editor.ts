@@ -66,7 +66,16 @@ const aparencia = EditorView.theme(
       backgroundColor: 'rgba(228, 234, 230, .12)',
       outline: 'none',
     },
-    '.cm-selectionMatch': { backgroundColor: 'rgba(228, 234, 230, .08)' },
+    // Outras ocorrências do que está selecionado: selecionar uma variável e
+    // ver onde ela é usada é ferramenta legítima de investigação. A 0,2 o
+    // fundo fica a só ΔE 8 da faixa da linha em execução, então o que separa
+    // os dois é a forma: a ocorrência é uma caixa contornada do tamanho da
+    // palavra; a faixa, um fundo sem contorno na linha inteira.
+    '.cm-selectionMatch': {
+      backgroundColor: 'rgba(201, 184, 245, .2)',
+      boxShadow: 'inset 0 0 0 1px rgba(201, 184, 245, .6)',
+      borderRadius: '2px',
+    },
     '.cm-tooltip': { backgroundColor: NEGATIVO, color: TEXTO, border: 'none' },
   },
   { dark: true }
