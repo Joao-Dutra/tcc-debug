@@ -1055,3 +1055,103 @@ animação, e o estado muda na hora.
 
 **O que não mudou.** Os estados de D10 e suas formas, o que cada nível de
 andaime revela (D9), o registro de métricas e o arranjo da tela de D10.
+
+
+## D20 — Tela inicial, vitrine de exercícios e tela de exercício compacta
+
+**Decisão.** A entrada da aplicação deixa de ser a lista de exercícios. Passa a
+haver uma tela inicial (`#/`), que apresenta a ferramenta e leva aos exercícios,
+e a lista vira uma vitrine em rota própria (`#/exercicios`). A tela de exercício
+é rearranjada para caber na janela sem rolagem. A exportação de métricas sai das
+telas do participante.
+
+**Tela inicial.** Texto à esquerda e, à direita, uma folha de exercício
+mimeografada — vetor, pilha e lista desenhados em tinta de anilina, uma lupa e
+um inseto —, toda montada em SVG no próprio componente, com retângulos, elipses
+e traços. Nenhum arquivo de imagem, nenhum recurso externo (D13). A tinta é
+anilina clara, e não a anilina da ação, para o botão continuar sendo o roxo mais
+forte da tela; e nenhuma cor de significado da bancada entra na folha, porque a
+decoração não pode ensinar outro sentido para azul, âmbar ou vermelho (D19).
+
+Três microanimações, em CSS e com nome: `folha-pousa`, que roda uma vez quando
+a tela abre; `marcador-avanca`, a seta andando de posição em posição como no
+reprodutor; e `lupa-investiga`, a lente passeando devagar pela folha. Com
+`prefers-reduced-motion`, nenhuma roda e a folha aparece na posição final.
+
+Os três passos da tela — executar, observar, apontar e corrigir — são numerados
+porque são de fato uma sequência. O terceiro nomeia o gesto de apontar a linha
+de propósito: o primeiro piloto registrou zero declarações de localização, e o
+problema era de descoberta (roadmap 0.1).
+
+**Vitrine.** Uma fileira por estrutura, na ordem de D8, com filtro por
+estrutura. Cada exercício é um cartão com miniatura, título, complexidade e as
+duas aberturas, com apoio e sem apoio. O filtro escolhido é grafite, e não
+anilina: a pílula anilina cheia é a do apoio escolhido na tela do exercício, e
+as duas escalas não podem se parecer (D9). Continua sem progresso, pontuação ou
+marca de resolvido.
+
+**A miniatura é o visualizador, não uma imagem.** O cartão desenha o próprio
+visualizador da estrutura, pequeno e parado. Assim mostra exatamente o desenho
+que o estudante vai encontrar, e um exercício novo não depende de ninguém gerar
+figura nenhuma. O componente que monta a miniatura mora em `src/componentes`: é
+ele que conhece o exercício, e o visualizador continua puro.
+
+- **O estado é escolhido no exercício**, no campo opcional `miniatura`, com as
+  variáveis de um instantâneo. Ordem e linha ficam de fora porque não fazem
+  sentido fora de uma execução.
+- **Nunca o quadro que denuncia o defeito.** O estado precisa ser um que as duas
+  versões — com e sem defeito — atravessam antes de divergirem. Até ali o
+  desenho é o mesmo com ou sem o defeito, e o cartão não entrega nada. Isso é
+  **verificado por execução**, no mesmo teste do quadro-denúncia (D16): um
+  estado posterior à divergência, ou inventado à mão, reprova o exercício.
+  Os estados escolhidos foram copiados da execução, e não escritos de cabeça.
+- **Exercício sem o campo cai num cartão sem miniatura.** Cobre os exercícios
+  que professores venham a cadastrar (roadmap 2.1) sem exigir deles o estado.
+- **Parada**: `MotionConfig skipAnimations` leva cada transição direto ao valor
+  final. As transições existem para mostrar a mudança entre dois passos, e na
+  miniatura não há passo seguinte.
+- **Sem apoio**: os rótulos de 9 px ficariam ilegíveis nesse tamanho. O que
+  sobra é a forma, que é o que o cartão precisa mostrar.
+- **Enquadrada no desenho.** O viewBox de cada visualizador é dimensionado para
+  a maior estrutura que ele comporta, e numa miniatura isso vira uma peça miúda
+  num canto. Depois de desenhada, a miniatura mede o conteúdo (`getBBox`) e
+  recorta o viewBox por ele. É decisão de moldura: o visualizador não sabe que
+  está numa miniatura.
+- **Decorativa para leitor de tela** (`aria-hidden`): o título do cartão já
+  nomeia o exercício.
+
+**Tela de exercício compacta.** Em janela de pelo menos 901 × 600 px, a página
+ocupa exatamente a janela: código à esquerda, de alto a baixo, com o retorno da
+declaração logo abaixo, que é onde se aponta; à direita, a visualização e, embaixo
+dela, os casos de teste e as dicas. O editor e a coluna de casos e dicas rolam
+por dentro, e o desenho nunca sai de vista. Abaixo desse tamanho, a página volta
+a rolar em coluna única — é melhor do que o editor virar uma fresta.
+
+A justificativa é a mesma do indicador de linha junto à animação (D10):
+investigar é ir e voltar entre o teste que falha, o desenho e a linha, e cada
+rolagem no meio disso é memória de trabalho gasta em achar de novo o que saiu da
+tela. Verificado em 1366 × 657 e 1920 × 960.
+
+Isso **muda o arranjo de D10**, que punha os casos numa faixa larga acima do
+código. Os casos continuam sendo de onde o estudante parte, agora sem empurrar
+o código e a visualização para baixo. O sinal de acerto **não mudou** de
+tamanho nem de intensidade: a condição do roadmap 1.1 é que ele fique idêntico
+entre pilotos, e encolhê-lo para caber seria mudá-lo.
+
+**Congelamento (19/09/2026).** A partir desta data o arranjo da tela de
+exercício está fechado até depois do próximo piloto. O que o estudante vê
+simultaneamente — código, visualização e casos de teste, e onde cada um fica —
+não muda nesse intervalo. É a mesma razão do sinal de acerto: pilotos com
+arranjos diferentes não se comparam, e a diferença de desempenho entre eles
+deixaria de ser atribuível ao que se quer medir.
+
+Continua permitido corrigir defeito que quebre o arranjo — um painel que saia
+da tela numa resolução não prevista, por exemplo —, desde que a correção
+restaure o arranjo descrito acima, e não o altere. Mudar a disposição, o tamanho
+relativo das áreas ou o que fica visível ao mesmo tempo espera o piloto.
+
+**Exportação só no painel do pesquisador.** O botão saiu da lista e da tela de
+exercício; fica só no painel de métricas, fora da navegação (D11). Nenhum dado
+se perde: a sessão já era arquivada ao sair do exercício e no `pagehide`, sem
+depender do botão (D15). A função de exportar do hook de métricas, que só o
+botão usava, saiu junto.

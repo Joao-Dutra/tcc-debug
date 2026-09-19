@@ -37,44 +37,58 @@ Disso decorre a regra mais importante deste documento: **a interface nunca
 resolve nada pelo estudante.** Todo recurso que torne a caça ao defeito
 desnecessária destrói o propósito da ferramenta.
 
-## As três telas
+## As quatro telas
 
-### 1. Lista de exercícios
+### 1. Tela inicial
 
-Uma régua de linhas, uma por exercício — não uma grade de cartões iguais. Cada
-linha traz o título, a estrutura de dados envolvida, uma indicação de
-complexidade e, à direita, duas opções de abertura — com apoio ou sem apoio —,
-que são as ações da linha. Um dos exercícios é marcado como tutorial. Há um
-botão discreto de exportar dados.
+Apresenta a ferramenta e leva aos exercícios. Texto à esquerda — o que é, como
+funciona, um botão para os exercícios — e, à direita, uma folha de exercício
+mimeografada desenhada em SVG: vetor, pilha e lista em tinta de anilina clara,
+uma lupa e um inseto. Abaixo, os três passos do trabalho, numerados porque são
+uma sequência. Três microanimações com nome (`folha-pousa`, `marcador-avanca`,
+`lupa-investiga`), desligadas com movimento reduzido. A folha não usa nenhuma
+cor de significado da bancada.
+
+### 2. Lista de exercícios (vitrine)
+
+Uma fileira por estrutura de dados — vetor, pilha, fila, lista encadeada —, com
+filtro por estrutura. Cada exercício é um cartão com uma **miniatura**, o
+título, a complexidade e, no pé, as duas aberturas — com apoio ou sem apoio. Um
+dos exercícios é marcado como tutorial. Nenhum botão de exportar: a exportação
+fica só no painel de métricas.
+
+A miniatura é o próprio visualizador da estrutura, pequeno e parado, sobre a
+mesa de luz, desenhando um estado **anterior** ao defeito — nunca o quadro que
+o denuncia. Exercício sem miniatura aparece num cartão só com o texto.
 
 São **duas escalas diferentes** e elas não podem ser confundidas visualmente:
 *complexidade* é uma característica do exercício; *apoio* é quanta ajuda a
 ferramenta oferece naquela abertura. Hoje são separadas por linha, por rótulo e
-por tratamento — complexidade como texto, apoio como botões.
+por tratamento — complexidade como texto, apoio como botões. O filtro escolhido
+é grafite, e não anilina, para não se parecer com o apoio escolhido.
 
-### 2. Tela de exercício — a mais importante
+### 3. Tela de exercício — a mais importante
 
-De cima para baixo:
+Cabe na janela sem rolar a página, a partir de 901 × 600 px. O estudante vê ao
+mesmo tempo o código, a visualização e os casos de teste.
 
-1. **Título, enunciado e a escolha do apoio**, em largura inteira.
-2. **Casos de teste**, numa faixa larga. O teste que falha é o que motiva a
-   investigação, então vem antes do código.
-3. **Código e visualização lado a lado**, com a mesma altura.
-   - À esquerda, o **código**: editor escuro, numeração de linhas e botão de
-     executar. O estudante clica no *número* da linha para declarar onde
-     acredita estar o defeito, e recebe na hora se acertou. Pode tentar quantas
-     vezes quiser.
-   - À direita, a **visualização**: o desenho animado da estrutura sobre a mesa
-     de luz (anatomia de nó rotulada, ponteiro em seta, nulo aterrado), o
-     indicador da linha que está sendo executada e os controles de reprodução —
-     anterior, tocar, próximo, e uma barra de posição com o contador de passos.
-4. **Dicas e retorno da localização**: as dicas, reveladas uma a uma pelo
-   estudante, à esquerda; as linhas que ele **apontou** como suspeitas, à
-   direita. Sem apoio não há dicas, e o retorno ocupa a faixa inteira.
+1. **No topo**: voltar e a escolha do apoio numa linha; título e enunciado
+   logo abaixo.
+2. **À esquerda, o código**, de alto a baixo: editor escuro, numeração de linhas
+   e botão de executar. O estudante clica no *número* da linha para declarar
+   onde acredita estar o defeito, e recebe na hora se acertou. Pode tentar
+   quantas vezes quiser. Logo abaixo do editor, as linhas que ele **apontou**.
+3. **À direita, a visualização**: o desenho animado da estrutura sobre a mesa de
+   luz (anatomia de nó rotulada, ponteiro em seta, nulo aterrado), e numa linha
+   só o indicador da linha em execução e os controles de reprodução — anterior,
+   tocar, próximo, e uma barra de posição com o contador de passos.
+4. **Embaixo da visualização, os casos de teste e as dicas**, que rolam por
+   dentro quando falta altura; o desenho fica parado. Sem apoio não há dicas.
 
-Em telas estreitas tudo empilha, com o código antes da visualização.
+Em telas estreitas ou baixas tudo empilha e a página volta a rolar, com o
+código antes da visualização.
 
-### 3. Painel de métricas
+### 4. Painel de métricas
 
 Tela de uso exclusivo do pesquisador, alcançável apenas por endereço direto.
 Tabela de sessões com exercício, nível de apoio, duração, tempos até a primeira
