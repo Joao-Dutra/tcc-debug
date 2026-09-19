@@ -20,6 +20,22 @@ test.describe('vitrine de exercícios', () => {
     await expect(fileiras).toHaveText(['Vetor', 'Pilha', 'Fila', 'Lista encadeada']);
   });
 
+  // A cor da etiqueta de complexidade não pode ser o único portador do nível
+  // (D20): cada cartão diz a palavra.
+  test('cada cartão diz a complexidade por escrito', async ({ page }) => {
+    await page.goto('/#/exercicios');
+
+    const cartoes = page.locator('.cartao');
+    const total = await cartoes.count();
+    expect(total).toBeGreaterThan(0);
+
+    for (let i = 0; i < total; i++) {
+      await expect(cartoes.nth(i).locator('.complexidade')).toHaveText(
+        /introdutório|intermediário|desafiador/
+      );
+    }
+  });
+
   test('cada cartão abre o exercício nos dois níveis de apoio', async ({ page }) => {
     await page.goto('/#/exercicios');
 

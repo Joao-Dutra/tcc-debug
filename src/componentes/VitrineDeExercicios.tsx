@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { catalogo } from '../exercicios/catalogo';
 import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
+import { complexidadeDe } from './complexidade';
 import { MiniaturaDoExercicio } from './MiniaturaDoExercicio';
 import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
 import type { Exercicio, TipoEstrutura } from '../nucleo/tipos';
@@ -54,6 +55,7 @@ function GlifoDaEstrutura({ tipo }: { tipo: TipoEstrutura }) {
 }
 
 function CartaoDoExercicio({ exercicio }: { exercicio: Exercicio }) {
+  const complexidade = complexidadeDe(exercicio.dificuldade);
   return (
     <li className={exercicio.miniatura ? 'cartao' : 'cartao sem-miniatura'}>
       <MiniaturaDoExercicio exercicio={exercicio} />
@@ -61,7 +63,12 @@ function CartaoDoExercicio({ exercicio }: { exercicio: Exercicio }) {
         <h3>{exercicio.titulo}</h3>
         <p className="meta-exercicio">
           {exercicio.tutorial && <span className="etiqueta">tutorial</span>}
-          <span className="complexidade">complexidade {exercicio.dificuldade} de 3</span>
+          {/* A complexidade descreve o exercício, e não quem o abre: é a mesma
+              informação de antes, dita em palavra em vez de fração. A cor vem
+              junto do termo, nunca sozinha. */}
+          <span className={`etiqueta complexidade ${complexidade.classe}`}>
+            {complexidade.termo}
+          </span>
         </p>
         {/* Um cartão por exercício, com as duas aberturas dentro dele. Dois
             cartões sugeririam dois exercícios. */}

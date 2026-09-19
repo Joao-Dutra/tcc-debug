@@ -142,6 +142,15 @@
   --foco: var(--anilina-600);
   --foco-halo: var(--anilina-300);
   --acerto: var(--musgo-700);        /* só o sinal de todos os casos passando */
+  /* Etiquetas de complexidade (D20). Ficam fora da bancada, onde matiz é
+     significado, mas dividem a tela com as miniaturas: por isso foram medidas
+     contra as cores de estado que aparecem lá. Distância mínima ΔE 27, da
+     intermediária ao anel do elemento apontado; as demais, de 31 a 55. Texto
+     sobre a etiqueta de 6,2:1 a 15,9:1. A palavra vem sempre junto — a cor
+     nunca carrega o nível sozinha. */
+  --complexidade-introdutorio: var(--lima-700);
+  --complexidade-intermediario: var(--palha-800);
+  --complexidade-desafiador: var(--rubi-900);
   --erro: var(--rubi-700);
   --editor-fundo: var(--areia-900);
   --editor-texto: var(--areia-200);
@@ -461,6 +470,9 @@ button.opcao-filtro[aria-pressed="true"]:hover:not(:disabled) {
 .etiqueta { font-size: var(--fonte-miuda); font-weight: 700;
   padding: 1px var(--esp-8); border-radius: var(--raio-pilula);
   background: var(--grafite); color: var(--mesa-de-luz); }
+.etiqueta.introdutorio { background: var(--complexidade-introdutorio); }
+.etiqueta.intermediario { background: var(--complexidade-intermediario); }
+.etiqueta.desafiador { background: var(--complexidade-desafiador); }
 
 button.discreto { font-size: var(--fonte-miuda); padding: 5px 11px;
   background: transparent; color: var(--grafite-suave); }
