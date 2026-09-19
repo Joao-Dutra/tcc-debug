@@ -99,6 +99,19 @@ export function compararVersoes(exercicio: Exercicio) {
   };
 }
 
+/**
+ * Os estados que as duas versões atravessam, em ordem, antes de a trajetória
+ * com defeito se separar da correta. Nenhum deles denuncia o defeito: até ali,
+ * o desenho é o mesmo com ou sem ele.
+ */
+export function estadosAntesDaDivergencia(exercicio: Exercicio): string[] {
+  const td = trajetoria(executar(exercicio, exercicio.codigoComDefeito).map((i) => estado(exercicio, i)));
+  const tc = trajetoria(executar(exercicio, exercicio.codigoCorreto).map((i) => estado(exercicio, i)));
+  let comum = 0;
+  while (comum < td.length && comum < tc.length && td[comum] === tc[comum]) comum++;
+  return tc.slice(0, comum);
+}
+
 describe.each(catalogo)('$id', (exercicio) => {
   if (PENDENTES.has(exercicio.id)) {
     it('continua reprovado, pendente de correção (D16)', () => {
@@ -109,6 +122,19 @@ describe.each(catalogo)('$id', (exercicio) => {
       const r = compararVersoes(exercicio);
       expect(r.trajetoriasIdenticas, 'trajetórias de estados idênticas').toBe(false);
       expect(r.quadrosDivergentes, 'quadros divergentes').toBeGreaterThan(1);
+    });
+  }
+
+  // A miniatura da lista de exercícios (D20) é verificada do mesmo jeito que
+  // o quadro-denúncia: por execução. O estado escrito no exercício precisa ser
+  // um que as duas versões atravessam antes de divergirem — senão o cartão
+  // entrega o defeito antes de o estudante abrir o exercício. Também pega o
+  // estado inventado à mão, que nenhuma execução produz.
+  if (exercicio.miniatura) {
+    const miniatura = exercicio.miniatura;
+    it('desenha na miniatura um estado anterior à divergência', () => {
+      const alvo = estado(exercicio, { ordem: 0, linha: null, variaveis: miniatura.variaveis });
+      expect(estadosAntesDaDivergencia(exercicio), 'estados antes da divergência').toContain(alvo);
     });
   }
 });
