@@ -904,13 +904,42 @@ forma reforçando uma distinção que já existia, e não um significado novo. O
 navegador não aplica filtro CSS a elemento SVG, a sombra falta e a borda
 contínua continua carregando o estado.
 
-**Editor.** Tema escuro próprio (`src/componentes/tema-do-editor.ts`), com três
-tons de sintaxe — lilás nas palavras-chave, verde-claro nos literais, cinza nos
-comentários — e nenhum vermelho, âmbar ou azul, para o código não carregar as
-cores da bancada. O realce é por tipo de token e uniforme no programa, então não
-diferencia trecho nenhum. A faixa da linha em execução de D9 continua quase
-neutra: branco translúcido a 13% sobre o editor escuro, no lugar do bege sobre
-fundo claro.
+**Editor.** Tema escuro próprio (`src/componentes/tema-do-editor.ts`), sem
+vermelho, âmbar ou azul, para o código não carregar as cores da bancada. O
+realce é por tipo de token e uniforme no programa, então não diferencia trecho
+nenhum. A faixa da linha em execução de D9 continua quase neutra: branco
+translúcido a 13% sobre o editor escuro, no lugar do bege sobre fundo claro.
+
+A primeira versão tinha três tons de sintaxe, e eram poucos: classe, função,
+variável e propriedade saíam na mesma cor, e é justamente isso que o estudante
+precisa separar para ler `no.proximo = novo`. O realce passou a ter uma família
+por categoria:
+
+| Categoria | Tom | Exemplo |
+|---|---|---|
+| Palavra-chave, `this`, `true`, `false`, `null` | lilás `#C9B8F5` | `var`, `new`, `return` |
+| Literal | verde-lima `#B5DA8E` | `10`, `"ana"` |
+| Função, na declaração e na chamada | rosa `#F2A6C8` | `inserirDepois` |
+| Classe, na declaração e no `new` | ciano-esverdeado `#6FD3DB` | `No` |
+| Propriedade | creme `#EBD9A2` | `this.valor`, `no.proximo` |
+| Variável | tom do texto `#E4EAE6` | `cabeca`, `novo` |
+| Comentário e pontuação | cinzas `#7F948C` e `#AEBBB5` | `//`, `;` |
+
+Todos ficam a 4,6:1 ou mais sobre o fundo e a ΔE ≥ 34 das cores com
+significado da bancada, com exceção dos cinzas, que são da família neutra da
+moldura. Entre dois tons com cor própria, a distância mínima é ΔE 24. O
+primeiro rascunho punha literal e classe a ΔE 13, e o literal foi para o lima
+e a classe para o ciano. O construtor de classe sai como propriedade, porque é
+assim que o analisador de JavaScript marca o nome de um método.
+
+**Ocorrências da seleção.** Selecionar uma variável e ver onde mais ela aparece
+é ferramenta legítima de investigação, e a 8% de opacidade o realce das outras
+ocorrências era quase invisível. Subiu para lilás a 20%. Nessa intensidade o
+fundo fica a só ΔE 8,5 da faixa da linha em execução, então a cor sozinha não
+separa os dois: a ocorrência ganhou contorno, e fica uma caixa do tamanho da
+palavra, enquanto a faixa é um fundo sem contorno na linha inteira. Onde as duas
+se sobrepõem, a caixa continua legível sobre a faixa. O realce é do que o
+próprio estudante selecionou, e não aponta trecho algum por conta própria.
 
 **Retorno sobre a ação, nunca sobre o desempenho.** Três retornos entraram, e a
 régua que os separa do que continua proibido é a do roadmap (1.1): responder ao

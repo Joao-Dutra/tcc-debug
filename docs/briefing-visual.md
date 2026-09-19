@@ -207,9 +207,13 @@ no código e nos valores do desenho, pesos 400 e 700. A família distingue `1`,
 Títulos de seção em caixa normal e peso 700; nada de etiquetas em maiúsculas
 espaçadas.
 
-**Editor.** Fundo escuro, três tons de sintaxe — lilás nas palavras-chave,
-verde-claro nos literais, cinza nos comentários —, sem vermelho, âmbar ou azul,
-que são cores da bancada.
+**Editor.** Fundo escuro, com uma família de cor por categoria do código:
+lilás nas palavras-chave, verde-lima nos literais, rosa nas funções,
+ciano-esverdeado nas classes, creme nas propriedades, o tom do texto nas
+variáveis e cinza em comentários e pontuação. Nenhum vermelho, âmbar ou azul,
+que são cores da bancada. A cor depende só da categoria, nunca do trecho.
+Selecionar uma palavra contorna as outras ocorrências dela com uma caixa lilás
+— forma diferente da faixa sem contorno da linha em execução.
 
 **Ícones.** Heroicons, embutidos como SVG no build. Nenhum recurso externo em
 tempo de execução: fontes e ícones vêm no pacote da aplicação.
