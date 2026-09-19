@@ -154,7 +154,7 @@ export function TelaInicial() {
 
       <footer className="rodape-inicial">
         Trabalho de conclusão de curso em Sistemas de Informação, IFMG Campus Ouro
-        Branco.
+        Branco. Desenvolvido por João Victor Dutra Martins Silva.
       </footer>
     </div>
   );
