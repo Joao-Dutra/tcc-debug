@@ -1,3 +1,4 @@
+import { ArrowDownTrayIcon } from '@heroicons/react/20/solid';
 import { catalogo } from '../exercicios/catalogo';
 import { exportarMetricas } from '../nucleo/metricas';
 import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
@@ -86,6 +87,7 @@ export function TelaInicial() {
           className="discreto"
           onClick={() => baixarMetricas(exportarMetricas(), 'metricas.json')}
         >
+          <ArrowDownTrayIcon className="icone" aria-hidden="true" />
           Exportar métricas (JSON)
         </button>
       </footer>

@@ -2,12 +2,20 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import CodeMirror, { lineNumbers } from '@uiw/react-codemirror';
 import type { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
+import {
+  ArrowDownTrayIcon,
+  ArrowLeftIcon,
+  FlagIcon,
+  PlayIcon,
+} from '@heroicons/react/20/solid';
+import { CheckIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { executar } from '../nucleo/executor';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { baixarMetricas, useMetricas } from './usar-metricas';
 import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
 import { linhaEmExecucao, marcarLinhaEmExecucao } from './linha-em-execucao';
+import { temaDoEditor } from './tema-do-editor';
 import {
   destacarLinhaNoEditor,
   detalheDosCasos,
@@ -29,7 +37,7 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
  */
 
 /**
- * Painel dos casos de teste, nos três graus de revelação de D9.
+ * Painel dos casos de teste, nos graus de revelação de D9.
  *
  * Componente próprio para poder ser verificado com um resultado fabricado:
  * a tela inteira só produz resultado depois de executar no Worker.
@@ -61,7 +69,15 @@ export function PainelDeCasos({
         <ul className="casos">
           {resultado?.casos.map((c) => (
             <li key={c.descricao} className={c.passou ? 'passou' : 'falhou'}>
-              <strong>{c.passou ? '✓' : '✗'}</strong> {c.descricao}
+              {c.passou ? (
+                <CheckIcon className="icone" aria-hidden="true" />
+              ) : (
+                <XMarkIcon className="icone" aria-hidden="true" />
+              )}
+              <span>
+                <span className="so-leitor">{c.passou ? 'passou: ' : 'falhou: '}</span>
+                {c.descricao}
+              </span>
               {!c.passou && detalhe === 'esperado-e-obtido' && (
                 <span className="detalhe">
                   esperado {JSON.stringify(c.esperado)}, obtido {JSON.stringify(c.obtido)}
@@ -162,12 +178,11 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   }, [linhaNoEditor]);
 
   return (
-    // A direção 2a vale só para esta tela: a classe escopa a paleta e as
-    // fontes, e a lista de exercícios e o painel de métricas ficam como estão.
     <div className="pagina tela-exercicio">
       <header>
         <a className="voltar" href={CAMINHO_INICIAL}>
-          ◀ todos os exercícios
+          <ArrowLeftIcon className="icone" aria-hidden="true" />
+          Todos os exercícios
         </a>
         <h1>{exercicio.titulo}</h1>
         <p>{exercicio.enunciado}</p>
@@ -210,6 +225,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
               onClick={() => void rodar('estudante')}
               disabled={rodando}
             >
+              <PlayIcon className="icone" aria-hidden="true" />
               {rodando ? 'Executando…' : 'Executar'}
             </button>
           </div>
@@ -227,6 +243,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
               highlightActiveLine: false,
               highlightActiveLineGutter: false,
             }}
+            theme={temaDoEditor}
             extensions={extensoes}
             onChange={aoEditar}
           />
@@ -272,9 +289,16 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
         {dicasPermitidas > 0 && (
           <section className="painel">
             <h2>Dicas</h2>
-            {exercicio.dicas.slice(0, dicasAbertas).map((d) => (
-              <p key={d} className="dica">{d}</p>
-            ))}
+            {dicasAbertas > 0 && (
+              <ol className="dicas">
+                {exercicio.dicas.slice(0, dicasAbertas).map((d, i) => (
+                  <li key={d} className="dica">
+                    <strong>Dica {i + 1}</strong>
+                    {d}
+                  </li>
+                ))}
+              </ol>
+            )}
             {dicasAbertas < dicasPermitidas && (
               <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
             )}
@@ -288,8 +312,16 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
             <ul className="casos apontadas">
               {metricas.localizacoes.map((l, i) => (
                 <li key={i} className={l.correta ? 'passou' : 'falhou'}>
-                  <strong>{l.correta ? '✓' : '✗'}</strong> Linha {l.linha} —{' '}
-                  {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
+                  <FlagIcon className="icone bandeira" aria-hidden="true" />
+                  <span className="linha">Linha {l.linha}</span>
+                  <span className="veredito">
+                    {l.correta ? (
+                      <CheckIcon className="icone" aria-hidden="true" />
+                    ) : (
+                      <XMarkIcon className="icone" aria-hidden="true" />
+                    )}
+                    {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -301,14 +333,15 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           estudante quantas vezes ele executou ou quantas dicas abriu muda o
           comportamento que o estudo quer medir. */}
       <section className="painel painel-sessao">
-        <h2>Sessão</h2>
         <p className="rodape-painel">
           As métricas ficam guardadas neste navegador e sobrevivem a recarregar a
           página. A exportação inclui todas as sessões guardadas nele.
         </p>
         <button
+          className="discreto"
           onClick={() => baixarMetricas(metricas.exportar(), `metricas-${exercicio.id}.json`)}
         >
+          <ArrowDownTrayIcon className="icone" aria-hidden="true" />
           Exportar métricas (JSON)
         </button>
       </section>

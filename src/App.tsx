@@ -1,3 +1,4 @@
+import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { catalogo } from './exercicios/catalogo';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { TelaExercicio } from './componentes/TelaExercicio';
@@ -31,7 +32,8 @@ export default function App() {
           </p>
         </header>
         <a className="voltar" href={CAMINHO_INICIAL}>
-          ◀ todos os exercícios
+          <ArrowLeftIcon className="icone" aria-hidden="true" />
+          Todos os exercícios
         </a>
       </div>
     );
