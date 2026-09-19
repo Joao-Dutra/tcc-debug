@@ -255,13 +255,13 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           <div className="cabecalho-painel">
             <h2>Código</h2>
             <button
-              className="primario executar"
+              className={pendente && !rodando ? 'primario executar pendente' : 'primario executar'}
               onClick={() => void rodar('estudante')}
               disabled={rodando}
             >
               <PlayIcon className="icone" aria-hidden="true" />
               {rodando ? 'Executando…' : pendente ? 'Executar alterações' : 'Executar'}
-              {pendente && !rodando && <span className="pendente" aria-hidden="true" />}
+              {pendente && !rodando && <span className="ponto" aria-hidden="true" />}
             </button>
           </div>
           {/* Sem o destaque da linha do cursor, que viria ligado por padrão: uma

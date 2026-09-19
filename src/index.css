@@ -631,11 +631,31 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   .faixa-casos .painel.acertou { animation: none; stroke-dashoffset: 0; }
 }
 
-/* Botão de executar. O ponto diz que o código mudou desde a última execução:
-   retorno sobre a ação em curso, sem contar nada. */
+/* Botão de executar. O ponto e o pulso dizem que o código mudou desde a última
+   execução: retorno sobre a ação em curso, sem contar nada (D20). O pulso é
+   contínuo porque o estado é contínuo — some no instante em que a execução
+   alcança o que está no editor. */
 .executar { position: relative; }
-.executar .pendente { width: 8px; height: 8px; border-radius: 50%;
+.executar .ponto { width: 8px; height: 8px; border-radius: 50%;
   background: var(--sobre-acao); box-shadow: 0 0 0 2px var(--acao-rala); }
+/* Duas camadas: o halo fixo, que se lê em qualquer instante, e o anel que
+   pulsa por cima dele. Sem o halo, a foto do botão no meio do ciclo mostraria
+   um botão comum — e quem olha de relance veria o mesmo. */
+.executar.pendente { box-shadow: 0 0 0 3px var(--acao-rala); }
+.executar.pendente::after { content: ''; position: absolute; inset: -3px;
+  border: 2px solid var(--acao); border-radius: var(--raio-controle);
+  pointer-events: none; animation: executar-pendente 1.8s ease-out infinite; }
+/* O anel se abre a partir da borda. Em um elemento por cima, e não no próprio
+   botão, para o alvo do clique não mudar de tamanho debaixo do ponteiro. */
+@keyframes executar-pendente {
+  0% { opacity: .75; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.2); }
+}
+/* Sem movimento, o anel simplesmente fica: mesma espessura, mesma cor e a
+   mesma leitura à distância que o pulso tem. */
+@media (prefers-reduced-motion: reduce) {
+  .executar.pendente::after { animation: none; opacity: .9; }
+}
 
 /* Editor. O tema de cores está em src/componentes/tema-do-editor.ts; aqui
    fica só o que depende da página. */

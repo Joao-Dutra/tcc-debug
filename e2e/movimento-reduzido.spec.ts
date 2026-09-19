@@ -53,6 +53,27 @@ test.describe('com movimento reduzido', () => {
     await expect(page.locator('.sinal-de-acerto')).toBeVisible();
     expect(await animacoesEmCurso(page)).toEqual([]);
   });
+
+  test('a mudança pendente continua visível sem movimento', async ({ page }) => {
+    await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
+    await page.locator('.cm-content').click();
+    await page.keyboard.insertText(' ');
+
+    const botao = page.locator('button.executar');
+    await expect(botao).toHaveClass(/pendente/);
+    await expect(botao).toHaveText(/Executar alterações/);
+    expect(await animacoesEmCurso(page)).toEqual([]);
+
+    // Sem o pulso, o anel fica parado no lugar — e não some junto com a
+    // animação, que seria trocar um sinal claro por nenhum.
+    const anel = await botao.evaluate((b) => {
+      const estilo = getComputedStyle(b, '::after');
+      return { conteudo: estilo.content, opacidade: Number(estilo.opacity), borda: estilo.borderTopWidth };
+    });
+    expect(anel.conteudo).not.toBe('none');
+    expect(anel.opacidade).toBeGreaterThan(0.5);
+    expect(anel.borda).toBe('2px');
+  });
 });
 
 test.describe('com movimento normal', () => {
@@ -66,5 +87,20 @@ test.describe('com movimento normal', () => {
     expect(await animacoesEmCurso(page)).toEqual(
       expect.arrayContaining(['marcador-avanca', 'lupa-investiga'])
     );
+  });
+
+  test('o botão pulsa enquanto a mudança não foi executada', async ({ page }) => {
+    await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
+    await page.locator('.cm-content').click();
+    await page.keyboard.insertText(' ');
+
+    await expect(page.locator('button.executar')).toHaveClass(/pendente/);
+    expect(await animacoesEmCurso(page)).toContain('executar-pendente');
+
+    // Executar alcança o que está no editor, e o pulso para: o sinal é do
+    // estado, não do clique.
+    await page.getByRole('button', { name: /Executar/ }).click();
+    await expect(page.locator('button.executar')).not.toHaveClass(/pendente/);
+    expect(await animacoesEmCurso(page)).not.toContain('executar-pendente');
   });
 });
