@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
-import { CELULA, DESTAQUE } from './estilos';
+import { CELULA, DESTAQUE, MARCADOR } from './estilos';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
@@ -53,6 +53,7 @@ interface PropsMarcador {
   /** Quantidade de células realmente desenhadas, para saber até onde ir. */
   desenhadas: number;
   acima: boolean;
+  /** Classe da seta: cheia no início, vazada no fim (MARCADOR, D19). */
   classe: string;
   /** Rótulo com o nome e o valor do marcador; some sem apoio (D9). */
   rotulos: boolean;
@@ -79,7 +80,7 @@ function Marcador({ nome, indice, desenhadas, acima, classe, rotulos }: PropsMar
       {acima ? (
         <>
           {rotulos && (
-            <text y={40} textAnchor="middle" fontSize="11" fontWeight="600" className={classe}>
+            <text y={40} textAnchor="middle" fontSize="11" fontWeight="700" className={MARCADOR.rotulo}>
               {nome} = {indice}
             </text>
           )}
@@ -89,7 +90,7 @@ function Marcador({ nome, indice, desenhadas, acima, classe, rotulos }: PropsMar
         <>
           <path d="M -6 130 L 6 130 L 0 118 Z" className={classe} />
           {rotulos && (
-            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" className={classe}>
+            <text y={146} textAnchor="middle" fontSize="11" fontWeight="700" className={MARCADOR.rotulo}>
               {nome} = {indice}
             </text>
           )}
@@ -268,7 +269,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
           indice={inicio}
           desenhadas={desenhadas}
           acima
-          classe="svg-marcador-primario"
+          classe={MARCADOR.primeiro}
           rotulos={rotulos}
         />
       )}
@@ -278,7 +279,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
           indice={fim}
           desenhadas={desenhadas}
           acima={false}
-          classe="svg-marcador-secundario"
+          classe={MARCADOR.segundo}
           rotulos={rotulos}
         />
       )}

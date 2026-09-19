@@ -72,6 +72,12 @@ exercício.
 | apontada | a posição que o marcador indica: ganha um anel âmbar em volta |
 | vazia | posição da capacidade que nunca recebeu valor: contorno pontilhado com `POSICAO_VAZIA`, sem preenchimento e sem nada dentro — não confundir com consumida, que tem valor esmaecido |
 
+**Marcadores em grafite, diferenciados pela forma (D19).** Use `MARCADOR` de
+`estilos.ts`: seta cheia para o marcador principal (topo, índice, início,
+cabeça), vazada para o segundo (fim, atual), rótulo sempre cheio. Dentro da
+bancada matiz é significado — marcador colorido se confunde com um estado de
+D10, e a cor de ação da interface nunca entra no desenho.
+
 **Capacidade fixa é dado do instantâneo, não do componente.** Quando o
 exercício declara `capacidade` e a observa, o desenho mostra as posições ainda
 não usadas; quando não declara, a estrutura é dinâmica e só aparece o que

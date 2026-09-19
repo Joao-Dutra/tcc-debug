@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
-import { CELULA, DESTAQUE, POSICAO_VAZIA } from './estilos';
+import { CELULA, DESTAQUE, MARCADOR, POSICAO_VAZIA } from './estilos';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
@@ -196,9 +196,9 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           animate={{ y: topo < 0 ? BASE_Y - 20 : yDaPosicao(topo) + ALTURA_CAIXA / 2 - 8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
         >
-          <path d="M 268 5 L 268 19 L 256 12 Z" className="svg-marcador-topo" />
+          <path d="M 268 5 L 268 19 L 256 12 Z" className={MARCADOR.primeiro} />
           {rotulos && (
-            <text x={276} y={17} fontSize="13" className="svg-marcador-topo" fontWeight="600">
+            <text x={276} y={17} fontSize="13" className={MARCADOR.rotulo} fontWeight="700">
               topo = {topo}
             </text>
           )}

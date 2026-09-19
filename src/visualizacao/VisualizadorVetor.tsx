@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
-import { CELULA, DESTAQUE } from './estilos';
+import { CELULA, DESTAQUE, MARCADOR } from './estilos';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
@@ -189,9 +189,9 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           initial={false}
           transition={{ type: 'spring', stiffness: 320, damping: 28 }}
         >
-          <path d="M -6 130 L 6 130 L 0 118 Z" className="svg-marcador-primario" />
+          <path d="M -6 130 L 6 130 L 0 118 Z" className={MARCADOR.primeiro} />
           {rotulos && (
-            <text y={146} textAnchor="middle" fontSize="11" fontWeight="600" className="svg-marcador-primario">
+            <text y={146} textAnchor="middle" fontSize="11" fontWeight="700" className={MARCADOR.rotulo}>
               índice = {indice}
             </text>
           )}

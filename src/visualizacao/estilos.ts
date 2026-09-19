@@ -95,3 +95,22 @@ export const DESTAQUE = {
   /** Folga entre a borda da célula e o anel, para os dois ficarem legíveis. */
   folga: 5,
 };
+
+/**
+ * Marcadores — índice, topo, início, fim, cabeça, atual (D19).
+ *
+ * Todos em grafite. Dentro da bancada matiz é significado, e marcador não é
+ * nenhum dos estados de D10: um marcador azul se confundia com a célula ativa,
+ * e o topo vermelho da pilha com a ligação cíclica. Quando dois marcadores
+ * dividem o desenho, a diferença é de forma — seta cheia para o primeiro,
+ * vazada para o segundo —, o que sobrevive à escala de cinza e ao nível sem
+ * apoio, onde os rótulos somem.
+ */
+export const MARCADOR = {
+  /** Seta do marcador principal da estrutura: topo, índice, início, cabeça. */
+  primeiro: 'svg-seta-cheia',
+  /** Seta de um segundo marcador no mesmo desenho: fim, atual. */
+  segundo: 'svg-seta-vazada',
+  /** Rótulo, sempre cheio: é texto, e texto vazado não se lê. */
+  rotulo: 'svg-marcador',
+} as const;

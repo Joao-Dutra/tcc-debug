@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
-import { CELULA, DESTAQUE } from './estilos';
+import { CELULA, DESTAQUE, MARCADOR } from './estilos';
 import type { EstadoDaCelula } from './estilos';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
@@ -571,7 +571,7 @@ export function VisualizadorListaEncadeada({
         {ponteiros.map(([nome, valor], p) => {
           const alvo = alvoDoPonteiro(valor);
           const apice = alvo.yBase - 8 - p * 24;
-          const classe = nome === 'cabeca' ? 'svg-marcador-primario' : 'svg-marcador-secundario';
+          const classe = nome === 'cabeca' ? MARCADOR.primeiro : MARCADOR.segundo;
           return (
             <motion.g
               key={'ponteiro-' + nome}
@@ -595,12 +595,12 @@ export function VisualizadorListaEncadeada({
               )}
               {rotulos && (
                 <text
-                  className={classe + ' svg-mono'}
+                  className={MARCADOR.rotulo + ' svg-mono'}
                   x={alvo.nulo ? -24 : 0}
                   y={apice - 20}
                   textAnchor={alvo.nulo ? 'start' : 'middle'}
                   fontSize="11.5"
-                  fontWeight="500"
+                  fontWeight="700"
                 >
                   {nome}
                   {alvo.nulo ? ' = null' : ''}
