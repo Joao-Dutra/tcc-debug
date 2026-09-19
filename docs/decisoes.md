@@ -399,7 +399,8 @@ passo.
 com ele:
 
 - *A cor é uma faixa quase neutra da paleta de base*: `--traco-estrutura` a 24%,
-  translúcida. O bege é da família do âmbar do elemento apontado, e o que
+  translúcida. (Valores da direção 2a; com o editor escuro de D19, a faixa
+  passou a branco translúcido a 13%, e continua neutra.) O bege é da família do âmbar do elemento apontado, e o que
   separa os dois é a saturação — a faixa tem croma 2,8, o âmbar 52 — e a forma:
   faixa atrás do texto contra anel em volta de uma célula. A faixa fica a
   ΔE ≥ 49 de todas as cores com significado de D10 e das cores do veredito de
@@ -608,6 +609,10 @@ vietnamita, cirílico e grego ficariam no pacote sem uso.
 
 **Licença.** As duas famílias são OFL-1.1, que permite empacotá-las e
 redistribuí-las junto com a aplicação.
+
+*Atualizada por D19:* as famílias passaram a ser Atkinson Hyperlegible Next e
+Atkinson Hyperlegible Mono, também OFL-1.1 e empacotadas do mesmo jeito, e os
+ícones vêm do pacote Heroicons, embutidos como SVG.
 
 ## D14 — Anatomia rotulada na lista encadeada (direção 2a)
 
@@ -843,3 +848,119 @@ a trajetória diverge já no primeiro empilhar. A categoria continua a mesma,
 `topo + 1` antes de escrever em `topo` abriria um buraco no vetor — outra
 semântica própria de JavaScript. Com capacidade fixa, toda posição existe desde
 o começo e guarda zero, como num `new int[4]` de Java.
+
+## D19 — Identidade visual: a sala e a mesa de luz
+
+**Decisão.** A aplicação inteira passa a ter uma identidade só, desenhada com a
+skill oficial `frontend-design` (instalada em `.claude/skills/frontend-design`).
+A página é uma sala verde-acinzentada onde só dois objetos têm corpo: o editor,
+escuro, e a bancada da visualização, que é a superfície mais clara da tela — uma
+mesa de luz com grade milimetrada tênue. O resto é texto pousado direto na sala.
+Substitui a direção 2a, que valia só para a tela de exercício.
+
+**Referência.** O laboratório escolar: a mesa de luz onde se examina uma peça, o
+verde dos equipamentos antigos de laboratório e o roxo de anilina das folhas
+mimeografadas de exercício. É dessa origem que saem as cores, e não de uma
+paleta de uso geral.
+
+| Nome | Hex | Papel |
+|---|---|---|
+| Verde-bancada | `#D8E0DA` | fundo da sala |
+| Mesa de luz | `#FAFCFA` | só a bancada |
+| Grafite | `#1F2B27` | texto, e marcadores dentro do desenho |
+| Anilina | `#5B3FA6` | a única cor de ação |
+| Acerto | `#1F7A4D` | só o sinal de todos os casos passando |
+| Negativo | `#1E2926` | fundo do editor |
+
+**Tipografia.** Atkinson Hyperlegible Next no texto e Atkinson Hyperlegible Mono
+no código e nos valores do desenho, pesos 400 e 700, subconjunto latino (D13),
+licença OFL-1.1. A família foi desenhada para distinguir `1`, `l` e `I`, e `0` e
+`O`. Numa ferramenta cujos defeitos são, na maioria, índice deslocado, é isso que
+a escolha tem de específico. O mono aparece só onde há correspondência com o
+código; contador de passos e rótulos de interface usam o texto com algarismos
+tabulares. Saem as etiquetas em maiúsculas espaçadas.
+
+**Dentro da bancada, matiz é significado.** As cores com significado de D10
+continuam nas mesmas famílias — azul, cinza, âmbar, vermelho — recalibradas
+para a mesa de luz. Contraste sobre `#FAFCFA`: ativa `#2A5DA8` 6,3:1, consumida
+`#66716C` 4,9:1, anel `#B06F0A` 4,0:1, ciclo `#B5352A` 5,8:1, posição vazia
+`#838E88` 3,3:1. Todo o resto do desenho é grafite ou cinza de moldura. Isso
+corrigiu duas confusões que já existiam:
+
+- o marcador de índice era pintado com a cor de ação, e a anilina fica a ΔE 29
+  do azul da célula ativa — perto demais para quem tem deficiência de visão de
+  cores. A separação só é garantida se for de lugar: a anilina nunca entra na
+  bancada;
+- o topo da pilha era vermelho, o mesmo vermelho da ligação cíclica.
+
+Os marcadores passaram a grafite. Quando dois dividem o desenho — início e fim,
+cabeça e atual —, a diferença é de forma: seta cheia para o primeiro, vazada
+para o segundo (`MARCADOR` em `src/visualizacao/estilos.ts`). A forma sobrevive
+à escala de cinza e ao nível sem apoio, onde os rótulos somem.
+
+**Profundidade como presença.** A célula ativa projeta uma sombra seca de 3 px,
+como peça pousada na mesa; consumida e posição vazia ficam chapadas. É mais uma
+forma reforçando uma distinção que já existia, e não um significado novo. Onde o
+navegador não aplica filtro CSS a elemento SVG, a sombra falta e a borda
+contínua continua carregando o estado.
+
+**Editor.** Tema escuro próprio (`src/componentes/tema-do-editor.ts`), com três
+tons de sintaxe — lilás nas palavras-chave, verde-claro nos literais, cinza nos
+comentários — e nenhum vermelho, âmbar ou azul, para o código não carregar as
+cores da bancada. O realce é por tipo de token e uniforme no programa, então não
+diferencia trecho nenhum. A faixa da linha em execução de D9 continua quase
+neutra: branco translúcido a 13% sobre o editor escuro, no lugar do bege sobre
+fundo claro.
+
+**Retorno sobre a ação, nunca sobre o desempenho.** Três retornos entraram, e a
+régua que os separa do que continua proibido é a do roadmap (1.1): responder ao
+que o estudante acabou de fazer é permitido; tempo, contagem, pontuação,
+progresso e histórico, não.
+
+- *Sinal de acerto.* Quando todos os casos passam, a faixa de casos vira um
+  campo verde e um selo de ✓ se traça uma vez, com "Todos os casos passaram."
+  O componente `SinalDeAcerto` não recebe o nível de andaime e é desenhado fora
+  do trecho que varia com ele, então é idêntico nos dois níveis: se a
+  intensidade do retorno variasse com o apoio, a diferença de desempenho entre
+  os níveis deixaria de ser atribuível ao apoio. Não mostra nada da sessão. É o
+  único movimento orquestrado da aplicação, e não anima para quem pediu ao
+  sistema movimento reduzido.
+- *Mudança pendente.* Enquanto o código do editor for diferente do último
+  executado, o botão diz "Executar alterações" e ganha um ponto. Compara dois
+  textos, não conta nada: desfazer a edição até o código executado apaga o
+  sinal.
+- *Convite no número da linha.* Ver abaixo.
+
+Este retorno precisa estar fechado antes do próximo piloto: mudar a intensidade
+dele entre pilotos invalida a comparação entre eles.
+
+**Descoberta da declaração de localização.** O primeiro piloto registrou zero
+declarações em 25 sessões (roadmap, 0.1). Antes de introduzir um modo de
+declaração separado, testa-se o convite visual: o número da linha tem cursor de
+ponteiro e, sob o mouse, vira uma pastilha anilina com o número em branco. O
+mecanismo de D7 não muda — o alvo continua sendo o número. Todos os números se
+comportam igual, e o realce não tem transição: um realce que esmaecesse devagar
+deixaria, por um instante, a linha anterior marcada. O estado vazio de "Onde
+você apontou" passou a dizer como apontar. Se o próximo piloto continuar sem
+declarações, o modo separado do roadmap volta à mesa.
+
+**Ícones.** Heroicons (`@heroicons/react`, MIT), instalado como pacote e
+renderizado como SVG embutido, sem recurso externo em tempo de execução (D13).
+Substituem os glifos `◀`, `✓` e `✗` da interface, que dependiam da fonte da
+máquina. Onde o ícone era a única indicação, uma palavra acompanha para leitor
+de tela.
+
+**O que foi revisado contra os padrões da skill.** A direção 2a era ela mesma o
+padrão que a skill aponta como marca de design gerado: fundo creme, tons
+quentes, rótulos em mono maiúsculo espaçado. Foram descartados também o tema
+escuro de IDE com acento neon (outro padrão, e derrubaria o contraste dos
+estados), o blueprint azul (colide com o azul da célula ativa e obrigaria a
+reescrever D10) e a grade de cartões idênticos — a lista de exercícios virou
+uma régua de linhas.
+
+**Movimento reduzido.** A aplicação inteira respeita a preferência do sistema
+(`MotionConfig reducedMotion="user"`): as transições do desenho acontecem sem
+animação, e o estado muda na hora.
+
+**O que não mudou.** Os estados de D10 e suas formas, o que cada nível de
+andaime revela (D9), o registro de métricas e o arranjo da tela de D10.

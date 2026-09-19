@@ -41,10 +41,11 @@ desnecessária destrói o propósito da ferramenta.
 
 ### 1. Lista de exercícios
 
-Cartões, um por exercício. Cada cartão traz o título, a estrutura de dados
-envolvida, uma indicação de complexidade e duas opções de abertura — com apoio
-ou sem apoio — que são as ações do cartão. Um dos exercícios é
-marcado como tutorial. Há um botão discreto de exportar dados.
+Uma régua de linhas, uma por exercício — não uma grade de cartões iguais. Cada
+linha traz o título, a estrutura de dados envolvida, uma indicação de
+complexidade e, à direita, duas opções de abertura — com apoio ou sem apoio —,
+que são as ações da linha. Um dos exercícios é marcado como tutorial. Há um
+botão discreto de exportar dados.
 
 São **duas escalas diferentes** e elas não podem ser confundidas visualmente:
 *complexidade* é uma característica do exercício; *apoio* é quanta ajuda a
@@ -53,28 +54,25 @@ por tratamento — complexidade como texto, apoio como botões.
 
 ### 2. Tela de exercício — a mais importante
 
-Título, enunciado e a escolha do apoio no topo. Abaixo, duas colunas:
+De cima para baixo:
 
-- À esquerda, o **código**, com editor, numeração de linhas e botão de executar.
-  O estudante clica no *número* da linha para declarar onde acredita estar o
-  defeito, e recebe na hora se acertou. Pode tentar quantas vezes quiser.
-- À direita, em cima, as **dicas**, reveladas uma a uma pelo estudante — junto
-  da visualização, porque é para ela que as dicas mandam olhar. Sem apoio não
-  há dicas, e a visualização sobe.
-- À direita, embaixo das dicas, a **visualização**, com o desenho animado da
-  estrutura sobre uma bancada clara, o indicador da linha que está sendo
-  executada e os controles de reprodução: anterior, tocar, próximo, e uma barra
-  de posição com o contador de passos.
+1. **Título, enunciado e a escolha do apoio**, em largura inteira.
+2. **Casos de teste**, numa faixa larga. O teste que falha é o que motiva a
+   investigação, então vem antes do código.
+3. **Código e visualização lado a lado**, com a mesma altura.
+   - À esquerda, o **código**: editor escuro, numeração de linhas e botão de
+     executar. O estudante clica no *número* da linha para declarar onde
+     acredita estar o defeito, e recebe na hora se acertou. Pode tentar quantas
+     vezes quiser.
+   - À direita, a **visualização**: o desenho animado da estrutura sobre a mesa
+     de luz (anatomia de nó rotulada, ponteiro em seta, nulo aterrado), o
+     indicador da linha que está sendo executada e os controles de reprodução —
+     anterior, tocar, próximo, e uma barra de posição com o contador de passos.
+4. **Dicas e retorno da localização**: as dicas, reveladas uma a uma pelo
+   estudante, à esquerda; as linhas que ele **apontou** como suspeitas, à
+   direita. Sem apoio não há dicas, e o retorno ocupa a faixa inteira.
 
-Embaixo das duas colunas fica o retorno do que o estudante fez: os **casos de
-teste** com seus resultados, à esquerda, e as linhas que ele **apontou** como
-suspeitas, à direita.
-
-Esta tela segue a direção 2a (bancada clara, anatomia de nó rotulada, ponteiro
-em seta, nulo aterrado), com Space Grotesk no texto e JetBrains Mono no código e
-nos rótulos do desenho. As outras duas telas ainda têm a aparência anterior.
-
-Em telas estreitas os painéis empilham.
+Em telas estreitas tudo empilha, com o código antes da visualização.
 
 ### 3. Painel de métricas
 
@@ -99,7 +97,7 @@ Isto vale inclusive para sutilezas: não destaque a linha onde o teste falhou, n
 enfatize a função que contém o problema, não use ênfase tipográfica que
 diferencie um trecho do código dos demais.
 
-### 2. Seis estados da visualização precisam continuar distinguíveis
+### 2. Os estados da visualização precisam continuar distinguíveis
 
 Cada um é sinalizado **por cor e também por forma**. A redundância é proposital —
 a informação não pode depender só de cor. Ao redesenhar, a forma é tão parte do
@@ -107,12 +105,22 @@ significado quanto a cor:
 
 | Estado | Cor | Forma que acompanha |
 |---|---|---|
-| Célula ativa | azul | borda contínua, opacidade cheia |
-| Célula consumida | cinza | borda tracejada, opacidade reduzida |
-| Elemento apontado pelo marcador | âmbar | anel em volta da célula |
+| Célula ativa | azul `#2A5DA8` | borda contínua, opacidade cheia, sombra seca de peça pousada |
+| Célula consumida | cinza `#66716C` | borda tracejada em opacidade cheia; fundo e valor esmaecidos; sem sombra |
+| Elemento apontado pelo marcador | âmbar `#B06F0A` | anel em volta da célula |
 | Marcador fora da estrutura | sem cor própria | posição além da ponta, mais rótulo |
 | Ponteiro nulo | sem cor própria | seta que termina em aterramento; numa variável, estacionada fora da fileira, mais rótulo |
-| Ligação cíclica | vermelho | gancho por baixo da fileira, seta de retorno, rótulo |
+| Ligação cíclica | vermelho `#B5352A` | gancho por baixo da fileira, seta de retorno, rótulo |
+| Posição vazia da capacidade | cor da moldura `#838E88` | contorno pontilhado, sem preenchimento e sem nada dentro |
+
+Todas passam de 3:1 sobre a mesa de luz (`#FAFCFA`).
+
+**Dentro da bancada, matiz é significado.** Nada no desenho usa cor que não seja
+uma destas. Marcadores, ligações e rótulos são grafite ou cinza de moldura; dois
+marcadores no mesmo desenho se distinguem pela forma — seta cheia e seta
+vazada. A cor de ação da interface (anilina) nunca entra na bancada: ela fica
+perto demais do azul da célula ativa para quem tem deficiência de visão de
+cores.
 
 A descrição de cada estado diz o que ele é, e nunca se está certo ou errado: a
 ferramenta desenha o estado e não opina sobre ele. O aterramento — dois traços
@@ -147,6 +155,23 @@ que a pesquisa quer observar.
 O contador de passos da execução (`passo 16 / 28`) é exceção e permanece — ele se
 refere à animação, não ao desempenho do estudante.
 
+### 5. Retorno sobre a ação, sim; sobre o desempenho, não
+
+Responder ao que o estudante acabou de fazer é permitido. Tempo decorrido,
+contagem de tentativas, pontuação, progresso e histórico de resolvidos, não —
+nem na tela de exercício, nem na lista. Os retornos que existem:
+
+- **Acerto.** Quando todos os casos passam, a faixa de casos vira um campo
+  verde, com um selo de ✓ que se traça uma vez e o texto "Todos os casos
+  passaram." É **idêntico nos dois níveis de apoio**: se variasse com o apoio, a
+  diferença de desempenho entre os níveis deixaria de ser atribuível ao apoio.
+  Também não pode mudar de intensidade entre pilotos.
+- **Mudança pendente.** Com o código editado e ainda não executado, o botão diz
+  "Executar alterações" e ganha um ponto.
+- **Convite no número da linha.** Cursor de ponteiro e, sob o mouse, o número
+  vira uma pastilha anilina. Todos os números se comportam igual; nenhum recebe
+  marca própria.
+
 ---
 
 ## O que pode mudar à vontade
@@ -157,14 +182,38 @@ foco e interação, e o arranjo geral das telas.
 
 A régua é simples: **aparência é livre; significado não é.**
 
-## O que existe hoje, para referência
+## A identidade atual (D19)
 
-Interface sóbria e clara, próxima de uma ferramenta de trabalho: fundo levemente
-acinzentado, painéis brancos com borda fina e cantos arredondados, títulos de
-seção em maiúsculas pequenas e cinza, azul como cor de ação, fonte de sistema.
-Funciona, mas é genérica — não tem nada que a identifique.
+**Conceito: a sala e a mesa de luz.** A referência é o laboratório escolar — a
+mesa de luz onde se examina uma peça, o verde dos equipamentos antigos de
+laboratório, o roxo de anilina das folhas mimeografadas de exercício. A página é
+uma sala verde-acinzentada onde só dois objetos têm corpo: o editor, escuro, e a
+bancada da visualização, que é a superfície mais clara da tela, com uma grade
+milimetrada tênue. O resto é texto pousado direto na sala, alinhado à esquerda.
+A ousadia está gasta na bancada; o resto é quieto.
 
-Um bom resultado seria uma identidade própria que **aumente a legibilidade da
-visualização**, já que ela é o instrumento central, sem sacrificar a
-distinguibilidade dos seis estados nem introduzir qualquer coisa que aponte o
-caminho para o defeito.
+| Nome | Hex | Papel |
+|---|---|---|
+| Verde-bancada | `#D8E0DA` | fundo da sala |
+| Mesa de luz | `#FAFCFA` | só a bancada |
+| Grafite | `#1F2B27` | texto, e marcadores dentro do desenho |
+| Anilina | `#5B3FA6` | a única cor de ação — nunca dentro da bancada |
+| Acerto | `#1F7A4D` | só o sinal de todos os casos passando |
+| Negativo | `#1E2926` | fundo do editor |
+
+**Tipografia.** Atkinson Hyperlegible Next no texto, Atkinson Hyperlegible Mono
+no código e nos valores do desenho, pesos 400 e 700. A família distingue `1`,
+`l` e `I`, e `0` e `O` — o que importa numa ferramenta de defeitos de índice.
+Títulos de seção em caixa normal e peso 700; nada de etiquetas em maiúsculas
+espaçadas.
+
+**Editor.** Fundo escuro, três tons de sintaxe — lilás nas palavras-chave,
+verde-claro nos literais, cinza nos comentários —, sem vermelho, âmbar ou azul,
+que são cores da bancada.
+
+**Ícones.** Heroicons, embutidos como SVG no build. Nenhum recurso externo em
+tempo de execução: fontes e ícones vêm no pacote da aplicação.
+
+**Padrões evitados de propósito:** fundo creme com acento terroso, tema escuro
+com um acento neon, grade de cartões idênticos com a mesma sombra, etiquetas em
+maiúsculas espaçadas sobre cada título, mono em rótulos miúdos.
