@@ -1252,3 +1252,53 @@ exercício não escolheu.
 botão, nos dois sentidos: que ele existe enquanto a mudança está pendente, que
 para quando a execução alcança o editor, e que sem movimento o anel continua
 visível no lugar do pulso.
+
+### Fluxo: continuar e ordem dos apontamentos (19/09/2026)
+
+Duas mudanças vindas de observação de uso. Nenhuma altera o que o estudante vê
+ao mesmo tempo nem onde cada coisa fica, então o congelamento segue de pé.
+
+**Continuar sem voltar ao catálogo.** Quando todos os casos passam, o sinal de
+acerto passa a trazer um convite para o próximo exercício. Antes, seguir adiante
+exigia voltar à vitrine e escolher de novo — um desvio que só existia por falta
+do caminho direto.
+
+Três restrições moldaram o convite:
+
+- **O apoio é herdado.** O endereço leva o mesmo nível da sessão atual. Trocar
+  de apoio no meio de uma sequência misturaria as condições que o estudo compara
+  (D9), e a troca continua sendo uma escolha explícita, na própria tela.
+- **A navegação encerra a sessão e começa outra** (D8). Não há nada de novo aqui:
+  é uma troca de rota, a tela remonta com chave nova, a sessão anterior é
+  arquivada no desmonte (D15) e o exercício seguinte abre com o código com
+  defeito dele.
+- **O convite não informa posição nem quantidade.** Nada de "2 de 9", "faltam
+  sete" ou contagem de resolvidos: seguir adiante é uma porta, não um placar.
+
+Daí uma decisão que não é óbvia pelo código: **a sequência dá a volta**. O
+exercício seguinte ao último é o primeiro do catálogo. Se o último ficasse sem
+convite, a ausência diria ao estudante que ele chegou ao fim da lista — posição
+na sequência é progresso, e progresso não aparece (D8). Com a volta, o convite é
+o mesmo em qualquer exercício.
+
+Quem sabe quem é o próximo é o catálogo, em `proximoDoCatalogo`, e a rota passa
+o resultado para a tela. A tela de exercício continua sem conhecer o catálogo:
+ela desenha um exercício, não uma sequência.
+
+**Apontamentos do mais recente para o mais antigo.** O painel "Onde você
+apontou" inverte a ordem de exibição. Com várias tentativas, a que o estudante
+acabou de fazer ficava no fim da lista, fora de vista, e era justamente a que
+ele queria conferir. **A ordem do registro de métricas não muda** — o log
+continua cronológico, como toda a análise depende que seja (D6); o que inverte é
+a leitura.
+
+**Um efeito colateral corrigido no caminho.** A regra de tamanho do selo de
+acerto valia para qualquer `svg` dentro do sinal, e o ícone do convite nasceu
+com os 72 px e o traço vazado do selo. A regra passou a mirar o selo, que é
+filho direto. Tamanho, cor e intensidade do selo seguem exatamente iguais — a
+condição do roadmap 1.1 continua valendo.
+
+**O que virou teste.** Que o convite leva ao próximo exercício preservando o
+apoio, que a sessão recomeça do código com defeito, que o texto do convite não
+tem número nenhum, que o último exercício dá a volta para o primeiro, e que a
+linha apontada mais recente aparece no topo.

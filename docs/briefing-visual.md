@@ -95,6 +95,11 @@ mesmo tempo o código, a visualização e os casos de teste.
    tocar, próximo, e uma barra de posição com o contador de passos.
 4. **Embaixo da visualização, os casos de teste e as dicas**, que rolam por
    dentro quando falta altura; o desenho fica parado. Sem apoio não há dicas.
+   Quando todos os casos passam, a faixa vira o campo verde de acerto e traz,
+   ao lado do selo, o convite para ir ao próximo exercício.
+
+As linhas apontadas aparecem da mais recente para a mais antiga: é a última
+tentativa que o estudante quer conferir.
 
 Em telas estreitas ou baixas tudo empilha e a página volta a rolar, com o
 código antes da visualização.
@@ -189,8 +194,10 @@ contagem de tentativas, pontuação, progresso e histórico de resolvidos, não 
 nem na tela de exercício, nem na lista. Os retornos que existem:
 
 - **Acerto.** Quando todos os casos passam, a faixa de casos vira um campo
-  verde, com um selo de ✓ que se traça uma vez e o texto "Todos os casos
-  passaram." É **idêntico nos dois níveis de apoio**: se variasse com o apoio, a
+  verde, com um selo de ✓ que se traça uma vez, o texto "Todos os casos
+  passaram." e um convite para ir ao próximo exercício — que leva adiante o
+  mesmo nível de apoio e não diz posição, quantidade nem quantos já foram
+  resolvidos. É **idêntico nos dois níveis de apoio**: se variasse com o apoio, a
   diferença de desempenho entre os níveis deixaria de ser atribuível ao apoio.
   Também não pode mudar de intensidade entre pilotos.
 - **Mudança pendente.** Com o código editado e ainda não executado, o botão diz
