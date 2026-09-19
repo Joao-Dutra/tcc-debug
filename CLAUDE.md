@@ -93,4 +93,6 @@ volta depois do experimento.
 docker compose up        # sobe em http://localhost:5173
 npm run dev              # alternativa sem Docker
 npm run build            # checagem de tipos + build de produção
+npx vitest run           # testes rápidos, sem navegador
+npm run e2e              # testes de ponta a ponta (Playwright, Edge local)
 ```

@@ -42,4 +42,6 @@ A aplicação sobe em <http://localhost:5173>.
 npm run dev      # servidor de desenvolvimento
 npm run build    # checagem de tipos e build de produção
 npm run lint     # análise estática
+npx vitest run   # testes do núcleo, dos exercícios e do CSS
+npm run e2e      # testes de ponta a ponta, no Edge instalado na máquina
 ```

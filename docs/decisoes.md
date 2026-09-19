@@ -1150,6 +1150,28 @@ da tela numa resolução não prevista, por exemplo —, desde que a correção
 restaure o arranjo descrito acima, e não o altere. Mudar a disposição, o tamanho
 relativo das áreas ou o que fica visível ao mesmo tempo espera o piloto.
 
+**Como isto é verificado.** As regras desta decisão que podem ser executadas
+viraram teste, no mesmo espírito do quadro-denúncia (D16):
+
+| Regra | Onde | O que alcança |
+|---|---|---|
+| A miniatura não mostra o quadro que denuncia o defeito | `src/exercicios/quadro-denuncia.test.ts` | Executa as duas versões e exige que o estado esteja entre os anteriores à divergência |
+| Toda animação tem exceção de movimento reduzido | `src/componentes/movimento-reduzido.test.ts` | Lê o `index.css` e cobra o `animation: none` de cada seletor que anima |
+| O filtro da vitrine mostra só a fileira escolhida | `e2e/vitrine.spec.ts` | Clique de verdade, no navegador |
+| Com movimento reduzido nada anima | `e2e/movimento-reduzido.spec.ts` | Preferência emulada; um teste com movimento normal guarda contra passar por vazio |
+| As telas cabem na largura de um celular | `e2e/celular.spec.ts` | 360 e 390 px por emulação, sem o piso de 492 px da janela do Edge |
+
+Os de ponta a ponta usam o Edge já instalado (`channel: 'msedge'`), sem baixar
+navegador, pela razão de D13. O piscar do cursor do editor fica fora da contagem
+de animações: é cursor de texto, vem do CodeMirror, e não é movimento que a
+aplicação acrescenta.
+
+**O que continua dependendo de olho e de aparelho**, e precisa de uma passada
+manual antes do piloto: que a preferência de movimento do sistema chegue ao
+navegador da máquina do piloto, e se o texto fica legível e a fileira rola bem
+com o dedo num celular de verdade. O teste responde se a página cabe, não se
+ela está boa.
+
 **Exportação só no painel do pesquisador.** O botão saiu da lista e da tela de
 exercício; fica só no painel de métricas, fora da navegação (D11). Nenhum dado
 se perde: a sessão já era arquivada ao sair do exercício e no `pagehide`, sem
