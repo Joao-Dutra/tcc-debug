@@ -25,7 +25,7 @@ export const CAMINHO_INICIAL = '#/';
 export const CAMINHO_METRICAS = '#/metricas';
 
 /**
- * O nível vai explícito no link quando informado, mesmo sendo `completo` o
+ * O nível vai explícito no link quando informado, mesmo sendo `com-apoio` o
  * padrão: é este endereço que será enviado a um participante, e ele precisa
  * dizer sozinho sob qual apoio a sessão foi aberta.
  */

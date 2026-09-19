@@ -154,7 +154,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   const dicasPermitidas = Math.min(dicasDisponiveis(andaime), exercicio.dicas.length);
 
   // A mesma linha do indicador textual, marcada no editor. Sem execução
-  // carregada, ou no apoio mínimo, não há marca.
+  // carregada, ou no nível sem apoio, não há marca.
   const linhaNoEditor = destacarLinhaNoEditor(andaime) ? (linhaAtual ?? null) : null;
   useEffect(() => {
     const view = editor.current?.view;

@@ -29,9 +29,8 @@ continua sendo função do que recebe. Quando a propriedade vier ausente, assuma
 
 | Nível | Legendas de orientação | Índices e rótulos dos marcadores |
 |---|---|---|
-| `completo` | sim | sim |
-| `parcial` | não | sim |
-| `minimo` | não | não |
+| `com-apoio` | sim | sim |
+| `sem-apoio` | não | não |
 
 Use `mostrarLegendas(nivel)` e `mostrarRotulos(nivel)` de
 `src/componentes/andaime.ts` em vez de comparar o nível na mão: a tabela de D9
@@ -80,7 +79,7 @@ existe. O componente não recebe o exercício e não decide isso (D10).
 
 **Cor nunca é o único portador.** O traço da borda separa ativa de consumida e
 o anel separa a apontada das demais. As duas distinções sobrevivem em escala de
-cinza e — o que pesa mais aqui — sobrevivem ao apoio mínimo de D9, onde não há
+cinza e — o que pesa mais aqui — sobrevivem ao nível sem apoio de D9, onde não há
 rótulo nenhum para socorrer. Por isso o anel é forma, e não uma tinta de fundo.
 
 **O anel diz o que vem em seguida, não o que deveria vir.** Ele acompanha o

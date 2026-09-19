@@ -59,10 +59,10 @@ export function TelaInicial() {
                   complexidade {exercicio.dificuldade} de 3
                 </span>
               </p>
-              {/* Um cartão por exercício, com as três aberturas dentro dele.
+              {/* Um cartão por exercício, com as duas aberturas dentro dele.
                   Três cartões separados sugeririam três exercícios. */}
               <p className="abertura">
-                <span className="rotulo-abertura">abrir com apoio</span>
+                <span className="rotulo-abertura">abrir</span>
                 {NIVEIS_DE_ANDAIME.map((nivel) => (
                   <a
                     key={nivel}

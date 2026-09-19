@@ -15,7 +15,7 @@ import { listaInserirPosicao } from './lista-inserir-posicao';
  * crescente. É a ordem em que a disciplina apresenta as estruturas.
  *
  * Ordem de apresentação não é sequência obrigatória: nenhum exercício é
- * bloqueado, e todos ficam abertos nos três apoios desde o começo.
+ * bloqueado, e todos ficam abertos nos dois níveis de apoio desde o começo.
  *
  * Vive em arquivo próprio para que cada exercício continue sendo um módulo
  * independente: nenhum exercício precisa conhecer os outros.

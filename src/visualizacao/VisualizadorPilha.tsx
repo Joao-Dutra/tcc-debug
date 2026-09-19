@@ -189,7 +189,7 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
       {/* Marcador do topo — desenhado mesmo quando aponta para fora do conteúdo,
           porque essa divergência é o sintoma visível de vários defeitos.
 
-          A seta é forma, não texto: no apoio mínimo o rótulo some, e sem ela o
+          A seta é forma, não texto: sem apoio o rótulo some, e sem ela o
           marcador sumiria junto, deixando a cor como único portador. */}
       {topo !== undefined && (
         <motion.g

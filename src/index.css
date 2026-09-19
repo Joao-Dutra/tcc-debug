@@ -358,7 +358,7 @@ a.nivel:hover { border-color: var(--acento); color: var(--acento); }
   gap: var(--esp-20); margin-top: var(--esp-20); align-items: stretch; }
 .tela-exercicio .grade-retorno { display: grid; grid-template-columns: 1fr 1fr;
   gap: var(--esp-20); margin-top: var(--esp-20); align-items: start; }
-/* No apoio mínimo não há dicas, e o que resta ocupa a faixa inteira. */
+/* Sem apoio não há dicas, e o que resta ocupa a faixa inteira. */
 .tela-exercicio .grade-retorno > .painel:only-child { grid-column: 1 / -1; }
 @media (max-width: 900px) {
   .tela-exercicio .grade-exercicio,

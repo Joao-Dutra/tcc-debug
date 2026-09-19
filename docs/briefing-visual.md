@@ -42,8 +42,8 @@ desnecessária destrói o propósito da ferramenta.
 ### 1. Lista de exercícios
 
 Cartões, um por exercício. Cada cartão traz o título, a estrutura de dados
-envolvida, uma indicação de complexidade e três opções de abertura — apoio
-completo, parcial ou mínimo — que são as ações do cartão. Um dos exercícios é
+envolvida, uma indicação de complexidade e duas opções de abertura — com apoio
+ou sem apoio — que são as ações do cartão. Um dos exercícios é
 marcado como tutorial. Há um botão discreto de exportar dados.
 
 São **duas escalas diferentes** e elas não podem ser confundidas visualmente:
@@ -59,8 +59,8 @@ Título, enunciado e a escolha do apoio no topo. Abaixo, duas colunas:
   O estudante clica no *número* da linha para declarar onde acredita estar o
   defeito, e recebe na hora se acertou. Pode tentar quantas vezes quiser.
 - À direita, em cima, as **dicas**, reveladas uma a uma pelo estudante — junto
-  da visualização, porque é para ela que as dicas mandam olhar. No apoio mínimo
-  não há dicas, e a visualização sobe.
+  da visualização, porque é para ela que as dicas mandam olhar. Sem apoio não
+  há dicas, e a visualização sobe.
 - À direita, embaixo das dicas, a **visualização**, com o desenho animado da
   estrutura sobre uma bancada clara, o indicador da linha que está sendo
   executada e os controles de reprodução: anterior, tocar, próximo, e uma barra

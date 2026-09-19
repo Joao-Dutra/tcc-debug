@@ -6,7 +6,7 @@
  *
  * Toda distinção tem portador além da cor. O traço da borda separa célula
  * ativa de consumida, e o elemento apontado ganha um anel — não uma tinta.
- * Isso não é só acessibilidade: no apoio mínimo (D9) os rótulos somem, e a
+ * Isso não é só acessibilidade: no nível sem apoio (D9) os rótulos somem, e a
  * forma é o que resta para carregar a informação.
  */
 
@@ -71,7 +71,7 @@ export const CELULA: Record<EstadoDaCelula, EstiloDaCelula> = {
  * Por isso o contorno é pontilhado, e não tracejado como o da consumida, e
  * nada é desenhado dentro: sem preenchimento, sem valor, sem índice. É a
  * ausência de conteúdo que separa os dois estados, mesmo em escala de cinza e
- * mesmo no apoio mínimo, onde não há rótulo para socorrer.
+ * mesmo no nível sem apoio, onde não há rótulo para socorrer.
  *
  * Só aparece onde há capacidade declarada. Pilha dinâmica não tem contorno de
  * capacidade: os blocos simplesmente aparecem.

@@ -54,7 +54,7 @@ interface PropsMarcador {
   desenhadas: number;
   acima: boolean;
   classe: string;
-  /** Rótulo com o nome e o valor do marcador; some no apoio mínimo (D9). */
+  /** Rótulo com o nome e o valor do marcador; some sem apoio (D9). */
   rotulos: boolean;
 }
 

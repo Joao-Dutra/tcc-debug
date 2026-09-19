@@ -20,8 +20,14 @@ import type { ResultadoExecucao } from './tipos';
  * campos do registro exportado não mudaram: instantâneos não entram nele. A
  * versão marca o ambiente de coleta, e é o que permite saber, na análise, se
  * uma sessão foi gravada antes ou depois da mudança.
+ *
+ * 3 — o andaime passou de três níveis para dois (ver D9). O campo `andaime`
+ * continua sendo texto, mas o conjunto de valores mudou: sessões da versão 2
+ * trazem `completo`, `parcial` ou `minimo`, e as da versão 3, `com-apoio` ou
+ * `sem-apoio`. Sem a versão, uma análise somaria condições diferentes sob o
+ * mesmo nome.
  */
-export const VERSAO_DO_REGISTRO = 2;
+export const VERSAO_DO_REGISTRO = 3;
 
 /**
  * A execução disparada ao abrir o exercício não é uma tentativa do estudante.

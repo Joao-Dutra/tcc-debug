@@ -219,7 +219,7 @@ controles da visualização fazem, que clicar no número da linha declara a
 suspeita e que o editor aceita correções.
 
 **Ordem de apresentação não é sequência obrigatória.** Nenhum exercício é
-bloqueado, e todos ficam abertos nos três apoios desde o começo. Impor
+bloqueado, e todos ficam abertos nos dois níveis de apoio desde o começo. Impor
 sequência criaria progresso — quem parou onde —, que é justamente o que esta
 tela não mostra, e limitaria o participante à ordem prevista quando o estudo
 manda o link direto do exercício (ver D9).
@@ -240,10 +240,11 @@ algum, que é exatamente o progresso que esta tela não exibe.
 ## D9 — Andaime como parâmetro independente do exercício
 
 **Decisão.** O nível de andaime (*scaffolding*) é um parâmetro da sessão, e não
-uma propriedade do exercício. O mesmo exercício pode ser apresentado com apoio
-`completo`, `parcial` ou `minimo`. O nível vem da URL
+uma propriedade do exercício. O mesmo exercício pode ser apresentado
+`com-apoio` ou `sem-apoio`. O nível vem da URL
 (`#/exercicio/<id>?andaime=<nivel>`), é registrado na sessão de métricas e,
-quando ausente ou inválido, assume `completo`.
+quando ausente ou inválido, assume `com-apoio`. Até o primeiro piloto eram três
+níveis — ver "Dois níveis, depois do piloto", abaixo.
 
 **Alternativa descartada.** Embutir o nível de apoio em cada exercício, de modo
 que os exercícios iniciais fossem naturalmente mais assistidos e os finais menos.
@@ -265,20 +266,46 @@ retirada do andaime como variável, e não apenas descrevê-la.
 
 **O que varia com o nível.**
 
-| Andaime | `completo` | `parcial` | `minimo` |
-|---|---|---|---|
-| Dicas disponíveis | três | uma | nenhuma |
-| Casos de teste | esperado e obtido | apenas passou ou falhou | apenas que algo falhou |
-| Legendas de orientação no desenho | sim | não | não |
-| Índices e rótulos dos marcadores | sim | sim | não |
-| Linha em execução destacada no editor | sim | sim | não |
-| Indicador textual da linha em execução | sim | sim | sim |
+| Andaime | `com-apoio` | `sem-apoio` |
+|---|---|---|
+| Dicas disponíveis | três | nenhuma |
+| Casos de teste | esperado e obtido | apenas que algo falhou |
+| Legendas de orientação no desenho | sim | não |
+| Índices e rótulos dos marcadores | sim | não |
+| Linha em execução destacada no editor | sim | não |
+| Indicador textual da linha em execução | sim | sim |
 
-A visualização tem três degraus, e não dois. Retirar de uma vez as legendas e
-os rótulos dos marcadores faria o apoio parcial cair quase ao mínimo, e as duas
-condições deixariam de se distinguir na análise. No apoio mínimo restam o valor
-guardado em cada posição e a forma e a posição dos marcadores: relacionar o
-marcador à variável do código volta a ser trabalho do estudante.
+Sem apoio restam o valor guardado em cada posição e a forma e a posição dos
+marcadores: relacionar o marcador à variável do código volta a ser trabalho do
+estudante.
+
+**Dois níveis, depois do piloto.** Até o primeiro piloto a escala tinha três
+níveis — `completo`, `parcial` e `minimo` —, e a visualização tinha três
+degraus, para que o apoio parcial não caísse quase ao mínimo. O piloto de
+18/09/2026 (ver `docs/roadmap.md`) mostrou outra coisa: das 25 sessões
+abertas, 16 foram com apoio completo, 6 com parcial e 3 com mínimo, e os níveis
+reduzidos foram quase sempre abandonados. Um degrau intermediário que quase
+ninguém usa não sustenta comparação e custa superfície: mais uma coluna em cada
+tabela, mais um caso em cada visualizador, mais um grupo a recrutar. A escala
+passou a ter dois níveis, que mantêm o essencial — a variável que permite
+comparar o mesmo exercício sob condições diferentes, sem a qual o estudo perde
+o grupo de comparação.
+
+O mapeamento entre as escalas, para a análise:
+
+| Escala antiga (registro versão 2) | Escala nova (registro versão 3) |
+|---|---|
+| `completo` | `com-apoio`, que oferece exatamente o que o completo oferecia |
+| `parcial` | sem correspondente — o nível deixou de existir |
+| `minimo` | `sem-apoio`, que oferece exatamente o que o mínimo oferecia |
+
+Como o conjunto de valores do campo `andaime` mudou, `VERSAO_DO_REGISTRO` subiu
+para 3. As sessões já coletadas continuam legíveis e trazem a versão 2. Quanto
+ao apoio, `completo` e `com-apoio` podem ser tratados na análise como a mesma
+condição, e `minimo` e `sem-apoio` também, porque o que a interface revela em
+cada par é idêntico — o que não dispensa conferir se o próprio exercício mudou
+entre as coletas. As sessões `parcial` ficam à parte, sem correspondente na
+escala nova.
 
 **Por que os níveis têm nome e não número.** A numeração media quantidade de
 apoio e portanto crescia na direção contrária à da dificuldade — o nível 3 era
@@ -288,8 +315,8 @@ exercício, que é propriedade dele e não da sessão; manter as duas escalas co
 mesmo vocabulário convidava a confundir justamente o que a análise precisa
 separar.
 
-**O que não varia com o nível.** O código do exercício, os casos executados, a
-instrumentação e o registro de métricas. O andaime é exclusivamente aquilo que a
+**O que não varia com o nível.** O código do exercício, os casos avaliados, os
+instantâneos gerados, a instrumentação e o registro de métricas. O andaime é exclusivamente aquilo que a
 interface revela; o núcleo não o conhece. Essa fronteira é o que garante que
 duas sessões do mesmo exercício sob níveis distintos sejam comparáveis.
 
@@ -299,7 +326,7 @@ manifestar apenas em entradas de borda pertencem ao exercício e são declarados
 nele. Manter essa separação explícita é o que sustenta a análise.
 
 **O nível passou a ser escolhível pela interface.** Cada exercício da lista
-oferece as três aberturas dentro de um único cartão, e a tela do exercício
+oferece as duas aberturas dentro de um único cartão, e a tela do exercício
 mostra qual está ativo e permite trocar. Trocar encerra a sessão e começa
 outra, conforme D8 — inclusive descartando o código já editado, porque duas
 tentativas sob apoios diferentes não podem ser somadas e um código carregado de
@@ -347,17 +374,17 @@ confusão que D9 existe para evitar.
 **A linha em execução tem dois portadores, e só um entra no *fading*.** O
 indicador de linha (ver D10) é, ele próprio, um andaime: faz pelo estudante o
 trabalho de relacionar o código à representação. Por isso ele se divide em
-dois. O indicador textual ("Executando a linha N") aparece em todos os
-níveis. O destaque de marca-texto da mesma linha no editor aparece nos apoios
-`completo` e `parcial` e some no `minimo`.
+dois. O indicador textual ("Executando a linha N") aparece nos dois níveis. O
+destaque de marca-texto da mesma linha no editor aparece `com-apoio` e some
+`sem-apoio`.
 
-No apoio mínimo resta o número, e achar essa linha no código — relacionar o
-passo ao programa — volta a ser trabalho do estudante. O texto fica em todos
-os níveis por ser também o principal recurso de legibilidade da ferramenta:
-sem ele, o mínimo deixaria de ser apoio reduzido e viraria um quadro sem
-legenda. O destaque sai junto com os rótulos dos marcadores, pelo mesmo
-motivo: no mínimo sai o que faz a correspondência pelo estudante, e fica o
-que ele precisa para fazê-la sozinho.
+Sem apoio resta o número, e achar essa linha no código — relacionar o passo ao
+programa — volta a ser trabalho do estudante. O texto fica nos dois níveis por
+ser também o principal recurso de legibilidade da ferramenta: sem ele, o nível
+sem apoio deixaria de ser apoio reduzido e viraria um quadro sem legenda. O
+destaque sai junto com os rótulos dos marcadores, pelo mesmo motivo: sem apoio
+sai o que faz a correspondência pelo estudante, e fica o que ele precisa para
+fazê-la sozinho.
 
 O destaque obedece à mesma regra do indicador: deriva do instantâneo exibido
 e nunca conhece a linha do defeito. Marca o número de linha que o indicador
@@ -440,7 +467,7 @@ nunca foi usado, a outra é elemento que saiu da estrutura.
 A distinção é carregada pela forma, e não pela cor: a vazia é pontilhada e não
 tem nada dentro; a consumida é tracejada e mostra o valor esmaecido. É a
 ausência de conteúdo que separa as duas, o que sobrevive à escala de cinza e ao
-apoio mínimo. A cor acompanha: a vazia usa `--posicao-vazia`, um traço de
+nível sem apoio. A cor acompanha: a vazia usa `--posicao-vazia`, um traço de
 estrutura escurecido até 3,2:1 sobre a bancada — da família da moldura, como a
 base da pilha e o contorno da fileira, e não da tinta do conteúdo. Contra a
 consumida ela fica a ΔE 12, que é a contrapartida de escurecer o bastante para
@@ -748,7 +775,7 @@ tenha. É aprovada porque o último quadro — `carla` ainda na fila depois de
   a classe "devolve o elemento errado" em pilha e fila. Fica para depois: o
   valor devolvido não está no instantâneo, e trazê-lo exige mudar o núcleo e o
   contrato dos visualizadores; hoje serviria a um exercício só; e mostrar
-  "devolveu 20" no desenho devolveria, no apoio mínimo, o "obtido" que o painel
+  "devolveu 20" no desenho devolveria, sem apoio, o "obtido" que o painel
   de casos esconde de propósito (D9).
 - *Trocar o defeito por um que diverja no estado* — a escolhida. O defeito
   passou a ser `itens.length = topo` no lugar de `topo + 1`, na mesma linha e na
