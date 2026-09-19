@@ -1177,3 +1177,78 @@ exercício; fica só no painel de métricas, fora da navegação (D11). Nenhum d
 se perde: a sessão já era arquivada ao sair do exercício e no `pagehide`, sem
 depender do botão (D15). A função de exportar do hook de métricas, que só o
 botão usava, saiu junto.
+
+### Ajustes de interface (19/09/2026)
+
+Cinco ajustes pedidos depois do congelamento, e nenhum deles mexe no arranjo
+congelado: quatro estão fora da tela de exercício, e o quinto é o botão de
+executar, que é retorno sobre a ação em curso e não muda o que o estudante vê
+ao mesmo tempo, nem onde cada coisa fica.
+
+**1. O botão de executar pulsa enquanto houver mudança pendente.** O ponto
+sozinho era discreto demais. Agora o botão ganha um halo fixo e um anel que
+pulsa por cima dele, em `animation` no `::after` — não no próprio botão, para o
+alvo do clique não mudar de tamanho debaixo do ponteiro de quem vai clicar. O
+halo é fixo de propósito: só o pulso deixaria o botão igual a qualquer outro
+no instante em que o anel está apagado.
+
+Com `prefers-reduced-motion`, o anel simplesmente fica parado, com a mesma
+espessura e a mesma cor: a alternativa estática precisa ser tão visível quanto o
+pulso, senão a preferência por menos movimento custaria informação a quem a
+usa. Continua sendo retorno sobre a ação e não sobre o desempenho: nasce de o
+código estar diferente do que rodou, e morre quando a execução alcança o editor
+— não conta nada.
+
+**2. Autoria na tela inicial.** Uma linha discreta no rodapé, com o curso, a
+instituição e o autor.
+
+**3. Complexidade como etiqueta, não como fração.** "complexidade 2 de 3" virou
+uma palavra: **introdutório**, **intermediário** e **desafiador**, no mesmo
+formato do balão de tutorial. O campo `dificuldade` continua numérico no modelo
+— número ordena, compara e entra na análise; a palavra é só como isso se lê. A
+tabela mora em `src/componentes/complexidade.ts`, no espírito de `andaime.ts`:
+quem desenha consulta, não decide.
+
+A etiqueta descreve **o exercício**, nunca quem o abre, e por isso não esbarra na
+proibição de progresso e pontuação (D8): é a informação que já estava na lista,
+com outra forma.
+
+*Verde, amarelo e vermelho encostam em cores que têm significado na bancada*, e
+a vitrine mostra miniaturas — ou seja, as duas coisas dividem a tela. Os tons
+foram escolhidos medindo essa distância, e não pelo nome da cor:
+
+| Etiqueta | Degrau | Hex | ΔE da célula ativa | ΔE do apontado | ΔE do ciclo | Texto |
+|---|---|---|---|---|---|---|
+| introdutório | `lima-700` | `#446800` | 55 | 36 | 54 | 6,2:1 |
+| intermediário | `palha-800` | `#473900` | 47 | 27 | 37 | 10,8:1 |
+| desafiador | `rubi-900` | `#430403` | 40 | 38 | 31 | 15,9:1 |
+
+A menor distância é 27, da etiqueta intermediária ao anel do elemento apontado.
+É o preço de o nível 2 ser amarelo: um amarelo saturado **é** a cor do anel, e
+por isso o tom virou um mostarda escuro. Entre as próprias etiquetas a distância
+vai de 20 a 49.
+
+Nada disso importaria se a cor fosse o único portador, e ela não é: cada etiqueta
+traz a palavra escrita, que é o que um teste de ponta a ponta cobra de todos os
+cartões. As duas escalas da tela continuam separadas por tratamento — a
+complexidade é etiqueta cheia na linha de metadados, o apoio são pílulas
+contornadas numa linha própria, rotulada "abrir".
+
+**4. "adianta menos" virou "auxilia menos durante a investigação".**
+
+**5. Ilustração nos três passos da tela inicial.** Uma por passo — a janela de
+código com o botão, a lupa sobre a fileira, o número da linha e o lápis —,
+montadas com primitivas no próprio código, como a folha (D13). Grafite no traço
+e anilina no que é ação; nenhuma cor de significado da bancada entra nelas. Com
+a ilustração no lugar, o círculo numerado saiu da linha própria e foi para junto
+do título: o passo não precisa de dois pesos visuais.
+
+O cartão sem miniatura também deixou de ser um vazio: recebe o glifo da
+estrutura, grande e quieto. O glifo diz do que o exercício trata sem descrever
+execução nenhuma — inventar um desenho ali seria afirmar um estado que o
+exercício não escolheu.
+
+**O que virou teste.** A palavra da complexidade em cada cartão e o pulso do
+botão, nos dois sentidos: que ele existe enquanto a mudança está pendente, que
+para quando a execução alcança o editor, e que sem movimento o anel continua
+visível no lugar do pulso.

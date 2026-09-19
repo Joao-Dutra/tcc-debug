@@ -45,7 +45,9 @@ Apresenta a ferramenta e leva aos exercícios. Texto à esquerda — o que é, c
 funciona, um botão para os exercícios — e, à direita, uma folha de exercício
 mimeografada desenhada em SVG: vetor, pilha e lista em tinta de anilina clara,
 uma lupa e um inseto. Abaixo, os três passos do trabalho, numerados porque são
-uma sequência. Três microanimações com nome (`folha-pousa`, `marcador-avanca`,
+uma sequência, cada um com a própria ilustração em SVG — a janela de código com
+o botão, a lupa sobre a fileira, o número da linha e o lápis. No rodapé, uma
+linha discreta de autoria: curso, instituição e autor. Três microanimações com nome (`folha-pousa`, `marcador-avanca`,
 `lupa-investiga`), desligadas com movimento reduzido. A folha não usa nenhuma
 cor de significado da bancada.
 
@@ -57,15 +59,24 @@ título, a complexidade e, no pé, as duas aberturas — com apoio ou sem apoio.
 dos exercícios é marcado como tutorial. Nenhum botão de exportar: a exportação
 fica só no painel de métricas.
 
+A complexidade é uma **etiqueta com palavra e cor** — introdutório em verde,
+intermediário em mostarda escuro, desafiador em vinho —, no mesmo formato do
+balão de tutorial. A palavra vem sempre junto: a cor nunca carrega o nível
+sozinha. Os três tons foram medidos contra as cores de significado que aparecem
+nas miniaturas da mesma tela, e a menor distância é ΔE 27 (ver D20).
+
 A miniatura é o próprio visualizador da estrutura, pequeno e parado, sobre a
 mesa de luz, desenhando um estado **anterior** ao defeito — nunca o quadro que
-o denuncia. Exercício sem miniatura aparece num cartão só com o texto.
+o denuncia. Exercício sem miniatura recebe no lugar o glifo da estrutura,
+grande e quieto: diz do que o exercício trata sem descrever execução nenhuma.
 
 São **duas escalas diferentes** e elas não podem ser confundidas visualmente:
 *complexidade* é uma característica do exercício; *apoio* é quanta ajuda a
 ferramenta oferece naquela abertura. Hoje são separadas por linha, por rótulo e
-por tratamento — complexidade como texto, apoio como botões. O filtro escolhido
-é grafite, e não anilina, para não se parecer com o apoio escolhido.
+por tratamento — a complexidade é etiqueta cheia e colorida na linha de
+metadados; o apoio são pílulas contornadas, numa linha própria rotulada
+"abrir". O filtro escolhido é grafite, e não anilina, para não se parecer com o
+apoio escolhido.
 
 ### 3. Tela de exercício — a mais importante
 
@@ -183,7 +194,11 @@ nem na tela de exercício, nem na lista. Os retornos que existem:
   diferença de desempenho entre os níveis deixaria de ser atribuível ao apoio.
   Também não pode mudar de intensidade entre pilotos.
 - **Mudança pendente.** Com o código editado e ainda não executado, o botão diz
-  "Executar alterações" e ganha um ponto.
+  "Executar alterações", ganha um ponto e passa a pulsar: um halo fixo e um anel
+  que se abre por cima dele, sem parar, enquanto o editor estiver diferente do
+  que rodou. Com movimento reduzido o anel fica parado no lugar, com a mesma
+  espessura e a mesma cor — a alternativa estática precisa ser tão visível
+  quanto o pulso.
 - **Convite no número da linha.** Cursor de ponteiro e, sob o mouse, o número
   vira uma pastilha anilina. Todos os números se comportam igual; nenhum recebe
   marca própria.
