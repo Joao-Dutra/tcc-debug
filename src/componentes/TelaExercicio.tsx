@@ -3,7 +3,6 @@ import CodeMirror, { lineNumbers } from '@uiw/react-codemirror';
 import type { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import {
-  ArrowDownTrayIcon,
   ArrowLeftIcon,
   FlagIcon,
   PlayIcon,
@@ -12,7 +11,7 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { executar } from '../nucleo/executor';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
-import { baixarMetricas, useMetricas } from './usar-metricas';
+import { useMetricas } from './usar-metricas';
 import { CAMINHO_EXERCICIOS, caminhoDoExercicio } from './usar-rota';
 import { linhaEmExecucao, marcarLinhaEmExecucao } from './linha-em-execucao';
 import { temaDoEditor } from './tema-do-editor';
@@ -384,20 +383,8 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
 
       {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
           estudante quantas vezes ele executou ou quantas dicas abriu muda o
-          comportamento que o estudo quer medir. */}
-      <section className="painel painel-sessao">
-        <p className="rodape-painel">
-          As métricas ficam guardadas neste navegador e sobrevivem a recarregar a
-          página. A exportação inclui todas as sessões guardadas nele.
-        </p>
-        <button
-          className="discreto"
-          onClick={() => baixarMetricas(metricas.exportar(), `metricas-${exercicio.id}.json`)}
-        >
-          <ArrowDownTrayIcon className="icone" aria-hidden="true" />
-          Exportar métricas (JSON)
-        </button>
-      </section>
+          comportamento que o estudo quer medir. Pela mesma razão a exportação
+          das métricas não fica aqui, e sim só no painel do pesquisador (D11). */}
     </div>
   );
 }

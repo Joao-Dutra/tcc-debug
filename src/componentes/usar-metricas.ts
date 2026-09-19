@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   arquivarSessao,
   criarSessao,
-  exportarMetricas,
   localizacoesDe,
 } from '../nucleo/metricas';
 import type { EventoDeLocalizacao, OrigemDaExecucao, Sessao } from '../nucleo/metricas';
@@ -96,21 +95,12 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
     [fecharRajada]
   );
 
-  // Arquiva antes de exportar em vez de concatenar: como arquivar é idempotente
-  // por id, existe um caminho só para montar a lista e nenhuma sessão sai
-  // duplicada nem de fora.
-  const exportar = useCallback(() => {
-    arquivarRetrato();
-    return exportarMetricas();
-  }, [arquivarRetrato]);
-
   return {
     registrarExecucao,
     registrarEdicao,
     registrarDica,
     declararLocalizacao,
     localizacoes,
-    exportar,
   };
 }
 
