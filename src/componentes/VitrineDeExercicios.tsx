@@ -112,7 +112,7 @@ export function VitrineDeExercicios() {
         <p>
           Cada cartão é um programa com um defeito para encontrar. A complexidade é do
           exercício e não muda. O apoio você escolhe ao abrir: sem apoio, a ferramenta
-          adianta menos.
+          auxilia menos durante a investigação.
         </p>
       </header>
 
