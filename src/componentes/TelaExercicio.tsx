@@ -126,6 +126,9 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   const [resultado, setResultado] = useState<ResultadoExecucao | null>(null);
   const [rodando, setRodando] = useState(false);
   const [dicasAbertas, setDicasAbertas] = useState(0);
+  // O código da última execução, para o botão dizer se o do editor é outro.
+  // Não conta nada: compara dois textos.
+  const [codigoExecutado, setCodigoExecutado] = useState<string | null>(null);
   const [rodada, setRodada] = useState(0);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
@@ -165,6 +168,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
     const saida = await executar(exercicio, codigo);
     metricas.registrarExecucao(origem, codigo, saida);
     setResultado(saida);
+    setCodigoExecutado(codigo);
     setRodada((r) => r + 1);
     setRodando(false);
   };
@@ -188,6 +192,10 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
     void rodar('automatica');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Voltar a edição ao código executado apaga o sinal: o que importa é se o
+  // que está no editor já rodou, e não se houve digitação no meio.
+  const pendente = codigoExecutado !== null && codigo !== codigoExecutado;
 
   const linhaAtual = reprodutor.atual?.linha;
   // O andaime é consultado só aqui e na visualização. O que é executado e o
@@ -247,12 +255,13 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           <div className="cabecalho-painel">
             <h2>Código</h2>
             <button
-              className="primario"
+              className="primario executar"
               onClick={() => void rodar('estudante')}
               disabled={rodando}
             >
               <PlayIcon className="icone" aria-hidden="true" />
-              {rodando ? 'Executando…' : 'Executar'}
+              {rodando ? 'Executando…' : pendente ? 'Executar alterações' : 'Executar'}
+              {pendente && !rodando && <span className="pendente" aria-hidden="true" />}
             </button>
           </div>
           {/* Sem o destaque da linha do cursor, que viria ligado por padrão: uma

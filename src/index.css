@@ -391,6 +391,12 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   .faixa-casos .painel.acertou { animation: none; stroke-dashoffset: 0; }
 }
 
+/* Botão de executar. O ponto diz que o código mudou desde a última execução:
+   retorno sobre a ação em curso, sem contar nada. */
+.executar { position: relative; }
+.executar .pendente { width: 8px; height: 8px; border-radius: 50%;
+  background: #fff; box-shadow: 0 0 0 2px var(--anilina-rala); }
+
 /* Editor. O tema de cores está em src/componentes/tema-do-editor.ts; aqui
    fica só o que depende da página. */
 .tela-exercicio .cm-editor { border-radius: var(--raio-placa); overflow: hidden;
