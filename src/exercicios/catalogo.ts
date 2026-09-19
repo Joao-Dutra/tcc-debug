@@ -31,3 +31,17 @@ export const catalogo: Exercicio[] = [
   listaInserirDepois,
   listaInserirPosicao,
 ];
+
+/**
+ * O exercício seguinte na ordem do catálogo, dando a volta no fim (D20).
+ *
+ * A volta não é detalhe de implementação. Sem ela, o último exercício ficaria
+ * sem convite para continuar, e essa ausência diria ao estudante onde ele está
+ * na sequência — posição e quantidade são progresso, e progresso não aparece
+ * (D8). Com a volta, o convite é o mesmo em qualquer exercício.
+ */
+export function proximoDoCatalogo(id: string): Exercicio | undefined {
+  const atual = catalogo.findIndex((exercicio) => exercicio.id === id);
+  if (atual === -1 || catalogo.length < 2) return undefined;
+  return catalogo[(atual + 1) % catalogo.length];
+}

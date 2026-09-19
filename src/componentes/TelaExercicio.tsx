@@ -4,6 +4,7 @@ import type { ReactCodeMirrorRef } from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import {
   ArrowLeftIcon,
+  ArrowRightIcon,
   FlagIcon,
   PlayIcon,
 } from '@heroicons/react/20/solid';
@@ -43,15 +44,28 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
  * os níveis deixaria de ser atribuível ao apoio (roadmap 1.1). Também não
  * recebe nada da sessão — responde ao que o estudante acabou de fazer, sem
  * tempo, contagem ou histórico.
+ *
+ * O convite para continuar segue a mesma regra (D20): leva ao próximo
+ * exercício e não diz qual é a posição dele, quantos faltam nem quantos já
+ * foram resolvidos. O endereço carrega o apoio da sessão atual, porque trocar
+ * de apoio no meio de uma sequência tiraria a comparação entre os níveis.
  */
-export function SinalDeAcerto() {
+export function SinalDeAcerto({ hrefDoProximo }: { hrefDoProximo?: string }) {
   return (
     <div className="sinal-de-acerto" role="status">
       <svg viewBox="0 0 72 72" aria-hidden="true">
         <circle cx="36" cy="36" r="32" />
         <path d="M22 37 L32 47 L51 27" />
       </svg>
-      <p>Todos os casos passaram.</p>
+      <div className="dizer-acerto">
+        <p>Todos os casos passaram.</p>
+        {hrefDoProximo && (
+          <a className="botao continuar" href={hrefDoProximo}>
+            Ir para o próximo exercício
+            <ArrowRightIcon className="icone" aria-hidden="true" />
+          </a>
+        )}
+      </div>
     </div>
   );
 }
@@ -68,11 +82,14 @@ export function PainelDeCasos({
   resultado,
   detalhe,
   rodada = 0,
+  hrefDoProximo,
 }: {
   resultado: ResultadoExecucao | null;
   detalhe: DetalheDosCasos;
   /** Muda a cada execução, para o selo se traçar de novo a cada acerto. */
   rodada?: number;
+  /** Endereço do próximo exercício, quando houver (D20). */
+  hrefDoProximo?: string;
 }) {
   const todosPassaram = resultado?.casos.length
     ? resultado.casos.every((c) => c.passou)
@@ -82,7 +99,11 @@ export function PainelDeCasos({
   return (
     <section className={todosPassaram ? 'painel acertou' : 'painel'}>
       {/* O sinal fica fora do trecho que varia com o andaime (D9). */}
-      {todosPassaram ? <SinalDeAcerto key={rodada} /> : <h2>Casos de teste</h2>}
+      {todosPassaram ? (
+        <SinalDeAcerto key={rodada} hrefDoProximo={hrefDoProximo} />
+      ) : (
+        <h2>Casos de teste</h2>
+      )}
       {/* O erro de execução aparece em qualquer nível: sem ele o estudante
           não saberia que o próprio código deixou de rodar, e isso não é
           apoio para encontrar o defeito implantado. */}
@@ -118,9 +139,14 @@ export function PainelDeCasos({
 interface Props {
   exercicio: Exercicio;
   andaime: NivelDeAndaime;
+  /**
+   * Para onde o convite de continuar leva. Vem de fora porque a tela não
+   * conhece o catálogo — ela desenha um exercício, não uma sequência.
+   */
+  proximo?: Exercicio;
 }
 
-export function TelaExercicio({ exercicio, andaime }: Props) {
+export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
   const [codigo, setCodigo] = useState(exercicio.codigoComDefeito);
   const [resultado, setResultado] = useState<ResultadoExecucao | null>(null);
   const [rodando, setRodando] = useState(false);
@@ -357,7 +383,15 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
               altura — o desenho fica parado. */}
           <div className="coluna-retorno">
             <div className="faixa-casos">
-              <PainelDeCasos resultado={resultado} detalhe={detalhe} rodada={rodada} />
+              <PainelDeCasos
+                resultado={resultado}
+                detalhe={detalhe}
+                rodada={rodada}
+                // O mesmo apoio da sessão atual segue no endereço. Abrir o
+                // próximo encerra esta sessão e começa outra (D8): é troca de
+                // rota, e a tela remonta com chave nova.
+                hrefDoProximo={proximo && caminhoDoExercicio(proximo.id, andaime)}
+              />
             </div>
             {dicasPermitidas > 0 && (
               <section className="painel painel-dicas">

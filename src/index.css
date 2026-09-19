@@ -654,20 +654,32 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .acertou .casos .icone { color: var(--sobre-acao); }
 .sinal-de-acerto { display: flex; align-items: center; gap: var(--esp-20);
   margin: var(--esp-4) 0 var(--esp-12); }
-.sinal-de-acerto svg { width: 72px; height: 72px; flex: none; }
-.sinal-de-acerto circle, .sinal-de-acerto path { fill: none; stroke: var(--sobre-acao);
-  stroke-linecap: round; stroke-linejoin: round; }
-.sinal-de-acerto circle { stroke-width: 3; stroke-dasharray: 202; stroke-dashoffset: 202;
+/* O seletor é o selo, filho direto, e não qualquer svg do sinal: o ícone do
+   convite para continuar também é um svg, e herdava daqui os 72 px e o traço
+   vazado do selo. Tamanho e intensidade do selo seguem iguais (D20). */
+.sinal-de-acerto > svg { width: 72px; height: 72px; flex: none; }
+.sinal-de-acerto > svg circle, .sinal-de-acerto > svg path { fill: none;
+  stroke: var(--sobre-acao); stroke-linecap: round; stroke-linejoin: round; }
+.sinal-de-acerto > svg circle { stroke-width: 3; stroke-dasharray: 202; stroke-dashoffset: 202;
   animation: tracar .5s cubic-bezier(.4, 0, .2, 1) forwards; }
-.sinal-de-acerto path { stroke-width: 5; stroke-dasharray: 50; stroke-dashoffset: 50;
+.sinal-de-acerto > svg path { stroke-width: 5; stroke-dasharray: 50; stroke-dashoffset: 50;
   animation: tracar .35s cubic-bezier(.3, 0, .2, 1) .4s forwards; }
 .sinal-de-acerto p { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 700;
   letter-spacing: -.01em; }
+/* O convite para continuar (D20). Fica ao lado do selo, e não no rodapé da
+   tela: é resposta ao acerto que acabou de acontecer. Não diz posição nem
+   quantidade — seguir adiante é uma porta, não um placar. */
+.dizer-acerto { display: flex; flex-direction: column; align-items: flex-start;
+  gap: var(--esp-10); }
+.sinal-de-acerto a.continuar { background: var(--sobre-acao); color: var(--acerto);
+  padding: var(--esp-8) 16px; font-size: var(--fonte-apoio); }
+.sinal-de-acerto a.continuar:hover { background: var(--musgo-200); }
+.sinal-de-acerto a.continuar .icone { color: inherit; }
 .faixa-casos .painel.acertou { animation: acender .45s ease-out; }
 @keyframes tracar { to { stroke-dashoffset: 0; } }
 @keyframes acender { from { background: var(--painel); } }
 @media (prefers-reduced-motion: reduce) {
-  .sinal-de-acerto circle, .sinal-de-acerto path,
+  .sinal-de-acerto > svg circle, .sinal-de-acerto > svg path,
   .faixa-casos .painel.acertou { animation: none; stroke-dashoffset: 0; }
 }
 

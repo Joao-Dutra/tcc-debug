@@ -1,5 +1,5 @@
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
-import { catalogo } from './exercicios/catalogo';
+import { catalogo, proximoDoCatalogo } from './exercicios/catalogo';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { TelaExercicio } from './componentes/TelaExercicio';
 import { TelaInicial } from './componentes/TelaInicial';
@@ -50,6 +50,7 @@ export default function App() {
       key={`${exercicio.id}:${rota.andaime}`}
       exercicio={exercicio}
       andaime={rota.andaime}
+      proximo={proximoDoCatalogo(exercicio.id)}
     />
   );
 }
