@@ -214,44 +214,45 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   return (
     <div className="pagina tela-exercicio">
       <header>
-        <a className="voltar" href={CAMINHO_EXERCICIOS}>
-          <ArrowLeftIcon className="icone" aria-hidden="true" />
-          Todos os exercícios
-        </a>
+        <div className="linha-topo">
+          <a className="voltar" href={CAMINHO_EXERCICIOS}>
+            <ArrowLeftIcon className="icone" aria-hidden="true" />
+            Todos os exercícios
+          </a>
+          {/* Trocar de nível troca de sessão (D8), e por isso o exercício
+              recomeça: duas tentativas sob apoios diferentes não podem ser
+              somadas, então nem o código editado atravessa a troca. */}
+          <p className="abertura">
+            <span className="rotulo-abertura">apoio</span>
+            {NIVEIS_DE_ANDAIME.map((nivel) =>
+              nivel === andaime ? (
+                <span key={nivel} className="nivel ativo" aria-current="true">
+                  {rotuloDoAndaime(nivel)}
+                </span>
+              ) : (
+                <a
+                  key={nivel}
+                  className="nivel"
+                  href={caminhoDoExercicio(exercicio.id, nivel)}
+                >
+                  {rotuloDoAndaime(nivel)}
+                </a>
+              )
+            )}
+            <span className="aviso-troca">trocar o apoio recomeça o exercício</span>
+          </p>
+        </div>
         <h1>{exercicio.titulo}</h1>
         <p>{exercicio.enunciado}</p>
-        {/* Trocar de nível troca de sessão (D8), e por isso o exercício
-            recomeça: duas tentativas sob apoios diferentes não podem ser
-            somadas, então nem o código editado atravessa a troca. */}
-        <p className="abertura">
-          <span className="rotulo-abertura">apoio</span>
-          {NIVEIS_DE_ANDAIME.map((nivel) =>
-            nivel === andaime ? (
-              <span key={nivel} className="nivel ativo" aria-current="true">
-                {rotuloDoAndaime(nivel)}
-              </span>
-            ) : (
-              <a
-                key={nivel}
-                className="nivel"
-                href={caminhoDoExercicio(exercicio.id, nivel)}
-              >
-                {rotuloDoAndaime(nivel)}
-              </a>
-            )
-          )}
-          <span className="aviso-troca">trocar o apoio recomeça o exercício</span>
-        </p>
       </header>
 
-      {/* Os casos vêm logo depois do enunciado: o teste que falha é o que
-          motiva a investigação, e é dele que o estudante parte (D10). */}
-      <div className="faixa-casos">
-        <PainelDeCasos resultado={resultado} detalhe={detalhe} rodada={rodada} />
-      </div>
-
+      {/* Arranjo compacto (D20): código, visualização e casos de teste cabem
+          juntos numa tela comum, sem rolar a página. Investigar é ir e voltar
+          entre os três — o teste que falha, o desenho que mostra o estado e a
+          linha que o produz —, e cada rolagem no meio disso é memória de
+          trabalho gasta em achar de novo o que saiu da tela. */}
       <main className="grade-exercicio">
-        <section className="painel">
+        <section className="painel painel-codigo">
           <div className="cabecalho-painel">
             <h2>Código</h2>
             <button
@@ -267,11 +268,15 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
           {/* Sem o destaque da linha do cursor, que viria ligado por padrão: uma
               segunda faixa que segue o cursor disputaria com a da execução, e
               a versão dele no gutter, onde se declara a localização, poderia
-              ser lida como marca de um palpite. */}
+              ser lida como marca de um palpite.
+
+              A altura vem da moldura, que ocupa o que sobra da coluna: o
+              editor rola por dentro, e a página não. */}
           <CodeMirror
             ref={editor}
+            className="moldura-editor"
             value={codigo}
-            height="420px"
+            height="100%"
             basicSetup={{
               lineNumbers: false,
               foldGutter: false,
@@ -282,92 +287,100 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
             extensions={extensoes}
             onChange={aoEditar}
           />
-          <p className="rodape-painel">
-            Clique no número de uma linha para apontar onde você acredita que está o
-            defeito. Pode tentar quantas vezes quiser, antes ou depois de editar.
-          </p>
-        </section>
-
-        <section className="painel">
-          <h2>Visualização</h2>
-          <div className="bancada">
-            {Visualizador ? (
-              <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
-            ) : (
+          {/* Logo abaixo do código, que é onde se aponta. O painel fica sempre
+              no lugar, mesmo vazio, para o alvo da declaração não aparecer do
+              nada. */}
+          <div className="retorno-apontadas">
+            <h2>Onde você apontou</h2>
+            {metricas.localizacoes.length === 0 ? (
+              // Estado vazio como convite: o primeiro piloto registrou zero
+              // declarações em 25 sessões, e o problema era de descoberta.
               <p className="rodape-painel">
-                Ainda não há visualizador para esta estrutura de dados.
+                Nenhuma linha apontada. Clique no número de uma linha do código para
+                dizer onde você acha que está o defeito. Pode tentar quantas vezes
+                quiser, antes ou depois de editar.
               </p>
-            )}
-          </div>
-          {/* Junto à animação de propósito (D10): manter de cabeça a
-              correspondência entre a instrução e o quadro consome memória de
-              trabalho, e não é esse o esforço que o estudo quer observar.
-
-              Fica fora do fading de D9 — aparece em todos os níveis, por ser
-              também o principal recurso de legibilidade da ferramenta. Por
-              isso mora na tela, e não no visualizador. */}
-          {/* Linha nula é o quadro final, depois do fim do programa (D1). */}
-          {linhaAtual !== undefined && (
-            <p className="indicador-linha">
-              {linhaAtual === null ? 'Execução terminada' : `Executando a linha ${linhaAtual}`}
-            </p>
-          )}
-          <ControlesReprodutor reprodutor={reprodutor} />
-        </section>
-      </main>
-
-      {/* Embaixo, o que apoia e o que devolve: as dicas, que mandam olhar para
-          a visualização, e as linhas que o estudante apontou. O painel das
-          linhas fica sempre no lugar, mesmo vazio, para o alvo da declaração
-          não aparecer do nada. */}
-      <div className="grade-retorno">
-        {dicasPermitidas > 0 && (
-          <section className="painel">
-            <h2>Dicas</h2>
-            {dicasAbertas > 0 && (
-              <ol className="dicas">
-                {exercicio.dicas.slice(0, dicasAbertas).map((d, i) => (
-                  <li key={d} className="dica">
-                    <strong>Dica {i + 1}</strong>
-                    {d}
+            ) : (
+              <ul className="casos apontadas">
+                {metricas.localizacoes.map((l, i) => (
+                  <li key={i} className={l.correta ? 'passou' : 'falhou'}>
+                    <FlagIcon className="icone bandeira" aria-hidden="true" />
+                    <span className="linha">Linha {l.linha}</span>
+                    <span className="veredito">
+                      {l.correta ? (
+                        <CheckIcon className="icone" aria-hidden="true" />
+                      ) : (
+                        <XMarkIcon className="icone" aria-hidden="true" />
+                      )}
+                      {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
+                    </span>
                   </li>
                 ))}
-              </ol>
+              </ul>
             )}
-            {dicasAbertas < dicasPermitidas && (
-              <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
-            )}
-          </section>
-        )}
-        <section className="painel">
-          <h2>Onde você apontou</h2>
-          {metricas.localizacoes.length === 0 ? (
-            // Estado vazio como convite: o primeiro piloto registrou zero
-            // declarações em 25 sessões, e o problema era de descoberta.
-            <p className="rodape-painel">
-              Nenhuma linha apontada. Clique no número de uma linha do código para
-              dizer onde você acha que está o defeito.
-            </p>
-          ) : (
-            <ul className="casos apontadas">
-              {metricas.localizacoes.map((l, i) => (
-                <li key={i} className={l.correta ? 'passou' : 'falhou'}>
-                  <FlagIcon className="icone bandeira" aria-hidden="true" />
-                  <span className="linha">Linha {l.linha}</span>
-                  <span className="veredito">
-                    {l.correta ? (
-                      <CheckIcon className="icone" aria-hidden="true" />
-                    ) : (
-                      <XMarkIcon className="icone" aria-hidden="true" />
-                    )}
-                    {l.correta ? 'o defeito está aqui' : 'o defeito não está aqui'}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
+          </div>
         </section>
-      </div>
+
+        <div className="coluna-investigacao">
+          <section className="painel painel-visualizacao">
+            <h2>Visualização</h2>
+            <div className="bancada">
+              {Visualizador ? (
+                <Visualizador instantaneo={reprodutor.atual} nivelAndaime={andaime} />
+              ) : (
+                <p className="rodape-painel">
+                  Ainda não há visualizador para esta estrutura de dados.
+                </p>
+              )}
+            </div>
+            {/* Junto à animação de propósito (D10): manter de cabeça a
+                correspondência entre a instrução e o quadro consome memória de
+                trabalho, e não é esse o esforço que o estudo quer observar.
+
+                Fica fora do fading de D9 — aparece em todos os níveis, por ser
+                também o principal recurso de legibilidade da ferramenta. Por
+                isso mora na tela, e não no visualizador. */}
+            <div className="rodape-bancada">
+              {/* Linha nula é o quadro final, depois do fim do programa (D1). */}
+              {linhaAtual !== undefined && (
+                <p className="indicador-linha">
+                  {linhaAtual === null ? 'Execução terminada' : `Executando a linha ${linhaAtual}`}
+                </p>
+              )}
+              <ControlesReprodutor reprodutor={reprodutor} />
+            </div>
+          </section>
+
+          {/* Os casos logo abaixo do desenho, e não mais acima de tudo: o teste
+              que falha continua sendo de onde o estudante parte (D10), mas
+              agora sem empurrar o código e a visualização para fora da tela.
+              As dicas vêm depois, e é esta parte que rola quando falta
+              altura — o desenho fica parado. */}
+          <div className="coluna-retorno">
+            <div className="faixa-casos">
+              <PainelDeCasos resultado={resultado} detalhe={detalhe} rodada={rodada} />
+            </div>
+            {dicasPermitidas > 0 && (
+              <section className="painel painel-dicas">
+                <h2>Dicas</h2>
+                {dicasAbertas > 0 && (
+                  <ol className="dicas">
+                    {exercicio.dicas.slice(0, dicasAbertas).map((d, i) => (
+                      <li key={d} className="dica">
+                        <strong>Dica {i + 1}</strong>
+                        {d}
+                      </li>
+                    ))}
+                  </ol>
+                )}
+                {dicasAbertas < dicasPermitidas && (
+                  <button onClick={revelarDica}>Revelar dica {dicasAbertas + 1}</button>
+                )}
+              </section>
+            )}
+          </div>
+        </div>
+      </main>
 
       {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
           estudante quantas vezes ele executou ou quantas dicas abriu muda o

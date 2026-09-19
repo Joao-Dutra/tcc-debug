@@ -532,39 +532,69 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   color: var(--grafite-suave); }
 
 /* ---------------------------------------------------------------------------
-   Tela de exercício (D19)
+   Tela de exercício (D19, D20)
 
    Uma sala cor de areia onde só dois objetos têm corpo: o editor escuro
    e a mesa de luz. O resto é texto pousado direto na sala.
---------------------------------------------------------------------------- */
-.tela-exercicio header { margin-bottom: 0; }
-.tela-exercicio header p { font-size: 16px; line-height: 1.6; }
-/* Os títulos de código e de visualização na mesma linha de base, embora só
-   o primeiro divida a faixa com um botão. */
-.tela-exercicio .grade-exercicio > .painel > h2,
-.tela-exercicio .grade-exercicio .cabecalho-painel { min-height: 36px; }
-.tela-exercicio .grade-exercicio > .painel > h2 { display: flex; align-items: center; }
-.tela-exercicio header .abertura { margin-top: var(--esp-16); }
 
-/* Arranjo (D10), de cima para baixo: enunciado e casos de teste em faixas de
-   largura inteira; código e visualização lado a lado, com a mesma altura; as
-   dicas e o retorno da declaração embaixo. */
-.tela-exercicio .faixa-casos { margin-top: var(--esp-24); }
-.tela-exercicio .faixa-casos .painel { margin-bottom: 0; }
-/* `stretch`: é o que iguala a altura dos dois painéis do meio. */
-.tela-exercicio .grade-exercicio { grid-template-columns: 1.02fr 1fr;
-  gap: var(--esp-32); margin-top: var(--esp-32); align-items: stretch; }
-.tela-exercicio .grade-retorno { display: grid; grid-template-columns: 1fr 1fr;
-  gap: var(--esp-32); margin-top: var(--esp-32); align-items: start; }
-/* Sem apoio não há dicas, e o que resta ocupa a faixa inteira. */
-.tela-exercicio .grade-retorno > .painel:only-child { grid-column: 1 / -1; }
+   Arranjo compacto (D20): o código à esquerda, de alto a baixo; à direita a
+   visualização e, embaixo dela, os casos de teste e as dicas. Em tela larga e
+   alta o bastante, a página ocupa exatamente a janela: o editor e a coluna do
+   retorno rolam por dentro, e o desenho nunca sai de vista.
+--------------------------------------------------------------------------- */
+.tela-exercicio { padding-top: var(--esp-12); padding-bottom: var(--esp-16); }
+.tela-exercicio header { margin-bottom: var(--esp-16); }
+.linha-topo { display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: var(--esp-8) var(--esp-20); }
+.tela-exercicio header .abertura { margin: 0; }
+.tela-exercicio header h1 { font-size: 24px; margin: var(--esp-8) 0 var(--esp-4); }
+.tela-exercicio header > p { max-width: 130ch; line-height: 1.5; }
+
+.tela-exercicio .grade-exercicio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--esp-24); align-items: stretch; }
+/* Fora dos casos de teste, as seções não têm chão próprio. */
+.painel-codigo, .painel-visualizacao, .painel-dicas { background: none; padding: 0; margin: 0; }
+/* Os títulos de código e de visualização na mesma linha de base, embora só
+   o primeiro divida a linha com um botão. */
+.painel-codigo .cabecalho-painel, .painel-visualizacao > h2 { min-height: 36px;
+  margin: 0 0 var(--esp-8); }
+.painel-visualizacao > h2 { display: flex; align-items: center; }
+.painel-codigo { display: flex; flex-direction: column; min-width: 0; }
+.moldura-editor { height: 420px; }
+
+.retorno-apontadas { margin-top: var(--esp-12); }
+.retorno-apontadas h2 { font-size: var(--fonte-corpo); font-weight: 700; margin: 0 0 var(--esp-4); }
+.retorno-apontadas .rodape-painel { margin: 0; }
+
+.coluna-investigacao { display: flex; flex-direction: column; gap: var(--esp-16); min-width: 0; }
+.coluna-retorno { display: flex; flex-direction: column; gap: var(--esp-16); }
+.tela-exercicio .faixa-casos .painel { margin: 0; padding: var(--esp-12) var(--esp-16); }
+.painel-dicas h2 { font-size: var(--fonte-corpo); margin-bottom: var(--esp-8); }
+
+.rodape-bancada { display: flex; flex-wrap: wrap; align-items: center;
+  gap: var(--esp-8) var(--esp-16); margin-top: var(--esp-10); }
+.rodape-bancada .indicador-linha { margin: 0; min-width: 11.5em; }
+.rodape-bancada .controles { margin: 0; flex: 1; min-width: 240px; }
+
 @media (max-width: 900px) {
-  .tela-exercicio .grade-exercicio,
-  .tela-exercicio .grade-retorno { grid-template-columns: 1fr; }
+  .tela-exercicio .grade-exercicio { grid-template-columns: 1fr; }
 }
-/* Fora da faixa de casos, as seções não têm chão próprio. */
-.tela-exercicio .grade-exercicio > .painel,
-.tela-exercicio .grade-retorno > .painel { background: none; padding: 0; margin: 0; }
+
+/* Página do tamanho da janela. Abaixo de 600 px de altura o arranjo não cabe
+   com folga, e é melhor a página rolar do que o editor virar uma fresta. */
+@media (min-width: 901px) and (min-height: 600px) {
+  .tela-exercicio { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+  .tela-exercicio .grade-exercicio { flex: 1; min-height: 0; }
+  .painel-codigo, .coluna-investigacao { min-height: 0; }
+  .moldura-editor { position: relative; flex: 1; min-height: 160px; height: auto; }
+  .moldura-editor .cm-editor { position: absolute; inset: 0; }
+  .retorno-apontadas { max-height: 8.5em; overflow-y: auto; flex: none; }
+  /* O respiro é do anel de foco dos botões, que a rolagem cortaria. */
+  .coluna-retorno { flex: 1; min-height: 0; overflow-y: auto; margin: -6px; padding: 6px; }
+  .tela-exercicio .bancada > svg { height: clamp(160px, 31vh, 320px); }
+}
+.apontadas { flex-direction: row; flex-wrap: wrap; gap: var(--esp-6) var(--esp-20); }
+
 .tela-exercicio .painel-sessao { background: none; padding: 0;
   margin: var(--esp-48) 0 0; border-top: 1px solid var(--regua);
   padding-top: var(--esp-16); display: flex; flex-wrap: wrap; align-items: center;
@@ -670,7 +700,7 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   color: var(--grafite-suave); margin-bottom: 2px; }
 
 /* Onde você apontou: eco das declarações do próprio estudante. */
-.apontadas li { grid-template-columns: 16px auto 1fr; }
+.apontadas li { grid-template-columns: 16px auto auto; }
 .apontadas .bandeira { color: var(--grafite-suave); }
 .apontadas .linha { font-family: var(--familia-mono); font-weight: 700; }
 .apontadas .veredito { display: inline-flex; align-items: center; gap: var(--esp-4); }
