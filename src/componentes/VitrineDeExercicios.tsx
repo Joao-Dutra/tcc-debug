@@ -58,7 +58,17 @@ function CartaoDoExercicio({ exercicio }: { exercicio: Exercicio }) {
   const complexidade = complexidadeDe(exercicio.dificuldade);
   return (
     <li className={exercicio.miniatura ? 'cartao' : 'cartao sem-miniatura'}>
-      <MiniaturaDoExercicio exercicio={exercicio} />
+      {exercicio.miniatura ? (
+        <MiniaturaDoExercicio exercicio={exercicio} />
+      ) : (
+        // Sem instantâneo escolhido não há desenho para mostrar, e inventar um
+        // seria afirmar um estado que o exercício não tem. Fica o glifo da
+        // estrutura, que diz do que o exercício trata sem descrever execução
+        // nenhuma.
+        <div className="miniatura vazia" aria-hidden="true">
+          <GlifoDaEstrutura tipo={exercicio.estrutura} />
+        </div>
+      )}
       <div className="corpo-cartao">
         <h3>{exercicio.titulo}</h3>
         <p className="meta-exercicio">

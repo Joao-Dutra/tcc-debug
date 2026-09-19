@@ -1,3 +1,4 @@
+import { IconeApontar, IconeExecutar, IconeObservar } from './IlustracoesDaInicial';
 import { CAMINHO_EXERCICIOS } from './usar-rota';
 
 /**
@@ -139,14 +140,17 @@ export function TelaInicial() {
           acontece dentro de cada exercício. */}
       <ol className="passos">
         <li>
+          <IconeExecutar />
           <h2>Execute</h2>
           <p>Rode o código e veja quais casos de teste falham.</p>
         </li>
         <li>
+          <IconeObservar />
           <h2>Observe</h2>
           <p>Avance a execução passo a passo e acompanhe o desenho da estrutura.</p>
         </li>
         <li>
+          <IconeApontar />
           <h2>Aponte e corrija</h2>
           <p>Clique no número da linha suspeita e conserte o código.</p>
         </li>

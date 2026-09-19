@@ -413,9 +413,32 @@ a.botao.primario:hover { background: var(--acao-forte); }
   grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--esp-32);
   margin: var(--esp-48) 0 0; padding: var(--esp-32) 0 0; border-top: 1px solid var(--regua); }
 .passos li { counter-increment: passo; }
-.passos li::before { content: counter(passo); display: grid; place-items: center;
-  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--grafite);
-  font-size: var(--fonte-apoio); font-weight: 700; margin-bottom: var(--esp-12); }
+/* O número acompanha o título, em vez de ficar numa linha só dele: com a
+   ilustração acima, o círculo solto repetia o peso do passo duas vezes. */
+.passos h2::before { content: counter(passo); display: inline-grid; place-items: center;
+  width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--grafite);
+  font-size: var(--fonte-miuda); font-weight: 700; margin-right: var(--esp-8);
+  vertical-align: -4px; }
+/* Ilustração de cada passo, montada em SVG no componente (D20). Papéis, e não
+   cores soltas: o traço é grafite, o cheio é a anilina da ação, e nenhuma cor
+   de significado da bancada entra aqui. */
+.icone-passo { display: block; width: 92px; height: 79px; margin-bottom: var(--esp-12); }
+.icone-passo .placa { fill: var(--mesa-de-luz); stroke: var(--grafite); stroke-width: 2;
+  stroke-linejoin: round; }
+.icone-passo .traco-fino { fill: none; stroke: var(--grafite); stroke-width: 1.5; }
+.icone-passo .linha-de-codigo { fill: none; stroke: var(--areia-500); stroke-width: 2.5;
+  stroke-linecap: round; }
+.icone-passo .cheio { fill: var(--grafite); }
+.icone-passo .cheio-traco { fill: none; stroke: var(--grafite); stroke-width: 2.5;
+  stroke-linecap: round; }
+.icone-passo .botao-cheio { fill: var(--acao); }
+.icone-passo .sobre-botao { fill: var(--sobre-acao); stroke: none; }
+.icone-passo .sobre-botao.traco-fino { fill: none; stroke: var(--sobre-acao);
+  stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.icone-passo .lente { fill: var(--anilina-100); fill-opacity: .6; }
+.icone-passo .aro { fill: none; stroke: var(--grafite); stroke-width: 3; }
+.icone-passo .cabo { fill: none; stroke: var(--grafite); stroke-width: 5;
+  stroke-linecap: round; }
 .passos h2 { font-size: 18px; font-weight: 700; margin: 0 0 var(--esp-4); }
 .passos p { margin: 0; max-width: 32ch; color: var(--grafite-suave); }
 .rodape-inicial { margin-top: var(--esp-48); font-size: var(--fonte-miuda);
@@ -458,6 +481,11 @@ button.opcao-filtro[aria-pressed="true"]:hover:not(:disabled) {
   background: var(--painel); border-radius: var(--raio-faixa); overflow: hidden; }
 .miniatura { height: 150px; padding: var(--esp-8); border-bottom: 1px solid var(--regua); }
 .miniatura svg { display: block; width: 100%; height: 100%; }
+/* Sem instantâneo escolhido, o glifo da estrutura, grande e quieto. Nada aqui
+   descreve execução: o cartão não finge ter um desenho que não tem. */
+.miniatura.vazia { display: grid; place-items: center; }
+.miniatura.vazia .glifo { width: 64px; height: 48px; color: var(--areia-500);
+  stroke-width: 1.2; }
 .miniatura svg text { font-family: var(--familia-mono); }
 .corpo-cartao { flex: 1; display: flex; flex-direction: column; gap: var(--esp-8);
   padding: 14px var(--esp-16) var(--esp-16); }
