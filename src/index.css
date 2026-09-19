@@ -353,6 +353,48 @@ button.discreto { font-size: var(--fonte-miuda); padding: 5px 11px;
   background: transparent; color: var(--grafite-suave); }
 
 /* ---------------------------------------------------------------------------
+   Lista de exercícios em vitrine (D20)
+
+   Uma fileira por estrutura, com os cartões lado a lado e rolagem horizontal
+   quando não cabem. A miniatura é o visualizador de verdade, sobre a mesma
+   mesa de luz da tela do exercício. Nenhuma marca de progresso (D8).
+--------------------------------------------------------------------------- */
+.vitrine header { margin-bottom: var(--esp-20); }
+
+/* O filtro é grafite quando escolhido, e não anilina: a pílula anilina cheia
+   é a do apoio escolhido, e as duas escalas não podem se parecer. */
+.filtro { display: flex; flex-wrap: wrap; gap: var(--esp-8); margin-bottom: var(--esp-32); }
+button.opcao-filtro { border-radius: var(--raio-pilula); padding: 6px 14px;
+  background: transparent; }
+button.opcao-filtro[aria-pressed="true"],
+button.opcao-filtro[aria-pressed="true"]:hover:not(:disabled) {
+  background: var(--grafite); border-color: var(--grafite); color: var(--mesa-de-luz); }
+.glifo { width: 28px; height: 21px; flex: none; fill: none; stroke: currentColor;
+  stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.opcao-filtro .glifo { width: 22px; height: 16px; }
+
+.fileira { margin-bottom: var(--esp-32); }
+.fileira h2 { display: flex; align-items: center; gap: var(--esp-10); margin: 0 0 var(--esp-12);
+  font-size: 20px; font-weight: 700; }
+/* O respiro em volta é do anel de foco dos links, que a rolagem cortaria. */
+.prateleira { list-style: none; display: flex; gap: var(--esp-20); overflow-x: auto;
+  scroll-snap-type: x proximity; margin: 0 -6px; padding: 6px 6px var(--esp-12); }
+
+.cartao { flex: 0 0 300px; scroll-snap-align: start; display: flex; flex-direction: column;
+  background: var(--painel); border-radius: var(--raio-faixa); overflow: hidden; }
+.miniatura { height: 150px; padding: var(--esp-8); border-bottom: 1px solid var(--regua); }
+.miniatura svg { display: block; width: 100%; height: 100%; }
+.miniatura svg text { font-family: var(--familia-mono); }
+.corpo-cartao { flex: 1; display: flex; flex-direction: column; gap: var(--esp-8);
+  padding: 14px var(--esp-16) var(--esp-16); }
+.corpo-cartao h3 { margin: 0; font-size: 16px; line-height: 1.35; font-weight: 700; }
+/* As aberturas descem até o pé do cartão, para ficarem alinhadas na fileira
+   mesmo com títulos de tamanhos diferentes ou sem miniatura. */
+.corpo-cartao .abertura { margin: auto 0 0; padding-top: var(--esp-4); }
+.meta-exercicio { margin: 0; display: flex; align-items: center; gap: var(--esp-12);
+  flex-wrap: wrap; font-size: var(--fonte-apoio); color: var(--grafite-suave); }
+
+/* ---------------------------------------------------------------------------
    Painel de métricas (D11): tela de análise, densidade vale mais que respiro.
 --------------------------------------------------------------------------- */
 .rolagem { overflow-x: auto; }
@@ -524,7 +566,7 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    controles ficam fora dela. A grade milimetrada é tênue (1,15:1) e uniforme,
    para não disputar com o pontilhado da posição vazia nem apontar região
    alguma. */
-.tela-exercicio .bancada > svg { display: block; border-radius: var(--raio-placa);
+.tela-exercicio .bancada > svg, .miniatura { display: block; border-radius: var(--raio-placa);
   background-color: var(--mesa-de-luz);
   background-image:
     linear-gradient(color-mix(in srgb, var(--grafite) 7.5%, transparent) 1px, transparent 1px),
@@ -535,6 +577,8 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   background-position: -1px -1px;
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--grafite) 8%, transparent),
     0 0 28px color-mix(in srgb, var(--areia-100) 80%, transparent); }
+/* No cartão, a mesa é o topo da peça: sem canto próprio e sem halo. */
+.miniatura { border-radius: 0; box-shadow: none; }
 .indicador-linha { margin: var(--esp-12) 0 0; font-size: var(--fonte-corpo);
   font-weight: 700; font-variant-numeric: tabular-nums; }
 

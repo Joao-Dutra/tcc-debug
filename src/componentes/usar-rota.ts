@@ -13,10 +13,14 @@ import type { NivelDeAndaime } from './andaime';
 
 export type Rota =
   | { tela: 'inicial' }
+  | { tela: 'exercicios' }
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' };
 
 export const CAMINHO_INICIAL = '#/';
+
+/** A vitrine: todos os exercícios, em fileiras por estrutura de dados. */
+export const CAMINHO_EXERCICIOS = '#/exercicios';
 
 /**
  * Painel do pesquisador (D11). Não é referenciada por nenhum elemento de
@@ -51,6 +55,7 @@ export function interpretarHash(hash: string): Rota {
   const partes = caminho.split('/').filter((parte) => parte !== '');
 
   if (partes[0] === 'metricas') return { tela: 'metricas' };
+  if (partes[0] === 'exercicios') return { tela: 'exercicios' };
 
   if (partes[0] === 'exercicio' && partes[1]) {
     return {

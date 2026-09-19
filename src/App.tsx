@@ -3,7 +3,8 @@ import { catalogo } from './exercicios/catalogo';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { TelaExercicio } from './componentes/TelaExercicio';
 import { TelaInicial } from './componentes/TelaInicial';
-import { CAMINHO_INICIAL, useRota } from './componentes/usar-rota';
+import { VitrineDeExercicios } from './componentes/VitrineDeExercicios';
+import { CAMINHO_EXERCICIOS, useRota } from './componentes/usar-rota';
 
 /**
  * Só roteamento.
@@ -16,6 +17,7 @@ export default function App() {
   const rota = useRota();
 
   if (rota.tela === 'inicial') return <TelaInicial />;
+  if (rota.tela === 'exercicios') return <VitrineDeExercicios />;
 
   // Rota do pesquisador (D11). Nenhuma tela do participante aponta para ela.
   if (rota.tela === 'metricas') return <PainelDeMetricas />;
@@ -31,7 +33,7 @@ export default function App() {
             Nenhum exercício do catálogo tem o identificador <code>{rota.id}</code>.
           </p>
         </header>
-        <a className="voltar" href={CAMINHO_INICIAL}>
+        <a className="voltar" href={CAMINHO_EXERCICIOS}>
           <ArrowLeftIcon className="icone" aria-hidden="true" />
           Todos os exercícios
         </a>

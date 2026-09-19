@@ -13,7 +13,7 @@ import { executar } from '../nucleo/executor';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { baixarMetricas, useMetricas } from './usar-metricas';
-import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
+import { CAMINHO_EXERCICIOS, caminhoDoExercicio } from './usar-rota';
 import { linhaEmExecucao, marcarLinhaEmExecucao } from './linha-em-execucao';
 import { temaDoEditor } from './tema-do-editor';
 import {
@@ -214,7 +214,7 @@ export function TelaExercicio({ exercicio, andaime }: Props) {
   return (
     <div className="pagina tela-exercicio">
       <header>
-        <a className="voltar" href={CAMINHO_INICIAL}>
+        <a className="voltar" href={CAMINHO_EXERCICIOS}>
           <ArrowLeftIcon className="icone" aria-hidden="true" />
           Todos os exercícios
         </a>
