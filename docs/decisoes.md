@@ -610,9 +610,9 @@ vietnamita, cirílico e grego ficariam no pacote sem uso.
 **Licença.** As duas famílias são OFL-1.1, que permite empacotá-las e
 redistribuí-las junto com a aplicação.
 
-*Atualizada por D19:* as famílias passaram a ser Atkinson Hyperlegible Next e
-Atkinson Hyperlegible Mono, também OFL-1.1 e empacotadas do mesmo jeito, e os
-ícones vêm do pacote Heroicons, embutidos como SVG.
+*Atualizada por D19:* as famílias passaram a ser Zen Maru Gothic na interface
+e Atkinson Hyperlegible Mono no código, também OFL-1.1 e empacotadas do mesmo
+jeito, e os ícones vêm do pacote Heroicons, embutidos como SVG.
 
 ## D14 — Anatomia rotulada na lista encadeada (direção 2a)
 
@@ -853,41 +853,90 @@ o começo e guarda zero, como num `new int[4]` de Java.
 
 **Decisão.** A aplicação inteira passa a ter uma identidade só, desenhada com a
 skill oficial `frontend-design` (instalada em `.claude/skills/frontend-design`).
-A página é uma sala verde-acinzentada onde só dois objetos têm corpo: o editor,
+A página é uma sala cor de areia onde só dois objetos têm corpo: o editor,
 escuro, e a bancada da visualização, que é a superfície mais clara da tela — uma
 mesa de luz com grade milimetrada tênue. O resto é texto pousado direto na sala.
 Substitui a direção 2a, que valia só para a tela de exercício.
 
 **Referência.** O laboratório escolar: a mesa de luz onde se examina uma peça, o
-verde dos equipamentos antigos de laboratório e o roxo de anilina das folhas
+papel e a areia da bancada de trabalho, e o roxo de anilina das folhas
 mimeografadas de exercício. É dessa origem que saem as cores, e não de uma
 paleta de uso geral.
 
-| Nome | Hex | Papel |
-|---|---|---|
-| Verde-bancada | `#D8E0DA` | fundo da sala |
-| Mesa de luz | `#FAFCFA` | só a bancada |
-| Grafite | `#1F2B27` | texto, e marcadores dentro do desenho |
-| Anilina | `#5B3FA6` | a única cor de ação |
-| Acerto | `#1F7A4D` | só o sinal de todos os casos passando |
-| Negativo | `#1E2926` | fundo do editor |
+**Temperatura: de verde-acinzentado para areia.** A primeira versão tinha a sala
+em verde-acinzentado (`#D8E0DA`), tirado dos equipamentos antigos de
+laboratório, e o resultado ficou frio demais. A estrutura conceitual ficou
+inteira — sala, mesa de luz como superfície mais clara, editor escuro, grafite
+dentro da bancada — e só a temperatura mudou: a sala passou a ser areia. Não é o
+creme com terracota que a skill aponta como padrão de design gerado. A areia é
+mais escura e mais saturada que aquele creme, e a cor de ação continua sendo a
+anilina, um violeta, e não um tom de barro.
 
-**Tipografia.** Atkinson Hyperlegible Next no texto e Atkinson Hyperlegible Mono
-no código e nos valores do desenho, pesos 400 e 700, subconjunto latino (D13),
-licença OFL-1.1. A família foi desenhada para distinguir `1`, `l` e `I`, e `0` e
-`O`. Numa ferramenta cujos defeitos são, na maioria, índice deslocado, é isso que
-a escolha tem de específico. O mono aparece só onde há correspondência com o
-código; contador de passos e rótulos de interface usam o texto com algarismos
-tabulares. Saem as etiquetas em maiúsculas espaçadas.
+| Papel | Degrau | Hex |
+|---|---|---|
+| Sala | `areia-300` | `#EADECD` |
+| Faixas (casos, dicas) | `areia-200` | `#F7EFE5` |
+| Mesa de luz — só a bancada | `areia-100` | `#FDF9F4` |
+| Grafite: texto, e marcadores dentro do desenho | `areia-900` | `#24201A` |
+| Texto suave | `areia-700` | `#62594F` |
+| Ação — a única | `anilina-700` | `#603FB0` |
+| Acerto — só o sinal de todos os casos passando | `musgo-700` | `#006D3C` |
+| Fundo do editor | `areia-900` | `#24201A` |
+
+**Escalas de 100 a 900.** As variáveis soltas deram lugar a escalas nomeadas,
+como num design system: `areia`, `anilina`, `azul`, `ambar`, `rubi`, `musgo`,
+`rosa`, `ciano`, `lima` e `palha`, cada uma de 100 (mais clara) a 900 (mais
+escura). São geradas em OKLCH, com o matiz fixo por família e a mesma
+luminosidade em cada degrau para todas elas (0,985 a 0,245). Por isso o 600 de
+uma família pesa o mesmo que o 600 de outra, e hover, fundo sutil e borda saem de
+um degrau vizinho, em vez de um valor inventado a cada uso.
+
+Nenhuma regra usa uma escala diretamente. As regras usam papéis — `--sala`,
+`--acao`, `--celula-ativa-traco`, `--sintaxe-funcao` —, e cada papel aponta para
+um degrau. Trocar a aparência é trocar o degrau de um papel, e a validação de
+contraste é feita papel por papel. Fora das escalas ficou um único valor, de
+propósito: o branco puro do fundo da célula ativa, um degrau acima da mesa de
+luz, para a peça se destacar da superfície em que pousa. O tema do editor lê os
+mesmos papéis por `var()` e não repete valor nenhum.
+
+**Tipografia.** Zen Maru Gothic na interface, pesos 500 e 700: sans
+arredondada, de desenho humanista, que tira a frieza sem ficar infantil para
+um público universitário. Foi comparada renderizada com M PLUS Rounded 1c, mais
+larga e mecânica, e com Rubik, que quase não arredonda. Nunito e Quicksand
+ficaram de fora por serem o reflexo padrão para "arredondada e amigável", e
+Fredoka, Baloo e Sniglet, por serem infantis. O corpo usa o peso 500, porque o
+400 fica fino demais sobre a areia.
+
+Atkinson Hyperlegible Mono continua no código e nos valores do desenho, pesos
+400 e 700. Ela foi desenhada para distinguir `1`, `l` e `I`, e `0` e `O`, e numa
+ferramenta cujos defeitos são, na maioria, índice deslocado é aí que isso
+importa. A Atkinson Hyperlegible Next saiu do texto corrido: na interface, a
+legibilidade já é boa em qualquer sans, e a Zen Maru dá o calor que faltava.
+Todas vêm do `@fontsource`, subconjunto latino, licença OFL-1.1 (D13). O
+contador de passos e os rótulos de interface usam o texto com algarismos
+tabulares, e continuam sem etiquetas em maiúsculas espaçadas.
 
 **Dentro da bancada, matiz é significado.** As cores com significado de D10
 continuam nas mesmas famílias — azul, cinza, âmbar, vermelho — recalibradas
-para a mesa de luz. Contraste sobre `#FAFCFA`: ativa `#2A5DA8` 6,3:1, consumida
-`#66716C` 4,9:1, anel `#B06F0A` 4,0:1, ciclo `#B5352A` 5,8:1, posição vazia
-`#838E88` 3,3:1. Todo o resto do desenho é grafite ou cinza de moldura. Isso
-corrigiu duas confusões que já existiam:
+para a mesa de luz. Revalidadas sobre a mesa de luz em areia (`#FDF9F4`):
 
-- o marcador de índice era pintado com a cor de ação, e a anilina fica a ΔE 29
+| Estado | Degrau | Hex | Contraste |
+|---|---|---|---|
+| Célula ativa | `azul-700` | `#2159A5` | 6,6:1 |
+| Célula consumida | `areia-700` | `#62594F` | 6,5:1 |
+| Elemento apontado (anel) | `ambar-600` | `#B26500` | 4,2:1 |
+| Ligação cíclica | `rubi-600` | `#CB473D` | 4,4:1 |
+| Posição vazia da capacidade | `areia-600` | `#83796B` | 4,1:1 |
+| Marcadores (sem cor própria) | `areia-900` | `#24201A` | 15,5:1 |
+
+Todas passam dos 3:1 de elemento gráfico. Os cinzas da consumida e da posição
+vazia passaram a vir da areia, porque o cinza frio destoava da sala quente. Os
+dois ficam a ΔE 13 um do outro, como já ficavam, e continua sendo a forma —
+tracejado com valor esmaecido contra pontilhado vazio — que os separa. Os demais
+pares de estados ficam a ΔE ≥ 26. Todo o resto do desenho é grafite ou areia de
+moldura. Isso corrigiu duas confusões que já existiam:
+
+- o marcador de índice era pintado com a cor de ação, e a anilina fica a ΔE 33
   do azul da célula ativa — perto demais para quem tem deficiência de visão de
   cores. A separação só é garantida se for de lugar: a anilina nunca entra na
   bancada;
@@ -907,35 +956,38 @@ contínua continua carregando o estado.
 **Editor.** Tema escuro próprio (`src/componentes/tema-do-editor.ts`), sem
 vermelho, âmbar ou azul, para o código não carregar as cores da bancada. O
 realce é por tipo de token e uniforme no programa, então não diferencia trecho
-nenhum. A faixa da linha em execução de D9 continua quase neutra: branco
-translúcido a 13% sobre o editor escuro, no lugar do bege sobre fundo claro.
+nenhum. A faixa da linha em execução de D9 continua quase neutra: `areia-100`
+translúcida a 9% sobre o editor escuro, no lugar do bege sobre fundo claro. Era
+13%, e com a sala em areia desceu, porque a 12% o comentário caía a 4,2:1 sobre a
+faixa; a 9% fica a 4,6:1, e a faixa continua a ΔE 9 do fundo do editor.
 
 A primeira versão tinha três tons de sintaxe, e eram poucos: classe, função,
 variável e propriedade saíam na mesma cor, e é justamente isso que o estudante
 precisa separar para ler `no.proximo = novo`. O realce passou a ter uma família
 por categoria:
 
-| Categoria | Tom | Exemplo |
+| Categoria | Degrau | Exemplo |
 |---|---|---|
-| Palavra-chave, `this`, `true`, `false`, `null` | lilás `#C9B8F5` | `var`, `new`, `return` |
-| Literal | verde-lima `#B5DA8E` | `10`, `"ana"` |
-| Função, na declaração e na chamada | rosa `#F2A6C8` | `inserirDepois` |
-| Classe, na declaração e no `new` | ciano-esverdeado `#6FD3DB` | `No` |
-| Propriedade | creme `#EBD9A2` | `this.valor`, `no.proximo` |
-| Variável | tom do texto `#E4EAE6` | `cabeca`, `novo` |
-| Comentário e pontuação | cinzas `#7F948C` e `#AEBBB5` | `//`, `;` |
+| Palavra-chave, `this`, `true`, `false`, `null` | lilás, `anilina-300` | `var`, `new`, `return` |
+| Literal | verde, `musgo-400` | `10`, `"ana"` |
+| Função, na declaração e na chamada | rosa, `rosa-400` | `inserirDepois` |
+| Classe, na declaração e no `new` | ciano-esverdeado, `ciano-400` | `No` |
+| Propriedade | palha, `palha-400` | `this.valor`, `no.proximo` |
+| Variável | tom do texto, `areia-200` | `cabeca`, `novo` |
+| Comentário e pontuação | `areia-500` e `areia-400` | `//`, `;` |
 
-Todos ficam a 4,6:1 ou mais sobre o fundo e a ΔE ≥ 34 das cores com
-significado da bancada, com exceção dos cinzas, que são da família neutra da
-moldura. Entre dois tons com cor própria, a distância mínima é ΔE 24. O
-primeiro rascunho punha literal e classe a ΔE 13, e o literal foi para o lima
-e a classe para o ciano. O construtor de classe sai como propriedade, porque é
-assim que o analisador de JavaScript marca o nome de um método.
+Sobre o editor em `areia-900`, todos ficam entre 6,0:1 e 14,2:1 e a ΔE ≥ 47 das
+cores com significado da bancada. Entre dois tons com cor própria, a distância
+mínima é ΔE 28. Na primeira versão, com o editor esverdeado, literal e classe
+chegaram a ficar a ΔE 13; na passagem para a areia, literal (lima) e
+propriedade (palha) ficaram a ΔE 21, e o literal foi para o verde `musgo`. O
+construtor de classe sai como propriedade, porque é assim que o analisador de
+JavaScript marca o nome de um método.
 
 **Ocorrências da seleção.** Selecionar uma variável e ver onde mais ela aparece
 é ferramenta legítima de investigação, e a 8% de opacidade o realce das outras
 ocorrências era quase invisível. Subiu para lilás a 20%. Nessa intensidade o
-fundo fica a só ΔE 8,5 da faixa da linha em execução, então a cor sozinha não
+fundo fica a só ΔE 10 da faixa da linha em execução, então a cor sozinha não
 separa os dois: a ocorrência ganhou contorno, e fica uma caixa do tamanho da
 palavra, enquanto a faixa é um fundo sem contorno na linha inteira. Onde as duas
 se sobrepõem, a caixa continua legível sobre a faixa. O realce é do que o
@@ -972,6 +1024,16 @@ comportam igual, e o realce não tem transição: um realce que esmaecesse devag
 deixaria, por um instante, a linha anterior marcada. O estado vazio de "Onde
 você apontou" passou a dizer como apontar. Se o próximo piloto continuar sem
 declarações, o modo separado do roadmap volta à mesa.
+
+**Anel de foco e barras de rolagem.** O foco pelo teclado tem um anel global:
+contorno de 2 px em `anilina-600`, afastado 2 px do elemento, com um halo de
+5 px em `anilina-300`. O contorno fica a 3,5:1 sobre a sala. O editor não é
+controle nativo e recebe o mesmo anel em volta da placa inteira quando está em
+foco. Os controles de reprodução, as aberturas da lista e os botões usam o
+anel global. As barras de rolagem acompanham a superfície: na página, polegar
+`areia-500` sobre trilho `areia-300`; no editor, `areia-700` sobre o fundo
+escuro. Usam `scrollbar-color`, e os pseudo-elementos do WebKit ficam só para
+navegador que ainda não entende a propriedade.
 
 **Ícones.** Heroicons (`@heroicons/react`, MIT), instalado como pacote e
 renderizado como SVG embutido, sem recurso externo em tempo de execução (D13).

@@ -105,15 +105,17 @@ significado quanto a cor:
 
 | Estado | Cor | Forma que acompanha |
 |---|---|---|
-| Célula ativa | azul `#2A5DA8` | borda contínua, opacidade cheia, sombra seca de peça pousada |
-| Célula consumida | cinza `#66716C` | borda tracejada em opacidade cheia; fundo e valor esmaecidos; sem sombra |
-| Elemento apontado pelo marcador | âmbar `#B06F0A` | anel em volta da célula |
+| Célula ativa | azul `#2159A5` | borda contínua, opacidade cheia, sombra seca de peça pousada |
+| Célula consumida | cinza de areia `#62594F` | borda tracejada em opacidade cheia; fundo e valor esmaecidos; sem sombra |
+| Elemento apontado pelo marcador | âmbar `#B26500` | anel em volta da célula |
 | Marcador fora da estrutura | sem cor própria | posição além da ponta, mais rótulo |
 | Ponteiro nulo | sem cor própria | seta que termina em aterramento; numa variável, estacionada fora da fileira, mais rótulo |
-| Ligação cíclica | vermelho `#B5352A` | gancho por baixo da fileira, seta de retorno, rótulo |
-| Posição vazia da capacidade | cor da moldura `#838E88` | contorno pontilhado, sem preenchimento e sem nada dentro |
+| Ligação cíclica | vermelho `#CB473D` | gancho por baixo da fileira, seta de retorno, rótulo |
+| Posição vazia da capacidade | cor da moldura `#83796B` | contorno pontilhado, sem preenchimento e sem nada dentro |
 
-Todas passam de 3:1 sobre a mesa de luz (`#FAFCFA`).
+Todas passam de 3:1 sobre a mesa de luz (`#FDF9F4`): de 4,1:1 a 6,6:1. Consumida
+e posição vazia ficam próximas na cor (ΔE 13) de propósito — as duas são da
+família da moldura —, e é a forma que as separa.
 
 **Dentro da bancada, matiz é significado.** Nada no desenho usa cor que não seja
 uma destas. Marcadores, ligações e rótulos são grafite ou cinza de moldura; dois
@@ -185,32 +187,47 @@ A régua é simples: **aparência é livre; significado não é.**
 ## A identidade atual (D19)
 
 **Conceito: a sala e a mesa de luz.** A referência é o laboratório escolar — a
-mesa de luz onde se examina uma peça, o verde dos equipamentos antigos de
-laboratório, o roxo de anilina das folhas mimeografadas de exercício. A página é
-uma sala verde-acinzentada onde só dois objetos têm corpo: o editor, escuro, e a
+mesa de luz onde se examina uma peça, o papel e a areia da bancada de trabalho,
+o roxo de anilina das folhas mimeografadas de exercício. A página é uma sala cor
+de areia, quente, onde só dois objetos têm corpo: o editor, escuro, e a
 bancada da visualização, que é a superfície mais clara da tela, com uma grade
 milimetrada tênue. O resto é texto pousado direto na sala, alinhado à esquerda.
 A ousadia está gasta na bancada; o resto é quieto.
 
-| Nome | Hex | Papel |
-|---|---|---|
-| Verde-bancada | `#D8E0DA` | fundo da sala |
-| Mesa de luz | `#FAFCFA` | só a bancada |
-| Grafite | `#1F2B27` | texto, e marcadores dentro do desenho |
-| Anilina | `#5B3FA6` | a única cor de ação — nunca dentro da bancada |
-| Acerto | `#1F7A4D` | só o sinal de todos os casos passando |
-| Negativo | `#1E2926` | fundo do editor |
+**Cores em escalas.** Cada família de cor é uma escala de 100 (mais clara) a
+900 (mais escura) — `areia`, `anilina`, `azul`, `ambar`, `rubi`, `musgo`,
+`rosa`, `ciano`, `lima`, `palha` —, com a mesma luminosidade em cada degrau
+para todas as famílias. Hover, fundo sutil e borda saem de um degrau vizinho.
+As regras usam papéis, e cada papel aponta para um degrau:
 
-**Tipografia.** Atkinson Hyperlegible Next no texto, Atkinson Hyperlegible Mono
-no código e nos valores do desenho, pesos 400 e 700. A família distingue `1`,
-`l` e `I`, e `0` e `O` — o que importa numa ferramenta de defeitos de índice.
-Títulos de seção em caixa normal e peso 700; nada de etiquetas em maiúsculas
-espaçadas.
+| Papel | Degrau | Hex |
+|---|---|---|
+| Sala | `areia-300` | `#EADECD` |
+| Faixas (casos, dicas) | `areia-200` | `#F7EFE5` |
+| Mesa de luz — só a bancada | `areia-100` | `#FDF9F4` |
+| Grafite: texto, e marcadores dentro do desenho | `areia-900` | `#24201A` |
+| Texto suave | `areia-700` | `#62594F` |
+| Ação — a única, nunca dentro da bancada | `anilina-700` | `#603FB0` |
+| Acerto — só o sinal de todos os casos passando | `musgo-700` | `#006D3C` |
+| Fundo do editor | `areia-900` | `#24201A` |
+
+Contraste sobre a sala: texto 12,2:1, texto suave 5,2:1, borda de controle
+3,2:1, ação 5,6:1.
+
+**Tipografia.** Zen Maru Gothic na interface, pesos 500 e 700 — sans
+arredondada e calorosa, sem ser infantil. Atkinson Hyperlegible Mono no código e
+nos valores do desenho, pesos 400 e 700, porque distingue `1`, `l` e `I`, e `0` e
+`O` — o que importa numa ferramenta de defeitos de índice. Títulos de seção em
+caixa normal e peso 700; nada de etiquetas em maiúsculas espaçadas.
+
+**Foco e rolagem.** Anel de foco global para navegação por teclado — contorno
+anilina de 2 px com halo claro —, inclusive em volta do editor. Barras de
+rolagem no tom da superfície: areia na página, escura no editor.
 
 **Editor.** Fundo escuro, com uma família de cor por categoria do código:
-lilás nas palavras-chave, verde-lima nos literais, rosa nas funções,
-ciano-esverdeado nas classes, creme nas propriedades, o tom do texto nas
-variáveis e cinza em comentários e pontuação. Nenhum vermelho, âmbar ou azul,
+lilás nas palavras-chave, verde nos literais, rosa nas funções,
+ciano-esverdeado nas classes, palha nas propriedades, o tom do texto nas
+variáveis e areia em comentários e pontuação. Nenhum vermelho, âmbar ou azul,
 que são cores da bancada. A cor depende só da categoria, nunca do trecho.
 Selecionar uma palavra contorna as outras ocorrências dela com uma caixa lilás
 — forma diferente da faixa sem contorno da linha em execução.
