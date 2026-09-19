@@ -67,43 +67,119 @@
 --------------------------------------------------------------------------- */
 
 :root {
-  /* Cores de base (D19). Trocáveis por escolha estética, desde que a anilina
-     continue fora da bancada e nenhuma delas encoste nas de significado. */
-  --sala: #d8e0da;            /* verde-bancada: o fundo onde tudo pousa */
-  --painel: #edf2ee;          /* faixas de texto que precisam de chão próprio */
-  --mesa-de-luz: #fafcfa;     /* só a bancada: a superfície mais clara da tela */
-  --grafite: #1f2b27;
-  --grafite-suave: #56625d;
-  --regua: #b4c0b9;           /* divisórias e molduras sem significado */
-  --borda-controle: #6f7c76;  /* 3:1 sobre a sala: contorno de controle */
-  --anilina: #5b3fa6;         /* a única cor de ação */
-  --anilina-funda: #472f8a;
-  --anilina-rala: #e4def3;
-  --acerto: #1f7a4d;          /* só o sinal de todos os casos passando */
-  --erro: #a8322a;
-  --negativo: #1e2926;        /* o editor */
-  --negativo-texto: #e4eae6;
-  --negativo-suave: #7f948c;
+  /* -------------------------------------------------------------------------
+     Escalas (D19)
 
-  /* Cores com significado. Ver a nota acima antes de trocar qualquer uma.
-     Contraste sobre a mesa de luz: ativa 6,3:1; consumida 4,9:1; anel 4,0:1;
-     ciclo 5,8:1; vazia 3,3:1 — todas acima dos 3:1 de elemento gráfico. */
+     Cada família é uma rampa de 100 (mais clara) a 900 (mais escura), gerada
+     em OKLCH com matiz fixo e a mesma luminosidade em cada degrau para todas
+     as famílias — L 0,985 / 0,955 / 0,905 / 0,83 / 0,70 / 0,58 / 0,47 / 0,35 /
+     0,245. Por isso o 600 de uma família pesa o mesmo que o 600 de outra, e um
+     hover, um fundo sutil ou uma borda saem de um degrau vizinho em vez de um
+     valor inventado no lugar.
+
+     Ninguém usa uma escala direto numa regra: as regras usam os papéis mais
+     abaixo, e os papéis apontam para degraus. Trocar a aparência é trocar o
+     degrau de um papel.
+  ------------------------------------------------------------------------- */
+  /* areia — h 75, croma 0,008–0,03 */
+  --areia-100: #fdf9f4; --areia-200: #f7efe5; --areia-300: #eadecd;
+  --areia-400: #d3c5b2; --areia-500: #a99c8c; --areia-600: #83796b;
+  --areia-700: #62594f; --areia-800: #403931; --areia-900: #24201a;
+  /* anilina — h 292, croma máximo 0,19 */
+  --anilina-100: #faf5ff; --anilina-200: #f1e7ff; --anilina-300: #e1cfff;
+  --anilina-400: #cbb0ff; --anilina-500: #a383ff; --anilina-600: #805ddf;
+  --anilina-700: #603fb0; --anilina-800: #3f237d; --anilina-900: #24104d;
+  /* azul — h 257, croma máximo 0,15 */
+  --azul-100: #eafcff; --azul-200: #d4f3ff; --azul-300: #b3e2ff;
+  --azul-400: #8dc9ff; --azul-500: #5e9ffa; --azul-600: #3979d1;
+  --azul-700: #2159a5; --azul-800: #0a3873; --azul-900: #021f47;
+  /* ambar — h 68, croma máximo 0,15 */
+  --ambar-100: #fff6e0; --ambar-200: #ffe9c0; --ambar-300: #ffd393;
+  --ambar-400: #ffb65f; --ambar-500: #da8a11; --ambar-600: #b26500;
+  --ambar-700: #8a4700; --ambar-800: #5f2a00; --ambar-900: #391500;
+  /* rubi — h 28, croma máximo 0,17 */
+  --rubi-100: #fff0ea; --rubi-200: #ffddd4; --rubi-300: #ffc1b3;
+  --rubi-400: #ff9e8f; --rubi-500: #f66e60; --rubi-600: #cb473d;
+  --rubi-700: #9f2b24; --rubi-800: #6e110e; --rubi-900: #430403;
+  /* musgo — h 155, croma máximo 0,13 */
+  --musgo-100: #eafff1; --musgo-200: #d2fddf; --musgo-300: #aff2c5;
+  --musgo-400: #86dea6; --musgo-500: #51b67a; --musgo-600: #249057;
+  --musgo-700: #006d3c; --musgo-800: #004822; --musgo-900: #002a10;
+  /* rosa — h 350, croma máximo 0,13 */
+  --rosa-100: #fff2fd; --rosa-200: #ffe1f6; --rosa-300: #ffc7e8;
+  --rosa-400: #ffa7d2; --rosa-500: #da7baa; --rosa-600: #b25785;
+  --rosa-700: #893b64; --rosa-800: #5e2142; --rosa-900: #380f25;
+  /* ciano — h 200, croma máximo 0,11 */
+  --ciano-100: #e6ffff; --ciano-200: #cafbfd; --ciano-300: #a1f0f4;
+  --ciano-400: #70dbe1; --ciano-500: #2bb3b9; --ciano-600: #008d94;
+  --ciano-700: #006b71; --ciano-800: #00464b; --ciano-900: #00282c;
+  /* lima — h 128, croma máximo 0,15 */
+  --lima-100: #f3ffe5; --lima-200: #e3fac9; --lima-300: #cbeda2;
+  --lima-400: #aed875; --lima-500: #83af3e; --lima-600: #608a05;
+  --lima-700: #446800; --lima-800: #294400; --lima-900: #152700;
+  /* palha — h 95, croma máximo 0,1 */
+  --palha-100: #fffae8; --palha-200: #f9f1cf; --palha-300: #eee0ab;
+  --palha-400: #d9c783; --palha-500: #b29e51; --palha-600: #8d792a;
+  --palha-700: #6b5a10; --palha-800: #473900; --palha-900: #292000;
+
+  /* -------------------------------------------------------------------------
+     Papéis de base. Trocáveis por escolha estética, desde que a anilina
+     continue fora da bancada e nenhum encoste nas cores de significado.
+     Contraste sobre a sala: texto 12,2:1; texto suave 5,2:1; borda de controle
+     3,2:1; ação 5,6:1.
+  ------------------------------------------------------------------------- */
+  --sala: var(--areia-300);          /* areia: o fundo onde tudo pousa */
+  --painel: var(--areia-200);        /* faixas que precisam de chão próprio */
+  --mesa-de-luz: var(--areia-100);   /* só a bancada: a superfície mais clara */
+  --grafite: var(--areia-900);
+  --grafite-suave: var(--areia-700);
+  --regua: var(--areia-400);         /* divisórias sem significado */
+  --borda-controle: var(--areia-600);
+  --acao: var(--anilina-700);        /* a única cor de ação */
+  --acao-forte: var(--anilina-800);  /* hover da ação */
+  --acao-rala: var(--anilina-200);   /* fundo sutil da ação */
+  --sobre-acao: var(--areia-100);    /* texto e ícone sobre ação e acerto */
+  --acerto: var(--musgo-700);        /* só o sinal de todos os casos passando */
+  --erro: var(--rubi-700);
+  --editor-fundo: var(--areia-900);
+  --editor-texto: var(--areia-200);
+  --editor-suave: var(--areia-500);
+
+  /* Realce de sintaxe do editor (tema em src/componentes/tema-do-editor.ts).
+     Uma família por categoria, nenhuma azul, âmbar ou vermelha — são as cores
+     da bancada. Contraste sobre o editor de 6,0:1 a 14,2:1; ΔE ≥ 47 das cores
+     de significado; entre dois tons com cor própria, ΔE ≥ 28. */
+  --sintaxe-palavra-chave: var(--anilina-300);
+  --sintaxe-literal: var(--musgo-400);
+  --sintaxe-funcao: var(--rosa-400);
+  --sintaxe-classe: var(--ciano-400);
+  --sintaxe-propriedade: var(--palha-400);
+  --sintaxe-variavel: var(--areia-200);
+  --sintaxe-comentario: var(--areia-500);
+  --sintaxe-pontuacao: var(--areia-400);
+
+  /* Cores com significado. Ver a nota do topo antes de trocar qualquer uma.
+     Contraste sobre a mesa de luz: ativa 6,6:1; consumida 6,5:1; anel 4,2:1;
+     ciclo 4,4:1; vazia 4,1:1 — todas acima dos 3:1 de elemento gráfico. */
+  /* Branco puro, fora das escalas de propósito: um degrau acima da mesa de
+     luz, para a peça ativa se destacar da superfície em que pousa. */
   --celula-ativa-fundo: #ffffff;
-  --celula-ativa-traco: #2a5da8;
-  --celula-consumida-fundo: #e4eae6;
-  --celula-consumida-traco: #66716c;
-  --elemento-apontado: #b06f0a;
-  --ligacao-ciclica: #b5352a;
+  --celula-ativa-traco: var(--azul-700);
+  --celula-consumida-fundo: var(--areia-200);
+  --celula-consumida-traco: var(--areia-700);
+  --elemento-apontado: var(--ambar-600);
+  --ligacao-ciclica: var(--rubi-600);
   /* Moldura da capacidade: da família da base da pilha e do contorno da
-     fileira, e não da tinta do conteúdo, escurecida até passar de 3:1. */
-  --posicao-vazia: #838e88;
+     fileira, e não da tinta do conteúdo. Fica a ΔE 13 da consumida — é a
+     forma, pontilhado vazio contra tracejado com valor, que separa as duas. */
+  --posicao-vazia: var(--areia-600);
 
-  /* Moldura do desenho: sem significado próprio, por isso em cinza. */
+  /* Moldura do desenho: sem significado próprio, por isso em areia. */
   --marcador: var(--grafite);
   --ligacao: var(--grafite-suave);
-  --traco-estrutura: #8c9892;
-  --contorno-fileira: var(--regua);
-  --sombra-da-peca: var(--regua);
+  --traco-estrutura: var(--areia-500);
+  --contorno-fileira: var(--areia-400);
+  --sombra-da-peca: var(--areia-400);
 
   /* Tipografia. Zen Maru Gothic na interface: sans arredondada, de desenho
      humanista, que tira a frieza sem ficar infantil. Atkinson Hyperlegible
@@ -152,7 +228,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--sala); }
 
-:focus-visible { outline: 2px solid var(--anilina); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--acao); outline-offset: 2px; }
 
 /* Para quem usa leitor de tela: o ícone some, a palavra fica. */
 .so-leitor { position: absolute; width: 1px; height: 1px; overflow: hidden;
@@ -193,19 +269,19 @@ button {
   border: 1px solid var(--borda-controle); background: var(--mesa-de-luz);
   color: var(--grafite); cursor: pointer;
 }
-button:hover:not(:disabled) { border-color: var(--anilina); color: var(--anilina); }
+button:hover:not(:disabled) { border-color: var(--acao); color: var(--acao); }
 button:disabled { opacity: .45; cursor: default; }
-button.primario { background: var(--anilina); border-color: var(--anilina);
-  color: #fff; font-weight: 700; }
-button.primario:hover:not(:disabled) { background: var(--anilina-funda);
-  border-color: var(--anilina-funda); color: #fff; }
+button.primario { background: var(--acao); border-color: var(--acao);
+  color: var(--sobre-acao); font-weight: 700; }
+button.primario:hover:not(:disabled) { background: var(--acao-forte);
+  border-color: var(--acao-forte); color: var(--sobre-acao); }
 
 .erro { color: var(--erro); font-size: var(--fonte-corpo); }
 .aviso-falha { color: var(--erro); font-size: var(--fonte-corpo); margin: 0; }
 
 .voltar { display: inline-flex; align-items: center; gap: var(--esp-6);
   font-size: var(--fonte-apoio); color: var(--grafite-suave); text-decoration: none; }
-.voltar:hover { color: var(--anilina); }
+.voltar:hover { color: var(--acao); }
 
 /* Escolha do apoio (D9). Deliberadamente diferente da complexidade: esta é
    texto corrido na linha de metadados, aquela são pílulas clicáveis numa
@@ -216,9 +292,9 @@ button.primario:hover:not(:disabled) { background: var(--anilina-funda);
 .nivel { padding: 4px 12px; border: 1px solid var(--borda-controle);
   border-radius: var(--raio-pilula); background: var(--mesa-de-luz);
   text-decoration: none; color: var(--grafite); }
-a.nivel:hover { border-color: var(--anilina); color: var(--anilina); }
-.nivel.ativo { background: var(--anilina); border-color: var(--anilina);
-  color: #fff; font-weight: 700; }
+a.nivel:hover { border-color: var(--acao); color: var(--acao); }
+.nivel.ativo { background: var(--acao); border-color: var(--acao);
+  color: var(--sobre-acao); font-weight: 700; }
 .aviso-troca { font-size: var(--fonte-miuda); color: var(--grafite-suave); }
 .complexidade { font-variant-numeric: tabular-nums; }
 
@@ -272,7 +348,7 @@ button.discreto { font-size: var(--fonte-miuda); padding: 5px 11px;
 .acoes-painel { display: flex; gap: var(--esp-8); flex-wrap: wrap; }
 button.perigo { color: var(--erro); border-color: var(--erro); }
 button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(--erro);
-  color: #fff; }
+  color: var(--sobre-acao); }
 
 /* ---------------------------------------------------------------------------
    Cores dentro do SVG
@@ -320,7 +396,7 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 /* ---------------------------------------------------------------------------
    Tela de exercício (D19)
 
-   Uma sala verde-acinzentada onde só dois objetos têm corpo: o editor escuro
+   Uma sala cor de areia onde só dois objetos têm corpo: o editor escuro
    e a mesa de luz. O resto é texto pousado direto na sala.
 --------------------------------------------------------------------------- */
 .tela-exercicio header { margin-bottom: 0; }
@@ -372,12 +448,12 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    desenhado fora do trecho que varia com o andaime. A faixa inteira muda de
    chão, e o selo se traça uma vez — o único movimento orquestrado da
    aplicação. */
-.faixa-casos .painel.acertou { background: var(--acerto); color: #fff; }
-.acertou .casos .icone { color: #fff; }
+.faixa-casos .painel.acertou { background: var(--acerto); color: var(--sobre-acao); }
+.acertou .casos .icone { color: var(--sobre-acao); }
 .sinal-de-acerto { display: flex; align-items: center; gap: var(--esp-20);
   margin: var(--esp-4) 0 var(--esp-12); }
 .sinal-de-acerto svg { width: 72px; height: 72px; flex: none; }
-.sinal-de-acerto circle, .sinal-de-acerto path { fill: none; stroke: #fff;
+.sinal-de-acerto circle, .sinal-de-acerto path { fill: none; stroke: var(--sobre-acao);
   stroke-linecap: round; stroke-linejoin: round; }
 .sinal-de-acerto circle { stroke-width: 3; stroke-dasharray: 202; stroke-dashoffset: 202;
   animation: tracar .5s cubic-bezier(.4, 0, .2, 1) forwards; }
@@ -397,20 +473,22 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    retorno sobre a ação em curso, sem contar nada. */
 .executar { position: relative; }
 .executar .pendente { width: 8px; height: 8px; border-radius: 50%;
-  background: #fff; box-shadow: 0 0 0 2px var(--anilina-rala); }
+  background: var(--sobre-acao); box-shadow: 0 0 0 2px var(--acao-rala); }
 
 /* Editor. O tema de cores está em src/componentes/tema-do-editor.ts; aqui
    fica só o que depende da página. */
-.tela-exercicio .cm-editor { border-radius: var(--raio-placa); overflow: hidden;
-  color-scheme: dark; }
+.tela-exercicio .cm-editor { border-radius: var(--raio-placa); color-scheme: dark; }
+.tela-exercicio .cm-scroller { border-radius: var(--raio-placa); }
 /* O número da linha é o alvo da declaração de localização (D7). Todos se
    comportam igual ao passar o mouse: o convite é para apontar qualquer linha,
    e nenhuma recebe destaque próprio. Sem transição: um realce que esmaece
    devagar deixa, por um instante, a linha anterior marcada. */
 .cm-lineNumbers .cm-gutterElement { cursor: pointer; border-radius: 3px; }
-.cm-lineNumbers .cm-gutterElement:hover { background: var(--anilina); color: #fff; }
+.cm-lineNumbers .cm-gutterElement:hover { background: var(--acao); color: var(--sobre-acao); }
 /* Só no conteúdo: o gutter, onde se declara a localização (D7), fica sem faixa. */
-.tela-exercicio .cm-linha-em-execucao { background: rgba(228, 234, 230, .13); }
+/* 9%: a 12%, o comentário caía abaixo de 4,5:1 sobre a faixa. */
+.tela-exercicio .cm-linha-em-execucao {
+  background: color-mix(in srgb, var(--areia-100) 9%, transparent); }
 
 /* A mesa de luz. É o fundo do desenho, e não do painel: a legenda e os
    controles ficam fora dela. A grade milimetrada é tênue (1,15:1) e uniforme,
@@ -419,13 +497,14 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .tela-exercicio .bancada > svg { display: block; border-radius: var(--raio-placa);
   background-color: var(--mesa-de-luz);
   background-image:
-    linear-gradient(rgba(31, 43, 39, .075) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 43, 39, .075) 1px, transparent 1px),
-    linear-gradient(rgba(31, 43, 39, .035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(31, 43, 39, .035) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--grafite) 7.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--grafite) 7.5%, transparent) 1px, transparent 1px),
+    linear-gradient(color-mix(in srgb, var(--grafite) 3.5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--grafite) 3.5%, transparent) 1px, transparent 1px);
   background-size: 40px 40px, 40px 40px, 8px 8px, 8px 8px;
   background-position: -1px -1px;
-  box-shadow: 0 0 0 1px rgba(31, 43, 39, .08), 0 0 28px rgba(255, 255, 255, .75); }
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--grafite) 8%, transparent),
+    0 0 28px color-mix(in srgb, var(--areia-100) 80%, transparent); }
 .indicador-linha { margin: var(--esp-12) 0 0; font-size: var(--fonte-corpo);
   font-weight: 700; font-variant-numeric: tabular-nums; }
 
@@ -433,7 +512,7 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   margin-top: var(--esp-10); }
 .controles button { width: 34px; height: 32px; padding: 0; justify-content: center; }
 .controles .icone { width: 18px; height: 18px; }
-.controles input[type=range] { flex: 1; accent-color: var(--anilina); min-width: 60px; }
+.controles input[type=range] { flex: 1; accent-color: var(--acao); min-width: 60px; }
 .contador { font-size: var(--fonte-apoio); color: var(--grafite-suave);
   white-space: nowrap; font-variant-numeric: tabular-nums; }
 

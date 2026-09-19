@@ -4,7 +4,7 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 
 /**
- * Tema do editor: o "negativo" da direção D19.
+ * Tema do editor: a placa escura da direção D19.
  *
  * Escuro ao lado da mesa de luz, que é a superfície mais clara da tela: o
  * editor recua sem perder a leitura, e o olho vai para o desenho.
@@ -13,70 +13,66 @@ import { tags } from '@lezer/highlight';
  * variável, propriedade — em famílias de cor próprias, e nenhuma delas é
  * azul, âmbar ou vermelho. Essas são as cores com significado da bancada
  * (D10), e o código não pode carregá-las: uma palavra-chave azul ao lado de
- * uma célula ativa azul sugeriria uma correspondência que não existe. Todos
- * os tons ficam a ΔE ≥ 34 das cores da bancada e a 4,6:1 ou mais sobre o
- * fundo; entre dois tons com cor própria, a distância mínima é ΔE 24.
+ * uma célula ativa azul sugeriria uma correspondência que não existe.
  *
  * O realce é por tipo de token e uniforme no programa inteiro: a mesma
  * categoria tem a mesma cor em qualquer linha, então nenhum trecho se
  * diferencia dos demais (briefing, restrição 1).
  *
- * As cores estão escritas aqui, e não em variável CSS, porque o tema do
- * CodeMirror é gerado como folha de estilo própria. Os valores repetem os de
- * `--negativo*` e da anilina em src/index.css.
+ * Todas as cores vêm dos papéis `--editor-*` e `--sintaxe-*` de src/index.css,
+ * que apontam para degraus das escalas. O tema do CodeMirror vira folha de
+ * estilo comum, então `var()` funciona aqui como em qualquer regra, e a
+ * validação de contraste feita lá vale para o que aparece aqui.
  */
 
-const NEGATIVO = '#1e2926';
-const TEXTO = '#e4eae6';
-const SUAVE = '#7f948c';
-const PONTUACAO = '#aebbb5';
-
-// Uma família por categoria do que o estudante lê. Variável fica no tom do
-// texto: é o que mais aparece, e o que mais aparece não precisa gritar.
-const LILAS = '#c9b8f5'; //         palavras-chave, this, true, false, null
-const VERDE_LIMA = '#b5da8e'; //    números e textos literais
-const ROSA = '#f2a6c8'; //          funções: declaração e chamada
-const CIANO_ESVERDEADO = '#6fd3db'; // classes: declaração e new
-const CREME = '#ebd9a2'; //         propriedades: no.proximo, this.valor
+const misturar = (cor: string, porcento: number) =>
+  `color-mix(in srgb, var(${cor}) ${porcento}%, transparent)`;
 
 const aparencia = EditorView.theme(
   {
-    '&': { backgroundColor: NEGATIVO, color: TEXTO },
+    '&': { backgroundColor: 'var(--editor-fundo)', color: 'var(--editor-texto)' },
     '.cm-scroller': {
       fontFamily: 'var(--familia-mono)',
       fontSize: 'var(--fonte-codigo)',
+      fontWeight: '400',
       lineHeight: '22px',
     },
-    '.cm-content': { caretColor: TEXTO, padding: '10px 0' },
-    '.cm-cursor, .cm-dropCursor': { borderLeftColor: TEXTO, borderLeftWidth: '2px' },
-    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
-      backgroundColor: 'rgba(201, 184, 245, .28)',
+    '.cm-content': { caretColor: 'var(--editor-texto)', padding: '10px 0' },
+    '.cm-cursor, .cm-dropCursor': {
+      borderLeftColor: 'var(--editor-texto)',
+      borderLeftWidth: '2px',
     },
-    '&.cm-focused': { outline: 'none' },
+    '&.cm-focused .cm-selectionBackground, .cm-selectionBackground, ::selection': {
+      backgroundColor: misturar('--anilina-300', 28),
+    },
     '.cm-gutters': {
-      backgroundColor: NEGATIVO,
-      color: SUAVE,
+      backgroundColor: 'var(--editor-fundo)',
+      color: 'var(--editor-suave)',
       border: 'none',
-      borderRight: '1px solid rgba(228, 234, 230, .1)',
+      borderRight: `1px solid ${misturar('--editor-texto', 10)}`,
     },
     // Folga lateral no número: é o alvo da declaração (D7), e o realce ao
     // passar o mouse precisa de espaço para virar uma pastilha legível.
     '.cm-lineNumbers .cm-gutterElement': { padding: '0 10px 0 12px', minWidth: '40px' },
     '.cm-matchingBracket, .cm-nonmatchingBracket': {
-      backgroundColor: 'rgba(228, 234, 230, .12)',
+      backgroundColor: misturar('--editor-texto', 12),
       outline: 'none',
     },
     // Outras ocorrências do que está selecionado: selecionar uma variável e
     // ver onde ela é usada é ferramenta legítima de investigação. A 0,2 o
-    // fundo fica a só ΔE 8 da faixa da linha em execução, então o que separa
+    // fundo fica a só ΔE 10 da faixa da linha em execução, então o que separa
     // os dois é a forma: a ocorrência é uma caixa contornada do tamanho da
     // palavra; a faixa, um fundo sem contorno na linha inteira.
     '.cm-selectionMatch': {
-      backgroundColor: 'rgba(201, 184, 245, .2)',
-      boxShadow: 'inset 0 0 0 1px rgba(201, 184, 245, .6)',
+      backgroundColor: misturar('--anilina-300', 20),
+      boxShadow: `inset 0 0 0 1px ${misturar('--anilina-300', 60)}`,
       borderRadius: '2px',
     },
-    '.cm-tooltip': { backgroundColor: NEGATIVO, color: TEXTO, border: 'none' },
+    '.cm-tooltip': {
+      backgroundColor: 'var(--editor-fundo)',
+      color: 'var(--editor-texto)',
+      border: 'none',
+    },
   },
   { dark: true }
 );
@@ -88,20 +84,21 @@ const aparencia = EditorView.theme(
 const realce = HighlightStyle.define([
   { tag: [tags.keyword, tags.controlKeyword, tags.definitionKeyword, tags.moduleKeyword,
     tags.operatorKeyword, tags.modifier, tags.self, tags.atom, tags.null, tags.bool],
-    color: LILAS },
+    color: 'var(--sintaxe-palavra-chave)' },
   { tag: [tags.string, tags.number, tags.regexp, tags.special(tags.string), tags.escape],
-    color: VERDE_LIMA },
+    color: 'var(--sintaxe-literal)' },
   { tag: [tags.function(tags.variableName), tags.function(tags.definition(tags.variableName)),
     tags.function(tags.propertyName), tags.function(tags.definition(tags.propertyName))],
-    color: ROSA },
-  { tag: [tags.className, tags.definition(tags.className)], color: CIANO_ESVERDEADO },
+    color: 'var(--sintaxe-funcao)' },
+  { tag: [tags.className, tags.definition(tags.className)], color: 'var(--sintaxe-classe)' },
   { tag: [tags.propertyName, tags.definition(tags.propertyName),
-    tags.special(tags.propertyName)], color: CREME },
+    tags.special(tags.propertyName)], color: 'var(--sintaxe-propriedade)' },
   { tag: [tags.variableName, tags.definition(tags.variableName), tags.labelName],
-    color: TEXTO },
-  { tag: [tags.comment, tags.lineComment, tags.blockComment], color: SUAVE },
+    color: 'var(--sintaxe-variavel)' },
+  { tag: [tags.comment, tags.lineComment, tags.blockComment],
+    color: 'var(--sintaxe-comentario)' },
   { tag: [tags.punctuation, tags.operator, tags.bracket, tags.separator,
-    tags.derefOperator], color: PONTUACAO },
+    tags.derefOperator], color: 'var(--sintaxe-pontuacao)' },
 ]);
 
 export const temaDoEditor: Extension = [aparencia, syntaxHighlighting(realce)];
