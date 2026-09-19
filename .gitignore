@@ -27,3 +27,7 @@ npm-debug.log*
 # Artefatos de teste do núcleo
 instr.test.mjs
 coverage/
+
+# Artefatos do Playwright
+test-results/
+playwright-report/
