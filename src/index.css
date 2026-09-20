@@ -646,8 +646,8 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .detalhe { grid-column: 2; color: var(--grafite-suave); font-size: var(--fonte-apoio);
   font-family: var(--familia-mono); }
 
-/* Sinal de acerto. Idêntico nos dois níveis de apoio (roadmap 1.1): é
-   desenhado fora do trecho que varia com o andaime. A faixa inteira muda de
+/* Sinal de acerto. Idêntico nos dois níveis de apoio (roadmap, retorno de
+   acerto): é desenhado fora do trecho que varia com o andaime. A faixa inteira muda de
    chão, e o selo se traça uma vez — o único movimento orquestrado da
    aplicação. */
 .faixa-casos .painel.acertou { background: var(--acerto); color: var(--sobre-acao); }

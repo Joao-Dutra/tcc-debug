@@ -1016,7 +1016,7 @@ Este retorno precisa estar fechado antes do próximo piloto: mudar a intensidade
 dele entre pilotos invalida a comparação entre eles.
 
 **Descoberta da declaração de localização.** O primeiro piloto registrou zero
-declarações em 25 sessões (roadmap, 0.1). Antes de introduzir um modo de
+declarações em 25 sessões (roadmap, primeiro piloto). Antes de introduzir um modo de
 declaração separado, testa-se o convite visual: o número da linha tem cursor de
 ponteiro e, sob o mouse, vira uma pastilha anilina com o número em branco. O
 mecanismo de D7 não muda — o alvo continua sendo o número. Todos os números se
@@ -1081,7 +1081,7 @@ reprodutor; e `lupa-investiga`, a lente passeando devagar pela folha. Com
 Os três passos da tela — executar, observar, apontar e corrigir — são numerados
 porque são de fato uma sequência. O terceiro nomeia o gesto de apontar a linha
 de propósito: o primeiro piloto registrou zero declarações de localização, e o
-problema era de descoberta (roadmap 0.1).
+problema era de descoberta (roadmap, primeiro piloto).
 
 **Vitrine.** Uma fileira por estrutura, na ordem de D8, com filtro por
 estrutura. Cada exercício é um cartão com miniatura, título, complexidade e as
@@ -1106,7 +1106,7 @@ ele que conhece o exercício, e o visualizador continua puro.
   estado posterior à divergência, ou inventado à mão, reprova o exercício.
   Os estados escolhidos foram copiados da execução, e não escritos de cabeça.
 - **Exercício sem o campo cai num cartão sem miniatura.** Cobre os exercícios
-  que professores venham a cadastrar (roadmap 2.1) sem exigir deles o estado.
+  que professores venham a cadastrar (roadmap, área de autoria) sem exigir deles o estado.
 - **Parada**: `MotionConfig skipAnimations` leva cada transição direto ao valor
   final. As transições existem para mostrar a mudança entre dois passos, e na
   miniatura não há passo seguinte.
@@ -1135,7 +1135,7 @@ tela. Verificado em 1366 × 657 e 1920 × 960.
 Isso **muda o arranjo de D10**, que punha os casos numa faixa larga acima do
 código. Os casos continuam sendo de onde o estudante parte, agora sem empurrar
 o código e a visualização para baixo. O sinal de acerto **não mudou** de
-tamanho nem de intensidade: a condição do roadmap 1.1 é que ele fique idêntico
+tamanho nem de intensidade: a regra de retorno de acerto do roadmap é que ele fique idêntico
 entre pilotos, e encolhê-lo para caber seria mudá-lo.
 
 **Congelamento (19/09/2026).** A partir desta data o arranjo da tela de
@@ -1296,7 +1296,7 @@ a leitura.
 acerto valia para qualquer `svg` dentro do sinal, e o ícone do convite nasceu
 com os 72 px e o traço vazado do selo. A regra passou a mirar o selo, que é
 filho direto. Tamanho, cor e intensidade do selo seguem exatamente iguais — a
-condição do roadmap 1.1 continua valendo.
+regra de retorno de acerto do roadmap continua valendo.
 
 **O que virou teste.** Que o convite leva ao próximo exercício preservando o
 apoio, que a sessão recomeça do código com defeito, que o texto do convite não

@@ -41,8 +41,8 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
  *
  * Não recebe o nível de andaime, e é isso que o torna idêntico nos dois: se a
  * intensidade do retorno variasse com o apoio, a diferença de desempenho entre
- * os níveis deixaria de ser atribuível ao apoio (roadmap 1.1). Também não
- * recebe nada da sessão — responde ao que o estudante acabou de fazer, sem
+ * os níveis deixaria de ser atribuível ao apoio (roadmap, retorno de
+ * acerto). Também não recebe nada da sessão — responde ao que o estudante acabou de fazer, sem
  * tempo, contagem ou histórico.
  *
  * O convite para continuar segue a mesma regra (D20): leva ao próximo
