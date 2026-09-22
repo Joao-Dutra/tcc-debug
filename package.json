@@ -17,6 +17,7 @@
     "@fontsource/zen-maru-gothic": "^5.3.0",
     "@heroicons/react": "^2.2.0",
     "@lezer/highlight": "^1.2.3",
+    "@supabase/supabase-js": "^2.116.0",
     "@uiw/react-codemirror": "^4.25.11",
     "acorn": "^8.18.0",
     "acorn-walk": "^8.3.5",

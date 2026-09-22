@@ -26,8 +26,14 @@ import type { ResultadoExecucao } from './tipos';
  * trazem `completo`, `parcial` ou `minimo`, e as da versão 3, `com-apoio` ou
  * `sem-apoio`. Sem a versão, uma análise somaria condições diferentes sob o
  * mesmo nome.
+ *
+ * 4 — a sessão passou a ser gravada sob uma identidade (ver D21). Nenhum campo
+ * foi criado nem removido, mas `participanteId` deixou de ser sempre nulo:
+ * registros da versão 3 e anteriores foram coletados sem identidade e não se
+ * agrupam por pessoa, enquanto os da 4 se agrupam. Sem a versão, uma análise
+ * leria "sem identidade" como se fosse um participante a mais.
  */
-export const VERSAO_DO_REGISTRO = 3;
+export const VERSAO_DO_REGISTRO = 4;
 
 /**
  * A execução disparada ao abrir o exercício não é uma tentativa do estudante.
@@ -76,7 +82,11 @@ export interface RegistroDeSessao {
   versao: number;
   id: string;
   exercicioId: string;
-  /** Preenchido quando houver autenticação de participantes. */
+  /**
+   * Identidade do participante (D21). Nulo em registros da versão 3 e
+   * anteriores, coletados antes de haver identidade, e nas cargas em que o
+   * Supabase não está configurado.
+   */
   participanteId: string | null;
   /**
    * Nível de andaime sob o qual a sessão foi apresentada (ver D9). Segue a
@@ -133,6 +143,24 @@ export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
   };
 }
 
+/**
+ * Identidade sob a qual as sessões estão sendo gravadas (D21).
+ *
+ * Fica no módulo, e não na criação da sessão, porque a entrada anônima do
+ * primeiro acesso é uma ida à rede e o primeiro exercício não espera por ela:
+ * a tela abre, a sessão começa, e o identificador chega depois. Como o
+ * registro só é lido no arquivamento, ele chega a tempo.
+ */
+let participanteAtual: string | null = null;
+
+export function definirParticipante(id: string | null): void {
+  participanteAtual = id;
+}
+
+export function participante(): string | null {
+  return participanteAtual;
+}
+
 export interface OpcoesDaSessao {
   exercicioId: string;
   /** Rótulo do nível de andaime da sessão (D9), definido pela interface. */
@@ -143,6 +171,7 @@ export interface OpcoesDaSessao {
    * a interface pergunta e recebe o veredito, sem nunca ver a resposta.
    */
   linhaDoDefeito: number;
+  /** Fixa a identidade da sessão; sem ela, vale a do módulo no arquivamento. */
   participanteId?: string | null;
   /** Relógio monotônico. Injetável para teste. */
   agora?: () => number;
@@ -219,7 +248,7 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         versao: VERSAO_DO_REGISTRO,
         id,
         exercicioId: opcoes.exercicioId,
-        participanteId: opcoes.participanteId ?? null,
+        participanteId: opcoes.participanteId ?? participanteAtual,
         andaime: opcoes.andaime ?? null,
         instanteDeInicio,
         duracaoTotalMs: t(),
