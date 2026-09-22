@@ -46,6 +46,24 @@ export function paraLinha(registro: RegistroDeSessao, participanteId: string): L
   };
 }
 
+/** O caminho de volta: uma linha do banco como o núcleo a conhece. */
+export function deLinha(linha: LinhaDeSessao): RegistroDeSessao {
+  return {
+    versao: linha.versao,
+    id: linha.id,
+    exercicioId: linha.exercicio_id,
+    participanteId: linha.participante_id,
+    andaime: linha.andaime,
+    // O Postgres devolve o instante no próprio formato (`+00:00` em vez de
+    // `Z`). Normalizado para o ISO do navegador, para que a mesma sessão lida
+    // do aparelho ou do banco saia igual na exportação.
+    instanteDeInicio: new Date(linha.instante_de_inicio).toISOString(),
+    duracaoTotalMs: linha.duracao_total_ms,
+    eventos: linha.eventos,
+    resumo: linha.resumo,
+  };
+}
+
 /**
  * Registros que a identidade de agora pode gravar: os dela e os que nasceram
  * sem identidade. Um registro de OUTRA identidade — o anônimo que existia
@@ -83,6 +101,48 @@ export function destinoSupabase(): DestinoRemoto {
       return lote.map((r) => r.id);
     },
   };
+}
+
+/**
+ * O servidor do Supabase devolve no máximo mil linhas por consulta, e corta o
+ * resto em silêncio. Sem paginar, a sessão de número 1001 simplesmente não
+ * apareceria no painel nem na exportação.
+ */
+const LINHAS_POR_PAGINA = 1000;
+
+/**
+ * Todas as sessões que a identidade de agora pode ler (D22).
+ *
+ * Quem decide o "todas" é o RLS, e não esta função: para o pesquisador, são as
+ * da turma inteira; para qualquer outra identidade, a mesma consulta devolve
+ * só as próprias. A interface escolhe o modo pelo papel, mas o dado não
+ * depende dessa escolha estar certa.
+ */
+export async function lerSessoesDoBanco(): Promise<RegistroDeSessao[]> {
+  const cliente = supabase();
+  if (!cliente) throw new Error('banco não configurado');
+
+  const registros: RegistroDeSessao[] = [];
+  for (;;) {
+    const inicio = registros.length;
+    const { data, error } = await cliente
+      .from('sessoes')
+      .select(
+        'id, participante_id, versao, exercicio_id, andaime, instante_de_inicio, duracao_total_ms, eventos, resumo'
+      )
+      // O id desempata: com a ordem só pelo instante, duas sessões com o
+      // mesmo início poderiam trocar de página entre uma consulta e outra.
+      .order('instante_de_inicio', { ascending: true })
+      .order('id', { ascending: true })
+      .range(inicio, inicio + LINHAS_POR_PAGINA - 1);
+    if (error) throw new Error(error.message);
+    const pagina = (data ?? []) as LinhaDeSessao[];
+    // Para na página vazia, e não na página curta: se o limite do projeto
+    // for menor que o pedido, toda página vem curta, e parar nela cortaria a
+    // leitura na primeira — o mesmo corte silencioso que a paginação evita.
+    if (pagina.length === 0) return registros;
+    registros.push(...pagina.map(deLinha));
+  }
 }
 
 /**

@@ -3,10 +3,12 @@ import type { RegistroDeSessao } from '../nucleo/metricas';
 import type { LinhaDeSessao } from './sessoes-remotas';
 
 /**
- * Gravação das sessões no banco, verificada por execução (D22).
+ * Leitura e gravação das sessões no banco, verificadas por execução (D22).
  *
- * A regra, do tipo que falha em silêncio: um registro de outra identidade não
- * pode derrubar o lote inteiro dos que pertencem à identidade de agora.
+ * Três regras, todas do tipo que falha em silêncio: a leitura não pode parar
+ * antes do fim quando o servidor corta a página; uma sessão lida do banco sai
+ * igual à que foi gravada; e um registro de outra identidade não pode derrubar
+ * o lote inteiro dos que pertencem à identidade de agora.
  */
 
 /** Banco de mentira: uma tabela em memória e um limite de linhas por resposta. */
@@ -50,7 +52,9 @@ vi.mock('./identidade', () => ({
   observarIdentidade: () => () => {},
 }));
 
-const { destinoSupabase } = await import('./sessoes-remotas');
+const { deLinha, destinoSupabase, lerSessoesDoBanco, paraLinha } = await import(
+  './sessoes-remotas'
+);
 
 function registro(id: string, participanteId: string | null): RegistroDeSessao {
   return {
@@ -81,6 +85,30 @@ beforeEach(() => {
   banco.limiteDoServidor = 1000;
   banco.upserts = [];
   usuarioAtual = 'uid-de-agora';
+});
+
+describe('leitura do banco', () => {
+  it('lê até o fim mesmo quando o servidor devolve menos do que o pedido', async () => {
+    banco.linhas = Array.from({ length: 7 }, (_, i) =>
+      paraLinha(registro(`sessao-${i}`, 'uid-a'), 'uid-a')
+    );
+    // Limite menor que a página pedida: toda resposta vem curta, e parar na
+    // primeira resposta curta leria só as duas primeiras sessões.
+    banco.limiteDoServidor = 2;
+
+    const lidas = await lerSessoesDoBanco();
+
+    expect(lidas.map((r) => r.id)).toEqual(banco.linhas.map((l) => l.id));
+  });
+
+  it('a sessão lida do banco sai igual à que foi gravada', () => {
+    const original = registro('sessao-x', 'uid-a');
+    const linha = paraLinha(original, 'uid-a');
+    // O Postgres devolve o instante no formato dele, e não no do navegador.
+    const vinda = { ...linha, instante_de_inicio: '2026-09-22 13:00:00+00' };
+
+    expect(deLinha(vinda)).toEqual(original);
+  });
 });
 
 describe('gravação no banco', () => {
