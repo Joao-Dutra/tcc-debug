@@ -107,7 +107,21 @@ export interface RegistroDeSessao {
 export interface ExportacaoDeMetricas {
   versao: number;
   exportadoEm: string;
+  /**
+   * De onde as sessões vieram e que recorte foi aplicado. Um arquivo filtrado
+   * sem essa anotação seria lido, meses depois, como se fosse a coleta
+   * inteira. Ausente em exportações anteriores a D22, que eram sempre tudo o
+   * que o aparelho tinha.
+   */
+  recorte?: RecorteDaExportacao;
   sessoes: RegistroDeSessao[];
+}
+
+export interface RecorteDaExportacao {
+  origem: 'banco' | 'aparelho';
+  filtro: FiltroDeSessoes;
+  /** Quantas sessões havia na origem antes do filtro. */
+  totalNaOrigem: number;
 }
 
 type EventoDeExecucao = Extract<Evento, { tipo: 'execucao' }>;
@@ -120,6 +134,51 @@ export type EventoDeLocalizacao = Extract<Evento, { tipo: 'localizacao' }>;
  */
 export function localizacoesDe(eventos: Evento[]): EventoDeLocalizacao[] {
   return eventos.filter((e): e is EventoDeLocalizacao => e.tipo === 'localizacao');
+}
+
+/**
+ * Critério de sessão válida (D22): ao menos uma execução feita pelo estudante.
+ *
+ * Nos dois pilotos, mais da metade das sessões foi de gente abrindo e fechando
+ * o exercício. A análise precisa separá-las, e o critério é aplicado como
+ * FILTRO, nunca como descarte: a sessão inválida continua gravada, porque o
+ * abandono também é dado — e porque um critério errado, aplicado na coleta,
+ * não se desfaz.
+ *
+ * Lido do log, e não de `resumo.execucoes`: é o log que é o dado (D6), e o
+ * critério precisa valer igual para registros de qualquer versão.
+ */
+export function sessaoValida(registro: RegistroDeSessao): boolean {
+  return registro.eventos.some((e) => e.tipo === 'execucao' && e.origem === 'estudante');
+}
+
+/** Nulo em um critério quer dizer "qualquer um". */
+export interface FiltroDeSessoes {
+  participanteId: string | null;
+  exercicioId: string | null;
+  andaime: string | null;
+  apenasValidas: boolean;
+}
+
+export const SEM_FILTRO: FiltroDeSessoes = {
+  participanteId: null,
+  exercicioId: null,
+  andaime: null,
+  apenasValidas: false,
+};
+
+/** Devolve uma lista nova; a de entrada não é tocada. */
+export function filtrarSessoes(
+  registros: RegistroDeSessao[],
+  filtro: FiltroDeSessoes
+): RegistroDeSessao[] {
+  return registros.filter(
+    (r) =>
+      (filtro.participanteId === null || r.participanteId === filtro.participanteId) &&
+      (filtro.exercicioId === null || r.exercicioId === filtro.exercicioId) &&
+      (filtro.andaime === null || r.andaime === filtro.andaime) &&
+      (!filtro.apenasValidas || sessaoValida(r))
+  );
 }
 
 export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
@@ -515,10 +574,14 @@ export function limparArquivo(): void {
   }
 }
 
-export function exportarSessoes(registros: RegistroDeSessao[]): string {
+export function exportarSessoes(
+  registros: RegistroDeSessao[],
+  recorte?: RecorteDaExportacao
+): string {
   const exportacao: ExportacaoDeMetricas = {
     versao: VERSAO_DO_REGISTRO,
     exportadoEm: new Date().toISOString(),
+    ...(recorte ? { recorte } : {}),
     sessoes: registros,
   };
   return JSON.stringify(exportacao, null, 2);
