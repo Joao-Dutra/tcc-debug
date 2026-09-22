@@ -1,11 +1,14 @@
 import { Fragment, useState } from 'react';
 import {
+  estadoDoEnvio,
   estadoDoEspelho,
   exportarMetricas,
   limparArquivo,
   sessoesArquivadas,
 } from '../nucleo/metricas';
 import { baixarMetricas } from './usar-metricas';
+import { useIdentidade } from './usar-identidade';
+import type { Identidade } from '../supabase/identidade';
 import type { Evento, RegistroDeSessao, ResumoDaSessao } from '../nucleo/metricas';
 
 /**
@@ -36,6 +39,27 @@ function desfecho(resumo: ResumoDaSessao): string {
   if (resumo.corrigido) return 'corrigido';
   if (resumo.tempoAteLocalizacaoMs !== null) return 'localizou, sem corrigir';
   return 'em aberto';
+}
+
+/**
+ * Como a pessoa está identificada (D21), em uma linha.
+ *
+ * É informação de conferência, do pesquisador: serve para saber, antes de
+ * começar a sessão, se o aparelho está gravando sob identidade e sob qual.
+ * Exportada para poder ser verificada sem navegador.
+ */
+export function descreverIdentidade(identidade: Identidade): string {
+  const papel = identidade.papel ?? 'papel não lido';
+  switch (identidade.forma) {
+    case 'nenhuma':
+      return 'sem identidade — as sessões ficam só neste aparelho';
+    case 'anonima':
+      return `anônima · ${identidade.usuarioId} · ${papel}`;
+    case 'google':
+      return `Google · ${identidade.email ?? identidade.usuarioId} · ${papel}`;
+    case 'email':
+      return `e-mail · ${identidade.email ?? identidade.usuarioId} · ${papel}`;
+  }
 }
 
 /** Exportada para poder ser verificada sem navegador. */
@@ -80,6 +104,8 @@ function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
 export function PainelDeMetricas() {
   const sessoes = sessoesArquivadas();
   const espelho = estadoDoEspelho();
+  const envio = estadoDoEnvio();
+  const identidade = useIdentidade();
   const [aberta, setAberta] = useState<string | null>(null);
   // O arquivo mora fora do React; depois de limpá-lo, a tela precisa redesenhar.
   const [, redesenhar] = useState(0);
@@ -89,6 +115,9 @@ export function PainelDeMetricas() {
   const limpar = () => {
     const confirmado = window.confirm(
       `Apagar as ${sessoes.length} sessões guardadas neste navegador? ` +
+        (envio.pendentes > 0
+          ? `${envio.pendentes} delas ainda não chegaram ao banco e se perdem. `
+          : '') +
         'Isto não pode ser desfeito: exporte antes, se ainda não exportou.'
     );
     if (!confirmado) return;
@@ -122,6 +151,22 @@ export function PainelDeMetricas() {
       )}
       {espelho.avisoDeLeitura && (
         <p className="erro">Ao iniciar, {espelho.avisoDeLeitura}.</p>
+      )}
+
+      <p className="rodape-painel">
+        Identidade: {descreverIdentidade(identidade)}
+        {envio.ativo
+          ? ` · banco ligado · ${envio.pendentes} sessão(ões) por enviar`
+          : ' · banco desligado nesta instalação'}
+      </p>
+      {identidade.falha && (
+        <p className="erro">A identificação falhou ({identidade.falha}).</p>
+      )}
+      {envio.ultimaFalha && (
+        <p className="erro">
+          O último envio ao banco falhou ({envio.ultimaFalha}). As sessões
+          seguem neste aparelho e serão reenviadas; exporte antes de limpar.
+        </p>
       )}
 
       <section className="painel">
