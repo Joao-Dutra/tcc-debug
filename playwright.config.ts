@@ -23,5 +23,10 @@ export default defineConfig({
     url: 'http://localhost:5199',
     reuseExistingServer: true,
     timeout: 60_000,
+    // Chaves do Supabase vazias de propósito (D22). Com o `.env` preenchido, cada
+    // execução da suíte criaria usuários anônimos e gravaria sessões de mentira
+    // no banco do estudo, misturadas às dos participantes. Variável que já
+    // existe no ambiente vence o `.env` no Vite, e vazia desliga o banco.
+    env: { VITE_SUPABASE_URL: '', VITE_SUPABASE_ANON_KEY: '' },
   },
 });
