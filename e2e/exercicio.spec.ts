@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { listaInserirPosicao } from '../src/exercicios/lista-inserir-posicao';
 import { vetorDobrar } from '../src/exercicios/vetor-dobrar';
+import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../src/nucleo/metricas';
 
 /** O fluxo dentro da tela de exercício (D20). */
 
@@ -52,16 +53,72 @@ test.describe('continuar sem voltar ao catálogo', () => {
 });
 
 test('as linhas apontadas aparecem da mais recente para a mais antiga', async ({ page }) => {
+  // Relógio controlado pelo teste: entre duas tentativas há o intervalo de
+  // D25, e ele é pulado em vez de esperado.
+  await page.clock.install();
   await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
 
   const numeros = page.locator('.cm-lineNumbers .cm-gutterElement');
+  const apontadas = page.locator('.apontadas li');
   // O gutter tem um elemento de medida antes da primeira linha, então a
   // linha N é o elemento N.
   await numeros.nth(3).click();
+  await expect(apontadas).toHaveCount(1);
+  await page.clock.fastForward(INTERVALO_ENTRE_LOCALIZACOES_MS);
   await numeros.nth(7).click();
 
-  const apontadas = page.locator('.apontadas li');
   await expect(apontadas).toHaveCount(2);
   await expect(apontadas.first()).toContainText('Linha 7');
   await expect(apontadas.last()).toContainText('Linha 3');
+});
+
+test.describe('intervalo entre tentativas de localização (D25)', () => {
+  // Nos dois níveis: o intervalo não é apoio, e é o mesmo com e sem ele.
+  for (const nivel of ['com-apoio', 'sem-apoio']) {
+    test(`o clique durante o intervalo não é julgado, ${nivel}`, async ({ page }) => {
+      await page.clock.install();
+      await page.goto(`/#/exercicio/pilha-desempilhar?andaime=${nivel}`);
+
+      const numeros = page.locator('.cm-lineNumbers .cm-gutterElement');
+      const apontadas = page.locator('.apontadas li');
+      const aviso = page.locator('.intervalo-apontar');
+
+      await numeros.nth(3).click();
+      await expect(apontadas).toHaveCount(1);
+      await expect(aviso).toHaveText('aguarde um instante para apontar outra linha');
+      await expect(page.locator('.moldura-editor')).toHaveClass(/em-intervalo/);
+      // Espera, e não cronômetro: o aviso não tem número nenhum.
+      expect(await aviso.innerText()).not.toMatch(/\d/);
+
+      // Dentro do intervalo, o clique não vira tentativa.
+      await page.clock.fastForward(INTERVALO_ENTRE_LOCALIZACOES_MS - 1000);
+      await numeros.nth(5).click();
+      await expect(aviso).not.toBeEmpty();
+
+      // Passado o intervalo, o aviso some e a tentativa seguinte é julgada.
+      await page.clock.fastForward(1000);
+      await expect(aviso).toBeEmpty();
+      await expect(page.locator('.moldura-editor')).not.toHaveClass(/em-intervalo/);
+      await numeros.nth(7).click();
+      // Exatamente as duas julgadas. Se o clique na linha 5 tivesse sido
+      // julgado, ele estaria aqui — e o da linha 7 teria caído no intervalo.
+      await expect(apontadas).toHaveText([/Linha 7/, /Linha 3/]);
+    });
+  }
+
+  test('o clique durante o intervalo fica no registro da sessão', async ({ page }) => {
+    await page.clock.install();
+    await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
+    const numeros = page.locator('.cm-lineNumbers .cm-gutterElement');
+    await numeros.nth(3).click();
+    await expect(page.locator('.apontadas li')).toHaveCount(1);
+    await numeros.nth(5).click();
+
+    await page.goto('/#/metricas');
+    await page.getByRole('button', { name: 'eventos' }).click();
+    await expect(page.getByText('localização · linha 3 · incorreta')).toBeVisible();
+    await expect(
+      page.getByText('clique na linha 5 durante o intervalo · sem veredito')
+    ).toBeVisible();
+  });
 });

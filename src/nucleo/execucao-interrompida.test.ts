@@ -164,6 +164,8 @@ describe('a execução interrompida nas métricas', () => {
   });
 
   it('a mudança de sentido do `t` está marcada na versão', () => {
-    expect(VERSAO_DO_REGISTRO).toBe(5);
+    // Da versão 5 em diante: as seguintes herdam o `t` do clique (D25 subiu
+    // para 6 por outro motivo, sem mexer nele).
+    expect(VERSAO_DO_REGISTRO).toBeGreaterThanOrEqual(5);
   });
 });

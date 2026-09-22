@@ -10,6 +10,7 @@ import {
 } from '@heroicons/react/20/solid';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { executar } from '../nucleo/executor';
+import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../nucleo/metricas';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { useMetricas } from './usar-metricas';
@@ -297,10 +298,14 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
               ser lida como marca de um palpite.
 
               A altura vem da moldura, que ocupa o que sobra da coluna: o
-              editor rola por dentro, e a página não. */}
+              editor rola por dentro, e a página não.
+
+              Durante o intervalo entre tentativas (D25), os números deixam de
+              convidar ao clique. O clique ainda chega ao núcleo, que o
+              registra sem julgar. */}
           <CodeMirror
             ref={editor}
-            className="moldura-editor"
+            className={metricas.emIntervalo ? 'moldura-editor em-intervalo' : 'moldura-editor'}
             value={codigo}
             height="100%"
             basicSetup={{
@@ -317,7 +322,31 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
               no lugar, mesmo vazio, para o alvo da declaração não aparecer do
               nada. */}
           <div className="retorno-apontadas">
-            <h2>Onde você apontou</h2>
+            <div className="cabecalho-apontadas">
+              <h2>Onde você apontou</h2>
+              {/* Retorno sobre a ação que acabou de acontecer, e não sobre o
+                  desempenho: não diz quantas tentativas houve nem quanto tempo
+                  passou. Igual depois de acerto e de erro, e nos dois níveis
+                  de apoio — o intervalo não é apoio, e se variasse com o
+                  veredito ele próprio viraria veredito (D25). A região existe
+                  sempre, vazia fora do intervalo, para o leitor de tela
+                  anunciar a espera quando ela começa. */}
+              <p className="intervalo-apontar" role="status">
+                {metricas.emIntervalo && (
+                  <>
+                    aguarde um instante para apontar outra linha
+                    <span className="trilho-do-intervalo" aria-hidden="true">
+                      {/* A chave recomeça a barra a cada tentativa julgada. */}
+                      <span
+                        key={metricas.rodadaDoIntervalo}
+                        className="barra-do-intervalo"
+                        style={{ animationDuration: `${INTERVALO_ENTRE_LOCALIZACOES_MS}ms` }}
+                      />
+                    </span>
+                  </>
+                )}
+              </p>
+            </div>
             {metricas.localizacoes.length === 0 ? (
               // Estado vazio como convite: o primeiro piloto registrou zero
               // declarações em 25 sessões, e o problema era de descoberta.

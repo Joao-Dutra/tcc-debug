@@ -123,6 +123,8 @@ export function descreverEvento(evento: Evento): string {
       return `dica ${evento.indice + 1} revelada`;
     case 'localizacao':
       return `localização · linha ${evento.linha} · ${evento.correta ? 'correta' : 'incorreta'}`;
+    case 'localizacao-no-intervalo':
+      return `clique na linha ${evento.linha} durante o intervalo · sem veredito`;
   }
 }
 

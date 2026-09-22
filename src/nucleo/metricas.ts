@@ -40,8 +40,31 @@ import type { ResultadoExecucao } from './tipos';
  * código comum a diferença é de milissegundos, mas num laço que esbarra no
  * tempo limite ela chega a segundos — e os tempos até a primeira execução e
  * até a correção, lidos desse `t`, mudariam de sentido sem aviso.
+ *
+ * 6 — entre duas tentativas de localização passou a haver um intervalo mínimo
+ * (ver D25), e o clique no número da linha durante esse intervalo passou a
+ * entrar no log como `localizacao-no-intervalo`, sem veredito. O número de
+ * tentativas e o intervalo entre elas mudam de sentido: até a versão 5 o
+ * estudante podia apontar a cada fração de segundo, e da 6 em diante não. Uma
+ * análise que misturasse as duas leria como mudança de comportamento o que é
+ * mudança da ferramenta.
  */
-export const VERSAO_DO_REGISTRO = 5;
+export const VERSAO_DO_REGISTRO = 6;
+
+/**
+ * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
+ *
+ * Com veredito imediato e tentativas ilimitadas (D7), apontar linha por linha
+ * até acertar dispensa a investigação — os dados mostraram 47 tentativas em 34
+ * segundos, subindo linha a linha. As tentativas continuam ilimitadas e o
+ * veredito continua imediato; o que muda é que a seguinte espera o intervalo.
+ * Dez segundos são mais de trinta vezes o intervalo daquela varredura e ficam
+ * abaixo de uma reprodução inteira da animação em seis dos nove exercícios do
+ * catálogo: quem volta ao desenho entre um palpite e outro quase nunca espera.
+ *
+ * Mudar este valor muda o ambiente de coleta, e pede nova VERSAO_DO_REGISTRO.
+ */
+export const INTERVALO_ENTRE_LOCALIZACOES_MS = 10_000;
 
 /**
  * A execução disparada ao abrir o exercício não é uma tentativa do estudante.
@@ -62,6 +85,11 @@ export type SituacaoDaExecucao = 'concluida' | 'interrompida';
  * Toda tentativa de localização vira um evento 'localizacao', acertando ou
  * errando. É de propósito: a sequência de palpites é o registro da estratégia
  * de investigação do estudante, e uma tentativa descartada some para sempre.
+ *
+ * Pela mesma razão, o clique no número da linha durante o intervalo entre
+ * tentativas (D25) também entra, como 'localizacao-no-intervalo': não é
+ * julgado nem conta como tentativa, mas insistir enquanto a ferramenta pede
+ * espera é justamente o comportamento que a análise da varredura procura.
  */
 export type Evento =
   | {
@@ -86,7 +114,9 @@ export type Evento =
     }
   | { tipo: 'edicao'; t: number; codigo: string }
   | { tipo: 'dica'; t: number; indice: number }
-  | { tipo: 'localizacao'; t: number; linha: number; correta: boolean };
+  | { tipo: 'localizacao'; t: number; linha: number; correta: boolean }
+  /** Desde a versão 6. Sem veredito: a linha não chegou a ser julgada. */
+  | { tipo: 'localizacao-no-intervalo'; t: number; linha: number };
 
 /** Métricas agregadas. Sempre deriváveis do log; nunca a única cópia do dado. */
 export interface ResumoDaSessao {
@@ -267,6 +297,15 @@ export interface OpcoesDaSessao {
 /** Identifica uma execução disparada, para completá-la quando o resultado chegar. */
 export type ExecucaoDisparada = number;
 
+/**
+ * O que aconteceu com um clique no número da linha. Durante o intervalo entre
+ * tentativas (D25) não há veredito — só quanto falta para a próxima poder ser
+ * julgada, que é o que a interface precisa para dizer ao estudante que espere.
+ */
+export type DeclaracaoDeLocalizacao =
+  | { julgada: true; correta: boolean }
+  | { julgada: false; restanteMs: number };
+
 export interface Sessao {
   readonly id: string;
   /**
@@ -290,8 +329,12 @@ export interface Sessao {
   registrarExecucao(origem: OrigemDaExecucao, codigo: string, resultado: ResultadoExecucao): void;
   registrarEdicao(codigo: string): void;
   registrarDica(indice: number): void;
-  /** Registra a tentativa e devolve se ela acertou. Tentativas são ilimitadas. */
-  registrarLocalizacao(linha: number): boolean;
+  /**
+   * Registra a tentativa e devolve o veredito. Tentativas são ilimitadas, mas
+   * entre duas julgadas há o intervalo de D25: o clique que chega antes dele é
+   * registrado sem veredito, e não adia o fim do intervalo.
+   */
+  registrarLocalizacao(linha: number): DeclaracaoDeLocalizacao;
   /** Retrato do registro no instante da chamada; pode ser pedido quantas vezes for. */
   registro(): RegistroDeSessao;
 }
@@ -316,6 +359,8 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
   const id = novoId();
   /** Posições, no log, das execuções disparadas que ainda esperam resultado. */
   const emCurso = new Set<ExecucaoDisparada>();
+  /** Instante da última tentativa julgada, no relógio monotônico; nulo antes da primeira. */
+  let ultimaJulgada: number | null = null;
 
   const t = () => Math.round(agora() - referencia);
 
@@ -381,9 +426,23 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
     },
 
     registrarLocalizacao(linha) {
+      const instante = agora();
+      const tRelativo = Math.round(instante - referencia);
+      const decorrido = ultimaJulgada === null ? Infinity : instante - ultimaJulgada;
+      if (decorrido < INTERVALO_ENTRE_LOCALIZACOES_MS) {
+        // Registrado, e não descartado: insistir durante a espera é dado. O
+        // intervalo continua contando da última julgada — se cada clique o
+        // reiniciasse, quem clica de novo por impaciência esperaria para sempre.
+        eventos.push({ tipo: 'localizacao-no-intervalo', t: tRelativo, linha });
+        return {
+          julgada: false,
+          restanteMs: Math.ceil(INTERVALO_ENTRE_LOCALIZACOES_MS - decorrido),
+        };
+      }
+      ultimaJulgada = instante;
       const correta = linha === opcoes.linhaDoDefeito;
-      eventos.push({ tipo: 'localizacao', t: t(), linha, correta });
-      return correta;
+      eventos.push({ tipo: 'localizacao', t: tRelativo, linha, correta });
+      return { julgada: true, correta };
     },
 
     registro() {

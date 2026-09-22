@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  INTERVALO_ENTRE_LOCALIZACOES_MS,
   arquivarSessao,
   criarSessao,
   localizacoesDe,
@@ -34,6 +35,21 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
   // Espelho das tentativas para a tela poder redesenhar. É preenchido lendo o
   // log da sessão, nunca montado à parte: o log é a única versão do dado.
   const [localizacoes, setLocalizacoes] = useState<EventoDeLocalizacao[]>([]);
+
+  // Intervalo entre tentativas (D25). Quem decide se um clique é julgado é o
+  // núcleo; isto só acompanha, para a tela dizer que é preciso esperar. A
+  // rodada muda a cada tentativa julgada, e é o que faz a barra recomeçar.
+  const [emIntervalo, setEmIntervalo] = useState(false);
+  const [rodadaDoIntervalo, setRodadaDoIntervalo] = useState(0);
+  const fimDoIntervalo = useRef<number | undefined>(undefined);
+
+  const esperar = useCallback((ms: number) => {
+    window.clearTimeout(fimDoIntervalo.current);
+    setEmIntervalo(true);
+    fimDoIntervalo.current = window.setTimeout(() => setEmIntervalo(false), ms);
+  }, []);
+
+  useEffect(() => () => window.clearTimeout(fimDoIntervalo.current), []);
 
   const fecharRajada = useCallback(() => {
     window.clearTimeout(temporizador.current);
@@ -115,11 +131,20 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
       // Mesma razão da execução: uma edição em curso vem antes do palpite na
       // sequência, senão a ordem da estratégia sai trocada no registro.
       fecharRajada();
-      sessao.current?.registrarLocalizacao(linha);
+      const declaracao = sessao.current?.registrarLocalizacao(linha);
+      if (!declaracao) return;
+      if (!declaracao.julgada) {
+        // O núcleo é quem manda: se ele ainda conta o intervalo, a tela volta
+        // a mostrar a espera pelo que falta, sem recomeçar a barra.
+        esperar(declaracao.restanteMs);
+        return;
+      }
       const registro = sessao.current?.registro();
       setLocalizacoes(registro ? localizacoesDe(registro.eventos) : []);
+      setRodadaDoIntervalo((n) => n + 1);
+      esperar(INTERVALO_ENTRE_LOCALIZACOES_MS);
     },
-    [fecharRajada]
+    [fecharRajada, esperar]
   );
 
   return {
@@ -129,6 +154,8 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
     registrarDica,
     declararLocalizacao,
     localizacoes,
+    emIntervalo,
+    rodadaDoIntervalo,
   };
 }
 

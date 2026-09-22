@@ -738,6 +738,11 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    devagar deixa, por um instante, a linha anterior marcada. */
 .cm-lineNumbers .cm-gutterElement { cursor: pointer; border-radius: 3px; }
 .cm-lineNumbers .cm-gutterElement:hover { background: var(--acao); color: var(--sobre-acao); }
+/* Durante o intervalo entre tentativas (D25), o número deixa de convidar:
+   sem pastilha e sem cursor de ponteiro. Continua igual em todas as linhas. */
+.moldura-editor.em-intervalo .cm-lineNumbers .cm-gutterElement { cursor: default; }
+.moldura-editor.em-intervalo .cm-lineNumbers .cm-gutterElement:hover {
+  background: transparent; color: var(--editor-suave); }
 /* Só no conteúdo: o gutter, onde se declara a localização (D7), fica sem faixa. */
 /* 9%: a 12%, o comentário caía abaixo de 4,5:1 sobre a faixa. */
 .tela-exercicio .cm-linha-em-execucao {
@@ -780,6 +785,24 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   color: var(--grafite-suave); margin-bottom: 2px; }
 
 /* Onde você apontou: eco das declarações do próprio estudante. */
+.retorno-apontadas .cabecalho-apontadas { display: flex; flex-wrap: wrap; align-items: baseline;
+  gap: var(--esp-4) var(--esp-12); margin: 0 0 var(--esp-4); }
+.retorno-apontadas .cabecalho-apontadas h2 { margin: 0; }
+/* O aviso do intervalo (D25) divide a linha com o título, e não ganha linha
+   própria: aparecer e sumir não empurra a lista das apontadas. A barra esvazia
+   no tempo do intervalo — a duração vem do núcleo, no próprio elemento — e não
+   tem número: é espera, e não cronômetro. Sem movimento, fica cheia e parada
+   até o fim, e o texto diz o mesmo. */
+.intervalo-apontar { margin: 0; display: inline-flex; align-items: center; gap: var(--esp-8);
+  font-size: var(--fonte-miuda); color: var(--grafite-suave); }
+.trilho-do-intervalo { display: inline-block; width: 56px; height: 4px; overflow: hidden;
+  border-radius: var(--raio-pilula); background: var(--regua); }
+.barra-do-intervalo { display: block; height: 100%; background: var(--grafite-suave);
+  transform-origin: left center; animation: esvaziar-intervalo linear forwards; }
+@keyframes esvaziar-intervalo { to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .barra-do-intervalo { animation: none; }
+}
 .apontadas li { grid-template-columns: 16px auto auto; }
 .apontadas .bandeira { color: var(--grafite-suave); }
 .apontadas .linha { font-family: var(--familia-mono); font-weight: 700; }
