@@ -23,6 +23,7 @@ const auth = {
   updateUser: vi.fn(),
   signUp: vi.fn(),
   signInWithPassword: vi.fn(),
+  signOut: vi.fn(),
 };
 
 const perfilDoUsuario = { papel: 'participante' };
@@ -76,6 +77,7 @@ beforeEach(() => {
   auth.signInWithOAuth.mockResolvedValue(semErro);
   auth.updateUser.mockResolvedValue(semErro);
   auth.signUp.mockResolvedValue(semErro);
+  auth.signOut.mockResolvedValue(semErro);
 });
 
 describe('primeiro acesso', () => {
@@ -156,6 +158,40 @@ describe('vincular conta a um anônimo', () => {
 
     expect(auth.signInWithOAuth).toHaveBeenCalledTimes(1);
     expect(auth.linkIdentity).not.toHaveBeenCalled();
+  });
+});
+
+describe('sair da conta', () => {
+  it('volta na hora a um anônimo novo, e não fica sob a conta nem sem identidade', async () => {
+    // O pesquisador entrou no computador do laboratório (D22).
+    vi.resetModules();
+    auth.getSession.mockResolvedValue({
+      data: {
+        session: {
+          user: {
+            id: 'uid-do-pesquisador',
+            is_anonymous: false,
+            app_metadata: { providers: ['email'] },
+            email: 'pesquisador@exemplo.br',
+          },
+        },
+      },
+    });
+    const identidade = await import('./identidade');
+    await identidade.iniciarIdentidade();
+    const { participante } = await import('../nucleo/metricas');
+    expect(participante()).toBe('uid-do-pesquisador');
+
+    auth.signInAnonymously.mockResolvedValue({
+      data: { session: { user: { ...usuarioAnonimo, id: 'uid-do-anonimo-novo' } } },
+      error: null,
+    });
+    await identidade.sair();
+
+    // O próximo participante a sentar ali grava sob uma identidade só dele.
+    expect(auth.signOut).toHaveBeenCalledTimes(1);
+    expect(identidade.identidadeAtual().forma).toBe('anonima');
+    expect(participante()).toBe('uid-do-anonimo-novo');
   });
 });
 

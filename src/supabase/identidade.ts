@@ -213,8 +213,23 @@ export async function entrarComSenha(email: string, senha: string): Promise<Resu
   return error ? registrarFalha(error) : { erro: null };
 }
 
+/**
+ * Sai da conta e volta na hora a uma identidade anônima NOVA (D22).
+ *
+ * Sair sem isso deixaria o aparelho sem identidade até recarregar, e o
+ * contrário — não sair — é pior: o pesquisador que entra no computador do
+ * laboratório e o entrega a um participante faria as sessões dele serem
+ * gravadas sob a conta do pesquisador, misturadas e inseparáveis. Anônimo
+ * novo, e não o anterior: o anterior pode ter sido de outra pessoa.
+ */
 export async function sair(): Promise<void> {
   const cliente = supabase();
   if (!cliente) return;
   await cliente.auth.signOut();
+  const { data, error } = await cliente.auth.signInAnonymously();
+  if (error) {
+    anunciar({ ...SEM_IDENTIDADE, falha: descrever(error) });
+    return;
+  }
+  await aplicarSessao(cliente, data.session);
 }
