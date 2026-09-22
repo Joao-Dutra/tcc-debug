@@ -13,7 +13,7 @@ import type { DestinoRemoto, RegistroDeSessao } from '../nucleo/metricas';
  */
 
 /** Uma linha de `public.sessoes`. Os nomes são os do banco, em snake_case. */
-interface LinhaDeSessao {
+export interface LinhaDeSessao {
   id: string;
   participante_id: string;
   versao: number;
@@ -46,6 +46,18 @@ export function paraLinha(registro: RegistroDeSessao, participanteId: string): L
   };
 }
 
+/**
+ * Registros que a identidade de agora pode gravar: os dela e os que nasceram
+ * sem identidade. Um registro de OUTRA identidade — o anônimo que existia
+ * neste aparelho antes de alguém entrar numa conta, como o pesquisador no
+ * próprio computador — seria recusado pelo RLS, e num lote só a recusa de um
+ * derrubaria todos. Fica no aparelho, pendente, e sobe se aquela identidade
+ * voltar.
+ */
+export function gravaveisPor(registros: RegistroDeSessao[], usuarioId: string): RegistroDeSessao[] {
+  return registros.filter((r) => r.participanteId === null || r.participanteId === usuarioId);
+}
+
 export function destinoSupabase(): DestinoRemoto {
   return {
     async gravar(registros) {
@@ -58,13 +70,17 @@ export function destinoSupabase(): DestinoRemoto {
       // que a entrada anônima concluir — leva o lote inteiro.
       if (!usuarioId) throw new Error('ainda sem identidade');
 
+      const lote = gravaveisPor(registros, usuarioId);
+      if (lote.length === 0) return [];
+
       const { error } = await cliente
         .from('sessoes')
         // Pelo id: rearquivar a mesma sessão atualiza a linha. É o que permite
         // reenviar tudo o que está no aparelho a cada carga da página sem
         // duplicar nada.
-        .upsert(registros.map((r) => paraLinha(r, usuarioId)), { onConflict: 'id' });
+        .upsert(lote.map((r) => paraLinha(r, usuarioId)), { onConflict: 'id' });
       if (error) throw new Error(error.message);
+      return lote.map((r) => r.id);
     },
   };
 }

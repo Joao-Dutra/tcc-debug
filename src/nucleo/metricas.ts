@@ -388,8 +388,13 @@ function espelhar(): void {
  * tempo todo — rede de sala de aula cai —, e a falha não pode custar o dado.
  */
 export interface DestinoRemoto {
-  /** Grava ou regrava os registros. Lança quando não conseguiu gravar todos. */
-  gravar(registros: RegistroDeSessao[]): Promise<void>;
+  /**
+   * Grava ou regrava os registros e devolve os ids que de fato gravou. Pode
+   * gravar só parte: um registro de outra identidade não pode ser gravado
+   * pela identidade de agora (D22), e não deve impedir os demais de subir.
+   * Lança quando não conseguiu gravar nada.
+   */
+  gravar(registros: RegistroDeSessao[]): Promise<string[]>;
 }
 
 export interface EstadoDoEnvio {
@@ -443,8 +448,8 @@ export function sincronizarPendentes(): Promise<void> {
   const atual = destino;
   envioEmCurso = atual
     .gravar(fila)
-    .then(() => {
-      for (const registro of fila) confirmadas.add(registro.id);
+    .then((gravados) => {
+      for (const id of gravados) confirmadas.add(id);
       ultimaFalhaDeEnvio = null;
     })
     .catch((e: unknown) => {

@@ -30,8 +30,9 @@ function destinoDeTeste() {
   const destino: DestinoRemoto = {
     gravar(registros: RegistroDeSessao[]) {
       if (derrubado) return Promise.reject(new Error('rede caiu'));
-      lotes.push(registros.map((r) => r.id));
-      return Promise.resolve();
+      const ids = registros.map((r) => r.id);
+      lotes.push(ids);
+      return Promise.resolve(ids);
     },
   };
 
@@ -115,6 +116,29 @@ describe('envio das sessões ao banco', () => {
     // E nunca duplicada no arquivo — o id é a identidade da sessão dos dois
     // lados, e é por isso que reenviar é seguro.
     expect(m.sessoesArquivadas()).toHaveLength(1);
+  });
+
+  it('confirma só o que o destino disse ter gravado', async () => {
+    const m = await carregarMetricas();
+    const aceita = sessaoQualquer(m, 'pilha-reverter');
+    const recusada = sessaoQualquer(m, 'fila-inverter');
+    // Destino que grava só parte do lote — o caso do registro de outra
+    // identidade, que o RLS recusaria (D22).
+    const lotes: string[][] = [];
+    await m.ativarDestinoRemoto({
+      gravar(registros) {
+        lotes.push(registros.map((r) => r.id));
+        return Promise.resolve([aceita.id]);
+      },
+    });
+    m.arquivarSessao(aceita.registro());
+    m.arquivarSessao(recusada.registro());
+    await m.sincronizarPendentes();
+    await m.sincronizarPendentes();
+
+    // A recusada continua pendente e volta a ser oferecida; a aceita, não.
+    expect(m.estadoDoEnvio().pendentes).toBe(1);
+    expect(lotes.at(-1)).toEqual([recusada.id]);
   });
 
   it('sem banco configurado, arquivar continua funcionando como antes', async () => {
