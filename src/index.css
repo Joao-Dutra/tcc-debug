@@ -521,9 +521,10 @@ button.discreto { font-size: var(--fonte-miuda); padding: 5px 11px;
 .eventos li { padding: 2px 0; }
 .carimbo { display: inline-block; min-width: 78px; color: var(--grafite-suave);
   font-variant-numeric: tabular-nums; }
-/* Sinal sobre a sessão (D25): contornado, e não cheio, porque chama a atenção
+/* Sinal sobre a sessão (D25, D26): contornado, e não cheio, porque chama a atenção
    para a sessão sem afirmar nada sobre ela. O detalhe vai no título e na
    sequência de eventos. */
+.sinais { display: inline-flex; gap: var(--esp-4); }
 .sinal { display: inline-block; padding: 0 var(--esp-6); border: 1px solid var(--grafite-suave);
   border-radius: var(--raio-pilula); cursor: help; }
 /* A ação de apagar se distingue da de exportar, porque é irreversível e mexe

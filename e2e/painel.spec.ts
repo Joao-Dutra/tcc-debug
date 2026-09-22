@@ -101,3 +101,24 @@ test('a sessão sem padrão de varredura não sai sinalizada', async ({ page }) 
   await expect(page.getByRole('heading', { name: 'Sessões (2 de 2 · 1 válidas)' })).toBeVisible();
   await expect(page.locator('.sinal')).toHaveCount(0);
 });
+
+test('a aba esquecida sai sinalizada como ociosa, com a duração ativa ao lado da total', async ({
+  page,
+}) => {
+  await page.clock.install();
+  await page.goto('/#/exercicio/pilha-reverter?andaime=com-apoio');
+  await page.getByRole('button', { name: 'Executar', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Executando/ })).toHaveCount(0);
+  // Seis minutos sem ninguém na frente da tela.
+  await page.clock.fastForward(6 * 60_000);
+
+  await page.goto('/#/metricas');
+  const cabecalho = await page.locator('.tabela-metricas th').allInnerTexts();
+  const coluna = (nome: string) => cabecalho.indexOf(nome);
+  const celulas = page.locator('.tabela-metricas tbody tr').first().locator('td');
+
+  await expect(celulas.nth(coluna('Sinais'))).toHaveText('ociosa');
+  // A total continua a do registro, intocada; a ativa deixa o silêncio de fora.
+  await expect(celulas.nth(coluna('Duração'))).toHaveText(/^6 min 0\d s$/);
+  await expect(celulas.nth(coluna('Ativa'))).toHaveText(/^\d+ s$/);
+});

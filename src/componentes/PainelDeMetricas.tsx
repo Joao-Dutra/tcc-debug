@@ -10,7 +10,12 @@ import {
   sessaoValida,
   sessoesArquivadas,
 } from '../nucleo/metricas';
-import { varreduraDe } from '../nucleo/sinais-de-sessao';
+import {
+  LIMIAR_DE_OCIOSIDADE_MS,
+  duracaoAtivaMs,
+  intervalosOciosos,
+  varreduraDe,
+} from '../nucleo/sinais-de-sessao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { entrarComSenha, sair } from '../supabase/identidade';
 import { baixarMetricas } from './usar-metricas';
@@ -23,7 +28,7 @@ import type {
   RegistroDeSessao,
   ResumoDaSessao,
 } from '../nucleo/metricas';
-import type { Varredura } from '../nucleo/sinais-de-sessao';
+import type { IntervaloOcioso, Varredura } from '../nucleo/sinais-de-sessao';
 
 /**
  * Painel de inspeção das sessões (D11, D22).
@@ -145,19 +150,41 @@ function descreverVarredura(varredura: Varredura): string {
   );
 }
 
-/** Os sinais da sessão, lidos do log na hora (D25): nada disto está gravado. */
+/** Os silêncios longos por extenso (D26): o maior e onde começa, para achá-lo na sequência. */
+function descreverOciosidade(ociosos: IntervaloOcioso[]): string {
+  const extensao = (o: IntervaloOcioso) => o.ateMs - o.deMs;
+  const maior = ociosos.reduce((a, b) => (extensao(b) > extensao(a) ? b : a));
+  const onde = `de ${duracao(extensao(maior))}, a partir de ${duracao(maior.deMs)}`;
+  return ociosos.length === 1
+    ? `um silêncio sem evento nenhum ${onde}; fica fora da duração ativa`
+    : `${ociosos.length} silêncios de mais de ${duracao(LIMIAR_DE_OCIOSIDADE_MS)} sem evento ` +
+        `nenhum, o maior ${onde}; ficam fora da duração ativa`;
+}
+
+/** Os sinais da sessão, lidos do log na hora (D25, D26): nada disto está gravado. */
 function Sinais({ sessao }: { sessao: RegistroDeSessao }) {
   const varredura = varreduraDe(sessao.eventos);
-  if (!varredura) return <>—</>;
+  const ociosos = intervalosOciosos(sessao);
+  if (!varredura && ociosos.length === 0) return <>—</>;
   return (
-    <span className="sinal" title={descreverVarredura(varredura)}>
-      varredura
+    <span className="sinais">
+      {varredura && (
+        <span className="sinal" title={descreverVarredura(varredura)}>
+          varredura
+        </span>
+      )}
+      {ociosos.length > 0 && (
+        <span className="sinal" title={descreverOciosidade(ociosos)}>
+          ociosa
+        </span>
+      )}
     </span>
   );
 }
 
 function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
   const varredura = varreduraDe(sessao.eventos);
+  const ociosos = intervalosOciosos(sessao);
   return (
     <div className="sequencia">
       <p className="rodape-painel">
@@ -166,6 +193,9 @@ function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
       </p>
       {varredura && (
         <p className="rodape-painel">Varredura: {descreverVarredura(varredura)}.</p>
+      )}
+      {ociosos.length > 0 && (
+        <p className="rodape-painel">Ociosidade: {descreverOciosidade(ociosos)}.</p>
       )}
       <ol className="eventos">
         {sessao.eventos.map((evento, i) => (
@@ -471,6 +501,9 @@ export function PainelDeMetricas() {
                   <th>Válida</th>
                   <th>Sinais</th>
                   <th>Duração</th>
+                  <th title="Sem os silêncios de mais de cinco minutos sem evento nenhum (D26)">
+                    Ativa
+                  </th>
                   <th>1ª execução</th>
                   <th>Localização</th>
                   <th>Correção</th>
@@ -498,6 +531,7 @@ export function PainelDeMetricas() {
                           <Sinais sessao={sessao} />
                         </td>
                         <td>{duracao(sessao.duracaoTotalMs)}</td>
+                        <td>{duracao(duracaoAtivaMs(sessao))}</td>
                         <td>{duracao(r.tempoAtePrimeiraExecucaoMs)}</td>
                         <td>{duracao(r.tempoAteLocalizacaoMs)}</td>
                         <td>{duracao(r.tempoAteCorrecaoMs)}</td>
@@ -516,7 +550,7 @@ export function PainelDeMetricas() {
                       </tr>
                       {estaAberta && (
                         <tr>
-                          <td colSpan={14}>
+                          <td colSpan={15}>
                             <Sequencia sessao={sessao} />
                           </td>
                         </tr>

@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { INTERVALO_ENTRE_LOCALIZACOES_MS } from './metricas';
-import { varreduraDe } from './sinais-de-sessao';
-import type { Evento } from './metricas';
+import { INTERVALO_ENTRE_LOCALIZACOES_MS, resumirSessao } from './metricas';
+import {
+  LIMIAR_DE_OCIOSIDADE_MS,
+  duracaoAtivaMs,
+  intervalosOciosos,
+  varreduraDe,
+} from './sinais-de-sessao';
+import type { Evento, RegistroDeSessao } from './metricas';
 
 /**
  * Sinal de varredura, verificado por execução (D25).
@@ -111,5 +116,73 @@ describe('sinal de varredura', () => {
 
   it('não sinaliza sessão sem tentativa nenhuma', () => {
     expect(varreduraDe([execucao(1000), { tipo: 'dica', t: 2000, indice: 0 }])).toBeNull();
+  });
+});
+
+describe('ociosidade e duração ativa (D26)', () => {
+  const MIN = 60_000;
+
+  function registro(eventos: Evento[], duracaoTotalMs: number): RegistroDeSessao {
+    return {
+      versao: 6,
+      id: 's',
+      exercicioId: 'vetor-dobrar',
+      participanteId: 'p',
+      andaime: 'com-apoio',
+      instanteDeInicio: '2026-09-22T13:00:00.000Z',
+      duracaoTotalMs,
+      eventos,
+      resumo: resumirSessao(eventos),
+    };
+  }
+
+  const automatica = { ...execucao(40), origem: 'automatica' } as Evento;
+
+  it('sessão sem silêncio longo: nada sinalizado, e a ativa é a total', () => {
+    const r = registro([automatica, execucao(30_000), { tipo: 'dica', t: 90_000, indice: 0 }], 2 * MIN);
+    expect(intervalosOciosos(r)).toEqual([]);
+    expect(duracaoAtivaMs(r)).toBe(2 * MIN);
+  });
+
+  it('a aba esquecida: 28 minutos com uma execução no começo', () => {
+    const r = registro([automatica, execucao(20_000)], 28 * MIN);
+    expect(intervalosOciosos(r)).toEqual([{ deMs: 20_000, ateMs: 28 * MIN }]);
+    // O silêncio sai inteiro: fica só o que houve até a última ação.
+    expect(duracaoAtivaMs(r)).toBe(20_000);
+  });
+
+  it('o silêncio no meio também sai, e o trabalho dos dois lados fica', () => {
+    const r = registro(
+      [automatica, execucao(60_000), execucao(12 * MIN), { tipo: 'dica', t: 13 * MIN, indice: 0 }],
+      14 * MIN
+    );
+    expect(intervalosOciosos(r)).toEqual([{ deMs: 60_000, ateMs: 12 * MIN }]);
+    expect(duracaoAtivaMs(r)).toBe(14 * MIN - (12 * MIN - 60_000));
+  });
+
+  it('o limiar não é ociosidade; um instante além dele é', () => {
+    expect(intervalosOciosos(registro([automatica], LIMIAR_DE_OCIOSIDADE_MS + 40))).toEqual([]);
+    expect(intervalosOciosos(registro([automatica], LIMIAR_DE_OCIOSIDADE_MS + 41))).toHaveLength(1);
+  });
+
+  it('sessão sem evento nenhum é silêncio do começo ao fim', () => {
+    const r = registro([], 20 * MIN);
+    expect(intervalosOciosos(r)).toEqual([{ deMs: 0, ateMs: 20 * MIN }]);
+    expect(duracaoAtivaMs(r)).toBe(0);
+  });
+
+  it('um log fora de ordem não produz intervalo negativo', () => {
+    // O núcleo grava em ordem, mas o registro pode chegar de outra fonte.
+    const r = registro([{ tipo: 'edicao', t: 8 * MIN, codigo: 'x' }, execucao(60_000)], 9 * MIN);
+    expect(intervalosOciosos(r)).toEqual([{ deMs: 60_000, ateMs: 8 * MIN }]);
+    expect(duracaoAtivaMs(r)).toBe(60_000 + MIN);
+  });
+
+  it('não altera o registro', () => {
+    const r = registro([automatica, execucao(20_000)], 28 * MIN);
+    const antes = structuredClone(r);
+    intervalosOciosos(r);
+    duracaoAtivaMs(r);
+    expect(r).toEqual(antes);
   });
 });

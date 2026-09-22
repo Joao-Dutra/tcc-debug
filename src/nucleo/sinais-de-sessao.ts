@@ -1,7 +1,7 @@
-import type { Evento, EventoDeLocalizacao } from './metricas';
+import type { Evento, EventoDeLocalizacao, RegistroDeSessao } from './metricas';
 
 /**
- * Sinais sobre a qualidade de uma sessão, lidos do log (D25).
+ * Sinais sobre a qualidade de uma sessão, lidos do log (D25, D26).
  *
  * São leituras, e não dado: calculados na hora de mostrar, a partir dos
  * eventos, sem alterar nem acrescentar nada ao registro. Por isso valem para
@@ -143,4 +143,74 @@ export function varreduraDe(eventos: Evento[]): Varredura | null {
     }
   }
   return melhor;
+}
+
+/**
+ * Intervalo sem evento nenhum a partir do qual a sessão é sinalizada como
+ * ociosa, e o trecho deixa de contar na duração ativa (D26).
+ *
+ * Cinco minutos: é da ordem de uma sessão resolvida inteira — nos pilotos, a
+ * correção levou de 27 s a 313 s —, e um silêncio desse tamanho, sem executar,
+ * editar, abrir dica nem apontar, não é parte de resolver. E é folgado para
+ * quem passa minutos assistindo à animação e pensando: a navegação no
+ * reprodutor não entra no log, e esse tempo aparece aqui como silêncio.
+ */
+export const LIMIAR_DE_OCIOSIDADE_MS = 5 * 60_000;
+
+export interface IntervaloOcioso {
+  /** Do último evento antes do silêncio — ou do início da sessão. */
+  deMs: number;
+  /** Até o evento seguinte — ou o fim da sessão. */
+  ateMs: number;
+}
+
+/**
+ * Os marcos da sessão em ordem: o início, cada evento e o fim. O núcleo grava
+ * o log em ordem de tempo; ordenar aqui é salvaguarda para o registro que
+ * chega de outra fonte — uma exportação editada à mão, uma linha alterada no
+ * banco —, porque um intervalo negativo entraria calado na soma da duração
+ * ativa.
+ */
+function marcos(registro: RegistroDeSessao): number[] {
+  const instantes = registro.eventos.map((e) => e.t).sort((a, b) => a - b);
+  return [0, ...instantes, Math.max(registro.duracaoTotalMs, instantes.at(-1) ?? 0)];
+}
+
+/** Os silêncios da sessão maiores que o limiar, em ordem. */
+export function intervalosOciosos(
+  registro: RegistroDeSessao,
+  limiarMs: number = LIMIAR_DE_OCIOSIDADE_MS
+): IntervaloOcioso[] {
+  const m = marcos(registro);
+  const ociosos: IntervaloOcioso[] = [];
+  for (let i = 1; i < m.length; i++) {
+    if (m[i] - m[i - 1] > limiarMs) ociosos.push({ deMs: m[i - 1], ateMs: m[i] });
+  }
+  return ociosos;
+}
+
+/**
+ * Duração da sessão sem os silêncios maiores que o limiar (D26).
+ *
+ * O silêncio longo sai inteiro, e não cortado no limiar. Cortar seria contínuo
+ * — quatro minutos e cinquenta e nove contam quase o mesmo que cinco e um —,
+ * mas somaria até cinco minutos de atividade a cada aba esquecida, numa
+ * tarefa que se resolve nesse mesmo tempo: a sessão de 28 minutos com uma
+ * execução no começo sairia com mais de cinco minutos ativos. Tirar inteiro
+ * erra para menos em quem pensou calado por mais de cinco minutos, que é o
+ * caso raro, e acerta no comum.
+ *
+ * Não substitui a duração total, que continua no registro, intocada.
+ */
+export function duracaoAtivaMs(
+  registro: RegistroDeSessao,
+  limiarMs: number = LIMIAR_DE_OCIOSIDADE_MS
+): number {
+  const m = marcos(registro);
+  let ativa = 0;
+  for (let i = 1; i < m.length; i++) {
+    const intervalo = m[i] - m[i - 1];
+    if (intervalo <= limiarMs) ativa += intervalo;
+  }
+  return ativa;
 }
