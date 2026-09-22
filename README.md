@@ -32,6 +32,10 @@ preencha as duas chaves; o esquema e as políticas estão em
 `supabase/migracoes/` e rodam uma vez, no editor SQL do projeto. Os detalhes
 ficam em D21, no registro de decisões.
 
+As políticas se conferem contra o projeto com `npm run verificar-rls`, antes de
+qualquer dado real e depois de toda migração. A verificação usa a chave secreta
+do projeto, passada só para o comando e nunca guardada no repositório (D24).
+
 ## Estrutura
 
 | Caminho             | Conteúdo                                       |
@@ -41,7 +45,7 @@ ficam em D21, no registro de decisões.
 | `src/visualizacao/` | Visualizadores das estruturas de dados         |
 | `src/componentes/`  | Interface                                      |
 | `src/supabase/`     | Identidade e gravação das sessões no banco     |
-| `supabase/`         | Esquema e políticas do banco, em SQL           |
+| `supabase/`         | Esquema e políticas do banco, e a verificação  |
 | `docs/`             | Registro de decisões de projeto                |
 
 `CLAUDE.md` traz o contexto e as convenções seguidas no desenvolvimento.
@@ -54,4 +58,5 @@ npm run build    # checagem de tipos e build de produção
 npm run lint     # análise estática
 npx vitest run   # testes do núcleo, dos exercícios e do CSS
 npm run e2e      # testes de ponta a ponta, no Edge instalado na máquina
+npm run verificar-rls  # RLS contra o projeto Supabase (chave secreta; D24)
 ```

@@ -55,7 +55,7 @@ Três regras que não devem ser quebradas:
 | `src/visualizacao/` | Um visualizador por tipo de estrutura de dados.         |
 | `src/componentes/`  | Interface genérica (reprodutor, painéis, controles).    |
 | `src/supabase/`     | Identidade e gravação das sessões no banco.             |
-| `supabase/`         | Esquema e políticas do banco, em SQL.                   |
+| `supabase/`         | Esquema e políticas do banco, em SQL, e a verificação.  |
 | `docs/`             | Decisões de projeto e anotações que alimentam o artigo. |
 
 ## Convenções
@@ -101,4 +101,5 @@ npm run dev              # alternativa sem Docker
 npm run build            # checagem de tipos + build de produção
 npx vitest run           # testes rápidos, sem navegador
 npm run e2e              # testes de ponta a ponta (Playwright, Edge local)
+npm run verificar-rls     # RLS contra o projeto real (chave secreta no shell, D24)
 ```

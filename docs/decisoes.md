@@ -1677,3 +1677,104 @@ como interrompida — e ela continua assim depois que o Worker finalmente
 responde. O laço infinito de verdade não serve para o teste: a maioria esbarra
 no limite de passos em milissegundos, e o que escapa leva cinco segundos.
 Reter o Worker é, do ponto de vista da tela, a mesma coisa.
+
+## D24 — Verificação do RLS contra o projeto real, fora da suíte comum
+
+**Decisão.** As políticas de D21 passam a ser verificadas por um script
+próprio, `supabase/verificacao/rls.verificacao.ts`, que roda com
+`npm run verificar-rls` contra o projeto Supabase de verdade. Ele entra como
+um participante comum — a chave pública e a sessão de uma conta sem papel, que
+é exatamente o que o navegador de um aluno tem — e tenta fazer o que o RLS
+existe para impedir.
+
+### O que motivou
+
+D21 e D22 anotaram a mesma lacuna: os testes não alcançam o RLS, porque ele
+vive no banco. E um RLS errado não falha de forma visível. Ninguém recebe
+mensagem de erro; o participante simplesmente lê o que não devia. Conferir à
+mão, uma vez, não protege da próxima migração que mexer numa política.
+
+### O que é verificado
+
+| Tentativa, como o participante A | O que a verificação exige |
+|---|---|
+| Consultar `sessoes` inteira, sem filtro | só linhas de A — e a própria sessão entre elas, senão a verificação passaria por vazio |
+| Gravar sessão com o `participante_id` de B | recusa pelo RLS, e a linha não existe no banco |
+| Regravar a sessão de B pelo id, com o próprio `participante_id` | recusa pelo RLS, e a sessão de B continua de B |
+| Alterar a sessão de B | nada alterado no banco; a mesma alteração na própria sessão passa |
+| Apagar a própria sessão | nada apagado: não há política de delete |
+| Mudar o próprio papel para pesquisador, por update e por upsert | o papel no banco continua `participante` |
+| Consultar `perfis` | só o próprio |
+| Consultar `sessoes` de novo, depois de tudo | continua só com as próprias |
+| Ler e gravar sem sessão nenhuma, só com a chave pública | nada lido, gravação recusada |
+
+**A mais importante é a do papel.** Se um participante conseguir se promover a
+pesquisador, a política de leitura do pesquisador (D22) passa a valer para ele,
+e qualquer aluno lê as sessões da turma inteira, com o código que cada um
+escreveu. Por isso ela é conferida por dois caminhos, e a leitura das sessões
+é repetida depois das tentativas: é a consequência que importa, e ela aparece
+ali mesmo que a promoção tivesse vindo por um caminho que a conferência do
+papel não viu.
+
+**A regravação pelo id** não estava na lista original e entrou porque é o
+caminho que o próprio navegador usa: a gravação é por upsert (D21). Com o id
+da sessão de outra pessoa e o próprio `participante_id`, a inserção passaria
+no `with check`; é a política de update, aplicada à linha que já existe, que
+precisa barrar.
+
+### Conferir o efeito, e não a resposta
+
+Duas armadilhas de teste negativo, e as duas foram tratadas:
+
+- **Update barrado pelo RLS não é erro.** A linha simplesmente não está ao
+  alcance, e a resposta volta vazia e sem erro. Por isso toda tentativa é
+  conferida lendo o banco por cima do RLS, e não pela resposta que o
+  participante recebeu.
+- **Recusa por outro motivo passaria por recusa do RLS.** Uma linha com uma
+  coluna de nome errado também seria recusada, e a verificação passaria sem ter
+  testado política nenhuma. Por isso a recusa precisa vir com o código do RLS
+  (`42501`), e a mesma forma de linha é antes gravada com sucesso pelo próprio
+  dono — é o controle positivo.
+
+### A chave secreta
+
+Só o script a usa, para três coisas: criar e remover as contas de teste e ler
+o banco por cima do RLS na conferência. As tentativas nunca passam por ela —
+se passassem, não haveria RLS nenhum sendo testado.
+
+Ela vem **só do ambiente do shell**, passada para o comando e retirada em
+seguida. Não entra no `.env` nem em variável `VITE_*`, que o Vite embute no
+pacote entregue ao navegador (D21); a configuração do script lê do `.env`
+apenas as duas chaves públicas, de modo que uma chave secreta posta ali por
+engano também não é lida.
+
+### Fora da suíte comum
+
+A suíte comum roda sem rede e sem banco, a cada mudança, e D22 tirou dela
+justamente o que tocava o banco do estudo. Esta verificação precisa das duas
+coisas e cria contas de verdade: tem configuração própria, e só roda quando
+alguém pede.
+
+### Sem resíduo no banco do estudo
+
+- As contas de teste usam e-mail em `example.com`, domínio reservado para
+  exemplo (RFC 2606), que nenhum participante tem.
+- Remover a conta leva junto o perfil e as sessões dela (`on delete cascade`,
+  D21). Se a remoção esbarrar numa chave estrangeira — alguém tirou o cascade
+  de uma tabela —, as linhas daquela conta, e só dela, são removidas antes.
+- As linhas de teste têm `versao` 0 e exercício `verificacao-rls`: mesmo que
+  uma sobrasse, não entraria na análise por engano.
+- A última verificação confere que não sobrou conta, perfil nem sessão de
+  teste. Uma execução derrubada no meio deixa contas para trás; a seguinte
+  começa removendo essas sobras, reconhecidas pelo e-mail.
+
+O que fica fora do alcance do script: o próprio serviço de autenticação do
+Supabase pode registrar a criação e a remoção das contas no log de auditoria
+dele. É registro do serviço, fora das tabelas do estudo, e não aparece no
+painel nem na exportação.
+
+### Quando rodar
+
+Antes de qualquer dado real; depois de toda migração que mexa numa política;
+e antes de a tabela de exercícios da área de autoria receber o primeiro
+exercício de verdade — as verificações dela entram neste mesmo script.

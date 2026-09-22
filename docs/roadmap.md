@@ -125,7 +125,8 @@ detalhe logístico: decide requisito.
 
 Nesta ordem, e a ordem importa: cada item depende do anterior estar de pé.
 
-1. **Identidade e persistência com Supabase**
+1. **Identidade e persistência com Supabase** — feito (D21); a verificação do
+   RLS está pronta (D24) e falta rodá-la contra o projeto
 2. **Painel de acompanhamento lendo do banco**
 3. **Visualizador de vetor com dois índices, e então ordenação e busca**
 4. **Área de autoria para professores**
@@ -145,6 +146,13 @@ quem tem acesso.
 
 Enquanto o Supabase não entra, `localStorage` espelhando o arquivo em memória,
 para que recarregar a página não apague a sessão (D15).
+
+**A conferência do RLS virou script** (D24): `npm run verificar-rls` entra
+como participante comum no projeto real e exige que ele não leia nem grave o
+que não é dele, e que não mude o próprio papel. As contas de teste nascem e
+morrem na própria verificação. **Pendente, e antes de qualquer dado real:**
+rodá-la com a chave secreta do projeto, que só ela usa e que não fica no
+repositório.
 
 ### 2. Painel de acompanhamento lendo do banco
 
