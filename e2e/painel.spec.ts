@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../src/nucleo/metricas';
 
 /**
  * Painel de métricas sobre as sessões do aparelho (D22).
@@ -71,4 +72,32 @@ test('a exportação leva só o recorte, e diz qual foi', async ({ page }) => {
     filtro: { participanteId: null, exercicioId: null, andaime: null, apenasValidas: true },
     totalNaOrigem: 2,
   });
+});
+
+test('a sessão com padrão de varredura sai sinalizada, e continua na tabela', async ({ page }) => {
+  // Cinco linhas vizinhas, uma depois da outra, sem executar nada no meio. O
+  // relógio é do teste: o intervalo de D25 é pulado, e não esperado.
+  await page.clock.install();
+  await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
+  const numeros = page.locator('.cm-lineNumbers .cm-gutterElement');
+  const apontadas = page.locator('.apontadas li');
+  for (let linha = 3; linha <= 7; linha++) {
+    await numeros.nth(linha).click();
+    await expect(apontadas).toHaveCount(linha - 2);
+    await page.clock.fastForward(INTERVALO_ENTRE_LOCALIZACOES_MS);
+  }
+
+  await page.goto('/#/metricas');
+  const sinal = page.locator('.sinal');
+  await expect(sinal).toHaveText('varredura');
+  await expect(sinal).toHaveAttribute('title', /^5 tentativas seguidas, da linha 3 à 7/);
+  // Sinalizar não é filtrar nem apagar: a sessão continua contada.
+  await expect(page.getByRole('heading', { name: 'Sessões (1 de 1 · 0 válidas)' })).toBeVisible();
+});
+
+test('a sessão sem padrão de varredura não sai sinalizada', async ({ page }) => {
+  await duasSessoes(page);
+  await page.goto('/#/metricas');
+  await expect(page.getByRole('heading', { name: 'Sessões (2 de 2 · 1 válidas)' })).toBeVisible();
+  await expect(page.locator('.sinal')).toHaveCount(0);
 });

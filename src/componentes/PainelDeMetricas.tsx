@@ -10,6 +10,7 @@ import {
   sessaoValida,
   sessoesArquivadas,
 } from '../nucleo/metricas';
+import { varreduraDe } from '../nucleo/sinais-de-sessao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { entrarComSenha, sair } from '../supabase/identidade';
 import { baixarMetricas } from './usar-metricas';
@@ -22,6 +23,7 @@ import type {
   RegistroDeSessao,
   ResumoDaSessao,
 } from '../nucleo/metricas';
+import type { Varredura } from '../nucleo/sinais-de-sessao';
 
 /**
  * Painel de inspeção das sessões (D11, D22).
@@ -36,8 +38,9 @@ import type {
  * leitura do banco é o RLS, e não esta escolha — uma identidade que não seja
  * de pesquisador, fazendo a mesma consulta, recebe só as próprias sessões.
  *
- * Todos os números vêm de `resumo`, que é calculado por `resumirSessao` a
- * partir do log (D6). Este componente formata e exibe; não recalcula nada.
+ * Todos os números vêm do núcleo: o `resumo`, calculado por `resumirSessao` a
+ * partir do log (D6), e os sinais, lidos do log por `sinais-de-sessao` (D25).
+ * Este componente formata e exibe; não calcula nada.
  */
 
 /** Exportada para poder ser verificada sem navegador. */
@@ -128,13 +131,42 @@ export function descreverEvento(evento: Evento): string {
   }
 }
 
+/**
+ * O sinal de varredura por extenso (D25). O sinal aponta a sessão para o
+ * pesquisador olhar a sequência; a frase diz o que olhar nela.
+ */
+function descreverVarredura(varredura: Varredura): string {
+  const forma =
+    varredura.forma === 'ordenada' ? 'em linhas vizinhas, no mesmo sentido' : 'em rajada';
+  return (
+    `${varredura.tentativas} tentativas seguidas, da linha ${varredura.primeiraLinha} à ` +
+    `${varredura.ultimaLinha}, em ${duracao(varredura.duracaoMs)}, ${forma}, sem executar, ` +
+    'editar nem abrir dica entre elas'
+  );
+}
+
+/** Os sinais da sessão, lidos do log na hora (D25): nada disto está gravado. */
+function Sinais({ sessao }: { sessao: RegistroDeSessao }) {
+  const varredura = varreduraDe(sessao.eventos);
+  if (!varredura) return <>—</>;
+  return (
+    <span className="sinal" title={descreverVarredura(varredura)}>
+      varredura
+    </span>
+  );
+}
+
 function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
+  const varredura = varreduraDe(sessao.eventos);
   return (
     <div className="sequencia">
       <p className="rodape-painel">
         sessão {sessao.id} · início {sessao.instanteDeInicio} · {sessao.eventos.length} eventos
         · {sessao.resumo.edicoes} edições · {sessao.resumo.execucoesComErro} execuções com erro
       </p>
+      {varredura && (
+        <p className="rodape-painel">Varredura: {descreverVarredura(varredura)}.</p>
+      )}
       <ol className="eventos">
         {sessao.eventos.map((evento, i) => (
           <li key={i}>
@@ -437,6 +469,7 @@ export function PainelDeMetricas() {
                   <th>Exercício</th>
                   <th>Andaime</th>
                   <th>Válida</th>
+                  <th>Sinais</th>
                   <th>Duração</th>
                   <th>1ª execução</th>
                   <th>Localização</th>
@@ -461,6 +494,9 @@ export function PainelDeMetricas() {
                         <td>{sessao.exercicioId}</td>
                         <td>{sessao.andaime ?? 'não registrado'}</td>
                         <td>{sessaoValida(sessao) ? 'sim' : 'não'}</td>
+                        <td>
+                          <Sinais sessao={sessao} />
+                        </td>
                         <td>{duracao(sessao.duracaoTotalMs)}</td>
                         <td>{duracao(r.tempoAtePrimeiraExecucaoMs)}</td>
                         <td>{duracao(r.tempoAteLocalizacaoMs)}</td>
@@ -480,7 +516,7 @@ export function PainelDeMetricas() {
                       </tr>
                       {estaAberta && (
                         <tr>
-                          <td colSpan={13}>
+                          <td colSpan={14}>
                             <Sequencia sessao={sessao} />
                           </td>
                         </tr>
