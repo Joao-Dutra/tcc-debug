@@ -4,7 +4,12 @@ import {
   criarSessao,
   localizacoesDe,
 } from '../nucleo/metricas';
-import type { EventoDeLocalizacao, OrigemDaExecucao, Sessao } from '../nucleo/metricas';
+import type {
+  EventoDeLocalizacao,
+  ExecucaoDisparada,
+  OrigemDaExecucao,
+  Sessao,
+} from '../nucleo/metricas';
 import type { ResultadoExecucao } from '../nucleo/tipos';
 
 /**
@@ -47,14 +52,26 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
     if (sessao.current) arquivarSessao(sessao.current.registro());
   }, [fecharRajada]);
 
-  // Sair do exercício encerra a sessão.
-  useEffect(() => arquivarRetrato, [arquivarRetrato]);
+  // Sair do exercício encerra a sessão. Uma execução ainda no Worker fica
+  // gravada como interrompida, com o código que foi executado (D23): sem
+  // isso, o resultado que chegasse depois cairia numa sessão já arquivada, e
+  // a execução sumiria — justamente a do laço infinito de quem desistiu.
+  useEffect(
+    () => () => {
+      sessao.current?.interromperExecucoesEmCurso();
+      arquivarRetrato();
+    },
+    [arquivarRetrato]
+  );
 
   // Recarregar ou fechar a aba não desmonta a tela — o React não roda o cleanup
   // quando a página vai embora —, e sem isto a sessão em curso seria justamente
   // a única que o espelho (D15) não salvaria. `pagehide`, e não `beforeunload`,
   // porque dispara também quando o navegador guarda a página em cache; se ela
-  // voltar, o arquivamento seguinte atualiza o mesmo registro pelo id.
+  // voltar, o arquivamento seguinte atualiza o mesmo registro pelo id. Pela
+  // mesma razão este não interrompe a execução em curso: se a página voltar,
+  // o resultado ainda chega. O retrato tirado aqui já a traz como
+  // interrompida, que é o que fica se a página não voltar.
   useEffect(() => {
     window.addEventListener('pagehide', arquivarRetrato);
     return () => window.removeEventListener('pagehide', arquivarRetrato);
@@ -69,14 +86,24 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
     [fecharRajada]
   );
 
-  const registrarExecucao = useCallback(
-    (origem: OrigemDaExecucao, codigo: string, resultado: ResultadoExecucao) => {
+  // Registrada no disparo, e não quando o resultado volta (D23): o que o
+  // estudante fez foi clicar, e o Worker pode não responder a tempo de a
+  // sessão ainda estar aberta.
+  const iniciarExecucao = useCallback(
+    (origem: OrigemDaExecucao, codigo: string): ExecucaoDisparada | null => {
       // Fecha a rajada antes: quem digita e clica em Executar em seguida precisa
       // aparecer no log nessa ordem, e não com a edição depois da execução.
       fecharRajada();
-      sessao.current?.registrarExecucao(origem, codigo, resultado);
+      return sessao.current?.iniciarExecucao(origem, codigo) ?? null;
     },
     [fecharRajada]
+  );
+
+  const concluirExecucao = useCallback(
+    (execucao: ExecucaoDisparada | null, resultado: ResultadoExecucao) => {
+      if (execucao !== null) sessao.current?.concluirExecucao(execucao, resultado);
+    },
+    []
   );
 
   const registrarDica = useCallback((indice: number) => {
@@ -96,7 +123,8 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
   );
 
   return {
-    registrarExecucao,
+    iniciarExecucao,
+    concluirExecucao,
     registrarEdicao,
     registrarDica,
     declararLocalizacao,

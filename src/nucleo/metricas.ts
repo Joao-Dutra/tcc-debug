@@ -32,8 +32,16 @@ import type { ResultadoExecucao } from './tipos';
  * registros da versão 3 e anteriores foram coletados sem identidade e não se
  * agrupam por pessoa, enquanto os da 4 se agrupam. Sem a versão, uma análise
  * leria "sem identidade" como se fosse um participante a mais.
+ *
+ * 5 — a execução passou a ser registrada no disparo, e não na chegada do
+ * resultado (ver D23). O evento `execucao` ganhou `situacao` e `tResultado`, e
+ * o `t` dele mudou de sentido: até a versão 4 era o instante em que o
+ * resultado voltou do Worker; da 5 em diante é o instante do clique. Para
+ * código comum a diferença é de milissegundos, mas num laço que esbarra no
+ * tempo limite ela chega a segundos — e os tempos até a primeira execução e
+ * até a correção, lidos desse `t`, mudariam de sentido sem aviso.
  */
-export const VERSAO_DO_REGISTRO = 4;
+export const VERSAO_DO_REGISTRO = 5;
 
 /**
  * A execução disparada ao abrir o exercício não é uma tentativa do estudante.
@@ -43,6 +51,14 @@ export const VERSAO_DO_REGISTRO = 4;
 export type OrigemDaExecucao = 'estudante' | 'automatica';
 
 /**
+ * Uma execução pode não chegar ao fim: o estudante que escreveu um laço
+ * infinito, cansou de esperar e saiu do exercício antes do tempo limite. Ela
+ * é gravada mesmo assim, como 'interrompida', porque o disparo foi uma ação
+ * dele — e quase sempre a mais informativa da sessão (D23).
+ */
+export type SituacaoDaExecucao = 'concluida' | 'interrompida';
+
+/**
  * Toda tentativa de localização vira um evento 'localizacao', acertando ou
  * errando. É de propósito: a sequência de palpites é o registro da estratégia
  * de investigação do estudante, e uma tentativa descartada some para sempre.
@@ -50,11 +66,19 @@ export type OrigemDaExecucao = 'estudante' | 'automatica';
 export type Evento =
   | {
       tipo: 'execucao';
+      /** Instante do disparo — o clique do estudante —, desde a versão 5. */
       t: number;
       origem: OrigemDaExecucao;
       /** Código exato executado. Sem ele não dá para distinguir, na análise,
           uma correção de verdade de um caso de teste satisfeito na marra. */
       codigo: string;
+      /** Ausente em registros da versão 4 e anteriores, que só gravavam o que
+          concluía. */
+      situacao?: SituacaoDaExecucao;
+      /** Instante em que o resultado voltou; nulo se interrompida. Ausente em
+          registros anteriores à versão 5. */
+      tResultado?: number | null;
+      /** Numa execução interrompida, 0, 0, false e null: não houve resultado. */
       casosPassaram: number;
       casosTotal: number;
       todosPassaram: boolean;
@@ -147,6 +171,10 @@ export function localizacoesDe(eventos: Evento[]): EventoDeLocalizacao[] {
  *
  * Lido do log, e não de `resumo.execucoes`: é o log que é o dado (D6), e o
  * critério precisa valer igual para registros de qualquer versão.
+ *
+ * A execução interrompida conta (D23). O estudante disparou, e o disparo é a
+ * ação que o critério procura; quem escreveu um laço infinito e desistiu de
+ * esperar não é quem abriu e fechou.
  */
 export function sessaoValida(registro: RegistroDeSessao): boolean {
   return registro.eventos.some((e) => e.tipo === 'execucao' && e.origem === 'estudante');
@@ -236,8 +264,29 @@ export interface OpcoesDaSessao {
   agora?: () => number;
 }
 
+/** Identifica uma execução disparada, para completá-la quando o resultado chegar. */
+export type ExecucaoDisparada = number;
+
 export interface Sessao {
   readonly id: string;
+  /**
+   * Grava a execução no instante do disparo, ainda sem resultado. Até ser
+   * concluída, é assim que ela aparece em qualquer retrato: interrompida, com
+   * o código que foi executado.
+   */
+  iniciarExecucao(origem: OrigemDaExecucao, codigo: string): ExecucaoDisparada;
+  /** Completa a execução com o resultado. Ignorada se ela já foi interrompida. */
+  concluirExecucao(execucao: ExecucaoDisparada, resultado: ResultadoExecucao): void;
+  /**
+   * A sessão está sendo encerrada: o que estiver em execução fica gravado como
+   * interrompido, e o resultado que chegar depois não o altera mais.
+   *
+   * Vale só para as execuções em curso, e não trava a sessão: o StrictMode
+   * desmonta e remonta a tela em desenvolvimento com a mesma sessão, e uma
+   * sessão travada ali deixaria de registrar tudo.
+   */
+  interromperExecucoesEmCurso(): void;
+  /** Disparo e resultado juntos, para quando o resultado já está na mão. */
   registrarExecucao(origem: OrigemDaExecucao, codigo: string, resultado: ResultadoExecucao): void;
   registrarEdicao(codigo: string): void;
   registrarDica(indice: number): void;
@@ -265,27 +314,62 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
   const instanteDeInicio = new Date().toISOString();
   const eventos: Evento[] = [];
   const id = novoId();
+  /** Posições, no log, das execuções disparadas que ainda esperam resultado. */
+  const emCurso = new Set<ExecucaoDisparada>();
 
   const t = () => Math.round(agora() - referencia);
 
-  return {
+  const sessao: Sessao = {
     id,
 
-    registrarExecucao(origem, codigo, resultado) {
-      const casosTotal = resultado.casos.length;
-      const casosPassaram = resultado.casos.filter((c) => c.passou).length;
+    iniciarExecucao(origem, codigo) {
+      // Entra no log já na forma interrompida: se a sessão acabar sem
+      // resultado, é exatamente isto que deve ficar, e nenhum passo posterior
+      // precisa lembrar de escrevê-lo. O resultado, quando vem, substitui.
       eventos.push({
         tipo: 'execucao',
         t: t(),
         origem,
         codigo,
+        situacao: 'interrompida',
+        tResultado: null,
+        casosPassaram: 0,
+        casosTotal: 0,
+        todosPassaram: false,
+        erro: null,
+      });
+      const posicao = eventos.length - 1;
+      emCurso.add(posicao);
+      return posicao;
+    },
+
+    concluirExecucao(execucao, resultado) {
+      if (!emCurso.delete(execucao)) return;
+      const disparo = eventos[execucao];
+      if (disparo.tipo !== 'execucao') return;
+      const casosTotal = resultado.casos.length;
+      const casosPassaram = resultado.casos.filter((c) => c.passou).length;
+      // Substitui o objeto em vez de alterá-lo: retratos já tirados guardam o
+      // evento antigo, e não podem mudar por baixo de quem os arquivou.
+      eventos[execucao] = {
+        ...disparo,
+        situacao: 'concluida',
+        tResultado: t(),
         casosPassaram,
         casosTotal,
         // Sem casos não há aprovação: um erro de sintaxe devolve lista vazia, e
         // every() sobre lista vazia é true.
         todosPassaram: casosTotal > 0 && casosPassaram === casosTotal,
         erro: resultado.erro ?? null,
-      });
+      };
+    },
+
+    interromperExecucoesEmCurso() {
+      emCurso.clear();
+    },
+
+    registrarExecucao(origem, codigo, resultado) {
+      sessao.concluirExecucao(sessao.iniciarExecucao(origem, codigo), resultado);
     },
 
     registrarEdicao(codigo) {
@@ -316,6 +400,7 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
       };
     },
   };
+  return sessao;
 }
 
 /**

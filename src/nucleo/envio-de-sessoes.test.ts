@@ -169,8 +169,9 @@ describe('identidade no registro', () => {
     const m = await carregarMetricas();
     // Sessões sem identidade existem (versão 3 e anteriores, ou banco
     // desligado); a versão é o que impede a análise de lê-las como se fossem
-    // de mais um participante.
-    expect(m.VERSAO_DO_REGISTRO).toBe(4);
+    // de mais um participante. A identidade entrou na 4; versões seguintes a
+    // mantêm.
+    expect(m.VERSAO_DO_REGISTRO).toBeGreaterThanOrEqual(4);
   });
 
   it('limpar o aparelho não desfaz o que já subiu', async () => {

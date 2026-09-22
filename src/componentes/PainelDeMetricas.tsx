@@ -105,6 +105,11 @@ function opcoesDe(
 export function descreverEvento(evento: Evento): string {
   switch (evento.tipo) {
     case 'execucao':
+      // Sem resultado não há casos a contar, e "0/0 casos" leria como se a
+      // execução tivesse terminado sem teste nenhum.
+      if (evento.situacao === 'interrompida') {
+        return `execução (${evento.origem}) · interrompida antes do resultado`;
+      }
       return [
         `execução (${evento.origem})`,
         `${evento.casosPassaram}/${evento.casosTotal} casos`,

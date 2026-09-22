@@ -190,8 +190,9 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
 
   const rodar = async (origem: OrigemDaExecucao) => {
     setRodando(true);
+    const execucao = metricas.iniciarExecucao(origem, codigo);
     const saida = await executar(exercicio, codigo);
-    metricas.registrarExecucao(origem, codigo, saida);
+    metricas.concluirExecucao(execucao, saida);
     setResultado(saida);
     setCodigoExecutado(codigo);
     setRodada((r) => r + 1);
