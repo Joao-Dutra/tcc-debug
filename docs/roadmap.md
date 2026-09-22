@@ -99,6 +99,20 @@ O segundo piloto é pequeno demais para média ou comparação entre níveis. El
 responde uma pergunta só, que era a que estava aberta: o instrumento registra o
 que precisa registrar.
 
+### Nos dados do banco
+
+Com as sessões lidas do banco no painel (D22), dois padrões apareceram que
+nenhuma das contagens mostrava:
+
+1. **Varredura de linhas.** Uma sessão com 47 tentativas de localização em 34
+   segundos, a cada 300 ms, subindo linha a linha. É o risco que D7 aceitou:
+   com veredito imediato e tentativas ilimitadas, apontar cada linha até
+   acertar dispensa a investigação. Deu no intervalo de dez segundos entre
+   tentativas e no sinal de varredura do painel (D25).
+2. **Aba esquecida.** Uma sessão de 28 minutos com uma execução no começo e
+   mais nada. A duração total é verdadeira e mente como tempo de trabalho.
+   Deu na duração ativa e no sinal de ociosidade (D26).
+
 ---
 
 ## Como o estudo será aplicado
@@ -127,7 +141,8 @@ Nesta ordem, e a ordem importa: cada item depende do anterior estar de pé.
 
 1. **Identidade e persistência com Supabase** — feito (D21); a verificação do
    RLS está pronta (D24) e falta rodá-la contra o projeto
-2. **Painel de acompanhamento lendo do banco**
+2. **Painel de acompanhamento lendo do banco** — feito (D22), com a qualidade
+   do dado em dia (D23, D25, D26)
 3. **Visualizador de vetor com dois índices, e então ordenação e busca**
 4. **Área de autoria para professores**
 5. **Congelamento do que o participante vê**
@@ -162,6 +177,27 @@ Continua fora da navegação do participante (D11).
 Vem logo depois da persistência porque é ele que mostra se o que está sendo
 gravado serve: é melhor descobrir que falta um campo com o painel na mão do que
 no dia da coleta.
+
+**Foi o que aconteceu, e a qualidade do dado veio antes do que é novo.** Tudo o
+que for construído depois gera dado que depende destas correções:
+
+- a execução disparada e não concluída fica gravada como interrompida (D23);
+- entre duas tentativas de localização há um intervalo de dez segundos, e o
+  painel sinaliza a sessão com padrão de varredura (D25) — o intervalo muda o
+  que o participante vê, e por isso precisava entrar antes do congelamento;
+- o painel mostra a duração ativa ao lado da total e sinaliza a sessão com
+  silêncio longo (D26).
+
+Os dois sinais são leituras do log, e não dado: valem também para as sessões
+já coletadas, e nenhuma é apagada ou excluída por eles.
+
+**Achado pendente.** No modo de desenvolvimento (`npm run dev`, `docker compose
+up`), o StrictMode do React desmonta e remonta a tela ao abrir o exercício, e a
+desmontagem simulada interrompe a execução automática da abertura (D23): ela
+fica gravada como interrompida. No build de produção ela sai certa — conferido
+nos dois. Não mexe em métrica nenhuma, porque a automática fica fora de todas,
+mas suja o log de quem rodar sessões pelo servidor de desenvolvimento. Ou o
+experimento roda do build de produção, ou isto se corrige antes.
 
 ### 3. Visualizador de vetor com dois índices, e então ordenação e busca
 

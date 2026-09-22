@@ -1778,3 +1778,212 @@ painel nem na exportação.
 Antes de qualquer dado real; depois de toda migração que mexa numa política;
 e antes de a tabela de exercícios da área de autoria receber o primeiro
 exercício de verdade — as verificações dela entram neste mesmo script.
+
+## D25 — Intervalo entre tentativas de localização, e sinal de varredura
+
+**Decisão.** Entre duas tentativas de localização julgadas passa a haver um
+intervalo mínimo de **dez segundos**. As tentativas continuam ilimitadas e o
+veredito continua imediato (D7). O clique no número da linha durante o
+intervalo é registrado sem veredito. No painel, a sessão com padrão de
+varredura passa a ser sinalizada, sem ser excluída de nada.
+
+### O que motivou
+
+O risco que D7 aceitou apareceu nos dados: **47 tentativas de localização em
+34 segundos, a cada 300 ms, subindo linha a linha.** Com resposta imediata e
+tentativas ilimitadas, o veredito vira oráculo, e apontar cada linha até
+acertar dispensa a investigação que o trabalho quer observar. Na literatura de
+sistemas tutores o comportamento tem nome — *gaming the system*, tirar proveito
+das propriedades do sistema em vez de aprender o conteúdo (Baker et al., 2004).
+
+### Por que um intervalo, e não as saídas que D7 previa
+
+D7 deixou anotadas duas saídas: limitar as tentativas ou atrasar o veredito.
+
+- **Limitar as tentativas** tornaria a localização impossível para quem
+  esgotasse o limite. O tempo até a localização ficaria nulo por falta de
+  tentativa, e não por o estudante não ter achado — a medida mudaria de
+  sentido, e ela é metade da separação que D7 existe para fazer.
+- **Atrasar o veredito** pune toda tentativa, inclusive a única e honesta, e
+  a resposta que chega tarde deixa de ser resposta à ação que o estudante
+  acabou de fazer.
+- **O intervalo** custa só a tentativa seguinte, e só a de quem tenta logo em
+  seguida. O palpite honesto continua com resposta na hora.
+
+### Por que dez segundos
+
+- **É mais de trinta vezes o intervalo da varredura observada.** As 47
+  tentativas levariam pelo menos 7 min 40 s, e não 34 s.
+- **Fica abaixo de uma reprodução inteira da animação em seis dos nove
+  exercícios.** Medido no catálogo, a 600 ms por passo: de 6,6 s
+  (`lista-inserir-depois`) a 45,6 s (`fila-inverter`), mediana de 18,6 s. Quem
+  volta ao desenho entre um palpite e outro — que é o que se espera de quem
+  investiga — quase nunca chega a esperar.
+- **Tira da varredura a vantagem sobre a investigação.** Varrendo de cima até a
+  linha do defeito, pulando linha em branco e fecha-chave, o catálogo pede de 3
+  a 17 tentativas; com o intervalo, isso é de 20 s a 160 s só de espera, 92 s
+  em média — a mesma ordem do tempo até a correção nos pilotos, de 27 s a
+  313 s. Varrer deixa de ser atalho.
+- **Mais do que isso passaria a punir o erro honesto mais comum**, que é
+  apontar a linha vizinha — o `while` no lugar do corpo do laço — e perceber
+  logo em seguida.
+
+A limitação é assumida: no exercício de entrada o defeito está na terceira
+linha candidata, e varrer até ele custa 20 s. Em programa curto, nenhum
+intervalo que não puna todo mundo impede uma varredura curta.
+
+### O mesmo para todos
+
+**Igual depois de acerto e de erro.** Se o intervalo só viesse depois do erro,
+ele próprio seria veredito. **Igual nos dois níveis de apoio.** O intervalo não
+é apoio: o que o nível muda é só o que a interface revela sobre a execução (D9,
+roadmap), e duas sessões sob apoios diferentes precisam enfrentar a mesma
+regra de localização para serem comparáveis.
+
+### Na tela
+
+- O aviso "aguarde um instante para apontar outra linha" aparece na mesma
+  linha do título "Onde você apontou", ao lado de uma barra que esvazia no
+  tempo do intervalo. Na mesma linha, e não numa própria, para aparecer e sumir
+  sem empurrar a lista das apontadas: o arranjo congelado em D20 não muda.
+- A barra não tem número. É espera, e não cronômetro: a regra de retorno sobre
+  a ação, e não sobre o desempenho, continua valendo — o aviso responde ao
+  palpite que acabou de acontecer, e não conta tentativas nem mostra tempo
+  decorrido.
+- Durante o intervalo, o número da linha perde a pastilha e o cursor de
+  ponteiro que D19 deu a ele. Continua igual em todas as linhas.
+- O aviso fica numa região anunciada ao leitor de tela, que existe sempre,
+  vazia fora do intervalo.
+- Com movimento reduzido, a barra fica cheia e parada até o fim, e o texto diz
+  o mesmo.
+
+### No registro
+
+- **A regra mora no núcleo, que julga**, e não na tela. A tela só acompanha o
+  que o núcleo decidiu para mostrar a espera; um descompasso de relógio entre
+  os dois não deixa passar tentativa nenhuma.
+- **O clique durante o intervalo entra no log** como
+  `localizacao-no-intervalo`, com a linha e sem veredito. Não conta como
+  tentativa, não entra no tempo até a localização e não prolonga o intervalo
+  — se prolongasse, quem clica de novo por impaciência esperaria para sempre.
+  Entra porque insistir enquanto a ferramenta pede espera é exatamente o
+  comportamento que a análise da varredura procura, e dado não coletado não
+  volta.
+- **`VERSAO_DO_REGISTRO` sobe para 6.** O número de tentativas e o intervalo
+  entre elas mudam de sentido: até a versão 5 o estudante podia apontar a cada
+  fração de segundo, e da 6 em diante não. Mudar os dez segundos daqui para a
+  frente pede outra versão.
+
+### O sinal de varredura no painel
+
+A sessão é sinalizada quando tem **cinco ou mais tentativas seguidas sem
+executar, editar ou abrir dica entre elas**, e essas tentativas estão **ou em
+linhas vizinhas, sempre no mesmo sentido** — salto de até três linhas, para
+pular a linha em branco e o fecha-chave —, **ou em rajada**, a menos de dois
+segundos uma da outra. O clique durante o intervalo e a execução automática da
+abertura não interrompem a sequência: o primeiro é a própria insistência, e a
+segunda não é ação de ninguém.
+
+As duas condições juntas, porque cada uma sozinha tem explicação inocente. A
+navegação no reprodutor não entra no log, e quem testa hipóteses assistindo à
+animação aparece como quem não fez nada entre os palpites. E quem hesita entre
+duas linhas vizinhas aponta uma e depois a outra, indo e voltando — o que não
+fecha um trecho no mesmo sentido.
+
+**Limitação conhecida.** Palpites em linhas distantes, fora de ordem e no
+ritmo do intervalo não são sinalizados: sem ordem e sem pressa, o log não
+distingue palpite de hipótese testada assistindo à animação. Na dúvida, sem
+sinal. A rajada só alcança sessões anteriores à versão 6 — desde o intervalo,
+duas tentativas julgadas nunca ficam tão perto.
+
+**É leitura, e não dado.** O sinal é calculado a partir do log na hora de
+mostrar; nada é gravado nem alterado no registro. Por isso vale para as
+sessões já coletadas — a das 47 tentativas inclusive —, e trocar o critério
+não exige recoletar nada. A sessão sinalizada continua na tabela, na contagem,
+no critério de sessão válida e na exportação: o sinal aponta a sessão para o
+pesquisador olhar a sequência, e a sequência aberta diz por extenso qual trecho
+disparou o sinal. O que fazer com ela é decisão da análise.
+
+A exportação não leva o sinal: leva o log, e o log basta para recalculá-lo
+pelo critério descrito aqui — ou por outro, se a análise preferir.
+
+### O que virou teste
+
+No núcleo: que a primeira tentativa é julgada na hora; que antes do intervalo
+o clique não é julgado, diz quanto falta e entra no log sem veredito; que
+passado o intervalo a seguinte é julgada; que clicar durante a espera não a
+prolonga; que o intervalo vale igual depois de um acerto; que as tentativas
+continuam ilimitadas; que o tempo até a localização vem da tentativa julgada,
+e não de um clique no intervalo; e que o registro sai com a versão 6. No
+sinal: que ele pega o caso das 47 tentativas, a varredura ordenada no ritmo do
+intervalo, a descida pulando linhas e a rajada fora de ordem; e que não pega
+menos de cinco tentativas, investigação no meio, o vai e volta entre vizinhas
+nem palpites espaçados em linhas distantes.
+
+No navegador, com o relógio controlado pelo teste: nos dois níveis de apoio,
+o clique no intervalo não vira tentativa, o aviso não tem número, e passado o
+intervalo o aviso some e a tentativa seguinte é julgada; o clique no intervalo
+aparece na sequência de eventos do painel; e a sessão com cinco linhas
+vizinhas sai sinalizada e continua contada, enquanto a sem varredura não sai.
+
+## D26 — Duração ativa e sinal de ociosidade
+
+**Decisão.** O painel passa a sinalizar a sessão que tem um silêncio de mais
+de **cinco minutos** sem evento nenhum, e a mostrar, ao lado da duração total,
+a **duração ativa**: a total sem esses silêncios. O registro não muda.
+
+### O que motivou
+
+Há nos dados uma sessão de 28 minutos com uma execução no começo e mais nada:
+uma aba esquecida aberta. A duração total dela é verdadeira — a sessão ficou
+mesmo aberta esse tempo —, mas lida como tempo de trabalho ela mente, e numa
+média de duração uma sessão dessas pesa por várias sessões inteiras.
+
+### Por que cinco minutos
+
+É da ordem de uma sessão resolvida inteira — nos pilotos, o tempo até a
+correção foi de 27 s a 313 s —, e um silêncio desse tamanho, sem executar,
+editar, abrir dica nem apontar, não é parte de resolver. E é folgado para quem
+passa minutos assistindo à animação e pensando: a navegação no reprodutor não
+entra no log, e esse tempo aparece para o sinal como silêncio.
+
+### Por que o silêncio longo sai inteiro
+
+Duas formas de descontar um silêncio longo são comuns: cortá-lo no limiar, ou
+tirá-lo inteiro. A escolha muda o resultado, e estimativas de tempo em tarefa
+dependem desse tipo de escolha a ponto de ela precisar ser relatada junto com
+os números (Kovanović et al., 2015).
+
+Cortar no limiar seria contínuo — quatro minutos e cinquenta e nove contariam
+quase o mesmo que cinco e um —, mas somaria até cinco minutos de atividade a
+cada aba esquecida, numa tarefa que se resolve nesse mesmo tempo: a sessão de
+28 minutos sairia com mais de cinco minutos ativos. Tirar inteiro erra para
+menos em quem pensou calado por mais de cinco minutos, que é o caso raro, e
+acerta no comum.
+
+### O que não muda
+
+- **A duração total continua a do registro**, intocada. A ativa é mostrada ao
+  lado, e não no lugar.
+- **Os demais tempos também não mudam.** O tempo até a primeira execução, até a
+  localização e até a correção continuam os do registro, e podem conter um
+  silêncio longo; o sinal é o que avisa isso.
+- **É leitura, e não dado**, como o sinal de varredura (D25): calculada do log
+  na hora de mostrar, vale para sessões de qualquer versão, e não vai na
+  exportação, que leva o log de onde ela se recalcula.
+
+A sessão sinalizada abre, na sequência de eventos, com o maior silêncio por
+extenso — quanto durou e a partir de quando —, para ele ser achado entre os
+eventos.
+
+### O que virou teste
+
+No núcleo: que a sessão sem silêncio longo não é sinalizada e tem a ativa
+igual à total; que a aba esquecida de 28 minutos sai com um silêncio e a ativa
+só com o que houve até a última ação; que o silêncio no meio da sessão sai e o
+trabalho dos dois lados fica; que o limiar exato não é ociosidade e um
+milissegundo além dele é; que sessão sem evento nenhum é silêncio do começo
+ao fim; que um log fora de ordem não produz intervalo negativo; e que nada
+disso altera o registro. No navegador, com o relógio controlado pelo teste:
+seis minutos sem ninguém na frente da tela deixam a sessão sinalizada como
+ociosa, com a duração total de seis minutos e a ativa de segundos.
