@@ -1596,3 +1596,84 @@ Supabase: entrar com a conta de pesquisador e ver as sessões de outros
 participantes, e entrar com uma conta sem o papel e ver só as próprias. Esse
 par de verificações é o que confirma que o RLS, e não a interface, está
 restringindo a leitura.
+
+## D23 — Execução registrada no disparo, e gravada como interrompida se a sessão acabar antes
+
+**Decisão.** A execução entra no log no instante em que o estudante a
+dispara, com o código executado, e é completada com o resultado quando ele
+volta do Worker. Se a sessão for encerrada antes disso, a execução fica
+gravada como **interrompida**. Resolve a perda anotada em D22.
+
+### O que se perdia
+
+Até aqui, a execução só era registrada quando o resultado voltava. Saindo do
+exercício antes disso, a sessão era arquivada sem ela, e o resultado que
+chegava depois caía numa sessão que ninguém arquivaria de novo. O caso
+provável é o laço infinito: o estudante espera, desiste antes do tempo limite
+(D5) e sai — e some justamente a execução que mais diz sobre a investigação
+dele, com o código do laço dentro.
+
+### Como funciona
+
+- **No disparo**, o evento `execucao` entra no log já na forma interrompida:
+  `situacao: 'interrompida'`, o código, `tResultado` nulo e nenhum caso. Se nada
+  mais acontecer, é isso que fica, e nenhum passo posterior precisa lembrar de
+  escrevê-lo.
+- **Quando o resultado volta**, o mesmo evento é substituído pela forma
+  concluída — não se cria outro. A substituição é de objeto, e não alteração
+  no lugar: um retrato já arquivado não muda por baixo de quem o arquivou.
+- **Ao sair do exercício**, as execuções em curso são interrompidas de vez: o
+  resultado que chegar depois é ignorado. Isso vale só para as que estão em
+  curso naquele instante, e não trava a sessão — o StrictMode desmonta e
+  remonta a tela com a mesma sessão em desenvolvimento, e uma sessão travada
+  ali deixaria de registrar tudo.
+- **O `pagehide` não interrompe.** A página pode voltar do cache do navegador,
+  e aí o resultado ainda chega e atualiza o registro pelo id. O retrato tirado
+  no `pagehide` já traz a execução como interrompida, que é o que fica se a
+  página não voltar.
+
+### Nas métricas
+
+**A execução interrompida conta como execução do estudante** para o critério
+de sessão válida (D22). O estudante disparou, e o disparo é a ação que o
+critério procura: quem escreveu um laço infinito e desistiu de esperar não é
+quem abriu e fechou. Pela mesma razão ela entra em `execucoes` e no tempo até
+a primeira execução. Não conta como execução com erro — não houve resultado,
+e erro é resultado — nem, evidentemente, como correção.
+
+A execução automática da abertura continua fora das métricas do estudante,
+interrompida ou não.
+
+### A versão do registro subiu para 5
+
+O evento `execucao` ganhou `situacao` e `tResultado`, e o `t` dele mudou de
+sentido: até a versão 4 era o instante em que o resultado voltou; da 5 em
+diante é o instante do clique. Para código comum a diferença é de
+milissegundos, mas numa execução que esbarra no tempo limite ela chega a cinco
+segundos. O tempo até a primeira execução e o tempo até a correção são lidos
+desse `t`, então mudariam de sentido sem aviso se a versão não marcasse.
+
+O instante do clique é também o sentido certo para as duas medidas: o que se
+quer saber é quando o estudante agiu, e não quanto o Worker demorou. Quem
+precisar da duração da execução tem `tResultado − t`.
+
+Nos registros anteriores à versão 5 os dois campos novos estão ausentes, e
+toda execução gravada neles é, por construção, concluída.
+
+### O que virou teste
+
+Que a execução aparece no log no instante do clique, antes do resultado; que o
+resultado completa o mesmo evento sem criar outro; que, encerrada a sessão, a
+execução fica interrompida com o código, e o resultado tardio não a altera;
+que o retrato tirado antes do resultado não muda quando ele chega; que
+interromper não trava a sessão; que a edição feita durante a execução entra
+depois dela no log; que a interrompida conta para o critério de sessão válida
+e para as execuções, e não como erro nem correção; e que a automática
+interrompida continua fora das métricas do estudante.
+
+No navegador: com o script do Worker retido na rede, sair do exercício com a
+execução em curso deixa no painel uma sessão válida, com a execução marcada
+como interrompida — e ela continua assim depois que o Worker finalmente
+responde. O laço infinito de verdade não serve para o teste: a maioria esbarra
+no limite de passos em milissegundos, e o que escapa leva cinco segundos.
+Reter o Worker é, do ponto de vista da tela, a mesma coisa.
