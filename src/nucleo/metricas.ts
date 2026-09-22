@@ -381,6 +381,90 @@ function espelhar(): void {
 }
 
 /**
+ * Destino durável fora do aparelho — o banco (D21).
+ *
+ * Mesma divisão do espelho: o núcleo declara o que precisa, e quem fala com a
+ * rede é a interface. A diferença é que este destino é assíncrono e falha o
+ * tempo todo — rede de sala de aula cai —, e a falha não pode custar o dado.
+ */
+export interface DestinoRemoto {
+  /** Grava ou regrava os registros. Lança quando não conseguiu gravar todos. */
+  gravar(registros: RegistroDeSessao[]): Promise<void>;
+}
+
+export interface EstadoDoEnvio {
+  ativo: boolean;
+  /** Sessões que ainda não foram confirmadas pelo banco nesta carga da página. */
+  pendentes: number;
+  ultimaFalha: string | null;
+}
+
+let destino: DestinoRemoto | null = null;
+let ultimaFalhaDeEnvio: string | null = null;
+let envioEmCurso: Promise<void> | null = null;
+
+/**
+ * Ids já confirmados pelo banco. Vive só nesta carga da página, de propósito:
+ * na carga seguinte, tudo o que está no aparelho é reenviado. O id da sessão é
+ * a chave primária da tabela, então reenviar atualiza a linha em vez de
+ * duplicá-la, e o custo de reenviar algumas dezenas de registros é menor do
+ * que o de inventar um controle de "já enviado" que pode ficar mentindo.
+ */
+const confirmadas = new Set<string>();
+
+function pendentes(): RegistroDeSessao[] {
+  return encerradas.filter((s) => !confirmadas.has(s.id));
+}
+
+/**
+ * Liga o banco e sobe o que estiver acumulado no aparelho. É aqui que a sessão
+ * que ficou só local por falta de rede volta a ser tentada.
+ */
+export function ativarDestinoRemoto(novo: DestinoRemoto): Promise<void> {
+  destino = novo;
+  return sincronizarPendentes();
+}
+
+/**
+ * Sobe as sessões ainda não confirmadas. Nunca rejeita: falhar em gravar no
+ * banco é situação prevista, não erro de programa — o arquivo em memória e o
+ * espelho local seguem inteiros, e a próxima chamada tenta de novo.
+ *
+ * Uma sincronização por vez: duas em paralelo gravariam os mesmos registros e
+ * a segunda poderia confirmar o que a primeira ainda não conseguiu.
+ */
+export function sincronizarPendentes(): Promise<void> {
+  if (!destino) return Promise.resolve();
+  if (envioEmCurso) return envioEmCurso;
+
+  const fila = pendentes();
+  if (fila.length === 0) return Promise.resolve();
+
+  const atual = destino;
+  envioEmCurso = atual
+    .gravar(fila)
+    .then(() => {
+      for (const registro of fila) confirmadas.add(registro.id);
+      ultimaFalhaDeEnvio = null;
+    })
+    .catch((e: unknown) => {
+      ultimaFalhaDeEnvio = descreverErro(e);
+    })
+    .finally(() => {
+      envioEmCurso = null;
+    });
+  return envioEmCurso;
+}
+
+export function estadoDoEnvio(): EstadoDoEnvio {
+  return {
+    ativo: destino !== null,
+    pendentes: pendentes().length,
+    ultimaFalha: ultimaFalhaDeEnvio,
+  };
+}
+
+/**
  * Arquiva uma sessão e grava o arquivo no espelho. Idempotente por id:
  * arquivar a mesma sessão de novo atualiza o retrato em vez de duplicá-lo, o
  * que também protege do ciclo monta/desmonta/monta que o StrictMode faz em
@@ -391,6 +475,9 @@ export function arquivarSessao(registro: RegistroDeSessao): void {
   if (i >= 0) encerradas[i] = registro;
   else encerradas.push(registro);
   espelhar();
+  // O retrato mudou, então a cópia que já esteja no banco está velha.
+  confirmadas.delete(registro.id);
+  void sincronizarPendentes();
 }
 
 export function sessoesArquivadas(): RegistroDeSessao[] {
@@ -410,6 +497,11 @@ export function limparArquivo(): void {
   encerradas.length = 0;
   avisoDeLeitura = null;
   falhaDeGravacao = null;
+  // Limpa o aparelho, e só ele: o que já subiu continua no banco, que é o
+  // ponto de D21. Apagar do banco não é operação de navegador (não há política
+  // de delete), e a sessão do participante anterior não deve mesmo sumir.
+  confirmadas.clear();
+  ultimaFalhaDeEnvio = null;
   if (!espelho) return;
   try {
     espelho.limpar();

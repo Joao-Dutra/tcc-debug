@@ -12,10 +12,16 @@ import '@fontsource/atkinson-hyperlegible-mono/latin-700.css';
 import './index.css';
 import { ativarEspelho } from './nucleo/metricas';
 import { espelhoLocal } from './componentes/espelho-local';
+import { ligarPersistencia } from './supabase/sessoes-remotas';
 
 // Antes da primeira tela: o que foi arquivado em outra carga da página volta
 // ao arquivo em memória (D15).
 ativarEspelho(espelhoLocal());
+
+// Identidade e banco (D21) sobem em paralelo com a interface, e não antes
+// dela: a entrada anônima é uma ida à rede, e nada do que o participante vê
+// pode esperar por rede. Sem chaves configuradas, não faz nada.
+void ligarPersistencia();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
