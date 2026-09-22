@@ -1,22 +1,40 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
+import type { FormEvent } from 'react';
 import {
+  SEM_FILTRO,
   estadoDoEnvio,
   estadoDoEspelho,
-  exportarMetricas,
+  exportarSessoes,
+  filtrarSessoes,
   limparArquivo,
+  sessaoValida,
   sessoesArquivadas,
 } from '../nucleo/metricas';
+import { supabaseConfigurado } from '../supabase/cliente';
+import { entrarComSenha, sair } from '../supabase/identidade';
 import { baixarMetricas } from './usar-metricas';
 import { useIdentidade } from './usar-identidade';
+import { useSessoesDoBanco } from './usar-sessoes-do-banco';
 import type { Identidade } from '../supabase/identidade';
-import type { Evento, RegistroDeSessao, ResumoDaSessao } from '../nucleo/metricas';
+import type {
+  Evento,
+  FiltroDeSessoes,
+  RegistroDeSessao,
+  ResumoDaSessao,
+} from '../nucleo/metricas';
 
 /**
- * Painel de inspeção das sessões arquivadas (D11).
+ * Painel de inspeção das sessões (D11, D22).
  *
- * É instrumento do pesquisador, não do participante: existe para conferir,
- * durante o piloto, se a coleta está saindo correta — um defeito de
- * instrumentação descoberto depois do experimento não tem remédio.
+ * É instrumento do pesquisador, não do participante: existe para conferir se a
+ * coleta está saindo correta — um defeito de instrumentação descoberto depois
+ * do experimento não tem remédio — e para recortar o que vai para a análise.
+ *
+ * Duas origens. Com pesquisador autenticado, lê do banco as sessões de todos
+ * os participantes. Sem ele, mostra o que está neste aparelho, como antes: é o
+ * que mantém o painel útil em desenvolvimento e sem rede. Quem restringe a
+ * leitura do banco é o RLS, e não esta escolha — uma identidade que não seja
+ * de pesquisador, fazendo a mesma consulta, recebe só as próprias sessões.
  *
  * Todos os números vêm de `resumo`, que é calculado por `resumirSessao` a
  * partir do log (D6). Este componente formata e exibe; não recalcula nada.
@@ -62,6 +80,27 @@ export function descreverIdentidade(identidade: Identidade): string {
   }
 }
 
+/**
+ * O começo do uid basta para distinguir participantes numa tabela de
+ * conferência; o uid inteiro fica no título da célula e vai na exportação.
+ */
+function participanteCurto(id: string | null): string {
+  return id === null ? 'sem identidade' : id.slice(0, 8);
+}
+
+/** Valores distintos de um campo, em ordem, sem os ausentes. */
+function opcoesDe(
+  sessoes: RegistroDeSessao[],
+  campo: (sessao: RegistroDeSessao) => string | null
+): string[] {
+  const valores = new Set<string>();
+  for (const sessao of sessoes) {
+    const valor = campo(sessao);
+    if (valor !== null) valores.add(valor);
+  }
+  return [...valores].sort();
+}
+
 /** Exportada para poder ser verificada sem navegador. */
 export function descreverEvento(evento: Evento): string {
   switch (evento.tipo) {
@@ -101,20 +140,156 @@ function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
   );
 }
 
+/**
+ * Entrada do pesquisador, dentro do painel e só nele — o painel continua fora
+ * da navegação do participante (D11).
+ *
+ * Só e-mail e senha, e sem vínculo: a conta de pesquisador é criada à mão no
+ * Supabase, com o papel concedido lá. Vincular o anônimo deste aparelho a ela
+ * traria para a conta do pesquisador as sessões de quem usou o aparelho antes.
+ */
+function EntradaDoPesquisador() {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+
+  const entrar = async (evento: FormEvent) => {
+    evento.preventDefault();
+    setEnviando(true);
+    const resultado = await entrarComSenha(email, senha);
+    setEnviando(false);
+    setErro(resultado.erro);
+    if (!resultado.erro) setSenha('');
+  };
+
+  return (
+    <form className="entrada-pesquisador" onSubmit={(e) => void entrar(e)}>
+      <label>
+        E-mail
+        <input
+          type="email"
+          autoComplete="username"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+        />
+      </label>
+      <label>
+        Senha
+        <input
+          type="password"
+          autoComplete="current-password"
+          value={senha}
+          onChange={(e) => setSenha(e.target.value)}
+          required
+        />
+      </label>
+      <button type="submit" disabled={enviando}>
+        Entrar como pesquisador
+      </button>
+      {erro && <p className="erro">{erro}</p>}
+    </form>
+  );
+}
+
+const ROTULOS_DO_FILTRO = {
+  participanteId: 'Participante',
+  exercicioId: 'Exercício',
+  andaime: 'Apoio',
+} as const;
+
+type CampoDoFiltro = keyof typeof ROTULOS_DO_FILTRO;
+const CAMPOS_DO_FILTRO = Object.keys(ROTULOS_DO_FILTRO) as CampoDoFiltro[];
+
+function Filtros({
+  sessoes,
+  filtro,
+  mudar,
+}: {
+  sessoes: RegistroDeSessao[];
+  filtro: FiltroDeSessoes;
+  mudar: (filtro: FiltroDeSessoes) => void;
+}) {
+  // As opções saem das sessões da origem, e não do catálogo: filtrar por um
+  // exercício que ninguém abriu só produziria tabela vazia.
+  const opcoes: Record<CampoDoFiltro, string[]> = {
+    participanteId: opcoesDe(sessoes, (s) => s.participanteId),
+    exercicioId: opcoesDe(sessoes, (s) => s.exercicioId),
+    andaime: opcoesDe(sessoes, (s) => s.andaime),
+  };
+
+  return (
+    <div className="filtros-painel">
+      {CAMPOS_DO_FILTRO.map((campo) => (
+        <label key={campo}>
+          {ROTULOS_DO_FILTRO[campo]}
+          <select
+            value={filtro[campo] ?? ''}
+            onChange={(e) => mudar({ ...filtro, [campo]: e.target.value || null })}
+          >
+            <option value="">todos</option>
+            {opcoes[campo].map((valor) => (
+              <option key={valor} value={valor}>
+                {campo === 'participanteId' ? participanteCurto(valor) : valor}
+              </option>
+            ))}
+          </select>
+        </label>
+      ))}
+      <label className="marcar">
+        <input
+          type="checkbox"
+          checked={filtro.apenasValidas}
+          onChange={(e) => mudar({ ...filtro, apenasValidas: e.target.checked })}
+        />
+        Só sessões válidas (ao menos uma execução do estudante)
+      </label>
+    </div>
+  );
+}
+
 export function PainelDeMetricas() {
-  const sessoes = sessoesArquivadas();
+  const identidade = useIdentidade();
+  const pesquisador = identidade.papel === 'pesquisador';
+  const banco = useSessoesDoBanco(pesquisador);
+  const origem = pesquisador ? 'banco' : 'aparelho';
+
   const espelho = estadoDoEspelho();
   const envio = estadoDoEnvio();
-  const identidade = useIdentidade();
+  const doAparelho = sessoesArquivadas();
+  const todas = pesquisador ? (banco.sessoes ?? []) : doAparelho;
+
+  const [filtro, setFiltro] = useState<FiltroDeSessoes>(SEM_FILTRO);
   const [aberta, setAberta] = useState<string | null>(null);
   // O arquivo mora fora do React; depois de limpá-lo, a tela precisa redesenhar.
   const [, redesenhar] = useState(0);
+
+  // Trocar de origem é trocar de conjunto: um participante escolhido entre as
+  // sessões do aparelho pode não existir no banco, e o filtro velho mostraria
+  // uma tabela vazia sem dizer por quê.
+  useEffect(() => {
+    setFiltro(SEM_FILTRO);
+    setAberta(null);
+  }, [origem]);
+
+  const sessoes = filtrarSessoes(todas, filtro);
+  const validas = todas.filter(sessaoValida).length;
+
+  // A exportação é do que está na tela, e diz de onde veio e que recorte foi
+  // aplicado: um arquivo filtrado sem essa anotação seria lido depois como a
+  // coleta inteira.
+  const exportar = () =>
+    baixarMetricas(
+      exportarSessoes(sessoes, { origem, filtro, totalNaOrigem: todas.length }),
+      `metricas-${origem}.json`
+    );
 
   // A mesma máquina serve a vários participantes (D15). Apagar é irreversível e
   // é dado de pesquisa, então pede confirmação e lembra de exportar antes.
   const limpar = () => {
     const confirmado = window.confirm(
-      `Apagar as ${sessoes.length} sessões guardadas neste navegador? ` +
+      `Apagar as ${doAparelho.length} sessões guardadas neste navegador? ` +
         (envio.pendentes > 0
           ? `${envio.pendentes} delas ainda não chegaram ao banco e se perdem. `
           : '') +
@@ -126,15 +301,27 @@ export function PainelDeMetricas() {
     redesenhar((n) => n + 1);
   };
 
+  const contaSemPapel =
+    (identidade.forma === 'email' || identidade.forma === 'google') &&
+    identidade.papel !== null &&
+    !pesquisador;
+
   return (
     <div className="pagina">
       <header>
         <h1>Métricas das sessões</h1>
-        <p>
-          Sessões guardadas neste navegador, inclusive as de cargas anteriores da
-          página. Ficam até serem apagadas aqui: entre um participante e outro,
-          exporte e depois limpe.
-        </p>
+        {pesquisador ? (
+          <p>
+            Sessões de todos os participantes, lidas do banco. Os filtros
+            recortam a tabela e a exportação; nada é apagado.
+          </p>
+        ) : (
+          <p>
+            Sessões guardadas neste navegador, inclusive as de cargas anteriores da
+            página. Ficam até serem apagadas aqui: entre um participante e outro,
+            exporte e depois limpe.
+          </p>
+        )}
       </header>
 
       {!espelho.ativo && (
@@ -169,32 +356,74 @@ export function PainelDeMetricas() {
         </p>
       )}
 
+      {supabaseConfigurado() && (
+        <section className="painel">
+          {pesquisador || contaSemPapel ? (
+            <div className="cabecalho-painel">
+              <p className="rodape-painel">
+                {pesquisador
+                  ? 'Enquanto esta conta estiver aberta, as sessões feitas neste navegador são gravadas sob ela. Saia antes de entregar o aparelho a um participante.'
+                  : 'Esta conta não tem o papel de pesquisador: o painel mostra só o que está neste aparelho.'}
+              </p>
+              <button onClick={() => void sair()}>Sair</button>
+            </div>
+          ) : (
+            <EntradaDoPesquisador />
+          )}
+        </section>
+      )}
+
+      {pesquisador && banco.erro && (
+        <p className="erro">A leitura do banco falhou ({banco.erro}).</p>
+      )}
+
       <section className="painel">
         <div className="cabecalho-painel">
-          <h2>Sessões ({sessoes.length})</h2>
+          <h2>
+            Sessões ({sessoes.length} de {todas.length} · {validas} válidas)
+          </h2>
           <div className="acoes-painel">
-            <button onClick={() => baixarMetricas(exportarMetricas(), 'metricas.json')}>
-              Exportar métricas (JSON)
+            {pesquisador && (
+              <button onClick={banco.recarregar} disabled={banco.carregando}>
+                {banco.carregando ? 'Lendo…' : 'Recarregar do banco'}
+              </button>
+            )}
+            <button onClick={exportar} disabled={sessoes.length === 0}>
+              Exportar o que está na tela (JSON)
             </button>
-            <button
-              className="perigo"
-              onClick={limpar}
-              disabled={sessoes.length === 0 && espelho.avisoDeLeitura === null}
-            >
-              Limpar sessões deste navegador
-            </button>
+            {/* Limpar é do aparelho. Na leitura do banco o botão não aparece:
+                apagaria outra coisa que não o que está na tela. */}
+            {!pesquisador && (
+              <button
+                className="perigo"
+                onClick={limpar}
+                disabled={doAparelho.length === 0 && espelho.avisoDeLeitura === null}
+              >
+                Limpar sessões deste navegador
+              </button>
+            )}
           </div>
         </div>
 
+        <Filtros sessoes={todas} filtro={filtro} mudar={setFiltro} />
+
         {sessoes.length === 0 ? (
-          <p className="rodape-painel">Nenhuma sessão arquivada.</p>
+          <p className="rodape-painel">
+            {todas.length > 0
+              ? 'Nenhuma sessão atende ao filtro.'
+              : pesquisador && banco.carregando
+                ? 'Lendo as sessões do banco…'
+                : 'Nenhuma sessão.'}
+          </p>
         ) : (
           <div className="rolagem">
             <table className="tabela-metricas">
               <thead>
                 <tr>
+                  <th>Participante</th>
                   <th>Exercício</th>
                   <th>Andaime</th>
+                  <th>Válida</th>
                   <th>Duração</th>
                   <th>1ª execução</th>
                   <th>Localização</th>
@@ -213,8 +442,12 @@ export function PainelDeMetricas() {
                   return (
                     <Fragment key={sessao.id}>
                       <tr>
+                        <td title={sessao.participanteId ?? undefined}>
+                          {participanteCurto(sessao.participanteId)}
+                        </td>
                         <td>{sessao.exercicioId}</td>
                         <td>{sessao.andaime ?? 'não registrado'}</td>
+                        <td>{sessaoValida(sessao) ? 'sim' : 'não'}</td>
                         <td>{duracao(sessao.duracaoTotalMs)}</td>
                         <td>{duracao(r.tempoAtePrimeiraExecucaoMs)}</td>
                         <td>{duracao(r.tempoAteLocalizacaoMs)}</td>
@@ -234,7 +467,7 @@ export function PainelDeMetricas() {
                       </tr>
                       {estaAberta && (
                         <tr>
-                          <td colSpan={11}>
+                          <td colSpan={13}>
                             <Sequencia sessao={sessao} />
                           </td>
                         </tr>

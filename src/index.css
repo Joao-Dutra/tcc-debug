@@ -528,6 +528,20 @@ button.perigo { color: var(--erro); border-color: var(--erro); }
 button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(--erro);
   color: var(--sobre-acao); }
 
+/* Filtros e entrada do pesquisador (D22). Campos no mesmo desenho dos botões,
+   para o painel ler como uma coisa só. */
+.filtros-painel, .entrada-pesquisador { display: flex; flex-wrap: wrap;
+  align-items: end; gap: var(--esp-8) var(--esp-16); margin-bottom: var(--esp-12); }
+.filtros-painel label, .entrada-pesquisador label { display: flex; flex-direction: column;
+  gap: var(--esp-4); font-size: var(--fonte-miuda); color: var(--grafite-suave); }
+.filtros-painel select, .entrada-pesquisador input {
+  font: inherit; font-size: var(--fonte-apoio); color: var(--grafite);
+  padding: var(--esp-6) var(--esp-10); border-radius: var(--raio-controle);
+  border: 1px solid var(--borda-controle); background: var(--mesa-de-luz); }
+.filtros-painel label.marcar { flex-direction: row; align-items: center;
+  font-size: var(--fonte-apoio); color: var(--grafite); }
+.entrada-pesquisador .erro { flex-basis: 100%; margin: 0; }
+
 /* ---------------------------------------------------------------------------
    Cores dentro do SVG
 
