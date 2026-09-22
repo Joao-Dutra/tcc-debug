@@ -26,6 +26,15 @@ async function duasSessoes(page: Page) {
   await expect(page.getByRole('button', { name: /Executando/ })).toHaveCount(0);
 }
 
+test('vindo direto de um exercício, o painel já conta a última execução', async ({ page }) => {
+  await duasSessoes(page);
+  await page.goto('/#/metricas');
+
+  // Sem a releitura ao montar, a sessão da pilha aparecia com o retrato de
+  // antes da execução, e a contagem saía 0.
+  await expect(page.getByRole('heading', { name: 'Sessões (2 de 2 · 1 válidas)' })).toBeVisible();
+});
+
 test('o filtro de válidas recorta a tabela sem apagar nada', async ({ page }) => {
   await duasSessoes(page);
   await page.goto('/#/metricas');

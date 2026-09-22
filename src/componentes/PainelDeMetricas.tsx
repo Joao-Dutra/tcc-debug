@@ -265,6 +265,12 @@ export function PainelDeMetricas() {
   // O arquivo mora fora do React; depois de limpá-lo, a tela precisa redesenhar.
   const [, redesenhar] = useState(0);
 
+  // Relê o arquivo logo depois de montar. Vindo direto de um exercício, o
+  // React desenha o painel ANTES de a tela do exercício desmontar e arquivar
+  // o retrato final da sessão: a primeira leitura sai velha — sem a última
+  // execução, e portanto com a contagem de válidas errada.
+  useEffect(() => redesenhar((n) => n + 1), []);
+
   // Trocar de origem é trocar de conjunto: um participante escolhido entre as
   // sessões do aparelho pode não existir no banco, e o filtro velho mostraria
   // uma tabela vazia sem dizer por quê.
