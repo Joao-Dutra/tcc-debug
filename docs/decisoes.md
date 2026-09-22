@@ -1302,3 +1302,171 @@ regra de retorno de acerto do roadmap continua valendo.
 apoio, que a sessão recomeça do código com defeito, que o texto do convite não
 tem número nenhum, que o último exercício dá a volta para o primeiro, e que a
 linha apontada mais recente aparece no topo.
+
+## D21 — Identidade e persistência das sessões no Supabase
+
+**Decisão.** As sessões arquivadas passam a ser gravadas no Supabase, sob uma
+identidade criada no primeiro acesso. O espelho em `localStorage` (D15) não sai
+de cena: vira a camada de resiliência.
+
+### O que isto muda em D3
+
+D3 registrou "sem backend na primeira versão", com a persistência condicionada
+ao estudo de validação. **A condição se cumpriu.** O estudo será presencial, em
+sala, com cada participante no próprio aparelho: a exportação manual de um
+`localStorage` por aparelho não recolhe os dados de uma turma — basta alguém
+fechar a aba, limpar o navegador ou pular o passo da exportação para a sessão
+sumir.
+
+O que D3 dizia continua valendo em duas partes, e é por isso que ela não foi
+substituída por inteiro:
+
+- **Exercícios continuam sendo módulos TypeScript versionados junto ao código.**
+  O banco guarda sessões, não catálogo. Isso só muda com a área de autoria.
+- **Backend próprio continua não existindo.** O Supabase entrega autenticação e
+  banco sem servidor nosso: não há código de servidor para escrever, hospedar
+  ou manter, e a aplicação segue sendo um pacote estático.
+
+O que deixa de valer é a limitação: a coleta não é mais local ao aparelho.
+
+### Identidade em três formas, e a ordem entre elas
+
+1. **Anônima, automática, no primeiro acesso.** Sem pedir nada — sem tela, sem
+   campo, sem clique.
+2. **Google.**
+3. **E-mail e senha.**
+
+As duas últimas se **vinculam** à anônima em vez de substituí-la
+(`linkIdentity` para o Google, `updateUser` para e-mail e senha). O `uid`
+continua o mesmo depois do vínculo, e como é o `uid` que é dono das linhas em
+`sessoes`, **as sessões já gravadas naquele aparelho continuam sendo da
+pessoa** — sem migração de dado e sem sessão órfã.
+
+Entrar numa conta que **já existe** é outra coisa: troca de identidade, e as
+sessões do anônimo ficam com o anônimo. Não há como ser diferente, e é por isso
+que o vínculo acontece antes de haver outra conta.
+
+**Nada disso pode aparecer antes do primeiro exercício.** Mais da metade das
+sessões dos dois pilotos foi abandonada sem ação nenhuma; um cadastro na porta
+agravaria exatamente esse número. A entrada anônima é uma ida à rede, e a tela
+não espera por ela: o exercício abre, a sessão começa sem identidade, e o
+identificador chega a tempo porque o registro só é lido no arquivamento.
+
+**Sem conta de teste compartilhada.** Duas pessoas sob o mesmo `uid` produzem
+sessões indistinguíveis, e a análise não as separa depois. Cada aparelho tem a
+própria identidade anônima, o que é justamente o que a conta compartilhada
+destruiria.
+
+### Papéis desde já
+
+`perfis.papel` é um enum de `participante`, `professor` e `pesquisador`, criado
+por gatilho junto com o usuário. `professor` ainda não concede nada: existe
+porque a área de autoria vem em seguida, e acrescentar papel depois de haver
+dado real custa migração de linha viva em vez de uma linha de DDL agora.
+
+Papel se concede à mão, no painel do Supabase. Não há política de `update` em
+`perfis` — com uma, um participante se promoveria a pesquisador e passaria a
+ler as sessões da turma inteira.
+
+### Acesso: o RLS é a única proteção
+
+A chave anônima vai no pacote entregue ao navegador **por desenho**, e qualquer
+pessoa a extrai do JavaScript. Ela identifica o projeto; não autoriza nada.
+Tabela sem política é tabela aberta a qualquer visitante do site, então o RLS
+entra antes de existir dado real — e não depois, quando já houver o que vazar.
+
+As políticas estão em `supabase/migracoes/0001_sessoes_e_papeis.sql`, e são
+estas:
+
+| Tabela    | Operação | Quem                                           |
+|-----------|----------|------------------------------------------------|
+| `perfis`  | select   | o dono do perfil; e quem é pesquisador         |
+| `perfis`  | outras   | ninguém pelo navegador                         |
+| `sessoes` | select   | o dono da sessão; e quem é pesquisador         |
+| `sessoes` | insert   | o próprio, e só como dono (`with check`)       |
+| `sessoes` | update   | o próprio, sem poder passar a sessão a outro   |
+| `sessoes` | delete   | ninguém — dado de pesquisa não se apaga assim  |
+
+Dois detalhes que não são óbvios no SQL:
+
+- **`e_pesquisador()` é `security definer`.** Consultada de dentro de uma
+  política sobre `perfis`, uma função comum reentraria na própria política e a
+  consulta entraria em recursão.
+- **O anônimo automático não é o papel `anon` do Postgres.** Ele autentica de
+  verdade e chega como `authenticated`, com `uid` próprio; `anon` é o visitante
+  sem sessão nenhuma, e dele as duas tabelas foram revogadas.
+
+### Falha de rede não custa dado
+
+O envio é uma tentativa, não uma garantia, e a rede de sala de aula vai cair no
+meio da coleta. Por isso:
+
+- O arquivo em memória e o espelho local (D15) continuam sendo gravados
+  **antes** de qualquer ida à rede.
+- Sessão que não subiu fica pendente e é reenviada: quando a rede volta, quando
+  a identidade muda, e a cada carga da página.
+- **O controle de "já enviado" vive só na carga da página.** Na seguinte, tudo
+  o que está no aparelho é reenviado. O id da sessão é a chave primária da
+  tabela, então reenviar atualiza a linha em vez de duplicá-la, e algumas
+  dezenas de registros custam menos que um controle durável que pode ficar
+  mentindo.
+- Sem chaves configuradas, a aplicação funciona inteira e grava só no aparelho,
+  como antes desta decisão. Nenhuma tela do estudante depende de haver banco —
+  o que também preserva D13 do lado do participante: o exercício roda com a
+  máquina desconectada.
+
+**Limpar o aparelho deixou de ser irreversível**, e essa é a diferença prática
+de D21 no procedimento entre participantes: o que já subiu está no banco. O
+botão do painel (D15) avisa quantas sessões ainda não chegaram lá.
+
+### A versão do registro subiu para 4
+
+Nenhum campo foi criado nem removido, mas `participanteId` deixou de ser sempre
+nulo. Registros da versão 3 e anteriores foram coletados sem identidade e não
+se agrupam por pessoa; sem a versão, a análise leria "sem identidade" como se
+fosse mais um participante. Mesma razão das versões 2 e 3.
+
+Um registro sem identidade que suba depois — coletado antes desta decisão, ou
+numa carga em que a entrada anônima falhou — é gravado sob a identidade de
+agora, que é a do aparelho onde ele foi coletado, porque a coluna é
+obrigatória. A `versao` dele continua marcando que ele não nasceu
+identificado.
+
+### Ambiente
+
+`VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`, em `.env` fora do Git, com
+`.env.example` documentando as duas. Na Vercel, as mesmas duas em *Environment
+Variables*, para *Production* e *Preview*.
+
+Tudo que começa com `VITE_` é embutido no pacote: a chave de serviço do
+Supabase **não** entra em variável `VITE_*` nem em `.env` deste repositório.
+
+No painel do Supabase ainda é preciso, à mão: habilitar *Anonymous sign-ins*,
+habilitar *Manual linking* (sem ele, `linkIdentity` é recusado), configurar o
+provedor Google, e registrar em *URL Configuration* as URLs de retorno — a de
+desenvolvimento e a da Vercel, de produção e de pré-visualização.
+
+Não há `vercel.json`: a navegação é por hash (D8), então o pacote estático não
+precisa de reescrita de rota.
+
+### O que virou teste
+
+Que a sessão que falhou ao subir continua no aparelho e sobe no reenvio; que o
+acumulado do aparelho sobe assim que o banco é ligado; que o já confirmado não
+é reenviado, mas o que foi rearquivado é; que sem banco tudo continua como
+antes; que limpar o aparelho não desfaz o que subiu; que a identidade que chega
+depois da tela abrir ainda carimba a sessão; que o primeiro acesso entra
+anônimo sozinho; que falhar em identificar não derruba a coleta; e — a que mais
+importa — que Google e e-mail **vinculam** ao anônimo em vez de entrar em outra
+identidade.
+
+O que os testes não alcançam é o RLS, que vive no banco. As políticas se
+conferem no projeto Supabase, com um participante tentando ler a sessão de
+outro, **antes de haver dado real**.
+
+### O que ficou de fora desta fatia
+
+Tela de entrada e de cadastro. As funções de vínculo existem e estão
+verificadas, mas nenhuma tela as chama ainda: enquanto não houver tela, todo
+participante é anônimo. A tela é a próxima fatia, e é onde entra a decisão de
+onde colocá-la sem que ela apareça antes do primeiro exercício.

@@ -24,6 +24,14 @@ npm run dev
 
 A aplicação sobe em <http://localhost:5173>.
 
+### Banco (opcional)
+
+Sem configuração, a aplicação funciona inteira e guarda as sessões só no
+aparelho. Para gravar também no Supabase, copie `.env.example` para `.env` e
+preencha as duas chaves; o esquema e as políticas estão em
+`supabase/migracoes/` e rodam uma vez, no editor SQL do projeto. Os detalhes
+ficam em D21, no registro de decisões.
+
 ## Estrutura
 
 | Caminho             | Conteúdo                                       |
@@ -32,6 +40,8 @@ A aplicação sobe em <http://localhost:5173>.
 | `src/exercicios/`   | Catálogo de exercícios                         |
 | `src/visualizacao/` | Visualizadores das estruturas de dados         |
 | `src/componentes/`  | Interface                                      |
+| `src/supabase/`     | Identidade e gravação das sessões no banco     |
+| `supabase/`         | Esquema e políticas do banco, em SQL           |
 | `docs/`             | Registro de decisões de projeto                |
 
 `CLAUDE.md` traz o contexto e as convenções seguidas no desenvolvimento.

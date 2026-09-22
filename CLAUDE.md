@@ -54,6 +54,8 @@ Três regras que não devem ser quebradas:
 | `src/exercicios/`   | Catálogo de exercícios, um arquivo por exercício.       |
 | `src/visualizacao/` | Um visualizador por tipo de estrutura de dados.         |
 | `src/componentes/`  | Interface genérica (reprodutor, painéis, controles).    |
+| `src/supabase/`     | Identidade e gravação das sessões no banco.             |
+| `supabase/`         | Esquema e políticas do banco, em SQL.                   |
 | `docs/`             | Decisões de projeto e anotações que alimentam o artigo. |
 
 ## Convenções
@@ -71,11 +73,15 @@ Três regras que não devem ser quebradas:
 ## Escopo
 
 **Nesta primeira versão:** estruturas lineares — vetor, pilha, fila e lista
-encadeada. Sem backend, sem autenticação. Exercícios são módulos TypeScript.
+encadeada. Exercícios são módulos TypeScript. Sem backend próprio: identidade e
+persistência das sessões são do Supabase (D21), e nenhuma tela do estudante
+pode depender de haver banco — sem chaves configuradas, a coleta continua só no
+aparelho.
 
-**Depois, e só depois:** persistência de métricas com Supabase, autenticação de
-participantes, modo avaliação com sequência fixa de exercícios, publicação na
-Vercel. Árvores e grafos ficam para o fim, condicionados ao cronograma.
+**Depois, e só depois:** tela de entrada e vínculo de conta, painel de
+acompanhamento lendo do banco, área de autoria para professores, modo avaliação
+com sequência fixa de exercícios, publicação na Vercel. Árvores e grafos ficam
+para o fim, condicionados ao cronograma.
 
 Ao propor mudanças, prefira concluir a fatia atual a antecipar as próximas.
 
