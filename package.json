@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "verificar-rls": "vitest run --config supabase/verificacao/vitest.config.ts"
   },
   "dependencies": {
     "@codemirror/lang-javascript": "^6.2.5",
