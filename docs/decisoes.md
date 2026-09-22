@@ -1470,3 +1470,129 @@ Tela de entrada e de cadastro. As funções de vínculo existem e estão
 verificadas, mas nenhuma tela as chama ainda: enquanto não houver tela, todo
 participante é anônimo. A tela é a próxima fatia, e é onde entra a decisão de
 onde colocá-la sem que ela apareça antes do primeiro exercício.
+
+## D22 — Painel de métricas lendo do banco, com recorte e critério de sessão válida
+
+**Decisão.** Com pesquisador autenticado, o painel de métricas (D11) lê do
+Supabase as sessões de todos os participantes. Sem ele, mostra o espelho local
+(D15), como antes. Nos dois modos há filtro por participante, por exercício,
+por nível de apoio e por sessão válida, e a exportação em JSON sai sobre o
+conjunto filtrado.
+
+### Quem restringe a leitura é o RLS
+
+A interface escolhe o modo pelo papel lido de `perfis`, mas **não é ela que
+protege o dado.** A consulta ao banco é a mesma nos dois casos, e quem decide o
+que volta são as políticas de D21: para o pesquisador, as sessões da turma
+inteira; para qualquer outra identidade, só as próprias. Uma interface
+adulterada no navegador, fingindo o papel, recebe as próprias sessões e nada
+mais. Por isso esta decisão **não mexe no SQL**: a política de leitura do
+pesquisador já existia desde D21, e ela basta.
+
+O painel continua fora da navegação do participante: nenhuma tela aponta para
+`#/metricas`.
+
+### A entrada do pesquisador
+
+Mora dentro do painel, e é só e-mail e senha. A conta é criada à mão no
+Supabase (*Authentication > Add user*), e o papel `pesquisador` é concedido na
+tabela `perfis`, também à mão — não há política que permita fazê-lo pelo
+navegador (D21).
+
+Sem vínculo, e de propósito: vincular o anônimo deste aparelho à conta do
+pesquisador traria para ela as sessões de quem usou o aparelho antes.
+
+**Sair devolve o aparelho a um anônimo novo, na hora.** Enquanto a conta do
+pesquisador está aberta, o núcleo carimba com ela as sessões abertas naquele
+navegador. No computador do laboratório, entregue a um participante depois,
+isso misturaria as sessões dele às do pesquisador, sem ter como separar. Sair
+sem entrar de novo deixaria o aparelho sem identidade até recarregar. O painel
+avisa disso enquanto a conta estiver aberta.
+
+### Critério de sessão válida
+
+**Ao menos uma execução feita pelo estudante.** A execução automática da
+abertura do exercício não conta: com ela, toda sessão aberta seria válida, e o
+critério não separaria nada. Execução com erro conta — é tentativa do
+estudante. Ler dica ou editar sem executar, não.
+
+Nos dois pilotos, mais da metade das sessões foi de gente abrindo e fechando. O
+critério existe para a análise separar isso, e por isso é **filtro, e nunca
+descarte**: a sessão inválida continua gravada e continua na exportação sem
+filtro. O abandono também é dado, e um critério errado aplicado na coleta não se
+desfaz — aplicado na leitura, basta trocar o filtro.
+
+O critério é lido do log, e não de `resumo.execucoes`: é o log que é o dado
+(D6), e o critério precisa valer igual para registros de qualquer versão.
+
+### A exportação diz que recorte foi aplicado
+
+O arquivo exportado ganha o campo `recorte`: a origem (`banco` ou `aparelho`),
+o filtro aplicado e quantas sessões havia na origem antes dele. Um arquivo
+filtrado sem essa anotação seria lido, meses depois, como se fosse a coleta
+inteira. O nome do arquivo também diz a origem: `metricas-banco.json` ou
+`metricas-aparelho.json`.
+
+**`VERSAO_DO_REGISTRO` continua em 4.** Nenhum campo do registro de sessão
+mudou; o que ganhou campo foi o envelope da exportação, e o campo é opcional —
+exportações anteriores simplesmente não o têm, e eram sempre tudo o que o
+aparelho tinha.
+
+### O que muda em relação a D21
+
+- **Registros de outra identidade não derrubam o envio.** Quando alguém entra
+  numa conta num aparelho que já tinha um anônimo — o caso do pesquisador no
+  próprio computador —, as sessões daquele anônimo não podem ser gravadas pela
+  identidade nova: o RLS as recusaria, e num lote só a recusa de uma derrubaria
+  todas. Agora o destino grava o que a identidade de agora pode gravar e
+  devolve os ids que gravou; o núcleo confirma só esses. O resto fica pendente
+  no aparelho.
+- **A leitura do banco é paginada até a página vazia.** O Supabase corta em
+  silêncio a resposta no limite de linhas do projeto. Parar na primeira página
+  curta leria só a primeira página sempre que esse limite fosse menor que o
+  pedido.
+
+### Dois achados no caminho
+
+**O painel lia o arquivo antes da hora.** Vindo direto de um exercício, o
+React desenha o painel antes de a tela do exercício desmontar e arquivar o
+retrato final da sessão. A primeira leitura saía velha, e sem a última
+execução — a contagem de válidas saía errada justamente na conferência que
+este critério existe para fazer. O painel agora relê o arquivo logo depois de
+montar. Anterior a D22, corrigido aqui porque o critério depende dele.
+
+**Execução em curso ao sair do exercício se perde — NÃO corrigido.** A
+execução só é registrada quando o resultado volta do Worker. Se o estudante
+sair do exercício antes disso, a sessão já foi arquivada sem ela, e o registro
+que chega depois não é arquivado de novo. O caso provável não é o clique
+seguido de saída imediata, e sim o laço infinito: o estudante espera, desiste
+e sai antes do limite de tempo do Worker (D5) — e a execução com erro, que é
+dado de investigação, some. Ainda faz a sessão parecer inválida. Pertence ao
+fluxo do exercício, e não a esta fatia: fica anotado para ser a próxima.
+
+### Os testes deixam de tocar no banco
+
+Com o `.env` preenchido, cada execução da suíte de ponta a ponta criava
+usuários anônimos e gravava sessões de mentira no banco do estudo, misturadas
+às dos participantes. O servidor dos testes agora sobe com as chaves do
+Supabase vazias: variável que já existe no ambiente vence o `.env` no Vite, e
+vazia desliga o banco.
+
+### O que virou teste
+
+Que a execução automática não torna a sessão válida e que uma do estudante
+basta, inclusive com erro; que cada critério do filtro recorta pelo seu campo e
+que eles se combinam; que recortar não apaga a lista de origem; que a
+exportação leva só o recorte e diz qual foi; que a leitura do banco vai até o
+fim com o servidor cortando as páginas; que a sessão lida do banco sai igual à
+gravada; que o registro de outra identidade fica de fora sem derrubar os
+demais, e que o núcleo confirma só o que foi gravado; que sair da conta volta a
+um anônimo novo. No navegador: que o painel, vindo direto de um exercício, já
+conta a última execução; que o filtro de válidas recorta e, desligado, traz
+tudo de volta; e que o arquivo baixado leva o recorte.
+
+O que os testes não alcançam é o modo do pesquisador, que depende do projeto
+Supabase: entrar com a conta de pesquisador e ver as sessões de outros
+participantes, e entrar com uma conta sem o papel e ver só as próprias. Esse
+par de verificações é o que confirma que o RLS, e não a interface, está
+restringindo a leitura.

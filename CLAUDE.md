@@ -78,9 +78,9 @@ persistência das sessões são do Supabase (D21), e nenhuma tela do estudante
 pode depender de haver banco — sem chaves configuradas, a coleta continua só no
 aparelho.
 
-**Depois, e só depois:** tela de entrada e vínculo de conta, painel de
-acompanhamento lendo do banco, área de autoria para professores, modo avaliação
-com sequência fixa de exercícios, publicação na Vercel. Árvores e grafos ficam
+**Depois, e só depois:** tela de entrada e vínculo de conta do participante,
+área de autoria para professores, modo avaliação com sequência fixa de
+exercícios, publicação na Vercel. Árvores e grafos ficam
 para o fim, condicionados ao cronograma.
 
 Ao propor mudanças, prefira concluir a fatia atual a antecipar as próximas.
