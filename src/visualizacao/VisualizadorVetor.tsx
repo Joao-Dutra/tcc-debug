@@ -1,6 +1,8 @@
 import { motion, AnimatePresence } from 'motion/react';
 import { ANDAIME_PADRAO, mostrarLegendas, mostrarRotulos } from '../componentes/andaime';
+import { caminhoDoArco, meioDoArco, pontaDoArco } from './arco-da-escrita';
 import { CELULA, DESTAQUE, MARCADOR } from './estilos';
+import type { Ponto } from './arco-da-escrita';
 import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
@@ -79,6 +81,16 @@ const xDaCelula = (i: number) => X_INICIAL + i * (LARGURA_CELULA + ESPACO);
 const centroDaCelula = (i: number) => xDaCelula(i) + LARGURA_CELULA / 2;
 const apiceDaFaixa = (faixa: number) => Y_PRIMEIRA_FAIXA + faixa * ALTURA_DA_FAIXA;
 
+/** Para o rótulo acessível da escrita: "da posição 2", "para a variável temp". */
+function descreverLugar(
+  lugar: { vetor?: string; indice?: number; variavel?: string },
+  destino = false
+): string {
+  const artigo = destino ? 'para a' : 'da';
+  if (lugar.variavel !== undefined) return `${artigo} variável ${lugar.variavel}`;
+  return `${artigo} posição ${lugar.indice}`;
+}
+
 /**
  * A forma de cada marcador, na ordem em que o exercício os declarou. Seta
  * cheia, seta vazada (D19) e losango: a diferença é de silhueta, que sobrevive
@@ -104,6 +116,14 @@ interface MarcadorDesenhado {
   indice: number;
   faixa: number;
 }
+
+/**
+ * Distância mínima entre as duas pontas para o arco da escrita ser desenhado.
+ * Abaixo disso as pontas caem no mesmo lugar do desenho — é o que acontece em
+ * `inicio = meio`, em que o movimento já é o próprio marcador mudando de
+ * posição — e o arco seria um rabisco sem sentido.
+ */
+const DISTANCIA_MINIMA_DO_ARCO = 14;
 
 interface CaixaDesenhada {
   nome: string;
@@ -156,11 +176,58 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
       ? principal.indice
       : null;
 
+  // Onde cada lugar do valor está no desenho, para o arco da escrita (D27).
+  // Uma posição fora da fileira desenhada não tem ponto, e aí não há arco:
+  // apontar para onde não se desenhou nada seria inventar.
+  const pontoDoLugar = (lugar: { vetor?: string; indice?: number; variavel?: string }): Ponto | null => {
+    if (lugar.vetor !== undefined && typeof lugar.indice === 'number') {
+      if (lugar.vetor !== 'itens' || lugar.indice < 0 || lugar.indice >= desenhadas) return null;
+      return { x: centroDaCelula(lugar.indice), y: Y_CELULA };
+    }
+    if (lugar.variavel === undefined) return null;
+    const naCaixa = caixas.findIndex((c) => c.nome === lugar.variavel);
+    if (naCaixa >= 0) {
+      return { x: xDaCaixa(naCaixa) + LARGURA_CAIXA / 2, y: Y_CAIXA + ALTURA_CAIXA };
+    }
+    const marcador = marcadores.find((m) => m.nome === lugar.variavel);
+    if (!marcador) return null;
+    const limitado = Math.min(Math.max(marcador.indice, -1), desenhadas);
+    const desvio = (marcador.faixa - (marcadores.length - 1) / 2) * DESVIO_ENTRE_MARCADORES;
+    return { x: centroDaCelula(limitado) + desvio, y: apiceDaFaixa(marcador.faixa) };
+  };
+
+  const valorDoLugar = (lugar: { vetor?: string; indice?: number; variavel?: string }): unknown => {
+    if (lugar.vetor !== undefined && typeof lugar.indice === 'number') {
+      const vetor = variaveis[lugar.vetor];
+      return Array.isArray(vetor) ? (vetor as unknown[])[lugar.indice] : undefined;
+    }
+    return lugar.variavel === undefined ? undefined : variaveis[lugar.variavel];
+  };
+
+  // A escrita que produziu este quadro, quando as duas pontas estão no
+  // desenho. O arco é o rastro dela, e fica no quadro; o valor percorrendo o
+  // arco é a animação. Parado, com movimento reduzido ou na miniatura, o
+  // rastro sozinho já conta o que aconteceu.
+  const escrita = instantaneo?.escrita;
+  const de = escrita ? pontoDoLugar(escrita.origem) : null;
+  const para = escrita ? pontoDoLugar(escrita.destino) : null;
+  const movimento =
+    de && para && Math.hypot(para.x - de.x, para.y - de.y) >= DISTANCIA_MINIMA_DO_ARCO
+      ? { de, para, valor: encurtar(textoDoValor(valorDoLugar(escrita!.destino))) }
+      : null;
+
+  const descricaoDaEscrita =
+    movimento && escrita
+      ? `; o valor ${movimento.valor} foi copiado ${descreverLugar(escrita.origem)} ` +
+        `${descreverLugar(escrita.destino, true)}`
+      : '';
+
   const descricao = rotulos
     ? `Vetor com ${itens.length} posições` +
       (marcadores.length > 0
         ? `; ${marcadores.map((m) => `${m.nome} = ${m.indice}`).join(', ')}`
-        : '')
+        : '') +
+      descricaoDaEscrita
     : `Vetor com ${itens.length} posições`;
 
   return (
@@ -179,6 +246,23 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         strokeDasharray="4 4"
       />
 
+      {/* Rastro da escrita que produziu este quadro (D27), desenhado antes das
+          caixas e das células para passar por trás delas. Ele mostra de onde o
+          valor veio, que é o que a troca entre duas posições tem de essencial e
+          o que nenhum quadro isolado conta. Deriva da execução, como tudo o
+          mais no desenho: aparece em toda cópia simples, certa ou errada. */}
+      {movimento && (
+        <g aria-hidden="true">
+          <path
+            d={caminhoDoArco(movimento.de, movimento.para)}
+            fill="none"
+            className="svg-ligacao"
+            strokeWidth={1.5}
+          />
+          <path d={pontaDoArco(movimento.de, movimento.para)} className="svg-ligacao-seta" />
+        </g>
+      )}
+
       {/* Caixas de valor, fora da fileira: são variáveis do programa, e não
           posições da estrutura. Por isso usam a cor da moldura, e não a da
           célula ativa, que é um estado da estrutura (D10). */}
@@ -190,8 +274,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
             width={LARGURA_CAIXA}
             height={ALTURA_CAIXA}
             rx={6}
-            fill="none"
-            className="svg-contorno"
+            className="svg-caixa-valor"
             strokeWidth={1.5}
           />
           {rotulos && (
@@ -357,6 +440,28 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           </motion.g>
         );
       })}
+
+      {/* O valor percorrendo o arco, por cima de tudo. A chave é a ordem do
+          quadro, então ele refaz o percurso a cada quadro que traz uma escrita
+          — inclusive ao voltar um passo, porque o que ele conta é como aquele
+          quadro surgiu. Sem movimento, o rastro sozinho continua contando. */}
+      {movimento && (
+        <motion.g
+          key={instantaneo?.ordem}
+          initial={{ x: movimento.de.x, y: movimento.de.y, opacity: 0 }}
+          animate={{
+            x: [movimento.de.x, meioDoArco(movimento.de, movimento.para).x, movimento.para.x],
+            y: [movimento.de.y, meioDoArco(movimento.de, movimento.para).y, movimento.para.y],
+            opacity: [1, 1, 0],
+          }}
+          transition={{ duration: 0.42, times: [0, 0.6, 1], ease: 'easeInOut' }}
+          aria-hidden="true"
+        >
+          <text textAnchor="middle" y={4} fontSize="12" fontWeight="700" className="svg-valor">
+            {movimento.valor}
+          </text>
+        </motion.g>
+      )}
 
       {legendas && (
         <text x={X_INICIAL - 6} y={212} fontSize="10" className="svg-rotulo">

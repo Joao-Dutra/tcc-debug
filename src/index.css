@@ -566,6 +566,10 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    É moldura, e não conteúdo: fina e no tom das divisórias, para ligar sem
    disputar com o valor guardado na célula. */
 .svg-haste { stroke: var(--traco-estrutura); }
+/* Caixa de uma variável que guarda valor, fora da estrutura (D27). Preenchida
+   com a própria mesa de luz, e não vazada: o arco da escrita passa por trás
+   dela sem atravessar o valor escrito dentro. */
+.svg-caixa-valor { fill: var(--mesa-de-luz); stroke: var(--contorno-fileira); }
 .svg-base { stroke: var(--traco-estrutura); }
 .svg-ligacao { stroke: var(--ligacao); }
 .svg-ligacao-seta { fill: var(--ligacao); }
