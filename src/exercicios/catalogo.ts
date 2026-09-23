@@ -1,6 +1,7 @@
 import type { Exercicio } from '../nucleo/tipos';
 import { vetorZerarNegativos } from './vetor-zerar-negativos';
 import { vetorDobrar } from './vetor-dobrar';
+import { vetorOrdenar } from './vetor-ordenar';
 import { pilhaDesempilhar } from './pilha-desempilhar';
 import { pilhaReverter } from './pilha-reverter';
 import { pilhaInverterPalavra } from './pilha-inverter-palavra';
@@ -23,6 +24,7 @@ import { listaInserirPosicao } from './lista-inserir-posicao';
 export const catalogo: Exercicio[] = [
   vetorZerarNegativos,
   vetorDobrar,
+  vetorOrdenar,
   pilhaDesempilhar,
   pilhaReverter,
   pilhaInverterPalavra,
