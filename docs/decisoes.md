@@ -1831,6 +1831,12 @@ acertar dispensa a investigação que o trabalho quer observar. Na literatura de
 sistemas tutores o comportamento tem nome — *gaming the system*, tirar proveito
 das propriedades do sistema em vez de aprender o conteúdo (Baker et al., 2004).
 
+> **Citação pendente de verificação.** A referência a Baker et al. (2004) foi
+> escrita de memória e **não foi conferida na fonte**: nem os autores, nem o
+> ano, nem o veículo, nem o que o trabalho de fato afirma. Não vai para a
+> monografia enquanto não for verificada. A decisão não depende dela — o que a
+> sustenta são os dados da própria coleta, descritos acima.
+
 ### Por que um intervalo, e não as saídas que D7 previa
 
 D7 deixou anotadas duas saídas: limitar as tentativas ou atrasar o veredito.
@@ -1988,6 +1994,12 @@ Duas formas de descontar um silêncio longo são comuns: cortá-lo no limiar, ou
 tirá-lo inteiro. A escolha muda o resultado, e estimativas de tempo em tarefa
 dependem desse tipo de escolha a ponto de ela precisar ser relatada junto com
 os números (Kovanović et al., 2015).
+
+> **Citação pendente de verificação.** A referência a Kovanović et al. (2015)
+> foi escrita de memória e **não foi conferida na fonte**: nem os autores, nem
+> o ano, nem o veículo, nem o que o trabalho de fato afirma. Não vai para a
+> monografia enquanto não for verificada. A decisão não depende dela — o que a
+> sustenta é a aritmética descrita abaixo, sobre os dados desta coleta.
 
 Cortar no limiar seria contínuo — quatro minutos e cinquenta e nove contariam
 quase o mesmo que cinco e um —, mas somaria até cinco minutos de atividade a
