@@ -15,6 +15,8 @@ const LIMITE_DE_PASSOS = 5000;
 interface Pedido {
   codigo: string;
   variaveisObservadas: string[];
+  /** Declarados pelo exercício, repassados a cada instantâneo (D27). */
+  marcadores?: string[];
   casos: { descricao: string; expressao: string; esperado: unknown }[];
 }
 
@@ -94,7 +96,7 @@ function serializarValor(valor: unknown): unknown {
 }
 
 self.onmessage = (evento: MessageEvent<Pedido>) => {
-  const { codigo, variaveisObservadas, casos } = evento.data;
+  const { codigo, variaveisObservadas, marcadores, casos } = evento.data;
   const instantaneos: Instantaneo[] = [];
   const resultados: ResultadoCaso[] = [];
   let erro: string | undefined;
@@ -114,7 +116,14 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
     for (const nome of variaveisObservadas) {
       if (nome in variaveis) filtradas[nome] = percorrer(variaveis[nome]);
     }
-    instantaneos.push({ ordem: instantaneos.length, linha, variaveis: filtradas });
+    // A mesma lista em todos os instantâneos, e não uma cópia por quadro: a
+    // serialização da mensagem preserva a identidade, então ela viaja uma vez.
+    instantaneos.push({
+      ordem: instantaneos.length,
+      linha,
+      variaveis: filtradas,
+      ...(marcadores ? { marcadores } : {}),
+    });
   };
 
   try {

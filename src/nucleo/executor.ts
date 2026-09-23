@@ -55,6 +55,7 @@ export function executar(
     worker.postMessage({
       codigo: instrumentado,
       variaveisObservadas: exercicio.variaveisObservadas,
+      marcadores: exercicio.marcadores,
       casos: exercicio.casosDeTeste.map((c) => ({
         descricao: c.descricao,
         expressao: c.expressao,

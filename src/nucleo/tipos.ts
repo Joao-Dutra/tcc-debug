@@ -21,6 +21,16 @@ export interface Instantaneo {
   linha: number | null;
   /** Variáveis visíveis naquele ponto, já serializadas. */
   variaveis: Record<string, unknown>;
+  /**
+   * Quais variáveis observadas são marcadores de posição, na ordem declarada
+   * pelo exercício (D27). Vem daqui, e não do componente, porque o
+   * visualizador é puro e não conhece o exercício: é o caminho que D14 já
+   * apontava para o papel dos campos da lista.
+   *
+   * Sem esta lista não há como separar `j`, que aponta uma posição, de `temp`,
+   * que guarda um valor: os dois são números.
+   */
+  marcadores?: string[];
 }
 
 /** Resultado de um caso de teste do exercício. */
@@ -68,6 +78,15 @@ export interface Exercicio {
   linhaDoDefeito: number;
   /** Nomes das variáveis que a visualização deve acompanhar. */
   variaveisObservadas: string[];
+  /**
+   * Entre as observadas, as que são marcadores de posição, na ordem em que o
+   * desenho deve distingui-las (D27): a primeira é a principal, e é dela que o
+   * anel acompanha a posição apontada.
+   *
+   * As demais variáveis observadas que não sejam a estrutura são desenhadas
+   * como caixas de valor — a temporária de uma troca, por exemplo.
+   */
+  marcadores?: string[];
   /** Casos de teste anexados ao código na execução. */
   casosDeTeste: CasoDeTeste[];
   /** Dicas em ordem crescente de revelação. */

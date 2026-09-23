@@ -25,6 +25,8 @@ export const vetorZerarNegativos: Exercicio = {
   tutorial: true,
   linhaDoDefeito: 4,
   variaveisObservadas: ['itens', 'indice'],
+  // O índice é marcador de posição, e não um valor guardado (D27).
+  marcadores: ['indice'],
   // Miniatura da lista: o vetor antes do laço.
   // Estado que as duas versões atravessam antes de divergirem (D20).
   miniatura: {

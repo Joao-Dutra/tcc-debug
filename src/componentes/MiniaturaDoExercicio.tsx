@@ -45,11 +45,14 @@ export function MiniaturaDoExercicio({ exercicio }: { exercicio: Exercicio }) {
   if (!exercicio.miniatura || !Visualizador) return null;
 
   // Ordem e linha não vêm de execução nenhuma, e nenhum visualizador as lê: o
-  // desenho é função das variáveis. Linha nula é o que menos afirma.
+  // desenho é função das variáveis. Linha nula é o que menos afirma. Os
+  // marcadores são do exercício (D27), e sem eles o cartão desenharia o índice
+  // como se fosse um valor guardado.
   const instantaneo: Instantaneo = {
     ordem: 0,
     linha: null,
     variaveis: exercicio.miniatura.variaveis,
+    marcadores: exercicio.marcadores,
   };
 
   return (

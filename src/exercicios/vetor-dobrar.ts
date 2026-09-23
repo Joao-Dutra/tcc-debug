@@ -19,6 +19,8 @@ export const vetorDobrar: Exercicio = {
   dificuldade: 2,
   linhaDoDefeito: 6,
   variaveisObservadas: ['itens', 'indice'],
+  // O índice é marcador de posição, e não um valor guardado (D27).
+  marcadores: ['indice'],
   // Miniatura da lista: o laço acabando de começar.
   // Estado que as duas versões atravessam antes de divergirem (D20).
   miniatura: {
