@@ -562,6 +562,10 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .svg-valor { fill: var(--grafite); }
 .svg-rotulo { fill: var(--grafite-suave); }
 .svg-contorno { stroke: var(--contorno-fileira); }
+/* Haste que liga o marcador, na faixa dele, à posição que ele aponta (D27).
+   É moldura, e não conteúdo: fina e no tom das divisórias, para ligar sem
+   disputar com o valor guardado na célula. */
+.svg-haste { stroke: var(--traco-estrutura); }
 .svg-base { stroke: var(--traco-estrutura); }
 .svg-ligacao { stroke: var(--ligacao); }
 .svg-ligacao-seta { fill: var(--ligacao); }

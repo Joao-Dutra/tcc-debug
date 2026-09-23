@@ -5,18 +5,28 @@ import type { NivelDeAndaime } from '../componentes/andaime';
 import type { Instantaneo } from '../nucleo/tipos';
 
 /**
- * Representa o vetor como uma fileira de posições numeradas, com o índice
- * corrente desenhado fora delas.
+ * Representa o vetor como uma fileira de posições numeradas, com os marcadores
+ * desenhados fora delas.
  *
- * O índice fica separado do conteúdo de propósito: nos defeitos desta
- * estrutura o que sai do lugar é a relação entre "onde o índice está" e "o que
- * existe naquela posição", e um desenho que mostre só o conteúdo esconde
+ * Os marcadores ficam separados do conteúdo de propósito: nos defeitos desta
+ * estrutura o que sai do lugar é a relação entre "onde o marcador está" e "o
+ * que existe naquela posição", e um desenho que mostre só o conteúdo esconde
  * justamente isso.
+ *
+ * **Vários marcadores ao mesmo tempo** (D27). A ordenação precisa de dois
+ * índices e a busca binária de três. Quem diz quais variáveis são marcadores é
+ * o exercício, pelo instantâneo: `j` e `temp` são os dois números, e só a
+ * declaração os separa. Cada marcador ganha uma faixa própria abaixo da
+ * fileira e uma forma própria, porque dentro da bancada o matiz é significado
+ * (D19) e não pode distinguir marcador de marcador. As demais variáveis
+ * observadas viram caixas de valor acima da fileira.
  *
  * Nenhuma posição é marcada como consumida, ao contrário da pilha e da fila.
  * Um vetor não consome nada, e deduzir "já percorrida" de `i < indice` seria
  * afirmar um histórico que um instantâneo não conhece: bastaria o laço começar
- * em 1, ou correr de trás para frente, para o desenho mentir.
+ * em 1, ou correr de trás para frente, para o desenho mentir. Pela mesma
+ * razão, um par de marcadores não pinta o intervalo entre eles: quem decide o
+ * que está dentro e o que está fora é o programa, e o desenho não sabe.
  *
  * Este componente é PURO: recebe um instantâneo e desenha. Não executa código,
  * não conhece exercícios e não decide quando avançar.
@@ -31,6 +41,26 @@ const Y_CELULA = 66;
 /** Acima disto a fileira não cabe no viewBox; o excedente vira um "+N". */
 const LIMITE_DE_CELULAS = 8;
 const MAX_CARACTERES = 7;
+
+/** Faixa do primeiro marcador e distância entre duas faixas. */
+const Y_PRIMEIRA_FAIXA = 120;
+const ALTURA_DA_FAIXA = 26;
+/** Altura da cabeça da seta, do ápice à base. */
+const ALTURA_DA_CABECA = 12;
+/**
+ * Deslocamento lateral entre marcadores vizinhos. Sem ele, dois marcadores na
+ * mesma posição — `inicio == meio`, que é o fim de toda busca binária —
+ * sobreporiam as hastes num traço só.
+ */
+const DESVIO_ENTRE_MARCADORES = 10;
+
+/** Caixas das variáveis que guardam valor, acima da fileira. */
+const Y_CAIXA = 20;
+const ALTURA_CAIXA = 30;
+const LARGURA_CAIXA = 46;
+const ESPACO_ENTRE_CAIXAS = 10;
+const X_FIM_DAS_CAIXAS = 440;
+const MAX_CAIXAS = 3;
 
 /** Valores chegam já serializados pelo Worker e podem ser objetos aninhados. */
 function textoDoValor(valor: unknown): string {
@@ -47,6 +77,38 @@ function encurtar(texto: string): string {
 
 const xDaCelula = (i: number) => X_INICIAL + i * (LARGURA_CELULA + ESPACO);
 const centroDaCelula = (i: number) => xDaCelula(i) + LARGURA_CELULA / 2;
+const apiceDaFaixa = (faixa: number) => Y_PRIMEIRA_FAIXA + faixa * ALTURA_DA_FAIXA;
+
+/**
+ * A forma de cada marcador, na ordem em que o exercício os declarou. Seta
+ * cheia, seta vazada (D19) e losango: a diferença é de silhueta, que sobrevive
+ * à escala de cinza e ao nível sem apoio, onde os rótulos somem. Do quarto em
+ * diante a forma se repete, e o que separa os marcadores é a faixa.
+ */
+function formaDoMarcador(ordem: number): { classe: string; desenho: string } {
+  const cabeca = ALTURA_DA_CABECA;
+  if (ordem === 0) {
+    return { classe: MARCADOR.primeiro, desenho: `M -6 ${cabeca} L 6 ${cabeca} L 0 0 Z` };
+  }
+  if (ordem === 1) {
+    return { classe: MARCADOR.segundo, desenho: `M -6 ${cabeca} L 6 ${cabeca} L 0 0 Z` };
+  }
+  return {
+    classe: MARCADOR.primeiro,
+    desenho: `M 0 0 L 6 ${cabeca / 2} L 0 ${cabeca} L -6 ${cabeca / 2} Z`,
+  };
+}
+
+interface MarcadorDesenhado {
+  nome: string;
+  indice: number;
+  faixa: number;
+}
+
+interface CaixaDesenhada {
+  nome: string;
+  texto: string;
+}
 
 interface Props {
   instantaneo?: Instantaneo;
@@ -54,12 +116,9 @@ interface Props {
 }
 
 export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }: Props) {
-  const bruto = instantaneo?.variaveis.itens;
+  const variaveis = instantaneo?.variaveis ?? {};
+  const bruto = variaveis.itens;
   const itens = Array.isArray(bruto) ? (bruto as unknown[]) : [];
-  const indice =
-    typeof instantaneo?.variaveis.indice === 'number'
-      ? (instantaneo.variaveis.indice as number)
-      : undefined;
 
   const legendas = mostrarLegendas(nivelAndaime);
   const rotulos = mostrarRotulos(nivelAndaime);
@@ -67,30 +126,45 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
   const desenhadas = Math.min(itens.length, LIMITE_DE_CELULAS);
   const ocultas = itens.length - desenhadas;
 
-  // O anel envolve a posição que o índice aponta. Quando ele aponta para fora
-  // do vetor não há anel, e é essa ausência que denuncia o estado — nada aqui
-  // sabe qual posição seria a certa.
-  const apontada = indice !== undefined && indice >= 0 && indice < desenhadas ? indice : null;
+  // Os marcadores são os que o exercício declarou, na ordem declarada, e só os
+  // que já existem neste quadro: nos primeiros instantâneos nem toda variável
+  // foi declarada ainda.
+  const declarados = instantaneo?.marcadores ?? [];
+  const marcadores: MarcadorDesenhado[] = declarados
+    .filter((nome) => typeof variaveis[nome] === 'number')
+    .map((nome, faixa) => ({ nome, indice: variaveis[nome] as number, faixa }));
 
-  // O marcador pode ir até uma posição além de cada ponta: é lá que ele
-  // aparece quando aponta para fora da fileira, e isso precisa ser visível.
-  const posicaoDoMarcador = centroDaCelula(
-    Math.min(Math.max(indice ?? 0, -1), desenhadas)
-  );
-  const indiceForaDaFileira = indice !== undefined && (indice < 0 || indice >= desenhadas);
+  // Toda variável observada que não é a estrutura nem marcador guarda um
+  // valor: a temporária de uma troca, por exemplo. Sem a caixa, o valor que
+  // sai de uma posição e volta para outra some do desenho no meio do caminho.
+  const todasAsCaixas: CaixaDesenhada[] = Object.entries(variaveis)
+    .filter(([nome, valor]) => nome !== 'itens' && !declarados.includes(nome) && valor !== undefined)
+    .map(([nome, valor]) => ({ nome, texto: textoDoValor(valor) }));
+  const caixas = todasAsCaixas.slice(0, MAX_CAIXAS);
+  const caixasOcultas = todasAsCaixas.length - caixas.length;
+  const larguraDasCaixas =
+    caixas.length * LARGURA_CAIXA + Math.max(caixas.length - 1, 0) * ESPACO_ENTRE_CAIXAS;
+  const xDaCaixa = (i: number) =>
+    X_FIM_DAS_CAIXAS - larguraDasCaixas + i * (LARGURA_CAIXA + ESPACO_ENTRE_CAIXAS);
+
+  // O anel envolve a posição que o marcador principal aponta. Quando ele
+  // aponta para fora do vetor não há anel, e é essa ausência que denuncia o
+  // estado — nada aqui sabe qual posição seria a certa.
+  const principal = marcadores[0];
+  const apontada =
+    principal !== undefined && principal.indice >= 0 && principal.indice < desenhadas
+      ? principal.indice
+      : null;
+
+  const descricao = rotulos
+    ? `Vetor com ${itens.length} posições` +
+      (marcadores.length > 0
+        ? `; ${marcadores.map((m) => `${m.nome} = ${m.indice}`).join(', ')}`
+        : '')
+    : `Vetor com ${itens.length} posições`;
 
   return (
-    <svg
-      viewBox="0 0 480 200"
-      width="100%"
-      style={{ maxHeight: 300 }}
-      role="img"
-      aria-label={
-        rotulos
-          ? `Vetor com ${itens.length} posições; índice = ${indice ?? 'indefinido'}`
-          : `Vetor com ${itens.length} posições`
-      }
-    >
+    <svg viewBox="0 0 480 220" width="100%" style={{ maxHeight: 320 }} role="img" aria-label={descricao}>
       {/* Contorno da fileira: mantém o lugar da estrutura visível mesmo quando
           ainda não há posição alguma para desenhar. */}
       <rect
@@ -104,6 +178,49 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         strokeWidth={1}
         strokeDasharray="4 4"
       />
+
+      {/* Caixas de valor, fora da fileira: são variáveis do programa, e não
+          posições da estrutura. Por isso usam a cor da moldura, e não a da
+          célula ativa, que é um estado da estrutura (D10). */}
+      {caixas.map((caixa, i) => (
+        <g key={'caixa-' + caixa.nome}>
+          <rect
+            x={xDaCaixa(i)}
+            y={Y_CAIXA}
+            width={LARGURA_CAIXA}
+            height={ALTURA_CAIXA}
+            rx={6}
+            fill="none"
+            className="svg-contorno"
+            strokeWidth={1.5}
+          />
+          {rotulos && (
+            <text
+              x={xDaCaixa(i) + LARGURA_CAIXA / 2}
+              y={Y_CAIXA - 5}
+              textAnchor="middle"
+              fontSize="9"
+              className="svg-rotulo"
+            >
+              {caixa.nome}
+            </text>
+          )}
+          <text
+            x={xDaCaixa(i) + LARGURA_CAIXA / 2}
+            y={Y_CAIXA + ALTURA_CAIXA / 2 + 5}
+            textAnchor="middle"
+            fontSize="12"
+            className="svg-valor"
+          >
+            {encurtar(caixa.texto)}
+          </text>
+        </g>
+      ))}
+      {caixasOcultas > 0 && (
+        <text x={xDaCaixa(0) - 8} y={Y_CAIXA + 20} textAnchor="end" fontSize="11" className="svg-rotulo">
+          +{caixasOcultas}
+        </text>
+      )}
 
       <AnimatePresence>
         {itens.slice(0, LIMITE_DE_CELULAS).map((valor, i) => {
@@ -150,7 +267,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         })}
       </AnimatePresence>
 
-      {/* Anel da posição que o índice aponta. */}
+      {/* Anel da posição que o marcador principal aponta. */}
       {apontada !== null && (
         <motion.g
           initial={false}
@@ -181,30 +298,68 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         </text>
       )}
 
-      {/* Marcador do índice: a seta é forma e fica em qualquer nível; só o
-          rótulo com o valor obedece ao fading de D9. */}
-      {indice !== undefined && (
-        <motion.g
-          animate={{ x: posicaoDoMarcador }}
-          initial={false}
-          transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-        >
-          <path d="M -6 130 L 6 130 L 0 118 Z" className={MARCADOR.primeiro} />
-          {rotulos && (
-            <text y={146} textAnchor="middle" fontSize="11" fontWeight="700" className={MARCADOR.rotulo}>
-              índice = {indice}
-            </text>
-          )}
-          {indiceForaDaFileira && rotulos && (
-            <text y={160} textAnchor="middle" fontSize="9" className="svg-rotulo">
-              fora da fileira
-            </text>
-          )}
-        </motion.g>
-      )}
+      {/* Marcadores: cada um na sua faixa, ligado à célula por uma haste. A
+          forma e a faixa ficam em qualquer nível; só o rótulo com o nome e o
+          valor obedece ao fading de D9. */}
+      {marcadores.map((marcador) => {
+        const { classe, desenho } = formaDoMarcador(marcador.faixa);
+        const apice = apiceDaFaixa(marcador.faixa);
+        // O marcador vai até uma posição além de cada ponta: é lá que ele
+        // aparece quando aponta para fora da fileira, e isso precisa ser visto.
+        const limitado = Math.min(Math.max(marcador.indice, -1), desenhadas);
+        const fora = marcador.indice < 0 || marcador.indice >= desenhadas;
+        const desvio =
+          (marcador.faixa - (marcadores.length - 1) / 2) * DESVIO_ENTRE_MARCADORES;
+        // Perto da ponta direita o rótulo não caberia adiante do marcador, e
+        // vira para o outro lado em vez de vazar do quadro.
+        const aDireita = centroDaCelula(limitado) > 300;
+        return (
+          <motion.g
+            key={'marcador-' + marcador.nome}
+            initial={false}
+            animate={{ x: centroDaCelula(limitado) + desvio }}
+            transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+          >
+            <line
+              x1={0}
+              y1={Y_CELULA + ALTURA_CELULA + 2}
+              x2={0}
+              y2={apice}
+              className="svg-haste"
+              strokeWidth={1.25}
+            />
+            <path d={desenho} transform={`translate(0 ${apice})`} className={classe} />
+            {rotulos && (
+              <>
+                <text
+                  x={aDireita ? -12 : 12}
+                  y={apice + ALTURA_DA_CABECA - 1}
+                  textAnchor={aDireita ? 'end' : 'start'}
+                  fontSize="11"
+                  fontWeight="700"
+                  className={MARCADOR.rotulo + ' svg-mono'}
+                >
+                  {marcador.nome} = {marcador.indice}
+                </text>
+                {fora && (
+                  <text
+                    x={aDireita ? -12 : 12}
+                    y={apice + ALTURA_DA_CABECA + 10}
+                    textAnchor={aDireita ? 'end' : 'start'}
+                    fontSize="9"
+                    className="svg-rotulo"
+                  >
+                    fora da fileira
+                  </text>
+                )}
+              </>
+            )}
+          </motion.g>
+        );
+      })}
 
       {legendas && (
-        <text x={X_INICIAL - 6} y={182} fontSize="10" className="svg-rotulo">
+        <text x={X_INICIAL - 6} y={212} fontSize="10" className="svg-rotulo">
           as posições são numeradas a partir de 0
         </text>
       )}
