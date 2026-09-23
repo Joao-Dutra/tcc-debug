@@ -62,10 +62,13 @@ describe('cópias simples', () => {
     const quadro = instantaneos.find(
       (i) => i.escrita && 'vetor' in i.escrita.destino && i.escrita.destino.indice === 0
     );
+    expect(quadro, 'nenhum quadro trouxe a escrita na posição 0').toBeDefined();
+    const posicaoZero = (instantaneo: Instantaneo) => (instantaneo.variaveis.itens as unknown[])[0];
+
     // A posição 0 já vale 4 neste quadro: ele é o depois da cópia.
-    expect((quadro?.variaveis.itens as unknown[])[0]).toBe(4);
+    expect(posicaoZero(quadro as Instantaneo)).toBe(4);
     // E no quadro anterior ela ainda valia 7.
-    expect((instantaneos[quadro!.ordem - 1].variaveis.itens as unknown[])[0]).toBe(7);
+    expect(posicaoZero(instantaneos[(quadro as Instantaneo).ordem - 1])).toBe(7);
   });
 });
 
