@@ -1,7 +1,16 @@
 import { expect, test } from '@playwright/test';
-import { listaInserirPosicao } from '../src/exercicios/lista-inserir-posicao';
+import { catalogo, proximoDoCatalogo } from '../src/exercicios/catalogo';
 import { vetorDobrar } from '../src/exercicios/vetor-dobrar';
 import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../src/nucleo/metricas';
+
+/**
+ * Quem é o próximo e quem é o último vêm do catálogo, e não escritos à mão: um
+ * exercício novo no meio da fileira não pode quebrar o teste do convite, que é
+ * sobre o convite e não sobre a ordem do catálogo.
+ */
+const proximoDeDobrar = proximoDoCatalogo('vetor-dobrar')!;
+const ultimo = catalogo[catalogo.length - 1];
+const primeiro = catalogo[0];
 
 /** O fluxo dentro da tela de exercício (D20). */
 
@@ -22,10 +31,14 @@ test.describe('continuar sem voltar ao catálogo', () => {
 
     await page.getByRole('link', { name: /próximo exercício/i }).click();
 
-    await expect(page).toHaveURL(/#\/exercicio\/pilha-desempilhar\?andaime=sem-apoio$/);
+    await expect(page).toHaveURL(
+      new RegExp(`#/exercicio/${proximoDeDobrar.id}\\?andaime=sem-apoio$`)
+    );
     // Sessão nova (D8): o exercício recomeça do código com defeito, e não do
     // que ficou no editor anterior.
-    await expect(page.locator('.cm-content')).toContainText('function empilhar');
+    await expect(page.locator('.cm-content')).toContainText(
+      proximoDeDobrar.codigoComDefeito.split('\n')[0]
+    );
     await expect(page.locator('.nivel.ativo')).toHaveText('sem apoio');
     await expect(page.locator('.painel.acertou')).toHaveCount(0);
   });
@@ -44,11 +57,11 @@ test.describe('continuar sem voltar ao catálogo', () => {
     // A ausência do convite no fim da lista contaria ao estudante onde ele
     // está na sequência, que é o mesmo que mostrar progresso. Por isso o
     // último volta ao primeiro do catálogo.
-    await page.goto('/#/exercicio/lista-inserir-posicao?andaime=com-apoio');
-    await corrigirEExecutar(page, listaInserirPosicao.codigoCorreto);
+    await page.goto(`/#/exercicio/${ultimo.id}?andaime=com-apoio`);
+    await corrigirEExecutar(page, ultimo.codigoCorreto);
 
     await page.getByRole('link', { name: /próximo exercício/i }).click();
-    await expect(page).toHaveURL(/#\/exercicio\/vetor-zerar-negativos\?andaime=com-apoio$/);
+    await expect(page).toHaveURL(new RegExp(`#/exercicio/${primeiro.id}\\?andaime=com-apoio$`));
   });
 });
 
