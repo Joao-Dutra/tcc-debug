@@ -2034,3 +2034,154 @@ ao fim; que um log fora de ordem não produz intervalo negativo; e que nada
 disso altera o registro. No navegador, com o relógio controlado pelo teste:
 seis minutos sem ninguém na frente da tela deixam a sessão sinalizada como
 ociosa, com a duração total de seis minutos e a ativa de segundos.
+
+## D27 — Vetor com vários marcadores, e a escrita que produziu o quadro
+
+**Decisão.** O visualizador de vetor passa a desenhar vários marcadores ao
+mesmo tempo, cada um numa faixa própria e com forma própria; as demais
+variáveis observadas viram caixas de valor; e o quadro mostra de onde veio o
+valor que acabou de ser escrito, com o valor percorrendo o caminho.
+
+### O que motivou
+
+A ordenação precisa de dois índices simultâneos — o do laço externo e o do
+interno — e a busca binária de três: início, meio e fim. O vetor desenhava um
+só, com o nome `indice` fixo dentro do componente. E a troca entre duas
+posições, que é o evento central da ordenação, aparecia como o vetor
+simplesmente trocado de um quadro para o outro: o estudante via o resultado, e
+não o movimento. Escrever os exercícios antes de o desenho comportar isso seria
+escrever defeitos que o desenho não mostra, que é o que D16 recusa.
+
+### Quem diz o que é marcador é o exercício
+
+`j` aponta uma posição; `temp` guarda um valor. Os dois são números, e nenhuma
+regra dentro do componente separa um do outro sem chutar — por nome, por
+vizinhança no código, por uso. Por isso o exercício declara `marcadores`, em
+ordem, e o núcleo leva a lista até o instantâneo.
+
+É o caminho que D14 já tinha apontado para os campos da lista encadeada: o
+visualizador é puro e não recebe o exercício, então o que ele precisa saber
+chega pelo dado que ele já recebe. A ordem da lista é a ordem em que o desenho
+distingue os marcadores, e o primeiro é o principal — é dele que o anel
+acompanha a posição apontada, como o topo na pilha e o início na fila.
+
+**Sem declaração, nenhum marcador.** Um vetor cujo exercício não declarou nada
+desenha todas as variáveis observadas como caixas de valor. É o comportamento
+explícito, e não um palpite: o índice sairia numa caixa, o que se vê na hora.
+Um teste cobra a declaração de todo exercício de vetor do catálogo, e cobra que
+todo marcador declarado esteja entre as variáveis observadas — um marcador fora
+delas nunca chegaria ao instantâneo, e sumiria do desenho sem ninguém notar.
+
+### Forma e faixa, nunca matiz
+
+Dentro da bancada o matiz é significado (D19): as cores nomeiam os estados de
+D10, e não podem separar um marcador de outro. A distinção é de **forma** —
+seta cheia, seta vazada e losango — e de **faixa**: cada marcador tem uma
+altura própria abaixo da fileira, ligada à posição que aponta por uma haste.
+As duas sobrevivem à escala de cinza e ao nível sem apoio, onde os rótulos
+somem.
+
+Do quarto marcador em diante a forma se repete e o que separa é a faixa.
+Nenhum exercício previsto chega lá: a busca binária, que é o caso extremo, usa
+três.
+
+**O deslocamento lateral existe por um caso concreto.** Em toda busca binária
+`inicio` e `meio` caem na mesma posição no fim, e dois marcadores exatamente
+sobre a mesma célula sobreporiam as hastes num traço só. Cada faixa desloca o
+marcador alguns pixels para o lado, e os dois continuam legíveis. É também o
+que a lista encadeada faz ao empilhar ponteiros, e é a resposta para o problema
+de rótulos sobrepostos que o roadmap anota para ela.
+
+**O rótulo traz o nome da variável do código** — `meio = 3`, e não "meio" por
+extenso escolhido pelo componente. Mesma razão de D14: o desenho vale pela
+correspondência com o código que o estudante lê. Perto da ponta direita o
+rótulo vira para o outro lado, em vez de vazar do quadro.
+
+### Caixas de valor
+
+A variável observada que não é a estrutura nem marcador é desenhada numa caixa
+acima da fileira. Sem ela, o valor que sai de uma posição e volta para outra
+some do desenho no meio do caminho — que é exatamente o que acontece na troca
+com temporária.
+
+A caixa usa a cor da moldura, e não a da célula ativa: é variável do programa,
+e não posição da estrutura, e pintá-la como célula afirmaria um estado de D10
+que ela não tem.
+
+### A escrita que produziu o quadro
+
+Nos instantâneos não existe troca atômica. Com a temporária são três escritas,
+uma por quadro, e o que liga uma à outra — de onde cada valor veio — não está
+em quadro nenhum. A instrumentação passa a anotar isso: quando a instrução é
+uma **cópia simples de um lugar para outro** (`itens[a] = itens[b]`,
+`itens[a] = temp`, `temp = itens[a]`), a sonda leva destino e origem, com os
+índices avaliados ali mesmo.
+
+Três limites, e cada um tem razão:
+
+- **Só expressões sem efeito colateral.** A sonda roda antes da instrução, e
+  avaliar ali um índice como `i++` executaria o efeito duas vezes — mudaria o
+  programa do estudante para desenhar melhor, o que é inaceitável. Sem isso, a
+  instrução fica sem anotação.
+- **Valor calculado ou vindo de chamada não é cópia.** `itens[i] = itens[i] * 2`
+  não veio de lugar nenhum, e uma chamada tem sondas dentro dela, de modo que a
+  anotação cairia num quadro em que a escrita ainda não aconteceu. Isso também
+  deixa os exercícios que já existem exatamente como estavam.
+- **As duas pontas precisam ser observadas.** Uma ponta fora da observação
+  apontaria para um lugar que o desenho não tem.
+
+**A anotação entra no quadro seguinte**, que é o que mostra o resultado da
+escrita — no quadro da própria sonda a cópia ainda não aconteceu.
+
+### O arco, e o que ele não é
+
+O desenho traz o arco de onde o valor veio até onde ele foi, com a ponta de
+seta no destino, e o valor percorre esse arco. O arco **fica no quadro**; a
+animação é só o valor. Parado, com movimento reduzido ou na miniatura, o rastro
+sozinho continua contando de onde o valor veio — o movimento nunca é o único
+portador.
+
+O arco **deriva da execução**, como tudo o mais no desenho (D10): aparece em
+toda cópia simples, certa ou errada, e não sabe qual delas seria a correta. Ele
+fica nos dois níveis de apoio, porque é mudança de estado, e não rótulo; o que
+sai sem apoio é o nome da caixa e o rótulo do marcador.
+
+Quando as duas pontas caem no mesmo lugar do desenho — `inicio = meio`, em que
+o movimento já é o próprio marcador mudando de posição — não há arco: seria um
+rabisco sem sentido.
+
+**A altura do arco é limitada para ele caber no quadro.** A primeira versão
+subia proporcionalmente à distância, e numa cópia entre pontas distantes a
+curva saía do viewBox e aparecia partida ao meio. A geometria virou módulo
+próprio com teste, porque é cálculo e se verifica sem navegador; olhar o
+desenho pegou esse defeito por sorte.
+
+### O que ficou de fora, de propósito
+
+**O intervalo entre dois marcadores não é pintado.** Na busca binária seria
+tentador esmaecer o que está fora de `inicio..fim`, como a fila faz com o que
+já saiu. Mas a fila tem essa semântica na própria estrutura, e o vetor não:
+quem decide o que está dentro é o programa, e deduzir isso dos nomes das
+variáveis faria o desenho afirmar o que não sabe — o mesmo motivo pelo qual o
+vetor nunca marcou posição como consumida.
+
+### O que virou teste
+
+No núcleo: que os marcadores declarados chegam a todos os quadros na ordem
+declarada, que sem declaração nenhuma variável vira marcador, e que a
+declaração não mexe nas variáveis do instantâneo; que todo exercício de vetor
+do catálogo declara os seus, e que todo marcador declarado é observado. Sobre a
+escrita: que a cópia de posição para variável, de posição para posição e de
+variável para posição é anotada com os índices já avaliados; que a anotação cai
+no quadro que mostra o resultado, e não no anterior; que valor calculado, valor
+vindo de chamada e literal não viram escrita; que índice com efeito colateral
+não é anotado **e o programa continua o mesmo**; e que a escrita com uma ponta
+fora das observadas é descartada.
+
+No desenho: que o arco cabe no quadro em qualquer par de pontas, inclusive
+absurdas, que ele sobe acima das duas e mais quanto mais distantes elas estão,
+e que a ponta de seta fecha no destino.
+
+O que continua dependendo de olho: se três marcadores na mesma posição ficam
+legíveis, e se o arco se lê sem se confundir com o conteúdo por onde passa.
+Conferido nas duas condições, com apoio e sem apoio, antes de fechar a fatia.

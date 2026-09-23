@@ -143,7 +143,8 @@ Nesta ordem, e a ordem importa: cada item depende do anterior estar de pé.
    RLS está pronta (D24) e falta rodá-la contra o projeto
 2. **Painel de acompanhamento lendo do banco** — feito (D22), com a qualidade
    do dado em dia (D23, D25, D26)
-3. **Visualizador de vetor com dois índices, e então ordenação e busca**
+3. **Visualizador de vetor com dois índices, e então ordenação e busca** — o
+   desenho está pronto (D27); faltam os exercícios
 4. **Área de autoria para professores**
 5. **Congelamento do que o participante vê**
 6. **Experimento**
@@ -209,6 +210,12 @@ depois os exercícios.** A ordenação exige dois índices simultâneos — o do
 externo e o do interno, ou os dois limites da busca binária —, e o visualizador
 de vetor hoje desenha um. Escrever os exercícios antes seria escrever defeitos
 que o desenho não mostra, que é justamente o que D16 recusa.
+
+**O desenho ficou pronto** (D27): cada marcador declarado pelo exercício ganha
+faixa e forma próprias — seta cheia, vazada e losango —, as demais variáveis
+observadas viram caixas de valor, e o quadro mostra de onde veio o valor que
+acabou de ser escrito, com o valor percorrendo o caminho. A troca deixou de
+ser o vetor aparecendo trocado no quadro seguinte.
 
 Com o desenho pronto, os exercícios são ampliação barata, sobre a estrutura que
 o curso mais usa:

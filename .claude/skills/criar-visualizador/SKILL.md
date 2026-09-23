@@ -78,6 +78,27 @@ cabeça), vazada para o segundo (fim, atual), rótulo sempre cheio. Dentro da
 bancada matiz é significado — marcador colorido se confunde com um estado de
 D10, e a cor de ação da interface nunca entra no desenho.
 
+**Três ou mais marcadores: forma e faixa (D27).** A partir do terceiro, a
+terceira forma é o losango, e cada marcador ganha uma faixa própria fora da
+estrutura, ligada por uma haste ao que aponta. Dois marcadores na mesma
+posição — `inicio == meio`, no fim de toda busca binária — precisam de um
+deslocamento lateral, senão as hastes viram um traço só. O rótulo traz o nome
+da variável do código, e vira para o outro lado perto da borda em vez de vazar
+do quadro. Ver `VisualizadorVetor`.
+
+**Quem é marcador vem do instantâneo, não do componente (D27).** `j` aponta
+uma posição e `temp` guarda um valor, e os dois são números: o exercício
+declara `marcadores`, em ordem, e o núcleo leva a lista até o instantâneo. A
+primeira é a principal, e é dela que o anel acompanha a posição apontada. Não
+adivinhe pelo nome da variável.
+
+**Movimento de valor entre lugares (D27).** Quando o instantâneo traz
+`escrita`, o quadro é resultado de uma cópia: desenhe o rastro do caminho e
+deixe o valor percorrê-lo. O rastro fica no quadro e a animação é só o valor —
+parado, com movimento reduzido ou na miniatura, o rastro sozinho continua
+contando de onde o valor veio. Se as duas pontas caem no mesmo lugar do
+desenho, não desenhe rastro nenhum.
+
 **Capacidade fixa é dado do instantâneo, não do componente.** Quando o
 exercício declara `capacidade` e a observa, o desenho mostra as posições ainda
 não usadas; quando não declara, a estrutura é dinâmica e só aparece o que

@@ -41,13 +41,30 @@ não da leitura do código — ver a verificação obrigatória abaixo.
    variável observada entra em cada instantâneo e infla a execução. E só o que
    o visualizador da estrutura de fato desenha: a pilha desenha `itens`,
    `topo` e, quando existe, `capacidade`; a fila, `itens`, `inicio` e `fim`; o
-   vetor, `itens` e `indice`; a
+   vetor, `itens`, os marcadores declarados e as demais observadas, que viram
+   caixas de valor; a
    lista, `cabeca`, `atual` e qualquer outra variável que seja nó ou `null`.
    Observar uma variável que o desenho ignora — o vetor auxiliar de um
    exercício de pilha, por exemplo — faz a verificação de divergência aprovar
    uma diferença que o estudante não vê. Estrutura auxiliar não é desenhada:
    o defeito precisa aparecer na estrutura principal. Na lista, a divergência
    também precisa cair dentro dos três nós que cabem na fileira (D14).
+8. **No vetor, declare `marcadores`** (D27): entre as observadas, quais são
+   posições — `['j', 'i']` na ordenação, `['meio', 'inicio', 'fim']` na busca
+   binária —, na ordem em que o desenho as distingue. A primeira é a
+   principal, e é dela que o anel acompanha a posição apontada. As demais
+   observadas viram caixas de valor ao lado da fileira, que é como a
+   temporária de uma troca aparece. Sem a declaração, o desenho não tem como
+   saber que `j` é posição e `temp` é valor — os dois são números —, e o
+   índice sai numa caixa. Um teste cobra a declaração em todo exercício de
+   vetor, e cobra que todo marcador declarado esteja entre as observadas.
+9. **A troca entre duas posições aparece como movimento** (D27), sem você
+   fazer nada: o núcleo anota a cópia simples de um lugar para outro
+   (`itens[a] = itens[b]`, `itens[a] = temp`, `temp = itens[a]`) e o desenho
+   mostra o valor mudando de lugar. Para isso valer, escreva a troca com essas
+   atribuições diretas, e observe a temporária. Valor calculado
+   (`itens[i] = itens[i] * 2`) ou vindo de chamada não é cópia, e não vira
+   movimento.
 
 ## Estilo do código (D17)
 
@@ -174,6 +191,8 @@ imediatamente anterior à divergência quando ele já sugere onde olhar.
 - [ ] `npx vitest run src/exercicios` passa: o defeito diverge da versão correta
       em estado observável, verificado por execução (D16).
 - [ ] `codigoCorreto` passa em todos os casos.
+- [ ] Se é de vetor, `marcadores` está declarado, na ordem certa, e só com
+      variáveis observadas — `npx vitest run src/nucleo` confere.
 - [ ] O exercício foi adicionado ao `catalogo`.
 - [ ] Se tem `miniatura`, o estado é anterior à divergência — o mesmo
       `npx vitest run src/exercicios` confere.
