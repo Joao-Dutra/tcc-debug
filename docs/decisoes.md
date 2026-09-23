@@ -1814,6 +1814,11 @@ Antes de qualquer dado real; depois de toda migração que mexa numa política;
 e antes de a tabela de exercícios da área de autoria receber o primeiro
 exercício de verdade — as verificações dela entram neste mesmo script.
 
+**Primeira execução contra o projeto: 23/09/2026, catorze verificações,
+todas passando.** Inclusive as duas do papel, que são as que separam um
+participante das sessões da turma inteira, e a limpeza, que confirmou não ter
+sobrado conta, perfil nem sessão de teste no banco.
+
 ## D25 — Intervalo entre tentativas de localização, e sinal de varredura
 
 **Decisão.** Entre duas tentativas de localização julgadas passa a haver um
