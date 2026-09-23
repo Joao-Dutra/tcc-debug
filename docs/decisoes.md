@@ -2190,3 +2190,118 @@ e que a ponta de seta fecha no destino.
 O que continua dependendo de olho: se três marcadores na mesma posição ficam
 legíveis, e se o arco se lê sem se confundir com o conteúdo por onde passa.
 Conferido nas duas condições, com apoio e sem apoio, antes de fechar a fatia.
+
+## D28 — Ordenação e busca binária, e os defeitos que sobraram
+
+**Decisão.** Dois exercícios novos de vetor: `vetor-ordenar`, bubble sort com
+uma troca que perde um valor, e `vetor-busca-binaria`, com a condição de
+parada que desiste cedo demais. Nenhum terceiro por ora.
+
+### Os três candidatos da ordenação, e por que este
+
+O roadmap listava três defeitos possíveis. Os dois descartados foram medidos
+por execução, e não por leitura:
+
+- **Limite do laço interno.** Passar do fim do trecho faz o programa comparar
+  com `itens[n]`, que em JavaScript é `undefined`; toda comparação com
+  `undefined` é falsa, então nada é trocado e **o vetor sai ordenado do mesmo
+  jeito**. Um defeito que não quebra caso nenhum é o análogo do mutante
+  equivalente, e a skill manda descartar.
+- **Comparação invertida.** Quebra os casos, mas se lê no código: trocar `>`
+  por `<` numa linha de comparação é o primeiro lugar em que qualquer estudante
+  olha. A regra principal da skill pede o contrário — visível na visualização,
+  invisível na leitura casual.
+- **Troca sem a temporária** — o escolhido. A temporária recebe o valor e
+  depois ninguém a usa: a última atribuição lê `itens[j]`, que acabou de ser
+  sobrescrito. As duas posições terminam iguais, e o valor que estava ali fica
+  parado na caixa `temp`, fora do vetor.
+
+**É o defeito que a fatia anterior tornou visível.** Sem o movimento da escrita
+(D27), os três passos da troca são três quadros em que valores mudam sozinhos.
+Com ele, o quadro que denuncia é o terceiro: o arco leva de volta para a
+direita o valor que acabou de vir da direita, enquanto o valor original está na
+caixa, sem sair de lá. O quadro final fecha o caso: quatro valores repetidos
+num vetor de cinco.
+
+**O laço externo anda com `ultimo`, e não com um contador de passagens.**
+`ultimo` é o fim do trecho ainda desordenado — uma posição de verdade, que o
+desenho pode apontar. Um contador de passagens apontaria para uma posição que
+não quer dizer nada ali, e o segundo marcador viraria enfeite.
+
+### Os três candidatos da busca, e por que a condição de parada
+
+Aqui o descarte foi mais duro, porque os dois candidatos descartados **não
+terminam**:
+
+- **Cálculo do meio** e **atualização dos limites** fazem o trecho parar de
+  encolher em alguma entrada — `inicio` deixa de passar de `meio`, ou o meio
+  cai fora do trecho —, e o programa entra em laço infinito. O estudante
+  receberia o limite de passos do Worker (D5), e não um quadro que denuncie o
+  defeito: cinco mil instantâneos de uma execução que não chega a lugar nenhum.
+  Foi verificado por execução em várias entradas antes do descarte.
+- **Condição de parada** — o escolhido. `inicio < fim` no lugar de
+  `inicio <= fim`: quando o trecho se estreita até uma posição só, o laço
+  termina antes de examiná-la. A busca termina sempre, e erra exatamente nos
+  valores das pontas.
+
+**O quadro que denuncia é o colapso:** `inicio` e `fim` param sobre a mesma
+posição — a que guarda o valor procurado — e o anel fica na vizinha, que foi a
+última examinada. O valor procurado aparece numa caixa ao lado da fileira,
+então o desenho diz sozinho o que está sendo procurado, sem o estudante
+precisar voltar ao código para descobrir.
+
+**Oito posições, e não quatro.** É o que o desenho comporta, e é o mínimo para
+a busca binária fazer sentido: com quatro, o vetor cabe numa olhada, o
+estudante resolve por inspeção e a visualização deixa de ser necessária — que é
+o contrário do que o trabalho defende.
+
+### Nenhum terceiro exercício
+
+Selection sort e insertion sort continuam bons candidatos e continuam de fora.
+O estudo prevê dois exercícios desta família, e dois bem feitos valem mais que
+três medianos: cada exercício a mais é outro defeito a escolher, outro
+enunciado a calibrar e outro conjunto de dicas a medir.
+
+### A construção da lista encadeada, de passagem
+
+Os dois exercícios de lista montavam a estrutura com uma chamada dentro da
+outra — `new No(10, new No(30, null))` —, que é a linha mais difícil de ler de
+um exercício que nem trata dela. Cada nó passou a nascer na própria linha, com
+nome, e a cabeça aponta para o nó já nomeado.
+
+**Sem acrescentar uma atribuição de ligação.** Uma linha como
+`cabeca.proximo = segundo` seria um candidato plausível a defeito do mesmo tipo
+que o defeito implantado em `lista-inserir-depois` — e deixaria um nó sozinho
+por dois quadros, que é um dos três casos em que o desenho da lista não
+reconhece o campo de ligação e cai no bloco único (D14). O ganho de leitura não
+paga esses dois preços.
+
+### `linhaDoDefeito` virou conferência, e não memória
+
+Acrescentar uma linha acima do defeito desloca `linhaDoDefeito` em silêncio, e
+o campo errado diz ao estudante que a linha certa está errada — o dado da
+sessão sobre localização fica inutilizável. A partir daqui a linha é conferida
+contra o código: as duas versões precisam divergir, ter o mesmo número de
+linhas, e **a primeira divergência precisa ser a linha declarada**.
+
+A comparação linha a linha mora no núcleo, e não no teste, porque a área de
+autoria vai derivar dali a linha do defeito em vez de pedi-la ao professor.
+
+**Um achado para a área de autoria:** `lista-inserir-depois` diverge em **duas**
+linhas, e não em uma — o defeito dele é a ordem entre duas atribuições, então
+as duas trocam de lugar. A regra de "divergência numa única linha" prevista
+para a submissão do professor recusaria um exercício que já está no catálogo e
+que é bom. Ver o desenho da área de autoria antes de fixar essa regra.
+
+### O que virou teste
+
+Os dois exercícios entram sozinhos no teste de quadro-denúncia (D16) e no da
+miniatura (D20), por estarem no catálogo, e passam. Além deles: que
+`linhaDoDefeito` é a primeira linha divergente em todo o catálogo, que as duas
+versões têm o mesmo número de linhas e que a linha apontada não é uma linha em
+branco.
+
+No navegador: que os três marcadores da busca chegam ao desenho com forma
+própria e que sem apoio some só o rótulo; que a ordenação mostra de onde veio o
+valor escrito nos dois níveis de apoio; e que a caixa da temporária guarda o
+valor que saiu do vetor, que é o que o defeito perde.

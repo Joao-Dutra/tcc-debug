@@ -143,8 +143,8 @@ Nesta ordem, e a ordem importa: cada item depende do anterior estar de pé.
    verificado contra o projeto (D24)
 2. **Painel de acompanhamento lendo do banco** — feito (D22), com a qualidade
    do dado em dia (D23, D25, D26)
-3. **Visualizador de vetor com dois índices, e então ordenação e busca** — o
-   desenho está pronto (D27); faltam os exercícios
+3. **Visualizador de vetor com dois índices, e então ordenação e busca** —
+   feito: o desenho (D27) e os dois exercícios (D28)
 4. **Área de autoria para professores**
 5. **Congelamento do que o participante vê**
 6. **Experimento**
@@ -218,14 +218,20 @@ observadas viram caixas de valor, e o quadro mostra de onde veio o valor que
 acabou de ser escrito, com o valor percorrendo o caminho. A troca deixou de
 ser o vetor aparecendo trocado no quadro seguinte.
 
-Com o desenho pronto, os exercícios são ampliação barata, sobre a estrutura que
-o curso mais usa:
+**Os dois exercícios estão escritos** (D28), sobre a estrutura que o curso mais
+usa, e os defeitos foram escolhidos por execução, medindo os candidatos:
 
-- **Bubble sort** — troca sem variável temporária, limite do laço interno,
-  comparação invertida.
-- **Busca binária** — cálculo do meio, atualização dos limites, condição de
-  parada.
-- **Selection sort e insertion sort** — bons candidatos, mesma família.
+- **Bubble sort** — troca sem a temporária: o valor volta da posição que acabou
+  de ser sobrescrita, e o original fica parado na caixa. O limite do laço
+  interno não quebra caso nenhum em JavaScript, e a comparação invertida se lê
+  no código sem olhar o desenho.
+- **Busca binária** — condição de parada: o laço desiste quando resta uma
+  posição só, e é ali que estão os valores das pontas. O cálculo do meio e a
+  atualização dos limites entram em laço infinito em alguma entrada, e o
+  estudante receberia o limite de passos do Worker em vez de um quadro.
+- **Selection sort e insertion sort** — continuam bons candidatos e continuam
+  de fora: o estudo prevê dois desta família, e dois bem feitos valem mais que
+  três medianos.
 
 **Merge sort fica de fora.** É recursivo e opera sobre sublistas simultâneas: a
 visualização exigiria representar vários vetores e a pilha de chamadas, o que
@@ -256,7 +262,11 @@ defeito que não aparece no desenho — a falha que o projeto já cometeu uma ve
 
 Forma provável: um modelo a preencher (código correto, código com defeito,
 casos de teste, dicas), com a verificação rodando na submissão e recusando o
-que não passar. O campo de miniatura (D20) é opcional de propósito: exercício
+que não passar. A linha do defeito sai da comparação entre as duas versões, e
+não de um campo a preencher — a conta já está no núcleo (D28). **Mas a regra
+de "divergência numa única linha" precisa ser revista antes de valer:**
+`lista-inserir-depois` diverge em duas, porque o defeito dele é a ordem entre
+duas atribuições, e ele é um exercício bom que já está no catálogo. O campo de miniatura (D20) é opcional de propósito: exercício
 sem ele cai num cartão sem miniatura, e ninguém fica preso por causa disso.
 
 ### 5. Congelamento do que o participante vê
