@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { catalogo } from '../exercicios/catalogo';
-import { instrumentar } from './instrumentar';
+import { abrirWorker } from './worker-em-teste';
+import type { RodarNoWorker } from './worker-em-teste';
 import type { ResultadoExecucao } from './tipos';
 
 /**
@@ -12,29 +13,10 @@ import type { ResultadoExecucao } from './tipos';
  * exercício ao quadro, é verificado por execução.
  */
 
-let rodarNoWorker: (pedido: unknown) => ResultadoExecucao;
+let rodarNoWorker: RodarNoWorker;
 
 beforeAll(async () => {
-  // Mesmo `self` de mentira do teste de quadro-denúncia: em Node não há
-  // Worker, e o código que roda é o mesmo do navegador.
-  let saida: ResultadoExecucao | null = null;
-  const falso: {
-    onmessage: ((evento: { data: unknown }) => void) | null;
-    postMessage: (mensagem: ResultadoExecucao) => void;
-  } = {
-    onmessage: null,
-    postMessage: (mensagem) => {
-      saida = mensagem;
-    },
-  };
-  (globalThis as unknown as { self: typeof falso }).self = falso;
-  await import('./executor.worker');
-  rodarNoWorker = (pedido) => {
-    saida = null;
-    falso.onmessage?.({ data: pedido });
-    if (saida === null) throw new Error('o Worker não respondeu');
-    return saida;
-  };
+  rodarNoWorker = await abrirWorker();
 });
 
 const CODIGO = `var itens = [3, 1];
@@ -44,10 +26,9 @@ j = j + 1;`;
 
 function executar(marcadores?: string[]): ResultadoExecucao {
   return rodarNoWorker({
-    codigo: instrumentar(CODIGO),
+    codigo: CODIGO,
     variaveisObservadas: ['itens', 'j', 'temp'],
     marcadores,
-    casos: [],
   });
 }
 

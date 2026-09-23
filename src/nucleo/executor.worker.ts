@@ -1,5 +1,5 @@
 /// <reference lib="webworker" />
-import type { Instantaneo, ResultadoCaso, ResultadoExecucao } from './tipos';
+import type { Escrita, Instantaneo, LugarDoValor, ResultadoCaso, ResultadoExecucao } from './tipos';
 
 /**
  * Executa o código já instrumentado dentro do Worker.
@@ -101,7 +101,43 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
   const resultados: ResultadoCaso[] = [];
   let erro: string | undefined;
 
-  const passo = (linha: number | null, variaveis: Record<string, unknown>) => {
+  /**
+   * A escrita anotada pela sonda da instrução anterior (D27). Ela é guardada
+   * aqui e entra no PRÓXIMO instantâneo, porque é ele que mostra o resultado
+   * dela: a sonda roda antes da instrução, e no quadro dela a cópia ainda não
+   * aconteceu.
+   */
+  let escritaPendente: Escrita | undefined;
+
+  /**
+   * Uma escrita só serve ao desenho se as duas pontas forem observadas e o
+   * índice for um número de verdade. Uma ponta fora da observação apontaria
+   * para um lugar que o desenho não tem.
+   */
+  const alcancaODesenho = (lugar: unknown): lugar is LugarDoValor => {
+    if (typeof lugar !== 'object' || lugar === null) return false;
+    const l = lugar as { variavel?: unknown; vetor?: unknown; indice?: unknown };
+    if (typeof l.variavel === 'string') return variaveisObservadas.includes(l.variavel);
+    return (
+      typeof l.vetor === 'string' &&
+      variaveisObservadas.includes(l.vetor) &&
+      typeof l.indice === 'number' &&
+      Number.isFinite(l.indice)
+    );
+  };
+
+  const escritaUtil = (escrita: unknown): Escrita | undefined => {
+    if (typeof escrita !== 'object' || escrita === null) return undefined;
+    const { destino, origem } = escrita as { destino?: unknown; origem?: unknown };
+    if (!alcancaODesenho(destino) || !alcancaODesenho(origem)) return undefined;
+    return { destino, origem };
+  };
+
+  const passo = (
+    linha: number | null,
+    variaveis: Record<string, unknown>,
+    escritaPrevista?: unknown
+  ) => {
     if (instantaneos.length >= LIMITE_DE_PASSOS) {
       throw new Error(
         'Limite de passos excedido — o programa provavelmente entrou em laço infinito.'
@@ -123,7 +159,9 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
       linha,
       variaveis: filtradas,
       ...(marcadores ? { marcadores } : {}),
+      ...(escritaPendente ? { escrita: escritaPendente } : {}),
     });
+    escritaPendente = escritaUtil(escritaPrevista);
   };
 
   try {

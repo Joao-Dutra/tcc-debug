@@ -22,6 +22,12 @@ export interface Instantaneo {
   /** Variáveis visíveis naquele ponto, já serializadas. */
   variaveis: Record<string, unknown>;
   /**
+   * A cópia de valor que produziu este quadro (D27), quando houve uma. É a
+   * escrita da instrução anterior, e não da que está prestes a rodar: o quadro
+   * mostra o resultado dela.
+   */
+  escrita?: Escrita;
+  /**
    * Quais variáveis observadas são marcadores de posição, na ordem declarada
    * pelo exercício (D27). Vem daqui, e não do componente, porque o
    * visualizador é puro e não conhece o exercício: é o caminho que D14 já
@@ -31,6 +37,26 @@ export interface Instantaneo {
    * que guarda um valor: os dois são números.
    */
   marcadores?: string[];
+}
+
+/** Um lugar que guarda valor: uma posição de um vetor, ou uma variável. */
+export type LugarDoValor = { vetor: string; indice: number } | { variavel: string };
+
+/**
+ * Uma cópia de valor de um lugar para outro (D27).
+ *
+ * Só as cópias simples são anotadas — `itens[a] = itens[b]`, `itens[a] = temp`,
+ * `temp = itens[a]` —, e só quando os índices são expressões sem efeito
+ * colateral, porque a sonda os avalia antes de a instrução rodar. Valor
+ * calculado não vira escrita: `itens[i] = itens[i] * 2` não é cópia de lugar
+ * nenhum.
+ *
+ * É isto que permite desenhar a troca entre duas posições como movimento, em
+ * vez de o vetor simplesmente aparecer trocado no quadro seguinte.
+ */
+export interface Escrita {
+  destino: LugarDoValor;
+  origem: LugarDoValor;
 }
 
 /** Resultado de um caso de teste do exercício. */
