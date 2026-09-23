@@ -1622,11 +1622,9 @@ dele, com o código do laço dentro.
 - **Quando o resultado volta**, o mesmo evento é substituído pela forma
   concluída — não se cria outro. A substituição é de objeto, e não alteração
   no lugar: um retrato já arquivado não muda por baixo de quem o arquivou.
-- **Ao sair do exercício**, as execuções em curso são interrompidas de vez: o
-  resultado que chegar depois é ignorado. Isso vale só para as que estão em
-  curso naquele instante, e não trava a sessão — o StrictMode desmonta e
-  remonta a tela com a mesma sessão em desenvolvimento, e uma sessão travada
-  ali deixaria de registrar tudo.
+- **Ao sair do exercício**, o retrato é arquivado com a execução na forma em
+  que ela está: interrompida, se o resultado ainda não voltou. Ver a correção
+  de 23/09/2026, abaixo — até ali, sair também interrompia a execução de vez.
 - **O `pagehide` não interrompe.** A página pode voltar do cache do navegador,
   e aí o resultado ainda chega e atualiza o registro pelo id. O retrato tirado
   no `pagehide` já traz a execução como interrompida, que é o que fica se a
@@ -1677,6 +1675,43 @@ como interrompida — e ela continua assim depois que o Worker finalmente
 responde. O laço infinito de verdade não serve para o teste: a maioria esbarra
 no limite de passos em milissegundos, e o que escapa leva cinco segundos.
 Reter o Worker é, do ponto de vista da tela, a mesma coisa.
+
+### O desmonte não interrompe mais (23/09/2026)
+
+**O que estava errado.** Em desenvolvimento — `npm run dev` e
+`docker compose up` —, o StrictMode do React desmonta e remonta a tela do
+exercício ao abri-la. A desmontagem simulada rodava a interrupção descrita
+acima, e ela alcançava a execução automática da abertura, que ainda estava no
+Worker. O resultado chegava, era ignorado, e **toda sessão aberta em
+desenvolvimento ficava com a automática gravada como interrompida.** No build
+de produção o defeito não aparece, porque não há a desmontagem simulada; foi
+conferido nos dois.
+
+Não mexia em métrica nenhuma — a automática fica fora de todas (D6) —, mas
+sujava o log, e de um jeito que só apareceria na análise, quando não há mais
+remédio. Log sujo é pior que defeito visível.
+
+**A correção.** O desmonte deixou de interromper; ele só arquiva o retrato. A
+interrupção não protegia dado nenhum, e é isto que sustenta a correção:
+
+- a execução entra no log já na forma interrompida, no disparo, então o
+  retrato arquivado no desmonte já a leva assim;
+- concluir **substitui** o objeto do evento em vez de alterá-lo, então o
+  retrato já arquivado não muda quando o resultado chega tarde;
+- depois do desmonte real, nada mais arquiva aquela sessão: o ouvinte de
+  `pagehide` sai junto com a tela, e a sessão em memória fica inalcançável.
+
+Ou seja, o resultado tardio já não tinha como alterar dado gravado. O único
+lugar onde a interrupção mudava alguma coisa era justamente onde a tela remonta
+com a mesma sessão — o StrictMode —, e ali ela apagava o resultado de uma
+execução que ia concluir. Sem uso, o método saiu do núcleo.
+
+**O que continua garantido, e verificado:** o retrato de quem saiu no meio leva
+a execução interrompida, com o código; o retrato tirado antes do resultado não
+muda quando ele chega; e um retrato tirado no meio do caminho não impede a
+execução de concluir depois, que é o caso do StrictMode. No navegador, e no
+próprio modo de desenvolvimento onde o defeito aparecia, um teste exige que a
+execução automática da abertura saia concluída.
 
 ## D24 — Verificação do RLS contra o projeto real, fora da suíte comum
 

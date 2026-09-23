@@ -191,13 +191,16 @@ que for construído depois gera dado que depende destas correções:
 Os dois sinais são leituras do log, e não dado: valem também para as sessões
 já coletadas, e nenhuma é apagada ou excluída por eles.
 
-**Achado pendente.** No modo de desenvolvimento (`npm run dev`, `docker compose
-up`), o StrictMode do React desmonta e remonta a tela ao abrir o exercício, e a
-desmontagem simulada interrompe a execução automática da abertura (D23): ela
-fica gravada como interrompida. No build de produção ela sai certa — conferido
-nos dois. Não mexe em métrica nenhuma, porque a automática fica fora de todas,
-mas suja o log de quem rodar sessões pelo servidor de desenvolvimento. Ou o
-experimento roda do build de produção, ou isto se corrige antes.
+**Um achado do caminho, já corrigido.** No modo de desenvolvimento (`npm run
+dev`, `docker compose up`), o StrictMode do React desmontava e remontava a tela
+ao abrir o exercício, e a desmontagem simulada interrompia a execução
+automática da abertura (D23): ela ficava gravada como interrompida. No build de
+produção não acontecia. Não mexia em métrica nenhuma, mas sujava o log de quem
+rodasse sessões pelo servidor de desenvolvimento — e um log sujo só aparece na
+análise, quando não há mais remédio. O desmonte deixou de interromper, e um
+teste de navegador guarda o caso no próprio modo em que ele aparecia (D23,
+correção de 23/09/2026). O experimento continua devendo rodar do build de
+produção, mas não depende disso.
 
 ### 3. Visualizador de vetor com dois índices, e então ordenação e busca
 
