@@ -314,17 +314,8 @@ export interface Sessao {
    * o código que foi executado.
    */
   iniciarExecucao(origem: OrigemDaExecucao, codigo: string): ExecucaoDisparada;
-  /** Completa a execução com o resultado. Ignorada se ela já foi interrompida. */
+  /** Completa a execução com o resultado. Ignorada se ela já foi concluída. */
   concluirExecucao(execucao: ExecucaoDisparada, resultado: ResultadoExecucao): void;
-  /**
-   * A sessão está sendo encerrada: o que estiver em execução fica gravado como
-   * interrompido, e o resultado que chegar depois não o altera mais.
-   *
-   * Vale só para as execuções em curso, e não trava a sessão: o StrictMode
-   * desmonta e remonta a tela em desenvolvimento com a mesma sessão, e uma
-   * sessão travada ali deixaria de registrar tudo.
-   */
-  interromperExecucoesEmCurso(): void;
   /** Disparo e resultado juntos, para quando o resultado já está na mão. */
   registrarExecucao(origem: OrigemDaExecucao, codigo: string, resultado: ResultadoExecucao): void;
   registrarEdicao(codigo: string): void;
@@ -407,10 +398,6 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         todosPassaram: casosTotal > 0 && casosPassaram === casosTotal,
         erro: resultado.erro ?? null,
       };
-    },
-
-    interromperExecucoesEmCurso() {
-      emCurso.clear();
     },
 
     registrarExecucao(origem, codigo, resultado) {

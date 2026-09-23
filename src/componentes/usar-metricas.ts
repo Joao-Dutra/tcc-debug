@@ -69,16 +69,17 @@ export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime
   }, [fecharRajada]);
 
   // Sair do exercício encerra a sessão. Uma execução ainda no Worker fica
-  // gravada como interrompida, com o código que foi executado (D23): sem
+  // gravada como interrompida, com o código que foi executado (D23): ela entra
+  // no log nessa forma no disparo, e é essa forma que o retrato leva — sem
   // isso, o resultado que chegasse depois cairia numa sessão já arquivada, e
-  // a execução sumiria — justamente a do laço infinito de quem desistiu.
-  useEffect(
-    () => () => {
-      sessao.current?.interromperExecucoesEmCurso();
-      arquivarRetrato();
-    },
-    [arquivarRetrato]
-  );
+  // a execução sumiria, justamente a do laço infinito de quem desistiu.
+  //
+  // O desmonte não interrompe a execução em curso. Arquivado o retrato, nada
+  // mais arquiva esta sessão, e o retrato não muda por baixo de quem o
+  // arquivou. Interromper aqui só teria efeito onde a tela remonta com a mesma
+  // sessão — o StrictMode, em desenvolvimento —, e ali o efeito era errado: a
+  // execução automática da abertura ficava interrompida para sempre.
+  useEffect(() => () => arquivarRetrato(), [arquivarRetrato]);
 
   // Recarregar ou fechar a aba não desmonta a tela — o React não roda o cleanup
   // quando a página vai embora —, e sem isto a sessão em curso seria justamente

@@ -42,3 +42,22 @@ test('execução em curso ao sair fica gravada como interrompida', async ({ page
   await page.getByLabel(/Só sessões válidas/).check();
   await expect(interrompida).toBeVisible();
 });
+
+/**
+ * A execução automática da abertura sai concluída (D23, correção de 23/09).
+ *
+ * Este teste roda no servidor de desenvolvimento, onde o StrictMode desmonta e
+ * remonta a tela: era justamente ali que a automática ficava gravada como
+ * interrompida, porque o desmonte simulado interrompia a execução em curso. Em
+ * produção o defeito não aparecia, e por isso só a análise o encontraria.
+ */
+test('a execução automática da abertura fica gravada como concluída', async ({ page }) => {
+  await page.goto('/#/exercicio/vetor-dobrar?andaime=com-apoio');
+  await expect(page.getByRole('button', { name: 'Executar', exact: true })).toBeEnabled();
+
+  await page.goto('/#/metricas');
+  await page.getByRole('button', { name: 'eventos' }).click();
+  const primeiro = page.locator('.eventos li').first();
+  await expect(primeiro).toHaveText(/execução \(automatica\) · \d+\/\d+ casos/);
+  await expect(primeiro).not.toHaveText(/interrompida/);
+});

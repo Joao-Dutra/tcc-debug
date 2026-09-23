@@ -77,27 +77,25 @@ describe('execução registrada no disparo', () => {
     });
   });
 
-  it('encerrada a sessão, fica interrompida com o código, e o resultado tardio não a altera', () => {
+  it('o retrato de quem saiu no meio fica interrompido, com o código', () => {
     const { sessao, avancar } = sessaoComRelogio();
     const disparo = sessao.iniciarExecucao('estudante', 'for (;;) {}');
     avancar(3000);
-    // O estudante desistiu e saiu do exercício.
-    sessao.interromperExecucoesEmCurso();
+    // O estudante desistiu e saiu do exercício: o retrato é arquivado aqui, e
+    // é este que fica — depois do desmonte, nada mais arquiva esta sessão.
     const arquivado = sessao.registro();
 
     // O Worker estoura o tempo limite e responde, tarde demais.
     sessao.concluirExecucao(disparo, { instantaneos: [], casos: [], erro: 'Tempo limite' });
 
-    for (const retrato of [arquivado, sessao.registro()]) {
-      expect(execucoesDe(retrato.eventos)).toEqual([
-        expect.objectContaining({
-          codigo: 'for (;;) {}',
-          situacao: 'interrompida',
-          tResultado: null,
-          erro: null,
-        }),
-      ]);
-    }
+    expect(execucoesDe(arquivado.eventos)).toEqual([
+      expect.objectContaining({
+        codigo: 'for (;;) {}',
+        situacao: 'interrompida',
+        tResultado: null,
+        erro: null,
+      }),
+    ]);
   });
 
   it('o retrato tirado antes do resultado não muda quando o resultado chega', () => {
@@ -111,13 +109,17 @@ describe('execução registrada no disparo', () => {
     expect(execucoesDe(sessao.registro().eventos)[0].situacao).toBe('concluida');
   });
 
-  it('interromper não trava a sessão: execuções disparadas depois concluem', () => {
-    // O StrictMode desmonta e remonta a tela com a mesma sessão.
+  it('o retrato do meio do caminho não impede a execução de concluir depois', () => {
+    // É o caso do StrictMode, que em desenvolvimento desmonta e remonta a tela
+    // com a mesma sessão: o retrato do desmonte é arquivado, a execução
+    // automática da abertura continua no Worker, e o resultado dela ainda
+    // precisa alcançar a sessão — senão ela fica interrompida para sempre.
     const { sessao } = sessaoComRelogio();
-    sessao.interromperExecucoesEmCurso();
-    const disparo = sessao.iniciarExecucao('estudante', 'codigo');
+    const disparo = sessao.iniciarExecucao('automatica', 'codigo');
+    const doDesmonte = sessao.registro();
     sessao.concluirExecucao(disparo, aprovado);
 
+    expect(execucoesDe(doDesmonte.eventos)[0].situacao).toBe('interrompida');
     expect(execucoesDe(sessao.registro().eventos)[0].situacao).toBe('concluida');
   });
 
@@ -136,7 +138,6 @@ describe('a execução interrompida nas métricas', () => {
   it('conta como execução do estudante para o critério de sessão válida', () => {
     const { sessao } = sessaoComRelogio();
     sessao.iniciarExecucao('estudante', 'while (true) {}');
-    sessao.interromperExecucoesEmCurso();
 
     expect(sessaoValida(sessao.registro())).toBe(true);
   });
@@ -145,7 +146,6 @@ describe('a execução interrompida nas métricas', () => {
     const { sessao, avancar } = sessaoComRelogio();
     avancar(4000);
     sessao.iniciarExecucao('estudante', 'while (true) {}');
-    sessao.interromperExecucoesEmCurso();
 
     const { resumo } = sessao.registro();
     expect(resumo.execucoes).toBe(1);
@@ -157,7 +157,6 @@ describe('a execução interrompida nas métricas', () => {
   it('a automática interrompida continua fora das métricas do estudante', () => {
     const { sessao } = sessaoComRelogio();
     sessao.iniciarExecucao('automatica', 'codigo');
-    sessao.interromperExecucoesEmCurso();
 
     expect(sessaoValida(sessao.registro())).toBe(false);
     expect(sessao.registro().resumo.execucoes).toBe(0);
