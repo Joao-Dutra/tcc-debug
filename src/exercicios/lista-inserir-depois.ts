@@ -20,7 +20,7 @@ export const listaInserirDepois: Exercicio = {
   estrutura: 'lista-encadeada',
   categoriaDefeito: 'ordem-de-operacoes',
   dificuldade: 2,
-  linhaDoDefeito: 14,
+  linhaDoDefeito: 15,
   variaveisObservadas: ['cabeca', 'atual'],
   // Miniatura da lista: o nó novo criado, ainda solto.
   // Estado que as duas versões atravessam antes de divergirem (D20).
@@ -38,7 +38,8 @@ export const listaInserirDepois: Exercicio = {
   }
 }
 
-var cabeca = new No(10, new No(30, null));
+var segundo = new No(30, null);
+var cabeca = new No(10, segundo);
 var atual = null;
 
 function inserirDepois(no, valor) {
@@ -58,7 +59,8 @@ inserirDepois(cabeca, 20);`,
   }
 }
 
-var cabeca = new No(10, new No(30, null));
+var segundo = new No(30, null);
+var cabeca = new No(10, segundo);
 var atual = null;
 
 function inserirDepois(no, valor) {

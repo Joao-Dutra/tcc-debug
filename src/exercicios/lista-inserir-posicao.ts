@@ -21,7 +21,7 @@ export const listaInserirPosicao: Exercicio = {
   estrutura: 'lista-encadeada',
   categoriaDefeito: 'condicao-de-parada',
   dificuldade: 3,
-  linhaDoDefeito: 17,
+  linhaDoDefeito: 18,
   variaveisObservadas: ['cabeca', 'atual'],
   // Miniatura da lista: a caminhada partindo da cabeça.
   // Estado que as duas versões atravessam antes de divergirem (D20).
@@ -39,7 +39,8 @@ export const listaInserirPosicao: Exercicio = {
   }
 }
 
-var cabeca = new No(10, new No(30, null));
+var segundo = new No(30, null);
+var cabeca = new No(10, segundo);
 var atual = null;
 
 function inserirNaPosicao(posicao, valor) {
@@ -70,7 +71,8 @@ var aceitouValida = inserirNaPosicao(1, 20);`,
   }
 }
 
-var cabeca = new No(10, new No(30, null));
+var segundo = new No(30, null);
+var cabeca = new No(10, segundo);
 var atual = null;
 
 function inserirNaPosicao(posicao, valor) {
