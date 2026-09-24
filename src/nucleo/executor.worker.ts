@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import { LIMITE_DE_PASSOS, MENSAGEM_DO_LIMITE_DE_PASSOS } from './limites';
 import type { Escrita, Instantaneo, LugarDoValor, ResultadoCaso, ResultadoExecucao } from './tipos';
 
 /**
@@ -9,8 +10,6 @@ import type { Escrita, Instantaneo, LugarDoValor, ResultadoCaso, ResultadoExecuc
  * segurança — o código executado é o do próprio catálogo, não código arbitrário
  * vindo da internet.
  */
-
-const LIMITE_DE_PASSOS = 5000;
 
 interface Pedido {
   codigo: string;
@@ -139,9 +138,7 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
     escritaPrevista?: unknown
   ) => {
     if (instantaneos.length >= LIMITE_DE_PASSOS) {
-      throw new Error(
-        'Limite de passos excedido — o programa provavelmente entrou em laço infinito.'
-      );
+      throw new Error(MENSAGEM_DO_LIMITE_DE_PASSOS);
     }
     // Um percurso por instantâneo, e não por variável: é o que faz cabeca e
     // atual compartilharem os mesmos __id. Serializadas em chamadas separadas,

@@ -1,8 +1,6 @@
 import { instrumentar } from './instrumentar';
+import { MENSAGEM_DO_TEMPO_LIMITE, TEMPO_LIMITE_MS } from './limites';
 import type { Exercicio, ResultadoExecucao } from './tipos';
-
-/** Tempo máximo que esperamos pelo Worker antes de desistir. */
-const TEMPO_LIMITE_MS = 5000;
 
 /**
  * Instrumenta e executa o código de um exercício, devolvendo os instantâneos e
@@ -36,7 +34,7 @@ export function executar(
       resolve({
         instantaneos: [],
         casos: [],
-        erro: 'Tempo limite de execução excedido.',
+        erro: MENSAGEM_DO_TEMPO_LIMITE,
       });
     }, TEMPO_LIMITE_MS);
 
