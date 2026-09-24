@@ -48,8 +48,15 @@ import type { ResultadoExecucao } from './tipos';
  * estudante podia apontar a cada fração de segundo, e da 6 em diante não. Uma
  * análise que misturasse as duas leria como mudança de comportamento o que é
  * mudança da ferramenta.
+ *
+ * 7 — numa troca de ordem entre duas linhas vizinhas, as duas passaram a
+ * contar como localização correta (D30). Até a versão 6, só a primeira
+ * contava, e quem apontava a segunda ouvia "o defeito não está aqui" — um
+ * retorno falso. No catálogo, isso muda `correta` em `lista-inserir-depois`:
+ * a linha 16 era incorreta e passa a ser correta, e com ela o tempo até a
+ * localização de quem a apontou primeiro.
  */
-export const VERSAO_DO_REGISTRO = 6;
+export const VERSAO_DO_REGISTRO = 7;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -288,6 +295,12 @@ export interface OpcoesDaSessao {
    * a interface pergunta e recebe o veredito, sem nunca ver a resposta.
    */
   linhaDoDefeito: number;
+  /**
+   * Todas as linhas em que apontar conta como acerto, quando é mais de uma — a
+   * troca de ordem entre duas vizinhas (D30). Ausente, só `linhaDoDefeito`.
+   * Mesma regra: fica no núcleo e não volta para a tela.
+   */
+  linhasAceitas?: number[];
   /** Fixa a identidade da sessão; sem ela, vale a do módulo no arquivamento. */
   participanteId?: string | null;
   /** Relógio monotônico. Injetável para teste. */
@@ -427,7 +440,7 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         };
       }
       ultimaJulgada = instante;
-      const correta = linha === opcoes.linhaDoDefeito;
+      const correta = (opcoes.linhasAceitas ?? [opcoes.linhaDoDefeito]).includes(linha);
       eventos.push({ tipo: 'localizacao', t: tRelativo, linha, correta });
       return { julgada: true, correta };
     },

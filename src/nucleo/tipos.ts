@@ -102,6 +102,17 @@ export interface Exercicio {
   codigoCorreto: string;
   /** Linha onde está o defeito, para validar a localização feita pelo estudante. */
   linhaDoDefeito: number;
+  /**
+   * Onde apontar conta como localizar o defeito, quando é mais de uma linha
+   * (D30). Ausente, vale só `linhaDoDefeito`.
+   *
+   * Existe para a troca de ordem entre duas linhas vizinhas: as duas mudaram de
+   * lugar, e quem aponta a segunda achou o defeito tanto quanto quem aponta a
+   * primeira. Responder "o defeito não está aqui" para ela seria um retorno
+   * falso, e retorno falso é pior que nenhum. O teste do catálogo confere que a
+   * lista bate com a comparação entre as duas versões.
+   */
+  linhasAceitas?: number[];
   /** Nomes das variáveis que a visualização deve acompanhar. */
   variaveisObservadas: string[];
   /**

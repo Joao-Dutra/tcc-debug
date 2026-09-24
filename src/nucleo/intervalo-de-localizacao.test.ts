@@ -121,7 +121,9 @@ describe('intervalo entre tentativas de localização', () => {
   });
 
   it('o registro marca a versão em que o intervalo passou a existir', () => {
-    expect(VERSAO_DO_REGISTRO).toBe(6);
-    expect(sessaoComRelogio().sessao.registro().versao).toBe(6);
+    // Da versão 6 em diante: as seguintes herdam o intervalo (D30 subiu para 7
+    // por outro motivo, sem mexer nele).
+    expect(VERSAO_DO_REGISTRO).toBeGreaterThanOrEqual(6);
+    expect(sessaoComRelogio().sessao.registro().versao).toBe(VERSAO_DO_REGISTRO);
   });
 });

@@ -21,6 +21,10 @@ export const listaInserirDepois: Exercicio = {
   categoriaDefeito: 'ordem-de-operacoes',
   dificuldade: 2,
   linhaDoDefeito: 15,
+  // As duas atribuições trocaram de lugar, e apontar qualquer uma delas é
+  // achar o defeito (D30): responder "não está aqui" para a segunda seria um
+  // retorno falso.
+  linhasAceitas: [15, 16],
   variaveisObservadas: ['cabeca', 'atual'],
   // Miniatura da lista: o nó novo criado, ainda solto.
   // Estado que as duas versões atravessam antes de divergirem (D20).

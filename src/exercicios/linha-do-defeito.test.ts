@@ -27,4 +27,13 @@ describe.each(catalogo)('$id', (exercicio) => {
     if (divergencia.tipo === 'recusada') return;
     expect(exercicio.linhaDoDefeito).toBe(divergencia.linha);
   });
+
+  it('as linhas aceitas como localização são as que a comparação aceita', () => {
+    // Na troca de ordem, as duas linhas; em qualquer outro caso, só a
+    // declarada. Faltar uma aqui é o estudante ouvir "não está aqui" onde está.
+    if (divergencia.tipo === 'recusada') return;
+    expect(exercicio.linhasAceitas ?? [exercicio.linhaDoDefeito]).toEqual(
+      divergencia.linhasAceitas
+    );
+  });
 });

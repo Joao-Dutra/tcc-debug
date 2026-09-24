@@ -21,12 +21,18 @@ import type { ResultadoExecucao } from '../nucleo/tipos';
 /** Silêncio de digitação que fecha uma rajada de edição. */
 const PAUSA_DA_RAJADA_MS = 2000;
 
-export function useMetricas(exercicioId: string, linhaDoDefeito: number, andaime: string) {
+export function useMetricas(
+  exercicioId: string,
+  linhaDoDefeito: number,
+  andaime: string,
+  /** Quando é mais de uma, na troca de ordem (D30). */
+  linhasAceitas?: number[]
+) {
   // Criada uma única vez: o instante de início é o instante em que o estudante
   // passou a encarar o exercício, não o de um render qualquer.
   const sessao = useRef<Sessao | null>(null);
   if (sessao.current === null) {
-    sessao.current = criarSessao({ exercicioId, linhaDoDefeito, andaime });
+    sessao.current = criarSessao({ exercicioId, linhaDoDefeito, linhasAceitas, andaime });
   }
 
   const temporizador = useRef<number | undefined>(undefined);

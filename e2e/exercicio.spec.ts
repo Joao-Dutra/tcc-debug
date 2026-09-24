@@ -135,3 +135,13 @@ test.describe('intervalo entre tentativas de localização (D25)', () => {
     ).toBeVisible();
   });
 });
+
+test('na troca de ordem, apontar a segunda linha também é acerto (D30)', async ({ page }) => {
+  // Em lista-inserir-depois as duas atribuições trocaram de lugar. Até a
+  // versão 6, quem apontava a segunda ouvia "o defeito não está aqui".
+  await page.goto('/#/exercicio/lista-inserir-depois?andaime=com-apoio');
+  const numeros = page.locator('.cm-lineNumbers .cm-gutterElement');
+  await numeros.nth(16).click();
+  await expect(page.locator('.apontadas li').first()).toContainText('Linha 16');
+  await expect(page.locator('.apontadas li').first()).toContainText('o defeito está aqui');
+});
