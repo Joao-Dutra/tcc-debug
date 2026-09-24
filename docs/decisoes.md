@@ -2269,12 +2269,38 @@ outra — `new No(10, new No(30, null))` —, que é a linha mais difícil de le
 um exercício que nem trata dela. Cada nó passou a nascer na própria linha, com
 nome, e a cabeça aponta para o nó já nomeado.
 
-**Sem acrescentar uma atribuição de ligação.** Uma linha como
-`cabeca.proximo = segundo` seria um candidato plausível a defeito do mesmo tipo
-que o defeito implantado em `lista-inserir-depois` — e deixaria um nó sozinho
-por dois quadros, que é um dos três casos em que o desenho da lista não
-reconhece o campo de ligação e cai no bloco único (D14). O ganho de leitura não
-paga esses dois preços.
+**Alternativa descartada: criar os nós soltos e ligá-los numa linha à
+parte.**
+
+```js
+var cabeca = new No(10, null);
+var segundo = new No(30, null);
+cabeca.proximo = segundo;
+```
+
+É a forma mais próxima de como a lista é montada no quadro em sala, e foi o
+que se pediu primeiro. Foi descartada por dois custos, e o primeiro decide
+sozinho:
+
+1. **A linha de ligação é um candidato plausível a defeito, do mesmo tipo do
+   defeito implantado.** Em `lista-inserir-depois` o defeito está justamente
+   na atribuição de um `proximo`. Uma linha correta que também atribui um
+   `proximo`, logo no começo do programa, faria o estudante perder tempo nela
+   pelo motivo errado — não por o desenho ter apontado para lá, mas por ela se
+   parecer com o que ele procura. Isso mede a semelhança entre duas linhas, e
+   não a investigação.
+2. **O nó ficaria sozinho por dois quadros**, e nó sozinho com ligação nula é
+   um dos três casos em que o desenho da lista não reconhece o campo de
+   ligação e cai no bloco único (D14). O desenho mudaria de forma no meio da
+   execução sem que nada tivesse mudado na estrutura.
+
+A forma adotada põe cada nó na própria linha, com nome, e deixa a ligação no
+argumento do construtor, que já era como o catálogo cria nós (D17):
+
+```js
+var segundo = new No(30, null);
+var cabeca = new No(10, segundo);
+```
 
 ### `linhaDoDefeito` virou conferência, e não memória
 
@@ -2291,7 +2317,13 @@ autoria vai derivar dali a linha do defeito em vez de pedi-la ao professor.
 linhas, e não em uma — o defeito dele é a ordem entre duas atribuições, então
 as duas trocam de lugar. A regra de "divergência numa única linha" prevista
 para a submissão do professor recusaria um exercício que já está no catálogo e
-que é bom. Ver o desenho da área de autoria antes de fixar essa regra.
+que é bom.
+
+A regra estava errada, e este exercício é o contraexemplo. O que importa não é
+o número de linhas que diferem, e sim que **o defeito seja um só, coeso e
+localizável numa linha declarável**: uma troca de ordem entre duas atribuições
+vizinhas é um defeito só. A forma exata da regra vem com o desenho da área de
+autoria.
 
 ### O que virou teste
 
