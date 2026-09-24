@@ -1346,6 +1346,11 @@ Entrar numa conta que **já existe** é outra coisa: troca de identidade, e as
 sessões do anônimo ficam com o anônimo. Não há como ser diferente, e é por isso
 que o vínculo acontece antes de haver outra conta.
 
+*Superada em parte por D29:* o aluno não tem mais conta nem vínculo nenhum —
+a identidade dele é só a anônima. Google e e-mail e senha passaram a ser a
+entrada do professor, e sem vínculo: o professor entra numa conta própria, e
+as sessões anônimas do aparelho ficam com o anônimo.
+
 **Nada disso pode aparecer antes do primeiro exercício.** Mais da metade das
 sessões dos dois pilotos foi abandonada sem ação nenhuma; um cadastro na porta
 agravaria exatamente esse número. A entrada anônima é uma ida à rede, e a tela
@@ -2337,3 +2342,75 @@ No navegador: que os três marcadores da busca chegam ao desenho com forma
 própria e que sem apoio some só o rótulo; que a ordenação mostra de onde veio o
 valor escrito nos dois níveis de apoio; e que a caixa da temporária guarda o
 valor que saiu do vetor, que é o que o defeito perde.
+
+## D29 — Login só para professores
+
+**Decisão, tomada com a orientadora.** A tela inicial passa a ter duas
+entradas: aluno e professor.
+
+- **Aluno** segue direto, com a identidade anônima criada na hora, como já
+  funcionava (D21). Não há criação de conta nem vínculo com Google ou e-mail
+  em nenhuma tela do aluno. A entrada traz um aviso curto e informativo — sem
+  nada a assinar nem aceitar — de que a interação é registrada anonimamente
+  para fins de pesquisa, incluindo o código escrito.
+- **Professor** entra com Google ou com e-mail e senha. **Entrar não concede o
+  papel:** o perfil nasce como participante, como todo perfil (D21), e o papel
+  professor é atribuído à mão, no banco. É isso que garante que só pessoas
+  selecionadas criem exercícios. Quem entra sem o papel vê um estado claro de
+  aguardando liberação, e não uma área vazia.
+- **Pesquisador** continua entrando por `#/metricas`, fora da navegação, sem
+  mudança (D22).
+
+### Por que o aluno não tem conta
+
+**O aparelho já agrupa as sessões de uma pessoa.** No estudo, cada participante
+usa o próprio aparelho (roadmap, como o estudo será aplicado), e a identidade
+anônima fica guardada nele: as sessões de uma pessoa saem sob um mesmo `uid`
+sem ela precisar dizer quem é.
+
+**Conta seria custo sem ganho.** D21 já registrava que um cadastro na porta
+agravaria o abandono — mais da metade das sessões dos pilotos terminou sem ação
+nenhuma. E uma conta traria para o banco um dado pessoal, o e-mail, de que o
+estudo não precisa.
+
+### O que muda em D21
+
+D21 previa três formas de identidade para o mesmo usuário — anônima, e depois
+Google ou e-mail **vinculados** a ela, preservando o `uid`. Com esta decisão:
+
+- **O vínculo sai.** O aluno fica só com a anônima. As funções de vínculo
+  existiam e estavam testadas, mas nenhuma tela as chamava (D21, "o que ficou
+  de fora"); elas deixam de existir, e a tela de cadastro do aluno que D21
+  deixou para depois não vai ser feita.
+- **Google e e-mail e senha viram a entrada do professor, sem vínculo.** O
+  professor entra numa conta própria. Vincular levaria para a conta dele as
+  sessões anônimas do aparelho em que ele entrou — as dele testando como aluno,
+  ou as de quem usou o aparelho antes. É a mesma razão pela qual a entrada do
+  pesquisador nunca vinculou (D22).
+- **A propriedade que o teste cobra se inverte.** D21 cobrava que Google e
+  e-mail vinculassem ao anônimo; a partir daqui, cobra-se que a entrada do
+  professor **nunca** vincule.
+- **"Sair" continua devolvendo a um anônimo novo** (D22), agora também para o
+  professor: quem entrou como professor num aparelho e o entrega a um aluno não
+  pode deixar as sessões desse aluno sob a conta dele.
+
+Continua valendo de D21: a entrada anônima automática, que não espera a rede;
+nenhuma conta compartilhada; os papéis concedidos só à mão; e o RLS como a
+única proteção do dado.
+
+### O aviso ao aluno
+
+É informativo, e não pede aceite: diz que a interação é registrada
+anonimamente para fins de pesquisa, incluindo o código escrito. Ele não
+substitui o termo de consentimento que o experimento prevê (D6, D15): o
+experimento é conduzido, e o termo pertence a ele; o aviso é para quem usa a
+ferramenta fora dele.
+
+### Limitação que fica
+
+**A identidade é por aparelho, e não por pessoa.** Quem usa dois aparelhos vira
+duas identidades, e elas não se juntam depois; dois alunos no mesmo aparelho
+viram uma só. O estudo evita os dois casos com um aparelho por participante.
+Num computador de laboratório compartilhado, a troca de identidade entre um
+aluno e outro depende do pesquisador — o aluno não tem como "sair" de uma
+identidade que ele nunca escolheu.
