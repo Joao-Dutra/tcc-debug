@@ -2414,3 +2414,79 @@ viram uma só. O estudo evita os dois casos com um aparelho por participante.
 Num computador de laboratório compartilhado, a troca de identidade entre um
 aluno e outro depende do pesquisador — o aluno não tem como "sair" de uma
 identidade que ele nunca escolheu.
+
+## D30 — Um defeito só, e as linhas em que apontar é acerto
+
+**Decisão.** A regra de que as versões divergem numa única linha dá lugar a
+outra: **o defeito é um só, coeso e localizável numa linha que se possa
+apontar.** Vale uma linha alterada, ou uma linha fora do lugar. Na troca de
+ordem entre duas linhas vizinhas, as duas passam a contar como localização
+correta. A regra mora no núcleo, e o catálogo e a submissão de um professor
+obedecem à mesma função.
+
+### O que motivou
+
+A regra de uma linha só foi pedida para a área de autoria "como no catálogo" —
+e o catálogo tinha o contraexemplo: `lista-inserir-depois` diverge em duas
+linhas, porque o defeito dele é a ordem entre duas atribuições. A regra estava
+errada. O que importa não é quantas linhas diferem, e sim se a diferença é um
+defeito só.
+
+### A regra
+
+Comparadas as duas versões linha a linha, sem o recuo — que em JavaScript não
+muda nada:
+
+- **Uma linha alterada.** A declarada é ela.
+- **Uma linha fora do lugar.** O trecho que difere tem as mesmas linhas nas
+  duas versões, e só uma delas mudou de posição. A declarada é a que mudou; na
+  troca entre duas vizinhas, mover qualquer uma das duas produz a mesma troca,
+  e as duas são aceitas.
+
+É recusado, e a recusa diz por quê: versões iguais; versões de tamanhos
+diferentes; a linha que difere em branco; e qualquer outra combinação — duas
+alterações, uma troca e uma alteração, duas trocas. A mensagem nomeia as
+linhas, para quem escreveu saber onde olhar.
+
+### As duas linhas da troca são acerto
+
+Até a versão 6, em `lista-inserir-depois`, quem apontava a segunda linha da
+troca ouvia "o defeito não está aqui". Ela é metade do defeito — lê
+`no.proximo` tarde demais, exatamente como a primeira o escreve cedo demais —,
+e a resposta era um **retorno falso. Retorno falso é pior que nenhum**: ensina
+ao estudante que a hipótese certa estava errada.
+
+O exercício declara `linhasAceitas`, e o teste do catálogo confere que a lista
+é a que a comparação aceita. O veredito continua no núcleo, e a lista não
+volta para a tela (D7).
+
+**`VERSAO_DO_REGISTRO` subiu para 7.** `correta` muda de sentido na linha 16
+desse exercício, e com ela o tempo até a localização de quem a apontou
+primeiro. A origem do exercício nas sessões (D31), que chegou a estar prevista
+para esta mesma versão, fica com a 8: as duas mudanças entram em fatias
+diferentes, com uma pausa entre elas, e registros da 7 sem o campo de origem
+deixariam a versão sem dizer o que ela contém.
+
+### Limitação: a instrução que falta
+
+Versões de tamanhos diferentes são recusadas, e com isso **a categoria
+"instrução que falta" fica fora do escopo da ferramenta.** Não é descuido: o
+estudante não tem linha para apontar numa ausência, e a declaração de
+localização (D7) é a única forma de separar localizar de corrigir. Um defeito
+que não se aponta não se mede.
+
+Quase sempre o mesmo equívoco se escreve como linha alterada — o incremento
+com o valor errado, e não o incremento ausente; a condição incompleta, e não a
+verificação que falta —, e é assim que o catálogo o faz.
+
+### O que virou teste
+
+A regra em si: uma linha alterada; a troca entre vizinhas, com as duas
+aceitas; a linha que desceu duas posições, com só ela aceita; a diferença de
+recuo ignorada; e cada recusa com a razão que ela dá. No catálogo: todo
+exercício tem um defeito só, a linha declarada é a da comparação, e as linhas
+aceitas são as que a comparação aceita. No veredito: a segunda linha da troca
+é acerto, a primeira continua sendo, uma linha fora da troca continua sendo
+erro, e sem a lista só a declarada conta. No navegador, no exercício de
+verdade: apontar a linha 16 de `lista-inserir-depois` responde que o defeito
+está ali.
