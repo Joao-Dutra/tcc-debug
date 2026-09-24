@@ -79,7 +79,16 @@ interface Conta {
 /** Ids de toda conta criada nesta execução, para a limpeza não depender de nada mais. */
 const criadas: string[] = [];
 
-async function criarConta(rotulo: string): Promise<Conta> {
+/**
+ * Uma conta de teste, com o papel que a verificação precisa. O papel é
+ * concedido pela chave secreta, como no painel do Supabase: nenhuma conta
+ * consegue concedê-lo a si mesma, e é isso que as verificações de `perfis`
+ * cobram.
+ */
+async function criarConta(
+  rotulo: string,
+  papel: 'participante' | 'professor' | 'pesquisador' = 'participante'
+): Promise<Conta> {
   const email = `${PREFIXO_DO_EMAIL}${rotulo}-${carimbo}${DOMINIO_DO_EMAIL}`;
   // Letra maiúscula, minúscula, algarismo e símbolo: passa em qualquer regra de
   // senha que o projeto tenha ligado.
@@ -94,6 +103,13 @@ async function criarConta(rotulo: string): Promise<Conta> {
     throw new Error(`não foi possível criar a conta de teste ${rotulo}: ${error?.message}`);
   }
   criadas.push(data.user.id);
+
+  if (papel !== 'participante') {
+    const concessao = await admin.from('perfis').update({ papel }).eq('id', data.user.id);
+    if (concessao.error) {
+      throw new Error(`não foi possível dar o papel ${papel} a ${rotulo}: ${concessao.error.message}`);
+    }
+  }
 
   const cliente = createClient(url, chavePublica, semPersistencia);
   const entrada = await cliente.auth.signInWithPassword({ email, password: senha });
@@ -110,6 +126,16 @@ async function criarConta(rotulo: string): Promise<Conta> {
  * as linhas da conta de teste, e nenhuma outra.
  */
 async function removerConta(id: string): Promise<void> {
+  // Os exercícios saem antes da conta: a tabela recusa apagar quem escreveu ou
+  // publicou um exercício (`on delete restrict`), para uma conta apagada não
+  // levar junto um publicado com sessões apontando para ele. Aqui são todos de
+  // teste — uma conta de teste só escreve e publica exercícios de teste. Se a
+  // migração 0002 ainda não rodou, a tabela não existe e não há o que apagar;
+  // as verificações dela é que vão dizer isso.
+  await admin
+    .from('exercicios_de_professor')
+    .delete()
+    .or(`autor_id.eq.${id},publicado_por.eq.${id}`);
   const primeira = await admin.auth.admin.deleteUser(id);
   if (!primeira.error) return;
   await admin.from('sessoes').delete().eq('participante_id', id);
@@ -194,8 +220,23 @@ function recusadaPeloRls(error: PostgrestError | null) {
   expect(error?.code, `recusada por outro motivo: ${error?.message}`).toBe('42501');
 }
 
+/**
+ * Recusa pelo banco: pelo RLS (42501) ou pelo gatilho da área de autoria
+ * (P0001, o `raise exception`). O gatilho roda antes da checagem da política,
+ * e é ele que responde por transição proibida e por publicado que muda. Os
+ * dois são o banco dizendo não; qualquer outro código é recusa por outro
+ * motivo, e a verificação não teria testado nada.
+ */
+function recusadaPeloBanco(error: PostgrestError | null) {
+  expect(error, 'a operação deveria ter sido recusada').not.toBeNull();
+  expect(['42501', 'P0001'], `recusada por outro motivo: ${error?.message}`).toContain(error?.code);
+}
+
 let a: Conta;
 let b: Conta;
+let professorA: Conta;
+let professorB: Conta;
+let pesquisador: Conta;
 const sessaoDeA = `${EXERCICIO_DE_TESTE}-a-${carimbo}`;
 const sessaoDeB = `${EXERCICIO_DE_TESTE}-b-${carimbo}`;
 
@@ -204,6 +245,9 @@ beforeAll(async () => {
   await removerTodasAsContasDeTeste();
   a = await criarConta('a');
   b = await criarConta('b');
+  professorA = await criarConta('professor-a', 'professor');
+  professorB = await criarConta('professor-b', 'professor');
+  pesquisador = await criarConta('pesquisador', 'pesquisador');
 });
 
 // Rede de segurança: se algo acima derrubar a execução antes da última
@@ -354,6 +398,286 @@ describe('visitante sem sessão nenhuma', () => {
   });
 });
 
+// ------------------------------------------------ área de autoria (D31) ---
+
+/** Conteúdo mínimo: o banco não olha dentro dele, e o código correto é marcado. */
+const conteudoDeTeste = (rotulo: string) => ({
+  titulo: `${EXERCICIO_DE_TESTE}-${rotulo}-${carimbo}`,
+  codigoComDefeito: 'var x = 2;',
+  codigoCorreto: 'var x = 1; // o aluno nunca pode ler isto',
+});
+
+/** Lida por cima do RLS: o que de fato está na tabela. */
+async function exercicioNoBanco(id: string) {
+  const { data, error } = await admin
+    .from('exercicios_de_professor')
+    .select('id, autor_id, situacao, conteudo, publicado_por, enviado_em, publicado_em')
+    .eq('id', id)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/** Cria o rascunho como o professor, e devolve o id que o banco deu. */
+async function rascunhoDe(professor: Conta, rotulo: string): Promise<string> {
+  const { data, error } = await professor.cliente
+    .from('exercicios_de_professor')
+    .insert({ conteudo: conteudoDeTeste(rotulo) })
+    .select('id')
+    .single();
+  if (error || !data) throw new Error(`o professor não criou o rascunho: ${error?.message}`);
+  return data.id as string;
+}
+
+// Os blocos abaixo contam uma história só, em ordem — rascunho, envio,
+// publicação, retirada —, e cada um parte do estado em que o anterior deixou
+// o exercício de A. O de B existe para haver o que um professor não pode ver.
+let exercicioDeA = '';
+let exercicioDeB = '';
+
+describe('exercícios de professor: rascunho', () => {
+  it('o participante não cria exercício', async () => {
+    const { error } = await a.cliente
+      .from('exercicios_de_professor')
+      .insert({ conteudo: conteudoDeTeste('participante') });
+    recusadaPeloRls(error);
+  });
+
+  it('o professor cria o próprio rascunho, e ele nasce rascunho mesmo que peça outra coisa', async () => {
+    // Controle positivo, e o gatilho: a situação e o autor são do banco, e
+    // não do que o navegador mandou.
+    const { data, error } = await professorA.cliente
+      .from('exercicios_de_professor')
+      .insert({ conteudo: conteudoDeTeste('a'), situacao: 'publicado', autor_id: professorB.id })
+      .select('id')
+      .single();
+    if (!error && data) {
+      exercicioDeA = data.id as string;
+      expect(await exercicioNoBanco(exercicioDeA)).toMatchObject({
+        situacao: 'rascunho',
+        autor_id: professorA.id,
+      });
+    } else {
+      // Recusar também é seguro; mas aí o rascunho de A sai pelo caminho normal.
+      recusadaPeloBanco(error);
+      exercicioDeA = await rascunhoDe(professorA, 'a');
+    }
+    exercicioDeB = await rascunhoDe(professorB, 'b');
+  });
+
+  it('outro professor não lê nem altera o rascunho de A', async () => {
+    const leitura = await professorB.cliente
+      .from('exercicios_de_professor')
+      .select('id')
+      .eq('id', exercicioDeA);
+    expect(leitura.data ?? []).toEqual([]);
+
+    const { data } = await professorB.cliente
+      .from('exercicios_de_professor')
+      .update({ conteudo: conteudoDeTeste('invadido') })
+      .eq('id', exercicioDeA)
+      .select('id');
+    expect(data ?? []).toEqual([]);
+    expect((await exercicioNoBanco(exercicioDeA))?.conteudo).toEqual(conteudoDeTeste('a'));
+  });
+
+  it('o participante não lê rascunho nenhum', async () => {
+    const { data } = await a.cliente.from('exercicios_de_professor').select('id');
+    expect(data ?? []).toEqual([]);
+  });
+
+  it('o professor edita o próprio rascunho', async () => {
+    const { data, error } = await professorA.cliente
+      .from('exercicios_de_professor')
+      .update({ conteudo: conteudoDeTeste('a-editado') })
+      .eq('id', exercicioDeA)
+      .select('id');
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(1);
+  });
+
+  it('o professor não publica o próprio rascunho', async () => {
+    const { error } = await professorA.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'publicado' })
+      .eq('id', exercicioDeA);
+    recusadaPeloBanco(error);
+    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('rascunho');
+  });
+});
+
+describe('exercícios de professor: envio e revisão', () => {
+  it('o professor envia o próprio rascunho para revisão', async () => {
+    const { error } = await professorA.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'em_revisao' })
+      .eq('id', exercicioDeA);
+    expect(error).toBeNull();
+    const noBanco = await exercicioNoBanco(exercicioDeA);
+    expect(noBanco?.situacao).toBe('em_revisao');
+    // O carimbo é do banco.
+    expect(noBanco?.enviado_em).not.toBeNull();
+  });
+
+  it('depois de enviar, o professor não edita, não apaga e não publica', async () => {
+    const edicao = await professorA.cliente
+      .from('exercicios_de_professor')
+      .update({ conteudo: conteudoDeTeste('depois-de-enviar') })
+      .eq('id', exercicioDeA)
+      .select('id');
+    expect(edicao.data ?? []).toEqual([]);
+
+    const apagar = await professorA.cliente
+      .from('exercicios_de_professor')
+      .delete()
+      .eq('id', exercicioDeA)
+      .select('id');
+    expect(apagar.data ?? []).toEqual([]);
+
+    const publicar = await professorA.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'publicado' })
+      .eq('id', exercicioDeA)
+      .select('id');
+    expect(publicar.data ?? []).toEqual([]);
+
+    expect(await exercicioNoBanco(exercicioDeA)).toMatchObject({
+      situacao: 'em_revisao',
+      conteudo: conteudoDeTeste('a-editado'),
+    });
+  });
+
+  it('o pesquisador lê o exercício em revisão', async () => {
+    const { data, error } = await pesquisador.cliente
+      .from('exercicios_de_professor')
+      .select('id')
+      .eq('id', exercicioDeA);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(1);
+  });
+
+  it('o pesquisador publica, e o banco carimba quem publicou', async () => {
+    const { error } = await pesquisador.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'publicado' })
+      .eq('id', exercicioDeA);
+    expect(error).toBeNull();
+    expect(await exercicioNoBanco(exercicioDeA)).toMatchObject({
+      situacao: 'publicado',
+      publicado_por: pesquisador.id,
+    });
+  });
+});
+
+describe('exercícios de professor: publicado', () => {
+  it('o conteúdo publicado não muda, nem pelo pesquisador', async () => {
+    // O id numa sessão precisa identificar exatamente o que o aluno viu.
+    const { error } = await pesquisador.cliente
+      .from('exercicios_de_professor')
+      .update({ conteudo: conteudoDeTeste('reescrito') })
+      .eq('id', exercicioDeA);
+    recusadaPeloBanco(error);
+    expect((await exercicioNoBanco(exercicioDeA))?.conteudo).toEqual(conteudoDeTeste('a-editado'));
+  });
+
+  it('o visitante sem sessão lê o publicado pela visão, e nunca o código correto', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const { data, error } = await visitante
+      .from('exercicios_publicados')
+      .select('id, conteudo')
+      .eq('id', exercicioDeA);
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(1);
+    const conteudo = (data?.[0]?.conteudo ?? {}) as Record<string, unknown>;
+    expect(conteudo).not.toHaveProperty('codigoCorreto');
+    expect(conteudo).toHaveProperty('codigoComDefeito');
+  });
+
+  it('a visão não mostra rascunho, e a tabela não se abre ao visitante', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const pelaVisao = await visitante
+      .from('exercicios_publicados')
+      .select('id')
+      .eq('id', exercicioDeB);
+    expect(pelaVisao.data ?? []).toEqual([]);
+
+    const pelaTabela = await visitante.from('exercicios_de_professor').select('id');
+    if (pelaTabela.error) recusadaPeloRls(pelaTabela.error);
+    else expect(pelaTabela.data ?? []).toEqual([]);
+  });
+
+  it('o participante lê o publicado pela visão', async () => {
+    const { data } = await a.cliente.from('exercicios_publicados').select('id').eq('id', exercicioDeA);
+    expect(data ?? []).toHaveLength(1);
+  });
+
+  it('ninguém apaga um publicado — nem o autor, nem o pesquisador', async () => {
+    for (const conta of [professorA, pesquisador]) {
+      const { data } = await conta.cliente
+        .from('exercicios_de_professor')
+        .delete()
+        .eq('id', exercicioDeA)
+        .select('id');
+      expect(data ?? []).toEqual([]);
+    }
+    expect(await exercicioNoBanco(exercicioDeA)).not.toBeNull();
+  });
+
+  it('o professor não retira, e o pesquisador retira', async () => {
+    const peloProfessor = await professorA.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'retirado' })
+      .eq('id', exercicioDeA)
+      .select('id');
+    expect(peloProfessor.data ?? []).toEqual([]);
+
+    const { error } = await pesquisador.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'retirado' })
+      .eq('id', exercicioDeA);
+    expect(error).toBeNull();
+    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('retirado');
+
+    // Retirado sai da vitrine.
+    const { data } = await a.cliente.from('exercicios_publicados').select('id').eq('id', exercicioDeA);
+    expect(data ?? []).toEqual([]);
+  });
+
+  it('retirado não volta a publicado: a transição não existe', async () => {
+    const { error } = await pesquisador.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'publicado' })
+      .eq('id', exercicioDeA);
+    recusadaPeloBanco(error);
+    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('retirado');
+  });
+
+  it('o professor apaga o próprio rascunho', async () => {
+    // Rascunho não tem sessão nenhuma apontando para ele.
+    const { data, error } = await professorB.cliente
+      .from('exercicios_de_professor')
+      .delete()
+      .eq('id', exercicioDeB)
+      .select('id');
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(1);
+  });
+});
+
+describe('sessões em exercício de professor', () => {
+  it('a sessão grava a origem do exercício', async () => {
+    // Controle de que a migração 0002 rodou: sem a coluna, a análise não
+    // separa as sessões de professor das do catálogo.
+    const id = `${EXERCICIO_DE_TESTE}-origem-${carimbo}`;
+    const { error } = await a.cliente
+      .from('sessoes')
+      .upsert({ ...linhaDeSessao(id, a.id), origem_do_exercicio: 'professor' });
+    expect(error).toBeNull();
+    const { data } = await admin.from('sessoes').select('origem_do_exercicio').eq('id', id).single();
+    expect(data?.origem_do_exercicio).toBe('professor');
+  });
+});
+
 describe('limpeza', () => {
   it('não deixa resíduo no banco do estudo', async () => {
     await removerTodasAsContasDeTeste();
@@ -362,6 +686,10 @@ describe('limpeza', () => {
     if (criadas.length > 0) {
       const perfis = await linhasNoBanco(admin.from('perfis').select('id').in('id', criadas));
       expect(perfis, 'perfis das contas de teste').toEqual([]);
+      const exercicios = await linhasNoBanco(
+        admin.from('exercicios_de_professor').select('id').in('autor_id', criadas)
+      );
+      expect(exercicios, 'exercícios das contas de teste').toEqual([]);
     }
     // Pelo exercício, e não só pelas contas: pega também a linha que tivesse
     // escapado de uma recusa e ficado sob outra identidade.
