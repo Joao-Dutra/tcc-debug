@@ -56,12 +56,22 @@ const ALTURA_DA_CABECA = 12;
  */
 const DESVIO_ENTRE_MARCADORES = 10;
 
-/** Caixas das variáveis que guardam valor, acima da fileira. */
-const Y_CAIXA = 20;
+/**
+ * Caixas das variáveis que guardam valor. Ficam ao lado da fileira, na altura
+ * das células, sempre que cabem ali: perto do vetor, o caminho de um valor
+ * entre a caixa e uma posição é curto, e a miniatura (D20), que se enquadra
+ * pelo que foi desenhado, não encolhe o vetor para alcançar uma caixa lá no
+ * canto. Quando a fileira ocupa a largura toda — as oito posições da busca
+ * binária —, a caixa sobe para cima dela, alinhada ao fim da fileira.
+ */
 const ALTURA_CAIXA = 30;
 const LARGURA_CAIXA = 46;
 const ESPACO_ENTRE_CAIXAS = 10;
-const X_FIM_DAS_CAIXAS = 440;
+const DISTANCIA_DA_FILEIRA = 18;
+const Y_CAIXA_AO_LADO = Y_CELULA + (ALTURA_CELULA - ALTURA_CAIXA) / 2;
+const Y_CAIXA_ACIMA = 20;
+/** Até onde a caixa pode ir sem encostar na borda direita do quadro. */
+const X_LIMITE_DAS_CAIXAS = 472;
 const MAX_CAIXAS = 3;
 
 /** Valores chegam já serializados pelo Worker e podem ser objetos aninhados. */
@@ -164,8 +174,15 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
   const caixasOcultas = todasAsCaixas.length - caixas.length;
   const larguraDasCaixas =
     caixas.length * LARGURA_CAIXA + Math.max(caixas.length - 1, 0) * ESPACO_ENTRE_CAIXAS;
-  const xDaCaixa = (i: number) =>
-    X_FIM_DAS_CAIXAS - larguraDasCaixas + i * (LARGURA_CAIXA + ESPACO_ENTRE_CAIXAS);
+  // O fim do contorno da fileira, que é o que a caixa não pode invadir.
+  const fimDaFileira = X_INICIAL + Math.max(desenhadas, 1) * (LARGURA_CELULA + ESPACO);
+  const caixasAoLado =
+    fimDaFileira + DISTANCIA_DA_FILEIRA + larguraDasCaixas <= X_LIMITE_DAS_CAIXAS;
+  const xDaPrimeiraCaixa = caixasAoLado
+    ? fimDaFileira + DISTANCIA_DA_FILEIRA
+    : fimDaFileira - larguraDasCaixas;
+  const yDaCaixa = caixasAoLado ? Y_CAIXA_AO_LADO : Y_CAIXA_ACIMA;
+  const xDaCaixa = (i: number) => xDaPrimeiraCaixa + i * (LARGURA_CAIXA + ESPACO_ENTRE_CAIXAS);
 
   // O anel envolve a posição que o marcador principal aponta. Quando ele
   // aponta para fora do vetor não há anel, e é essa ausência que denuncia o
@@ -187,7 +204,13 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
     if (lugar.variavel === undefined) return null;
     const naCaixa = caixas.findIndex((c) => c.nome === lugar.variavel);
     if (naCaixa >= 0) {
-      return { x: xDaCaixa(naCaixa) + LARGURA_CAIXA / 2, y: Y_CAIXA + ALTURA_CAIXA };
+      // O caminho entra pelo lado da caixa voltado para a fileira: a lateral
+      // esquerda quando ela está ao lado, a base quando está acima. Pelo alto
+      // não, que é onde fica o nome da variável — a ponta da seta caía em
+      // cima dele.
+      return caixasAoLado
+        ? { x: xDaCaixa(naCaixa), y: yDaCaixa + ALTURA_CAIXA / 2 }
+        : { x: xDaCaixa(naCaixa) + LARGURA_CAIXA / 2, y: yDaCaixa + ALTURA_CAIXA };
     }
     const marcador = marcadores.find((m) => m.nome === lugar.variavel);
     if (!marcador) return null;
@@ -270,7 +293,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         <g key={'caixa-' + caixa.nome}>
           <rect
             x={xDaCaixa(i)}
-            y={Y_CAIXA}
+            y={yDaCaixa}
             width={LARGURA_CAIXA}
             height={ALTURA_CAIXA}
             rx={6}
@@ -280,7 +303,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           {rotulos && (
             <text
               x={xDaCaixa(i) + LARGURA_CAIXA / 2}
-              y={Y_CAIXA - 5}
+              y={yDaCaixa - 5}
               textAnchor="middle"
               fontSize="9"
               className="svg-rotulo"
@@ -290,7 +313,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
           )}
           <text
             x={xDaCaixa(i) + LARGURA_CAIXA / 2}
-            y={Y_CAIXA + ALTURA_CAIXA / 2 + 5}
+            y={yDaCaixa + ALTURA_CAIXA / 2 + 5}
             textAnchor="middle"
             fontSize="12"
             className="svg-valor"
@@ -300,7 +323,7 @@ export function VisualizadorVetor({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
         </g>
       ))}
       {caixasOcultas > 0 && (
-        <text x={xDaCaixa(0) - 8} y={Y_CAIXA + 20} textAnchor="end" fontSize="11" className="svg-rotulo">
+        <text x={xDaPrimeiraCaixa + larguraDasCaixas + 6} y={yDaCaixa + 20} textAnchor="start" fontSize="11" className="svg-rotulo">
           +{caixasOcultas}
         </text>
       )}
