@@ -17,6 +17,7 @@ import { complexidadeDe } from './complexidade';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
 import { estadoDaArea } from './estado-da-area';
 import { CATEGORIAS, ESTRUTURAS } from './formulario-do-exercicio';
+import { publicacaoLiberada } from './liberacoes-da-autoria';
 import { PreviaDoExercicio } from './PreviaDoExercicio';
 import { RelatorioDeVerificacao } from './RelatorioDeVerificacao';
 import { useIdentidade } from './usar-identidade';
@@ -112,6 +113,12 @@ function ConteudoParaLer({ exercicio }: { exercicio: ExercicioDeProfessor }) {
         )}
         <dt>Enviado em</dt>
         <dd>{quando(exercicio.enviadoEm)}</dd>
+        {/* Só o identificador: o banco não guarda o e-mail em `perfis` (D29), e
+            quem precisa saber quem é o encontra no painel do Supabase. */}
+        <dt>Conta do autor</dt>
+        <dd>
+          <code>{exercicio.autorId}</code>
+        </dd>
       </dl>
 
       <h3>Enunciado</h3>
@@ -239,7 +246,7 @@ function ExercicioEmRevisao({
 
   const relatorio = refeita.tipo === 'pronta' ? refeita.relatorio : null;
   // Só o refeito decide. O gravado não entra nesta conta.
-  const derivado = relatorio?.aprovado ? relatorio.derivado : undefined;
+  const derivado = publicacaoLiberada(relatorio);
 
   const agir = async (acao: () => Promise<void>) => {
     setOcupado(true);

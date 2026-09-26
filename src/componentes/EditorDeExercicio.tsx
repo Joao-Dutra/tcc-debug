@@ -21,6 +21,7 @@ import {
   formularioVazio,
   rascunhoDoFormulario,
 } from './formulario-do-exercicio';
+import { envioLiberado, verificacaoValeParaOAtual } from './liberacoes-da-autoria';
 import { PreviaDoExercicio } from './PreviaDoExercicio';
 import { RelatorioDeVerificacao } from './RelatorioDeVerificacao';
 import { temaDoEditor } from './tema-do-editor';
@@ -117,9 +118,8 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
   };
 
   const atual = rascunhoDoFormulario(formulario).rascunho;
-  const verificacaoValeParaOAtual =
-    relatorio !== null && atual !== null && verificado === JSON.stringify(atual);
-  const podeEnviar = verificacaoValeParaOAtual && relatorio?.aprovado === true;
+  const valeParaOAtual = verificacaoValeParaOAtual(relatorio, verificado, atual);
+  const podeEnviar = envioLiberado(relatorio, verificado, atual);
 
   const falhou = (e: unknown) => {
     setMensagem(null);
@@ -452,7 +452,7 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
           {id ? 'Apagar rascunho' : 'Descartar'}
         </button>
       </div>
-      {relatorio && !verificacaoValeParaOAtual && (
+      {relatorio && !valeParaOAtual && (
         <p className="rodape-painel">
           O exercício mudou desde a última verificação. Verifique de novo antes de enviar.
         </p>
