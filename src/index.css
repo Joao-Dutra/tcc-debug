@@ -359,6 +359,16 @@ a.botao { display: inline-flex; align-items: center; gap: var(--esp-8);
   font-weight: 700; font-size: var(--fonte-corpo); }
 a.botao.primario { background: var(--acao); color: var(--sobre-acao); }
 a.botao.primario:hover { background: var(--acao-forte); }
+/* A entrada do professor é a segunda, e se lê assim: contornada em grafite,
+   para a anilina cheia continuar sendo a do aluno, que é a entrada de quase
+   todo mundo (D29). */
+a.botao.secundario { border: 1.5px solid var(--grafite); color: var(--grafite); }
+a.botao.secundario:hover { border-color: var(--acao); color: var(--acao); }
+.entradas { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--esp-16) var(--esp-24); }
+.entrada-aluno { display: flex; flex-direction: column; align-items: flex-start; }
+/* Informativo, e não um termo: letra de apoio, logo abaixo do botão do aluno. */
+.chamada .aviso-pesquisa { font-size: var(--fonte-miuda); line-height: 1.5;
+  color: var(--grafite-suave); max-width: 34ch; margin: var(--esp-10) 0 0; }
 
 .folha { display: block; width: 100%; height: auto; overflow: visible; }
 .folha-de-baixo { fill: var(--areia-200); stroke: var(--areia-400); }
@@ -536,17 +546,36 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 
 /* Filtros e entrada do pesquisador (D22). Campos no mesmo desenho dos botões,
    para o painel ler como uma coisa só. */
-.filtros-painel, .entrada-pesquisador { display: flex; flex-wrap: wrap;
+.filtros-painel, .entrada-pesquisador, .entrada-conta { display: flex; flex-wrap: wrap;
   align-items: end; gap: var(--esp-8) var(--esp-16); margin-bottom: var(--esp-12); }
-.filtros-painel label, .entrada-pesquisador label { display: flex; flex-direction: column;
+.filtros-painel label, .entrada-pesquisador label, .entrada-conta label { display: flex; flex-direction: column;
   gap: var(--esp-4); font-size: var(--fonte-miuda); color: var(--grafite-suave); }
-.filtros-painel select, .entrada-pesquisador input {
+.filtros-painel select, .entrada-pesquisador input, .entrada-conta input {
   font: inherit; font-size: var(--fonte-apoio); color: var(--grafite);
   padding: var(--esp-6) var(--esp-10); border-radius: var(--raio-controle);
   border: 1px solid var(--borda-controle); background: var(--mesa-de-luz); }
 .filtros-painel label.marcar { flex-direction: row; align-items: center;
   font-size: var(--fonte-apoio); color: var(--grafite); }
-.entrada-pesquisador .erro { flex-basis: 100%; margin: 0; }
+.entrada-pesquisador .erro, .entrada-conta .erro { flex-basis: 100%; margin: 0; }
+
+/* ---------------------------------------------------------------------------
+   Área do professor (D29, D31): tela de trabalho, como o painel — densidade
+   vale mais que respiro, e nada aqui é visto por aluno.
+--------------------------------------------------------------------------- */
+.conta-aberta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8) var(--esp-16);
+  margin-top: var(--esp-12); }
+.conta-aberta .rodape-painel { margin: 0; }
+.entrada-conta .aviso-conta { flex-basis: 100%; margin: 0; font-size: var(--fonte-apoio); }
+.aguardando-liberacao p { margin: 0 0 var(--esp-8); max-width: var(--largura-texto); }
+.lista-de-exercicios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
+  gap: var(--esp-8); }
+.lista-de-exercicios li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--esp-4) var(--esp-12); }
+.titulo-do-exercicio { font-weight: 700; }
+/* A situação é texto numa pílula contornada: a palavra carrega o estado, e a
+   cor não precisa carregar nada. */
+.situacao { font-size: var(--fonte-miuda); padding: 0 var(--esp-8); border-radius: var(--raio-pilula);
+  border: 1px solid var(--grafite-suave); color: var(--grafite-suave); }
+.comentario-da-revisao { flex-basis: 100%; font-size: var(--fonte-apoio); color: var(--grafite-suave); }
 
 /* ---------------------------------------------------------------------------
    Cores dentro do SVG

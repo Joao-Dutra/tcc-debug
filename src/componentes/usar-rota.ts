@@ -15,7 +15,8 @@ export type Rota =
   | { tela: 'inicial' }
   | { tela: 'exercicios' }
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
-  | { tela: 'metricas' };
+  | { tela: 'metricas' }
+  | { tela: 'autoria' };
 
 export const CAMINHO_INICIAL = '#/';
 
@@ -27,6 +28,13 @@ export const CAMINHO_EXERCICIOS = '#/exercicios';
  * navegação: quem chega aqui digita a rota.
  */
 export const CAMINHO_METRICAS = '#/metricas';
+
+/**
+ * Área do professor (D29, D31). A tela inicial aponta para cá; quem não tem o
+ * papel de professor entra e vê que aguarda liberação. O que protege os
+ * exercícios é o RLS, e não esta rota.
+ */
+export const CAMINHO_AUTORIA = '#/autoria';
 
 /**
  * O nível vai explícito no link quando informado, mesmo sendo `com-apoio` o
@@ -55,6 +63,7 @@ export function interpretarHash(hash: string): Rota {
   const partes = caminho.split('/').filter((parte) => parte !== '');
 
   if (partes[0] === 'metricas') return { tela: 'metricas' };
+  if (partes[0] === 'autoria') return { tela: 'autoria' };
   if (partes[0] === 'exercicios') return { tela: 'exercicios' };
 
   if (partes[0] === 'exercicio' && partes[1]) {

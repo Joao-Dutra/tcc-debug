@@ -1,5 +1,6 @@
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { catalogo, proximoDoCatalogo } from './exercicios/catalogo';
+import { AreaDoProfessor } from './componentes/AreaDoProfessor';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { TelaExercicio } from './componentes/TelaExercicio';
 import { TelaInicial } from './componentes/TelaInicial';
@@ -21,6 +22,9 @@ export default function App() {
 
   // Rota do pesquisador (D11). Nenhuma tela do participante aponta para ela.
   if (rota.tela === 'metricas') return <PainelDeMetricas />;
+
+  // Área do professor (D29, D31), com entrada própria na tela inicial.
+  if (rota.tela === 'autoria') return <AreaDoProfessor />;
 
   const exercicio = catalogo.find((e) => e.id === rota.id);
 

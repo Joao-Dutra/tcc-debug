@@ -16,6 +16,7 @@ const TELAS = [
   { nome: 'inicial', rota: '#/' },
   { nome: 'vitrine', rota: '#/exercicios' },
   { nome: 'exercício', rota: '#/exercicio/pilha-desempilhar?andaime=com-apoio' },
+  { nome: 'do professor', rota: '#/autoria' },
 ];
 
 for (const largura of [360, 390]) {

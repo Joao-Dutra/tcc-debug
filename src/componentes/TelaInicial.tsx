@@ -1,8 +1,9 @@
 import { IconeApontar, IconeExecutar, IconeObservar } from './IlustracoesDaInicial';
-import { CAMINHO_EXERCICIOS } from './usar-rota';
+import { CAMINHO_AUTORIA, CAMINHO_EXERCICIOS } from './usar-rota';
 
 /**
- * Tela de entrada: diz o que a ferramenta é e leva aos exercícios.
+ * Tela de entrada: diz o que a ferramenta é e leva aos exercícios, pela
+ * entrada do aluno, ou à área do professor (D29).
  *
  * Não mostra exercício nenhum, nem quantos existem, nem quais já foram
  * abertos — é a mesma regra da lista, sem progresso (D8).
@@ -129,9 +130,26 @@ export function TelaInicial() {
             de propósito. Você executa, acompanha a estrutura de dados mudando passo a
             passo e descobre em que ponto o programa sai do trilho.
           </p>
-          <a className="botao primario" href={CAMINHO_EXERCICIOS}>
-            Ver os exercícios
-          </a>
+          {/* Duas entradas (D29). O aluno segue direto, com a identidade anônima
+              que o aparelho já tem: nada de conta nem cadastro na porta. O
+              professor entra na área dele, onde a conta é pedida. */}
+          <div className="entradas">
+            <div className="entrada-aluno">
+              <a className="botao primario" href={CAMINHO_EXERCICIOS}>
+                Entrar como aluno
+              </a>
+              {/* Informativo, e sem nada a aceitar: diz o que é registrado,
+                  inclusive o código. Não substitui o termo de consentimento
+                  do experimento, que é conduzido (D29). */}
+              <p className="aviso-pesquisa">
+                A sua interação é registrada de forma anônima para fins de pesquisa, incluindo
+                o código que você escrever.
+              </p>
+            </div>
+            <a className="botao secundario" href={CAMINHO_AUTORIA}>
+              Entrar como professor
+            </a>
+          </div>
         </div>
         <FolhaDeExercicio />
       </section>
