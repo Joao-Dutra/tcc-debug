@@ -36,3 +36,11 @@ test('o professor vai para a área dele', async ({ page }) => {
   // Sem banco, a área diz por que não funciona, em vez de uma tela vazia.
   await expect(page.getByText(/o banco não está configurado/)).toBeVisible();
 });
+
+test('a revisão fica fora das entradas, e sem banco diz por quê', async ({ page }) => {
+  await page.goto('/#/');
+  await expect(page.locator('a[href="#/revisao"]')).toHaveCount(0);
+  await page.goto('/#/revisao');
+  await expect(page.getByRole('heading', { name: 'Revisão dos exercícios', level: 1 })).toBeVisible();
+  await expect(page.getByText(/o banco não está configurado/)).toBeVisible();
+});

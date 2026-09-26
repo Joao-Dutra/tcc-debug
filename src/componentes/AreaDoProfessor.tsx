@@ -12,7 +12,7 @@ import { lerMeusExercicios } from '../supabase/exercicios-de-professor';
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { estadoDaArea } from './estado-da-area';
 import { useIdentidade } from './usar-identidade';
-import { CAMINHO_AUTORIA, CAMINHO_INICIAL } from './usar-rota';
+import { CAMINHO_AUTORIA, CAMINHO_INICIAL, CAMINHO_REVISAO } from './usar-rota';
 import type { ExercicioDeProfessor, SituacaoDoExercicio } from '../supabase/exercicios-de-professor';
 import type { Identidade } from '../supabase/identidade';
 import type { RascunhoDeExercicio } from '../nucleo/verificacao-do-exercicio';
@@ -305,6 +305,11 @@ export function AreaDoProfessor() {
             O pesquisador revisa e publica os exercícios dos professores, mas não os escreve
             por aqui: os exercícios da pesquisa ficam no catálogo, no repositório, com a suíte
             de testes inteira.
+          </p>
+          <p>
+            <a className="botao" href={CAMINHO_REVISAO}>
+              Ir para a revisão
+            </a>
           </p>
         </section>
       </Moldura>

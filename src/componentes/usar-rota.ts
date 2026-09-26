@@ -16,7 +16,8 @@ export type Rota =
   | { tela: 'exercicios' }
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' }
-  | { tela: 'autoria' };
+  | { tela: 'autoria' }
+  | { tela: 'revisao' };
 
 export const CAMINHO_INICIAL = '#/';
 
@@ -35,6 +36,13 @@ export const CAMINHO_METRICAS = '#/metricas';
  * exercícios é o RLS, e não esta rota.
  */
 export const CAMINHO_AUTORIA = '#/autoria';
+
+/**
+ * Revisão dos exercícios de professor, pelo pesquisador (D31). Como o painel,
+ * fora da navegação do participante; a área do professor aponta para cá quando
+ * quem entrou é pesquisador.
+ */
+export const CAMINHO_REVISAO = '#/revisao';
 
 /**
  * O nível vai explícito no link quando informado, mesmo sendo `com-apoio` o
@@ -64,6 +72,7 @@ export function interpretarHash(hash: string): Rota {
 
   if (partes[0] === 'metricas') return { tela: 'metricas' };
   if (partes[0] === 'autoria') return { tela: 'autoria' };
+  if (partes[0] === 'revisao') return { tela: 'revisao' };
   if (partes[0] === 'exercicios') return { tela: 'exercicios' };
 
   if (partes[0] === 'exercicio' && partes[1]) {

@@ -630,6 +630,36 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .avisos-da-verificacao h3 { font-size: var(--fonte-apoio); margin: 0 0 var(--esp-4); }
 .avisos-da-verificacao ul { margin: var(--esp-8) 0 0; padding-left: var(--esp-20); font-size: var(--fonte-apoio); }
 
+/* Revisão (D31): o pesquisador lê o exercício inteiro antes de decidir. */
+.revisao-do-exercicio h3 { font-size: var(--fonte-apoio); margin: var(--esp-16) 0 var(--esp-4); }
+.dados-do-exercicio { display: grid; grid-template-columns: max-content 1fr; gap: var(--esp-4) var(--esp-16);
+  margin: 0; font-size: var(--fonte-apoio); }
+.dados-do-exercicio dt { font-weight: 700; }
+.dados-do-exercicio dd { margin: 0; }
+.texto-do-exercicio { margin: 0; max-width: var(--largura-texto); white-space: pre-wrap; }
+.dicas-da-revisao, .casos-da-revisao { margin: var(--esp-4) 0 0; padding-left: var(--esp-20);
+  font-size: var(--fonte-apoio); max-width: var(--largura-texto); }
+.casos-da-revisao code { font-family: var(--familia-mono); }
+/* Os números são os da tela do aluno: é por eles que a localização se declara,
+   e por eles o pesquisador confere a linha que a verificação derivou. */
+.codigo-numerado { margin: 0; padding: var(--esp-10) var(--esp-12); overflow-x: auto;
+  font-family: var(--familia-mono); font-size: var(--fonte-miuda); line-height: 1.6;
+  background: var(--mesa-de-luz); border: 1px solid var(--regua); border-radius: var(--raio-faixa); }
+.numero-da-linha { display: inline-block; min-width: 3ch; margin-right: var(--esp-12); text-align: right;
+  color: var(--grafite-suave); user-select: none; }
+/* A divergência do relatório gravado não pode passar batida: fio na cor de
+   erro e texto, porque a cor sozinha não diria o que divergiu. */
+.sinal-de-divergencia { margin: 0 0 var(--esp-8); padding: var(--esp-8) var(--esp-12);
+  border-left: 3px solid var(--erro); background: var(--mesa-de-luz); font-size: var(--fonte-apoio); }
+.sinal-de-divergencia p { margin: 0; }
+.sinal-de-divergencia ul { margin: var(--esp-8) 0 0; padding-left: var(--esp-20); }
+.relatorio-gravado summary { cursor: pointer; font-size: var(--fonte-apoio); margin-bottom: var(--esp-8); }
+.comentario-para-devolver { display: flex; flex-direction: column; gap: var(--esp-4); margin-top: var(--esp-16);
+  font-size: var(--fonte-apoio); font-weight: 700; max-width: var(--largura-texto); }
+.comentario-para-devolver textarea { font: inherit; font-weight: 500; resize: vertical;
+  padding: var(--esp-6) var(--esp-10); border-radius: var(--raio-controle);
+  border: 1px solid var(--borda-controle); background: var(--mesa-de-luz); color: var(--grafite); }
+
 /* Prévia: as duas versões lado a lado, cada uma com o seu reprodutor. */
 .previa { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--esp-24); }
 .versao-da-previa h3 { font-size: var(--fonte-apoio); margin: 0 0 var(--esp-8); }

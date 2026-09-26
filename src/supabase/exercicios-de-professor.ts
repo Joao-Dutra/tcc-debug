@@ -36,6 +36,28 @@ export interface ConteudoDoExercicio extends RascunhoDeExercicio {
   linhasAceitas?: number[];
 }
 
+/**
+ * Só o que o professor escreveu. A linha do defeito e as linhas aceitas quem
+ * grava é a publicação, a partir da verificação refeita; se vierem no conteúdo
+ * de um exercício em revisão, foram escritas por outro caminho, e a revisão
+ * não as usa.
+ */
+export function rascunhoDoConteudo(conteudo: ConteudoDoExercicio): RascunhoDeExercicio {
+  return {
+    titulo: conteudo.titulo,
+    enunciado: conteudo.enunciado,
+    estrutura: conteudo.estrutura,
+    dificuldade: conteudo.dificuldade,
+    categoriaDefeito: conteudo.categoriaDefeito,
+    codigoCorreto: conteudo.codigoCorreto,
+    codigoComDefeito: conteudo.codigoComDefeito,
+    casosDeTeste: conteudo.casosDeTeste,
+    dicas: conteudo.dicas,
+    marcadores: conteudo.marcadores,
+    variaveisDeValor: conteudo.variaveisDeValor,
+  };
+}
+
 export interface ExercicioDeProfessor {
   id: string;
   autorId: string;

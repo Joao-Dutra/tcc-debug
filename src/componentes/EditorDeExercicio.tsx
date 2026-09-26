@@ -16,6 +16,7 @@ import {
 import { complexidadeDe } from './complexidade';
 import {
   CATEGORIAS,
+  ESTRUTURAS,
   formularioDe,
   formularioVazio,
   rascunhoDoFormulario,
@@ -42,13 +43,6 @@ import type { Exercicio, TipoEstrutura } from '../nucleo/tipos';
  * algo mudou depois de verificar, verifica-se de novo. Sem isso, verificar e
  * depois editar mandaria para a revisão um exercício que ninguém verificou.
  */
-
-const ESTRUTURAS: readonly { valor: TipoEstrutura; rotulo: string }[] = [
-  { valor: 'vetor', rotulo: 'Vetor' },
-  { valor: 'pilha', rotulo: 'Pilha' },
-  { valor: 'fila', rotulo: 'Fila' },
-  { valor: 'lista-encadeada', rotulo: 'Lista encadeada' },
-];
 
 const CONFIGURACAO_DO_EDITOR = {
   foldGutter: false,

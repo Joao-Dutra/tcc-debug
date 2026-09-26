@@ -37,6 +37,13 @@ export interface FormularioDoExercicio {
   variaveisDeValor: string;
 }
 
+export const ESTRUTURAS: readonly { valor: TipoEstrutura; rotulo: string }[] = [
+  { valor: 'vetor', rotulo: 'Vetor' },
+  { valor: 'pilha', rotulo: 'Pilha' },
+  { valor: 'fila', rotulo: 'Fila' },
+  { valor: 'lista-encadeada', rotulo: 'Lista encadeada' },
+];
+
 export const CATEGORIAS: readonly { valor: CategoriaDefeito; rotulo: string }[] = [
   { valor: 'indice-deslocado', rotulo: 'Índice deslocado — uma posição a mais ou a menos' },
   { valor: 'condicao-de-parada', rotulo: 'Condição de parada — o laço termina cedo ou tarde demais' },

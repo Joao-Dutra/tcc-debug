@@ -2,6 +2,7 @@ import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { catalogo, proximoDoCatalogo } from './exercicios/catalogo';
 import { AreaDoProfessor } from './componentes/AreaDoProfessor';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
+import { RevisaoDeExercicios } from './componentes/RevisaoDeExercicios';
 import { TelaExercicio } from './componentes/TelaExercicio';
 import { TelaInicial } from './componentes/TelaInicial';
 import { VitrineDeExercicios } from './componentes/VitrineDeExercicios';
@@ -25,6 +26,9 @@ export default function App() {
 
   // Área do professor (D29, D31), com entrada própria na tela inicial.
   if (rota.tela === 'autoria') return <AreaDoProfessor />;
+
+  // Revisão dos exercícios de professor, pelo pesquisador (D31).
+  if (rota.tela === 'revisao') return <RevisaoDeExercicios />;
 
   const exercicio = catalogo.find((e) => e.id === rota.id);
 
