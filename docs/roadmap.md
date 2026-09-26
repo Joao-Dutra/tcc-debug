@@ -252,7 +252,7 @@ ninguém. Isso é parte do valor do trabalho, e não um apêndice dele.
 separada e restrita, e não toca em nenhuma tela do participante. Pode continuar
 evoluindo durante a coleta sem mudar uma linha do que o participante vê.
 **Com uma exceção, que veio com a publicação:** os exercícios publicados
-aparecem na vitrine. Por isso publicar e retirar ficam fora da coleta (D31, e o
+aparecem na vitrine. Por isso nada é publicado até o fim da coleta (D31, e o
 item 5).
 
 Área restrita, liberada a pessoas selecionadas. Sem preocupação com código
@@ -293,9 +293,10 @@ O congelamento do arranjo da tela de exercício já está em vigor (D20); este
 marco estende a mesma regra ao resto.
 
 **Os propostos por professores entram no congelamento.** A seção deles é parte
-da vitrine: durante a coleta não se publica nem se retira nada (D31), e o que
-estiver publicado no início dela é decidido antes — fica, e é parte do que os
-participantes veem, ou sai.
+da vitrine, e nada é publicado até o fim da coleta (D31): o que for escrito
+antes disso espera em revisão, que o aluno não vê, e é publicado depois. A
+retirada, definitiva, não é usada para segurar exercício. Antes do início,
+confere-se que não há nenhum publicado.
 
 ### 6. Experimento
 

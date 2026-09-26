@@ -2607,11 +2607,28 @@ Worker.
 
 ### Publicar durante a coleta
 
-**Procedimento: nem publicar nem retirar durante uma coleta.** As duas coisas
-mudam a vitrine que os participantes veem, e o congelamento (roadmap, item 5)
-exige que ela seja a mesma do começo ao fim. A confirmação do botão de publicar
-lembra disso. O que estiver publicado quando a coleta começar faz parte da
-vitrine congelada — deixar ou retirar é decidido antes.
+**Decisão, do autor: nada é publicado até o fim da coleta.** Publicar muda a
+vitrine que os participantes veem, e o congelamento (roadmap, item 5) exige que
+ela seja a mesma do começo ao fim. Sem nenhum publicado, a seção dos propostos
+não existe, e a vitrine da coleta é só o catálogo.
+
+- **O que for escrito antes disso espera em revisão.** O aluno não vê
+  exercício em revisão — a visão dos publicados só traz os publicados —, então
+  a fila pode crescer durante a coleta sem tocar em nada do que o participante
+  vê. A publicação vem depois do fim da coleta.
+- **Revisar e devolver continuam livres.** Refazer a verificação e devolver
+  com comentário não mudam a vitrine; o professor pode corrigir o rascunho
+  devolvido e reenviá-lo, e ele volta a esperar na fila.
+- **A retirada não é usada para isso.** Ela é definitiva: o retirado não volta
+  à vitrine, e publicá-lo de novo exigiria um rascunho novo, com outro
+  identificador, e outra revisão. Segurar um exercício é deixá-lo em revisão, e
+  não publicá-lo e retirá-lo.
+- **Antes do início da coleta, confere-se na revisão que a lista de publicados
+  está vazia.**
+
+É procedimento, e não trava no banco: o banco não sabe quando há coleta, e com
+um só pesquisador publicando, a regra cabe na confirmação do botão de
+publicar, que a repete.
 
 ### Limitações que ficam
 

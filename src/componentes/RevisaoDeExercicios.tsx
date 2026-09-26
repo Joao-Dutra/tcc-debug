@@ -264,8 +264,9 @@ function ExercicioEmRevisao({
     if (!derivado) return;
     const confirmado = window.confirm(
       'Publicar este exercício? Ele passa a aparecer na vitrine para os alunos.\n\n' +
-        'Durante uma coleta de dados, não publique: a vitrine que os participantes veem ' +
-        'precisa ser a mesma do começo ao fim da coleta (D31).'
+        'Nada é publicado até o fim da coleta de dados: a vitrine que os participantes ' +
+        'veem precisa ser a mesma do começo ao fim. Até lá, deixe o exercício em revisão — ' +
+        'o aluno não o vê (D31).'
     );
     if (confirmado) void agir(() => publicar(exercicio.id, rascunho, derivado));
   };
