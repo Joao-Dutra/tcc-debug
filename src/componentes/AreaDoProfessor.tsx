@@ -9,11 +9,13 @@ import {
   sair,
 } from '../supabase/identidade';
 import { lerMeusExercicios } from '../supabase/exercicios-de-professor';
+import { EditorDeExercicio } from './EditorDeExercicio';
 import { estadoDaArea } from './estado-da-area';
 import { useIdentidade } from './usar-identidade';
 import { CAMINHO_AUTORIA, CAMINHO_INICIAL } from './usar-rota';
 import type { ExercicioDeProfessor, SituacaoDoExercicio } from '../supabase/exercicios-de-professor';
 import type { Identidade } from '../supabase/identidade';
+import type { RascunhoDeExercicio } from '../nucleo/verificacao-do-exercicio';
 
 /**
  * A área do professor (D29, D31).
@@ -157,10 +159,23 @@ const ROTULOS_DA_SITUACAO: Record<SituacaoDoExercicio, string> = {
   retirado: 'Retirado',
 };
 
-/** Os exercícios do professor, por situação. */
+/** O que a situação quer dizer para quem escreveu o exercício. */
+const O_QUE_ACONTECE: Record<Exclude<SituacaoDoExercicio, 'rascunho'>, string> = {
+  em_revisao: 'Enviado. Aguarda a revisão, e não muda mais até ser publicado ou devolvido.',
+  publicado: 'Publicado: os alunos o veem na vitrine. Não muda mais; para corrigir, crie um rascunho a partir dele.',
+  retirado: 'Retirado da vitrine. Continua guardado, porque há sessões de alunos nele.',
+};
+
+type Aberto =
+  | { tipo: 'novo'; inicial: RascunhoDeExercicio | null }
+  | { tipo: 'rascunho'; exercicio: ExercicioDeProfessor };
+
+/** Os exercícios do professor, por situação, e o editor quando um está aberto. */
 function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
   const [exercicios, setExercicios] = useState<ExercicioDeProfessor[] | null>(null);
   const [erro, setErro] = useState<string | null>(null);
+  const [aberto, setAberto] = useState<Aberto | null>(null);
+  const [leitura, setLeitura] = useState(0);
 
   useEffect(() => {
     let valida = true;
@@ -170,14 +185,35 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
     return () => {
       valida = false;
     };
-  }, [autorId]);
+  }, [autorId, leitura]);
+
+  if (aberto) {
+    return (
+      <EditorDeExercicio
+        // Chave nova a cada abertura: o editor começa do que foi aberto, e
+        // não do que ficou de outro exercício.
+        key={aberto.tipo === 'rascunho' ? aberto.exercicio.id : 'novo'}
+        id={aberto.tipo === 'rascunho' ? aberto.exercicio.id : null}
+        inicial={aberto.tipo === 'rascunho' ? aberto.exercicio.conteudo : aberto.inicial}
+        aoFechar={(mudou) => {
+          setAberto(null);
+          if (mudou) setLeitura((n) => n + 1);
+        }}
+      />
+    );
+  }
 
   if (erro) return <p className="erro">A leitura dos seus exercícios falhou ({erro}).</p>;
   if (exercicios === null) return <p className="rodape-painel">Lendo os seus exercícios…</p>;
 
   return (
     <section className="painel">
-      <h2>Seus exercícios</h2>
+      <div className="cabecalho-painel">
+        <h2>Seus exercícios</h2>
+        <button className="primario" onClick={() => setAberto({ tipo: 'novo', inicial: null })}>
+          Novo exercício
+        </button>
+      </div>
       {exercicios.length === 0 ? (
         <p className="rodape-painel">Você ainda não escreveu nenhum exercício.</p>
       ) : (
@@ -186,10 +222,30 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
             <li key={e.id}>
               <span className={`situacao ${e.situacao}`}>{ROTULOS_DA_SITUACAO[e.situacao]}</span>
               <span className="titulo-do-exercicio">{e.conteudo.titulo || 'Sem título'}</span>
+              {e.situacao === 'rascunho' ? (
+                <button
+                  className="discreto"
+                  onClick={() => setAberto({ tipo: 'rascunho', exercicio: e })}
+                >
+                  Editar
+                </button>
+              ) : (
+                (e.situacao === 'publicado' || e.situacao === 'retirado') && (
+                  <button
+                    className="discreto"
+                    onClick={() => setAberto({ tipo: 'novo', inicial: e.conteudo })}
+                  >
+                    Criar rascunho a partir deste
+                  </button>
+                )
+              )}
               {e.situacao === 'rascunho' && e.comentarioDaRevisao && (
                 <span className="comentario-da-revisao">
                   Devolvido pela revisão: {e.comentarioDaRevisao}
                 </span>
+              )}
+              {e.situacao !== 'rascunho' && (
+                <span className="comentario-da-revisao">{O_QUE_ACONTECE[e.situacao]}</span>
               )}
             </li>
           ))}

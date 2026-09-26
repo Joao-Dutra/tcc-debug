@@ -577,6 +577,63 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   border: 1px solid var(--grafite-suave); color: var(--grafite-suave); }
 .comentario-da-revisao { flex-basis: 100%; font-size: var(--fonte-apoio); color: var(--grafite-suave); }
 
+/* Editor de exercício. Campos em coluna, na ordem do trabalho; a estrutura
+   vem primeiro porque decide os nomes que o desenho procura. */
+.editor-de-exercicio .campos { display: flex; flex-direction: column; gap: var(--esp-16);
+  margin-bottom: var(--esp-16); }
+.editor-de-exercicio label, .editor-de-exercicio .campo-de-codigo { display: flex; flex-direction: column;
+  gap: var(--esp-4); font-size: var(--fonte-apoio); font-weight: 700; color: var(--grafite); }
+.editor-de-exercicio input, .editor-de-exercicio textarea, .editor-de-exercicio select {
+  font: inherit; font-size: var(--fonte-apoio); font-weight: 500; color: var(--grafite);
+  padding: var(--esp-6) var(--esp-10); border-radius: var(--raio-controle);
+  border: 1px solid var(--borda-controle); background: var(--mesa-de-luz); }
+.editor-de-exercicio textarea { resize: vertical; }
+.editor-de-exercicio .mono { font-family: var(--familia-mono); }
+.editor-de-exercicio .ajuda { font-weight: 500; font-size: var(--fonte-miuda); color: var(--grafite-suave); }
+.editor-de-exercicio .rotulo-do-campo { font-weight: 700; }
+.editor-de-exercicio .campo-de-codigo .discreto { align-self: flex-start; }
+.lado-a-lado { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--esp-16); }
+.editor-de-exercicio fieldset { border: 1px solid var(--regua); border-radius: var(--raio-faixa);
+  padding: var(--esp-12) var(--esp-16); margin: 0; display: flex; flex-direction: column;
+  gap: var(--esp-8); }
+.editor-de-exercicio legend { font-size: var(--fonte-apoio); font-weight: 700; padding: 0 var(--esp-4); }
+.editor-de-exercicio fieldset > button { align-self: flex-start; }
+.caso-do-formulario { display: grid; grid-template-columns: 2fr 2fr 1fr auto; gap: var(--esp-8);
+  align-items: center; }
+@media (max-width: 700px) { .caso-do-formulario { grid-template-columns: 1fr; } }
+/* O contrato de nomes aparece antes do código, com chão próprio: é regra que
+   o professor precisa ler antes de escrever, e não depois de errar. */
+.nomes-esperados { background: var(--mesa-de-luz); border-left: 3px solid var(--grafite);
+  border-radius: var(--raio-faixa); padding: var(--esp-10) var(--esp-16); }
+.nomes-esperados h3 { font-size: var(--fonte-apoio); margin: 0 0 var(--esp-4); }
+.nomes-esperados ul { margin: var(--esp-8) 0 0; padding-left: var(--esp-20); font-size: var(--fonte-apoio); }
+.nomes-esperados code { font-family: var(--familia-mono); font-weight: 700; }
+.erros-do-formulario { list-style: none; margin: 0 0 var(--esp-12); padding: 0; }
+.erros-do-formulario .erro { margin: 0 0 var(--esp-4); font-size: var(--fonte-apoio); }
+.mensagem-do-editor { margin: 0 0 var(--esp-12); font-size: var(--fonte-apoio); }
+.bloco-do-editor { margin-top: var(--esp-24); }
+.bloco-do-editor > h3 { font-size: var(--fonte-secao); margin: 0 0 var(--esp-10); }
+/* No editor do professor, o número da linha não é alvo de nada: sem o convite
+   de clique que ele tem na tela do aluno, onde declara a localização (D19). */
+.autoria .cm-lineNumbers .cm-gutterElement { cursor: text; }
+.autoria .cm-lineNumbers .cm-gutterElement:hover { background: transparent; color: var(--editor-suave); }
+.autoria .cm-editor { border-radius: var(--raio-placa); color-scheme: dark; }
+
+/* Relatório da verificação: o veredito em cima, os itens com o motivo. */
+.relatorio .veredito { font-weight: 700; margin: 0 0 var(--esp-10); }
+.relatorio .veredito.aprovado { color: var(--acerto); }
+.relatorio .veredito.recusado { color: var(--erro); }
+.itens-da-verificacao li { grid-template-columns: 16px 1fr; }
+.detalhe-da-verificacao { grid-column: 2; color: var(--grafite-suave); font-size: var(--fonte-apoio); }
+.avisos-da-verificacao { margin-top: var(--esp-16); }
+.avisos-da-verificacao h3 { font-size: var(--fonte-apoio); margin: 0 0 var(--esp-4); }
+.avisos-da-verificacao ul { margin: var(--esp-8) 0 0; padding-left: var(--esp-20); font-size: var(--fonte-apoio); }
+
+/* Prévia: as duas versões lado a lado, cada uma com o seu reprodutor. */
+.previa { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--esp-24); }
+.versao-da-previa h3 { font-size: var(--fonte-apoio); margin: 0 0 var(--esp-8); }
+
 /* ---------------------------------------------------------------------------
    Cores dentro do SVG
 
@@ -795,7 +852,7 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    controles ficam fora dela. A grade milimetrada é tênue (1,15:1) e uniforme,
    para não disputar com o pontilhado da posição vazia nem apontar região
    alguma. */
-.tela-exercicio .bancada > svg, .miniatura { display: block; border-radius: var(--raio-placa);
+.tela-exercicio .bancada > svg, .previa .bancada > svg, .miniatura { display: block; border-radius: var(--raio-placa);
   background-color: var(--mesa-de-luz);
   background-image:
     linear-gradient(color-mix(in srgb, var(--grafite) 7.5%, transparent) 1px, transparent 1px),
