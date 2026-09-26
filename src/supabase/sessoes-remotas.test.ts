@@ -109,6 +109,18 @@ describe('leitura do banco', () => {
 
     expect(deLinha(vinda)).toEqual(original);
   });
+
+  it('a origem do exercício vai e volta na versão 8, e não aparece nas anteriores (D31)', () => {
+    const deProfessor = { ...registro('sessao-p', 'uid-a'), versao: 8, origemDoExercicio: 'professor' as const };
+    expect(paraLinha(deProfessor, 'uid-a').origem_do_exercicio).toBe('professor');
+    expect(deLinha(paraLinha(deProfessor, 'uid-a'))).toEqual(deProfessor);
+
+    // Numa sessão antiga o banco preenche `catalogo` pelo padrão da coluna,
+    // e isso não pode entrar no registro: ele não tinha o campo.
+    const antiga = registro('sessao-antiga', 'uid-a');
+    const lida = deLinha({ ...paraLinha(antiga, 'uid-a'), origem_do_exercicio: 'catalogo' });
+    expect(lida).not.toHaveProperty('origemDoExercicio');
+  });
 });
 
 describe('gravação no banco', () => {

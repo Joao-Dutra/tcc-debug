@@ -112,6 +112,7 @@ describe('recorte das sessões', () => {
       participanteId: 'b',
       exercicioId: 'pilha-reverter',
       andaime: null,
+      origemDoExercicio: null,
       apenasValidas: true,
     });
     expect(recorte.map((r) => r.id)).toEqual([todas[2].id]);

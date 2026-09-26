@@ -69,7 +69,13 @@ test('a exportação leva só o recorte, e diz qual foi', async ({ page }) => {
   ]);
   expect(conteudo.recorte).toEqual({
     origem: 'aparelho',
-    filtro: { participanteId: null, exercicioId: null, andaime: null, apenasValidas: true },
+    filtro: {
+      participanteId: null,
+      exercicioId: null,
+      andaime: null,
+      origemDoExercicio: null,
+      apenasValidas: true,
+    },
     totalNaOrigem: 2,
   });
 });

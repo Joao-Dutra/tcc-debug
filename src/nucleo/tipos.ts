@@ -83,6 +83,13 @@ export type CategoriaDefeito =
   | 'ordem-de-operacoes'
   | 'inicializacao-incorreta';
 
+/**
+ * De onde o exercício veio (D31): do catálogo, que mora no repositório e passa
+ * pela suíte inteira, ou da área de autoria de um professor. A análise do
+ * estudo precisa separar as sessões de um e de outro.
+ */
+export type OrigemDoExercicio = 'catalogo' | 'professor';
+
 /** Estrutura de dados que o exercício manipula (define qual visualizador é usado). */
 export type TipoEstrutura = 'vetor' | 'pilha' | 'fila' | 'lista-encadeada';
 
@@ -96,6 +103,8 @@ export interface Exercicio {
   dificuldade: 1 | 2 | 3;
   /** Marca o exercício de entrada do catálogo, apresentado antes dos demais. */
   tutorial?: boolean;
+  /** Ausente, é do catálogo. Os de professor chegam do banco já marcados. */
+  origem?: OrigemDoExercicio;
   /** Código com o defeito implantado — é o que o estudante vê. */
   codigoComDefeito: string;
   /** Versão correta, usada apenas para conferência interna. Nunca exibir. */

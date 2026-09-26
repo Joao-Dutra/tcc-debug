@@ -158,12 +158,7 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
   const [rodada, setRodada] = useState(0);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
-  const metricas = useMetricas(
-    exercicio.id,
-    exercicio.linhaDoDefeito,
-    andaime,
-    exercicio.linhasAceitas
-  );
+  const metricas = useMetricas(exercicio, andaime);
   const jaAbriu = useRef(false);
   const editor = useRef<ReactCodeMirrorRef>(null);
 

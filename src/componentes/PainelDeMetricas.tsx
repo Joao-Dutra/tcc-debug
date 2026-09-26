@@ -7,6 +7,7 @@ import {
   exportarSessoes,
   filtrarSessoes,
   limparArquivo,
+  origemDe,
   sessaoValida,
   sessoesArquivadas,
 } from '../nucleo/metricas';
@@ -265,6 +266,7 @@ function EntradaDoPesquisador() {
 const ROTULOS_DO_FILTRO = {
   participanteId: 'Participante',
   exercicioId: 'Exercício',
+  origemDoExercicio: 'Origem',
   andaime: 'Apoio',
 } as const;
 
@@ -285,6 +287,7 @@ function Filtros({
   const opcoes: Record<CampoDoFiltro, string[]> = {
     participanteId: opcoesDe(sessoes, (s) => s.participanteId),
     exercicioId: opcoesDe(sessoes, (s) => s.exercicioId),
+    origemDoExercicio: opcoesDe(sessoes, (s) => origemDe(s)),
     andaime: opcoesDe(sessoes, (s) => s.andaime),
   };
 
@@ -497,6 +500,7 @@ export function PainelDeMetricas() {
                 <tr>
                   <th>Participante</th>
                   <th>Exercício</th>
+                  <th>Origem</th>
                   <th>Andaime</th>
                   <th>Válida</th>
                   <th>Sinais</th>
@@ -525,6 +529,7 @@ export function PainelDeMetricas() {
                           {participanteCurto(sessao.participanteId)}
                         </td>
                         <td>{sessao.exercicioId}</td>
+                        <td>{origemDe(sessao)}</td>
                         <td>{sessao.andaime ?? 'não registrado'}</td>
                         <td>{sessaoValida(sessao) ? 'sim' : 'não'}</td>
                         <td>
@@ -550,7 +555,7 @@ export function PainelDeMetricas() {
                       </tr>
                       {estaAberta && (
                         <tr>
-                          <td colSpan={15}>
+                          <td colSpan={16}>
                             <Sequencia sessao={sessao} />
                           </td>
                         </tr>

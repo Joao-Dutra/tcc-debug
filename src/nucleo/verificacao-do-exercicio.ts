@@ -120,6 +120,9 @@ export function exercicioDoRascunho(
   const contrato = NOMES_DA_ESTRUTURA[rascunho.estrutura];
   return {
     id,
+    // Um exercício que nasce de um rascunho é sempre de professor: o catálogo
+    // mora no repositório (D31).
+    origem: 'professor',
     titulo: rascunho.titulo,
     enunciado: rascunho.enunciado,
     estrutura: rascunho.estrutura,

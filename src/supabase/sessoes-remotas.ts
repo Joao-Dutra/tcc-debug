@@ -1,7 +1,8 @@
 import { supabase, supabaseConfigurado } from './cliente';
 import { iniciarIdentidade, identidadeAtual, observarIdentidade } from './identidade';
-import { ativarDestinoRemoto, sincronizarPendentes } from '../nucleo/metricas';
+import { ativarDestinoRemoto, origemDe, sincronizarPendentes } from '../nucleo/metricas';
 import type { DestinoRemoto, RegistroDeSessao } from '../nucleo/metricas';
+import type { OrigemDoExercicio } from '../nucleo/tipos';
 
 /**
  * Gravação das sessões arquivadas no banco (D21).
@@ -18,12 +19,17 @@ export interface LinhaDeSessao {
   participante_id: string;
   versao: number;
   exercicio_id: string;
+  /** Com `catalogo` como padrão no banco (0002). */
+  origem_do_exercicio: OrigemDoExercicio;
   andaime: string | null;
   instante_de_inicio: string;
   duracao_total_ms: number;
   eventos: RegistroDeSessao['eventos'];
   resumo: RegistroDeSessao['resumo'];
 }
+
+/** Desde quando o registro traz a origem do exercício (D31). */
+const VERSAO_COM_ORIGEM = 8;
 
 /**
  * A coluna `participante_id` é obrigatória, então um registro sem identidade
@@ -38,6 +44,7 @@ export function paraLinha(registro: RegistroDeSessao, participanteId: string): L
     participante_id: registro.participanteId ?? participanteId,
     versao: registro.versao,
     exercicio_id: registro.exercicioId,
+    origem_do_exercicio: origemDe(registro),
     andaime: registro.andaime,
     instante_de_inicio: registro.instanteDeInicio,
     duracao_total_ms: registro.duracaoTotalMs,
@@ -52,6 +59,10 @@ export function deLinha(linha: LinhaDeSessao): RegistroDeSessao {
     versao: linha.versao,
     id: linha.id,
     exercicioId: linha.exercicio_id,
+    // O campo só existe no registro da versão 8 em diante. Nas anteriores o
+    // banco preenche `catalogo` pelo padrão da coluna, e isso não pode entrar
+    // no registro: a sessão lida precisa sair igual à que foi gravada.
+    ...(linha.versao >= VERSAO_COM_ORIGEM ? { origemDoExercicio: linha.origem_do_exercicio } : {}),
     participanteId: linha.participante_id,
     andaime: linha.andaime,
     // O Postgres devolve o instante no próprio formato (`+00:00` em vez de
@@ -128,7 +139,7 @@ export async function lerSessoesDoBanco(): Promise<RegistroDeSessao[]> {
     const { data, error } = await cliente
       .from('sessoes')
       .select(
-        'id, participante_id, versao, exercicio_id, andaime, instante_de_inicio, duracao_total_ms, eventos, resumo'
+        'id, participante_id, versao, exercicio_id, origem_do_exercicio, andaime, instante_de_inicio, duracao_total_ms, eventos, resumo'
       )
       // O id desempata: com a ordem só pelo instante, duas sessões com o
       // mesmo início poderiam trocar de página entre uma consulta e outra.

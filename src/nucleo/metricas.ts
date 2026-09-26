@@ -1,4 +1,4 @@
-import type { ResultadoExecucao } from './tipos';
+import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
 
 /**
  * Coleta das métricas da sessão de exercício.
@@ -55,8 +55,13 @@ import type { ResultadoExecucao } from './tipos';
  * retorno falso. No catálogo, isso muda `correta` em `lista-inserir-depois`:
  * a linha 16 era incorreta e passa a ser correta, e com ela o tempo até a
  * localização de quem a apontou primeiro.
+ *
+ * 8 — o registro ganhou `origemDoExercicio`: `catalogo` ou `professor` (D31).
+ * Nas versões anteriores o campo não existe, e toda sessão é do catálogo — não
+ * havia outra origem. A análise do estudo separa as duas: um exercício de
+ * professor não passou pela suíte do catálogo, nem pelo congelamento.
  */
-export const VERSAO_DO_REGISTRO = 7;
+export const VERSAO_DO_REGISTRO = 8;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -144,6 +149,11 @@ export interface RegistroDeSessao {
   id: string;
   exercicioId: string;
   /**
+   * De onde veio o exercício (D31). Ausente até a versão 7, quando todo
+   * exercício era do catálogo; `origemDe` lê os dois casos do mesmo jeito.
+   */
+  origemDoExercicio?: OrigemDoExercicio;
+  /**
    * Identidade do participante (D21). Nulo em registros da versão 3 e
    * anteriores, coletados antes de haver identidade, e nas cargas em que o
    * Supabase não está configurado.
@@ -217,11 +227,18 @@ export function sessaoValida(registro: RegistroDeSessao): boolean {
   return registro.eventos.some((e) => e.tipo === 'execucao' && e.origem === 'estudante');
 }
 
+/** A origem da sessão, valendo também para os registros anteriores ao campo. */
+export function origemDe(registro: RegistroDeSessao): OrigemDoExercicio {
+  return registro.origemDoExercicio ?? 'catalogo';
+}
+
 /** Nulo em um critério quer dizer "qualquer um". */
 export interface FiltroDeSessoes {
   participanteId: string | null;
   exercicioId: string | null;
   andaime: string | null;
+  /** Texto, como o andaime: é o valor que o seletor do painel devolve. */
+  origemDoExercicio: string | null;
   apenasValidas: boolean;
 }
 
@@ -229,6 +246,7 @@ export const SEM_FILTRO: FiltroDeSessoes = {
   participanteId: null,
   exercicioId: null,
   andaime: null,
+  origemDoExercicio: null,
   apenasValidas: false,
 };
 
@@ -242,6 +260,7 @@ export function filtrarSessoes(
       (filtro.participanteId === null || r.participanteId === filtro.participanteId) &&
       (filtro.exercicioId === null || r.exercicioId === filtro.exercicioId) &&
       (filtro.andaime === null || r.andaime === filtro.andaime) &&
+      (filtro.origemDoExercicio === null || origemDe(r) === filtro.origemDoExercicio) &&
       (!filtro.apenasValidas || sessaoValida(r))
   );
 }
@@ -287,6 +306,8 @@ export function participante(): string | null {
 
 export interface OpcoesDaSessao {
   exercicioId: string;
+  /** Ausente, é do catálogo (D31). */
+  origemDoExercicio?: OrigemDoExercicio;
   /** Rótulo do nível de andaime da sessão (D9), definido pela interface. */
   andaime?: string;
   /**
@@ -450,6 +471,7 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         versao: VERSAO_DO_REGISTRO,
         id,
         exercicioId: opcoes.exercicioId,
+        origemDoExercicio: opcoes.origemDoExercicio ?? 'catalogo',
         participanteId: opcoes.participanteId ?? participanteAtual,
         andaime: opcoes.andaime ?? null,
         instanteDeInicio,

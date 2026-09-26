@@ -11,7 +11,7 @@ import type {
   OrigemDaExecucao,
   Sessao,
 } from '../nucleo/metricas';
-import type { ResultadoExecucao } from '../nucleo/tipos';
+import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 
 /**
  * Liga o gravador de métricas ao ciclo de vida do React, no mesmo espírito do
@@ -21,18 +21,20 @@ import type { ResultadoExecucao } from '../nucleo/tipos';
 /** Silêncio de digitação que fecha uma rajada de edição. */
 const PAUSA_DA_RAJADA_MS = 2000;
 
-export function useMetricas(
-  exercicioId: string,
-  linhaDoDefeito: number,
-  andaime: string,
-  /** Quando é mais de uma, na troca de ordem (D30). */
-  linhasAceitas?: number[]
-) {
+export function useMetricas(exercicio: Exercicio, andaime: string) {
   // Criada uma única vez: o instante de início é o instante em que o estudante
-  // passou a encarar o exercício, não o de um render qualquer.
+  // passou a encarar o exercício, não o de um render qualquer. Do exercício
+  // saem o id, a origem (D31) e as linhas que julgam a localização (D7, D30) —
+  // estas ficam no núcleo e não voltam para a tela.
   const sessao = useRef<Sessao | null>(null);
   if (sessao.current === null) {
-    sessao.current = criarSessao({ exercicioId, linhaDoDefeito, linhasAceitas, andaime });
+    sessao.current = criarSessao({
+      exercicioId: exercicio.id,
+      origemDoExercicio: exercicio.origem ?? 'catalogo',
+      linhaDoDefeito: exercicio.linhaDoDefeito,
+      linhasAceitas: exercicio.linhasAceitas,
+      andaime,
+    });
   }
 
   const temporizador = useRef<number | undefined>(undefined);
