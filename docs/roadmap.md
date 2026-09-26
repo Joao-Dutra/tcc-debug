@@ -145,7 +145,8 @@ Nesta ordem, e a ordem importa: cada item depende do anterior estar de pé.
    do dado em dia (D23, D25, D26)
 3. **Visualizador de vetor com dois índices, e então ordenação e busca** —
    feito: o desenho (D27) e os dois exercícios (D28)
-4. **Área de autoria para professores**
+4. **Área de autoria para professores** — feita (D31): escrita, verificação,
+   revisão e publicação, com o RLS verificado contra o projeto
 5. **Congelamento do que o participante vê**
 6. **Experimento**
 
@@ -250,6 +251,9 @@ ninguém. Isso é parte do valor do trabalho, e não um apêndice dele.
 **Por que cabe antes do congelamento sem ameaçá-lo:** a área vive em rota
 separada e restrita, e não toca em nenhuma tela do participante. Pode continuar
 evoluindo durante a coleta sem mudar uma linha do que o participante vê.
+**Com uma exceção, que veio com a publicação:** os exercícios publicados
+aparecem na vitrine. Por isso publicar e retirar ficam fora da coleta (D31, e o
+item 5).
 
 Área restrita, liberada a pessoas selecionadas. Sem preocupação com código
 malicioso nesta etapa, por decisão registrada: o acesso é controlado.
@@ -260,14 +264,19 @@ foi ele que pegou o defeito da pilha que ninguém tinha percebido (D16). Um
 exercício submetido sem passar por essa verificação entra no catálogo com
 defeito que não aparece no desenho — a falha que o projeto já cometeu uma vez.
 
-Forma provável: um modelo a preencher (código correto, código com defeito,
-casos de teste, dicas), com a verificação rodando na submissão e recusando o
-que não passar. A linha do defeito sai da comparação entre as duas versões, e
-não de um campo a preencher — a conta já está no núcleo (D28). **Mas a regra
-de "divergência numa única linha" precisa ser revista antes de valer:**
-`lista-inserir-depois` diverge em duas, porque o defeito dele é a ordem entre
-duas atribuições, e ele é um exercício bom que já está no catálogo. O campo de miniatura (D20) é opcional de propósito: exercício
-sem ele cai num cartão sem miniatura, e ninguém fica preso por causa disso.
+**Como ficou (D31).** O professor preenche um modelo — a estrutura, com os
+nomes que o desenho procura mostrados antes do código; o código correto e o com
+defeito; os casos; três dicas — e a verificação roda no navegador dele,
+recusando com o motivo. A linha do defeito sai da comparação entre as versões,
+pela regra revista em D30. O pesquisador revisa em `#/revisao`, onde a
+verificação é refeita e só ela libera a publicação; o relatório gravado pelo
+professor fica como referência, com a divergência sinalizada. Os publicados
+aparecem numa seção à parte da vitrine, sem o código correto chegar ao
+navegador do aluno. O campo de miniatura (D20) não entrou no modelo: o
+proposto aparece num cartão sem miniatura.
+
+**Falta, à mão, no painel do Supabase:** o provedor Google e as URLs de retorno
+da área (D31, configuração). Sem eles, o professor entra só por e-mail e senha.
 
 ### 5. Congelamento do que o participante vê
 
@@ -282,6 +291,11 @@ de acompanhamento, os testes e a documentação.
 
 O congelamento do arranjo da tela de exercício já está em vigor (D20); este
 marco estende a mesma regra ao resto.
+
+**Os propostos por professores entram no congelamento.** A seção deles é parte
+da vitrine: durante a coleta não se publica nem se retira nada (D31), e o que
+estiver publicado no início dela é decidido antes — fica, e é parte do que os
+participantes veem, ou sai.
 
 ### 6. Experimento
 

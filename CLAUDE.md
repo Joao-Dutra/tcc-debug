@@ -78,10 +78,14 @@ persistência das sessões são do Supabase (D21), e nenhuma tela do estudante
 pode depender de haver banco — sem chaves configuradas, a coleta continua só no
 aparelho.
 
-**Depois, e só depois:** tela de entrada e vínculo de conta do participante,
-área de autoria para professores, modo avaliação com sequência fixa de
-exercícios, publicação na Vercel. Árvores e grafos ficam
-para o fim, condicionados ao cronograma.
+**Já feito além disso:** a tela inicial com as entradas de aluno e professor —
+o aluno sempre anônimo, sem conta nem vínculo (D29) — e a área de autoria, com
+a revisão e a publicação pelo pesquisador (D31). Exercícios de professor vivem
+no banco, e não no catálogo; o aluno nunca recebe o código correto deles.
+
+**Depois, e só depois:** modo avaliação com sequência fixa de exercícios,
+publicação na Vercel. Árvores e grafos ficam para o fim, condicionados ao
+cronograma.
 
 Ao propor mudanças, prefira concluir a fatia atual a antecipar as próximas.
 

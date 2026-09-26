@@ -2490,3 +2490,185 @@ aceitas são as que a comparação aceita. No veredito: a segunda linha da troca
 erro, e sem a lista só a declarada conta. No navegador, no exercício de
 verdade: apontar a linha 16 de `lista-inserir-depois` responde que o defeito
 está ali.
+
+## D31 — A área de autoria
+
+**Decisão.** Professores convidados escrevem exercícios numa área própria
+(`#/autoria`); o pesquisador os revisa e publica (`#/revisao`); os publicados
+aparecem aos alunos numa seção à parte da vitrine. O catálogo da pesquisa
+continua no repositório, com a suíte inteira, e não passa por aqui.
+
+### O modelo
+
+Um exercício de professor mora em `exercicios_de_professor` (migração 0002), e
+o conteúdo é o `RascunhoDeExercicio` do núcleo, em `jsonb` — o mesmo formato
+que a verificação lê. A situação anda num caminho só:
+
+| De           | Para         | Quem                                   |
+|--------------|--------------|----------------------------------------|
+| (nada)       | `rascunho`   | professor                              |
+| `rascunho`   | `em_revisao` | o autor                                |
+| `em_revisao` | `rascunho`   | pesquisador, com comentário (devolver) |
+| `em_revisao` | `publicado`  | pesquisador                            |
+| `publicado`  | `retirado`   | pesquisador                            |
+
+**Publicado não muda mais**, nem retirado. Há sessões de alunos apontando para
+aquele conteúdo, e um conteúdo que muda debaixo delas tornaria as sessões
+ilegíveis. Para corrigir um publicado, o professor cria um rascunho a partir
+dele, que é outro exercício, com outro identificador. Pelo mesmo motivo o
+retirado não volta: sai da vitrine e continua guardado.
+
+O gatilho `guardar_exercicio_de_professor` impõe o caminho e carimba autor,
+datas e quem publicou; o navegador não diz quem é nem em que pé o exercício
+está. As políticas dão ao autor os próprios, ao pesquisador todos, e ao
+professor escrita só no que ainda é rascunho.
+
+### Só o professor escreve
+
+O pesquisador revisa, mas não escreve pela área: o material da pesquisa é o
+catálogo, que tem a suíte de testes inteira e a revisão de código. Um
+exercício do pesquisador escrito pela área teria uma revisão só — a dele.
+
+### Os nomes antes do código
+
+O desenho encontra as variáveis pelo nome (`itens`, `topo`, `cabeca`…). O
+editor mostra esses nomes logo abaixo da escolha da estrutura, antes de o
+professor escrever a primeira linha. Recusar só na verificação seria deixá-lo
+descobrir a regra depois de escrever o programa inteiro.
+
+### A verificação, duas vezes
+
+As regras são as mesmas do catálogo, pela mesma função (`verificarExercicio`),
+e um teste passa o catálogo inteiro por ela como rascunho: nada bom o bastante
+para o catálogo é recusado aqui, e vice-versa. Cada recusa diz o motivo e o
+que fazer.
+
+**No navegador do professor**, para ele saber o que corrigir. Enviar exige a
+verificação aprovada **do que está no formulário agora**: editar depois de
+verificar desabilita o envio até verificar de novo.
+
+**Refeita no navegador do pesquisador**, ao abrir o exercício na revisão. **É
+ela, e só ela, que decide a publicação.** O relatório gravado junto do envio
+foi escrito pelo navegador do professor, e um acesso direto à API grava o que
+quiser naquela coluna. A revisão o mostra como referência do que o professor
+viu, e sinaliza quando ele diverge do refeito — no veredito, no resultado de
+cada item, na linha do defeito, na contagem de avisos de estilo —, quando
+falta, ou quando não tem a forma de um relatório. As explicações ficam fora
+da comparação: trazem mensagens do motor de JavaScript, que mudam de um
+navegador para outro sem que nada tenha sido forjado. Divergir não é prova de
+fraude — o verificador pode ter mudado entre o envio e a revisão —, é aviso
+para olhar.
+
+O que se publica é exatamente o que foi verificado: o conteúdo lido ao abrir,
+o mesmo que foi à verificação. A publicação grava junto a linha do defeito e as
+linhas aceitas que **a verificação refeita** derivou (D30).
+
+### O aluno não recebe o código correto
+
+A tela do aluno lê os publicados pela visão `exercicios_publicados`, que tira
+`codigoCorreto` do conteúdo. O veredito da localização só precisa da linha e
+das linhas aceitas, gravadas na publicação. O código correto no navegador do
+aluno ficaria a uma aba de ferramentas de desenvolvedor da resposta — e nunca
+mostrar o código correto é regra do projeto, não só da interface.
+
+### Na tela do aluno
+
+- **Seção à parte na vitrine**, "Propostos por professores", depois das
+  estruturas e recortada pelo mesmo filtro. Não se mistura às fileiras: o
+  catálogo passou pela suíte e pela revisão de código, os propostos por outro
+  caminho.
+- **Silêncio sem banco.** Sem chaves, com a leitura em curso ou com ela
+  falhando, a seção não existe, e a vitrine é o catálogo de antes. Nenhuma tela
+  do aluno depende de haver banco (D21). Já a abertura de um proposto pelo
+  link diz que a leitura falhou, e não que o exercício não existe — o aluno
+  com o link tentaria de novo.
+- **O convite para o próximo** anda entre os propostos, com a mesma volta no
+  fim que o catálogo tem (D20), sem misturar as duas sequências.
+- **A sessão grava a origem** (`origemDoExercicio`, `VERSAO_DO_REGISTRO` 8, e
+  a coluna `origem_do_exercicio` em `sessoes`), e o painel filtra por ela: as
+  sessões nos propostos se separam das do catálogo na análise.
+
+### Sem proteção contra código malicioso — por ora
+
+**Decisão consciente, com ressalva.** O acesso à área é controlado: o papel de
+professor é dado à mão (D29), a pessoas selecionadas. Não há, nesta etapa,
+análise do código submetido além da execução no Worker com os limites de
+passos e de tempo, que já valem para todo código.
+
+**Abrir a área ao público exige revisitar esta decisão.** A verificação roda
+no navegador do professor, e um acesso direto à API a contorna: com o papel,
+dá para pôr na fila um exercício com qualquer código e qualquer relatório. O
+que hoje segura é a verificação refeita e o olho do pesquisador — mas o código
+de um exercício em revisão **executa no navegador do pesquisador**, e o de um
+publicado, no de cada aluno. O Worker não alcança a página nem a sessão
+guardada, mas faz pedidos de rede. Com professores sem convite, seria preciso
+ao menos uma verificação fora do navegador e uma restrição de rede para o
+Worker.
+
+### Publicar durante a coleta
+
+**Procedimento: nem publicar nem retirar durante uma coleta.** As duas coisas
+mudam a vitrine que os participantes veem, e o congelamento (roadmap, item 5)
+exige que ela seja a mesma do começo ao fim. A confirmação do botão de publicar
+lembra disso. O que estiver publicado quando a coleta começar faz parte da
+vitrine congelada — deixar ou retirar é decidido antes.
+
+### Limitações que ficam
+
+- **Uma linha malformada não aparece em lista nenhuma.** Um conteúdo sem a
+  forma do rascunho — só escrito por acesso direto, porque a tela não o produz
+  — fica fora da área do autor, da revisão e da vitrine. Não chega ao aluno,
+  mas também não se devolve pela tela; sai pelo painel do Supabase.
+- **A revisão mostra o `uid` do autor, e não o nome.** `perfis` não guarda
+  e-mail (D29). Quem precisa saber quem escreveu cruza o `uid` com os usuários
+  no painel do Supabase.
+- **A prévia e a verificação executam o código de quem escreveu**, no
+  navegador de quem olha. Ver a seção acima.
+
+### Configuração no Supabase
+
+À mão, uma vez:
+
+- Rodar `supabase/migracoes/0002_area_de_autoria.sql` no editor SQL, e depois
+  `npm run verificar-rls` (D24). Rodada após a 0002: 33 testes, todos passando
+  — professores só nos próprios rascunhos, pesquisador em todos, a visão dos
+  publicados sem o código correto e aberta ao anônimo.
+- Em *Authentication → Providers*, habilitar o Google (cliente OAuth do Google
+  Cloud) e manter a confirmação de e-mail ligada — a tela avisa quem criou
+  conta por e-mail de que precisa confirmar antes de entrar.
+- Em *URL Configuration*, permitir o retorno do Google à área: a entrada pede
+  volta para `…/#/autoria`, e a lista precisa aceitar a origem com qualquer
+  caminho (por exemplo `http://localhost:5173/**`, e o equivalente de cada
+  endereço da Vercel).
+- *Manual linking*, que D21 pedia, deixou de ser usado com D29 e pode ser
+  desligado.
+- Liberar um professor:
+  `update public.perfis set papel = 'professor' where id = '<uid>';`
+
+### O que virou teste
+
+No núcleo: o catálogo inteiro passa na verificação como rascunho; cada recusa,
+com a razão que dá; a conversão do formulário, com os erros apontados na linha
+em que aconteceram; o relatório gravado lido de volta pelo JSON, recusado
+inteiro quando malformado, e a conferência — o forjado (aprovado no gravado,
+recusado refeito), a linha do defeito diferente, o item que falta, os avisos
+de estilo apagados, as explicações diferentes que não contam, e o ausente
+separado do ilegível. O convite para o próximo, nas duas sequências.
+
+No banco (`npm run verificar-rls`): o caminho das situações, quem pode cada
+passo, a imutabilidade do publicado e a visão sem o código correto.
+
+No navegador: a entrada do aluno sem pedido de conta; a área e a revisão sem
+banco dizendo por quê; e, num projeto próprio da suíte (`banco-falso`), o
+caminho com banco sem banco nenhum — o servidor aponta para um endereço
+`.invalid`, que nunca resolve, e o teste responde a cada pedido. Ali se cobra
+a seção dos propostos e o filtro, a abertura pelo identificador, a origem
+gravada na sessão, o identificador desconhecido e o silêncio da vitrine com a
+leitura falhando.
+
+**O que não virou teste de ponta a ponta:** o editor e a revisão com conta
+entrada. Os dois dependem de uma sessão de professor ou de pesquisador, e
+fingi-la pelo banco falso seria testar o arremedo da autenticação. Foram
+conferidos à mão, num arnês provisório; as regras que decidem — o envio só
+com a verificação atual, a publicação só com o refeito — estão em funções
+cobertas pela suíte rápida.

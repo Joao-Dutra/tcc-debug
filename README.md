@@ -36,6 +36,11 @@ As políticas se conferem contra o projeto com `npm run verificar-rls`, antes de
 qualquer dado real e depois de toda migração. A verificação usa a chave secreta
 do projeto, passada só para o comando e nunca guardada no repositório (D24).
 
+A área do professor (`#/autoria`) e a revisão do pesquisador (`#/revisao`)
+guardam os exercícios no banco e só funcionam com ele. O que configurar no
+painel do Supabase — provedor Google, URLs de retorno, liberação de um
+professor — está em D31.
+
 ## Estrutura
 
 | Caminho             | Conteúdo                                       |
