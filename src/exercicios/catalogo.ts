@@ -45,7 +45,16 @@ export const catalogo: Exercicio[] = [
  * (D8). Com a volta, o convite é o mesmo em qualquer exercício.
  */
 export function proximoDoCatalogo(id: string): Exercicio | undefined {
-  const atual = catalogo.findIndex((exercicio) => exercicio.id === id);
-  if (atual === -1 || catalogo.length < 2) return undefined;
-  return catalogo[(atual + 1) % catalogo.length];
+  return proximoEm(catalogo, id);
+}
+
+/**
+ * A mesma volta, em qualquer sequência. Os exercícios de professor usam a
+ * deles (D31): o convite leva de um proposto a outro, sem misturar com o
+ * catálogo da pesquisa.
+ */
+export function proximoEm(lista: readonly Exercicio[], id: string): Exercicio | undefined {
+  const atual = lista.findIndex((exercicio) => exercicio.id === id);
+  if (atual === -1 || lista.length < 2) return undefined;
+  return lista[(atual + 1) % lista.length];
 }

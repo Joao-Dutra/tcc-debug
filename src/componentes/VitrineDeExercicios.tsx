@@ -4,6 +4,7 @@ import { catalogo } from '../exercicios/catalogo';
 import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
 import { complexidadeDe } from './complexidade';
 import { MiniaturaDoExercicio } from './MiniaturaDoExercicio';
+import { useExerciciosPublicados } from './usar-exercicios-publicados';
 import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
 import type { Exercicio, TipoEstrutura } from '../nucleo/tipos';
 
@@ -109,6 +110,16 @@ export function VitrineDeExercicios() {
 
   const visiveis = fileiras.filter((f) => filtro === 'todas' || f.tipo === filtro);
 
+  // Os propostos por professores vêm do banco (D31). Enquanto a leitura não
+  // termina, se ela falhar ou se não houver banco, a seção simplesmente não
+  // existe: a vitrine do aluno não é lugar de aviso de conexão, e o catálogo
+  // continua inteiro.
+  const publicados = useExerciciosPublicados();
+  const propostos =
+    publicados.estado === 'pronto'
+      ? publicados.exercicios.filter((e) => filtro === 'todas' || e.estrutura === filtro)
+      : [];
+
   return (
     <div className="pagina vitrine">
       <header>
@@ -153,6 +164,22 @@ export function VitrineDeExercicios() {
           </ul>
         </section>
       ))}
+
+      {/* Seção à parte, e não misturada às fileiras: o catálogo é o material
+          da pesquisa, revisado com a suíte inteira, e os propostos passaram
+          por outro caminho (D31). Na ordem da publicação, a mesma do convite
+          para o próximo. */}
+      {propostos.length > 0 && (
+        <section className="fileira propostos" aria-labelledby="fileira-propostos">
+          <h2 id="fileira-propostos">Propostos por professores</h2>
+          <p className="nota-da-fileira">Escritos por professores convidados.</p>
+          <ul className="prateleira">
+            {propostos.map((exercicio) => (
+              <CartaoDoExercicio key={exercicio.id} exercicio={exercicio} />
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }

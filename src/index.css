@@ -483,6 +483,11 @@ button.opcao-filtro[aria-pressed="true"]:hover:not(:disabled) {
 .fileira { margin-bottom: var(--esp-32); }
 .fileira h2 { display: flex; align-items: center; gap: var(--esp-10); margin: 0 0 var(--esp-12);
   font-size: 20px; font-weight: 700; }
+/* Os propostos por professores (D31) vêm depois das estruturas, separados por
+   um fio: são outra origem, e não uma quinta estrutura. */
+.fileira.propostos { border-top: 1px solid var(--regua); padding-top: var(--esp-24); }
+.fileira.propostos h2 { margin-bottom: var(--esp-4); }
+.nota-da-fileira { margin: 0 0 var(--esp-12); font-size: var(--fonte-apoio); color: var(--grafite-suave); }
 /* O respiro em volta é do anel de foco dos links, que a rolagem cortaria. */
 .prateleira { list-style: none; display: flex; gap: var(--esp-20); overflow-x: auto;
   scroll-snap-type: x proximity; margin: 0 -6px; padding: 6px 6px var(--esp-12); }
