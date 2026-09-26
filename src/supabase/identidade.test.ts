@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
- * Vínculo de conta, verificado por execução (D21).
+ * Identidade, verificada por execução (D21, D29).
  *
- * A regra: **vincular Google ou e-mail a um anônimo preserva as sessões já
- * gravadas naquele aparelho.** Isso só vale enquanto a chamada for de vínculo
- * (`linkIdentity`, `updateUser`), que mantém o mesmo `uid`. Trocar por uma
- * entrada comum (`signInWithOAuth`, `signUp`) cria outro usuário, e as sessões
- * do anônimo ficam órfãs — sem dono que as enxergue, já que o RLS as prende ao
- * `uid` que as gravou.
+ * O aluno entra anônimo sozinho e fica assim: a identidade guardada no
+ * aparelho é o que agrupa as sessões dele. A regra que D21 cobrava aqui —
+ * vincular Google ou e-mail ao anônimo — se inverteu com D29: a entrada é do
+ * professor, e **nunca vincula**. Vincular (`linkIdentity`, `updateUser`)
+ * levaria para a conta do professor as sessões anônimas do aparelho em que ele
+ * entrou; entrar (`signInWithOAuth`, `signUp`, `signInWithPassword`) deixa
+ * cada identidade com as suas.
  *
  * É uma linha de diferença, e o prejuízo aparece só depois da coleta. Por isso
  * vira teste.
@@ -70,7 +71,7 @@ async function comAnonimoJaEntrado(): Promise<Identidade> {
 beforeEach(() => {
   // A suíte rápida roda sem navegador; o endereço de retorno do login com
   // Google é a única coisa que o módulo pede ao `window`.
-  vi.stubGlobal('window', { location: { origin: 'https://exemplo.br' } });
+  vi.stubGlobal('window', { location: { origin: 'https://exemplo.br', pathname: '/' } });
   for (const espiao of Object.values(auth)) espiao.mockReset();
   auth.onAuthStateChange.mockReturnValue({ data: { subscription: { unsubscribe() {} } } });
   auth.linkIdentity.mockResolvedValue(semErro);
@@ -121,43 +122,49 @@ describe('primeiro acesso', () => {
   });
 });
 
-describe('vincular conta a um anônimo', () => {
-  it('Google sobre anônimo vincula, e não entra em outra identidade', async () => {
+// D29 inverteu o que D21 cobrava aqui. O aluno não tem conta, e a entrada do
+// professor NUNCA vincula ao anônimo do aparelho: vincular levaria para a conta
+// dele as sessões de quem usou o aparelho antes. A propriedade que o teste
+// cobra é a ausência do vínculo, com o anônimo em curso — que é o caso de
+// todo aparelho.
+describe('a entrada do professor não vincula ao anônimo (D29)', () => {
+  it('Google entra numa conta própria, e não vincula', async () => {
     const identidade = await comAnonimoJaEntrado();
-    await identidade.entrarComGoogle();
+    await identidade.entrarComGoogle('#/autoria');
 
-    expect(auth.linkIdentity).toHaveBeenCalledWith({
+    expect(auth.signInWithOAuth).toHaveBeenCalledWith({
       provider: 'google',
-      options: { redirectTo: 'https://exemplo.br' },
+      options: { redirectTo: 'https://exemplo.br/#/autoria' },
     });
-    expect(auth.signInWithOAuth).not.toHaveBeenCalled();
-  });
-
-  it('e-mail e senha sobre anônimo promovem o mesmo usuário', async () => {
-    const identidade = await comAnonimoJaEntrado();
-    await identidade.criarContaComSenha('participante@exemplo.br', 'senha-comprida');
-
-    expect(auth.updateUser).toHaveBeenCalledWith({
-      email: 'participante@exemplo.br',
-      password: 'senha-comprida',
-    });
-    expect(auth.signUp).not.toHaveBeenCalled();
-  });
-
-  it('sem anônimo em curso, entra normalmente', async () => {
-    vi.resetModules();
-    auth.getSession.mockResolvedValue({ data: { session: null } });
-    auth.signInAnonymously.mockResolvedValue({
-      data: { session: null },
-      error: { message: 'sem rede' },
-    });
-    const identidade = await import('./identidade');
-    await identidade.iniciarIdentidade();
-
-    await identidade.entrarComGoogle();
-
-    expect(auth.signInWithOAuth).toHaveBeenCalledTimes(1);
     expect(auth.linkIdentity).not.toHaveBeenCalled();
+  });
+
+  it('a conta nova com e-mail e senha é outro usuário, e não o anônimo promovido', async () => {
+    const identidade = await comAnonimoJaEntrado();
+    auth.signUp.mockResolvedValue({ data: { session: { user: { id: 'uid-novo' } } }, error: null });
+    const resultado = await identidade.criarContaDeProfessor('prof@exemplo.br', 'senha-comprida');
+
+    expect(auth.signUp).toHaveBeenCalledWith({ email: 'prof@exemplo.br', password: 'senha-comprida' });
+    expect(auth.updateUser).not.toHaveBeenCalled();
+    expect(resultado).toEqual({ erro: null, confirmarPorEmail: false });
+  });
+
+  it('quando o projeto pede confirmação por e-mail, a tela fica sabendo', async () => {
+    const identidade = await comAnonimoJaEntrado();
+    auth.signUp.mockResolvedValue({ data: { session: null, user: { id: 'uid-novo' } }, error: null });
+    const resultado = await identidade.criarContaDeProfessor('prof@exemplo.br', 'senha-comprida');
+
+    expect(resultado.confirmarPorEmail).toBe(true);
+  });
+
+  it('entrar com senha também não vincula', async () => {
+    const identidade = await comAnonimoJaEntrado();
+    auth.signInWithPassword.mockResolvedValue(semErro);
+    await identidade.entrarComSenha('prof@exemplo.br', 'senha-comprida');
+
+    expect(auth.signInWithPassword).toHaveBeenCalledTimes(1);
+    expect(auth.linkIdentity).not.toHaveBeenCalled();
+    expect(auth.updateUser).not.toHaveBeenCalled();
   });
 });
 

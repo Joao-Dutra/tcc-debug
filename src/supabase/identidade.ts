@@ -3,18 +3,18 @@ import { definirParticipante } from '../nucleo/metricas';
 import type { AuthError, Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
- * Identidade do participante (D21).
+ * Identidade (D21, D29).
  *
- * Três formas, e uma ordem entre elas: o primeiro acesso entra anônimo sem
- * pedir nada, e Google ou e-mail e senha podem ser VINCULADOS depois àquele
- * mesmo anônimo. Vincular preserva o `uid`, e como é o `uid` que é dono das
- * linhas em `sessoes`, as sessões já gravadas naquele aparelho continuam sendo
- * da mesma pessoa — nenhuma migração de dado, nenhuma sessão órfã.
+ * O aluno é só anônimo: o primeiro acesso entra sem pedir nada, e a
+ * identidade fica guardada no aparelho, que é o que agrupa as sessões de uma
+ * pessoa. Não há conta de aluno nem vínculo nenhum (D29). Mais da metade das
+ * sessões dos dois pilotos foi abandonada sem ação nenhuma, e qualquer pedido
+ * de cadastro na porta agravaria isso. Por isso a entrada anônima é
+ * automática e não bloqueia: a tela abre enquanto ela acontece.
  *
- * Nenhuma dessas formas pode aparecer antes do primeiro exercício. Mais da
- * metade das sessões dos dois pilotos foi abandonada sem ação nenhuma, e
- * qualquer pedido de cadastro na porta agravaria isso. Por isso a entrada
- * anônima é automática e não bloqueia: a tela abre enquanto ela acontece.
+ * Google e e-mail e senha são a entrada do professor, e o pesquisador entra
+ * por e-mail e senha no painel (D22). Nenhuma das duas vincula ao anônimo do
+ * aparelho: cada conta é uma identidade própria.
  *
  * Conta de teste compartilhada não existe aqui, por decisão: duas pessoas sob
  * o mesmo `uid` viram sessões indistinguíveis na análise, e o dado não se
@@ -162,48 +162,60 @@ function registrarFalha(erro: AuthError): ResultadoDeEntrada {
 }
 
 /**
- * Google. Sobre um anônimo, VINCULA: o `uid` continua o mesmo depois, e as
- * sessões daquele aparelho seguem sendo da pessoa. Sem anônimo em curso — caso
- * raro, em que a entrada anônima falhou —, entra normalmente, e aí a
- * identidade é nova mesmo.
+ * Google, para o professor (D29). **Nunca vincula** ao anônimo do aparelho: o
+ * professor entra numa conta própria, e as sessões anônimas que estavam aqui
+ * ficam com o anônimo. Vincular levaria para a conta dele as sessões de quem
+ * usou o aparelho antes — a mesma razão pela qual o pesquisador nunca
+ * vinculou (D22).
+ *
+ * `destino` é para onde o navegador volta depois do Google. O código de
+ * retorno chega na consulta (`?code=`, fluxo PKCE) e o destino fica no hash,
+ * então os dois convivem no mesmo endereço (D8). O endereço precisa estar na
+ * lista de retorno do projeto Supabase.
  */
-export async function entrarComGoogle(): Promise<ResultadoDeEntrada> {
+export async function entrarComGoogle(destino: string): Promise<ResultadoDeEntrada> {
   const cliente = supabase();
   if (!cliente) return SEM_BANCO;
 
-  const options = { redirectTo: window.location.origin };
-  const { error } =
-    atual.forma === 'anonima'
-      ? await cliente.auth.linkIdentity({ provider: 'google', options })
-      : await cliente.auth.signInWithOAuth({ provider: 'google', options });
+  const { error } = await cliente.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: `${window.location.origin}${window.location.pathname}${destino}` },
+  });
   return error ? registrarFalha(error) : { erro: null };
 }
 
+export interface ResultadoDoCadastro extends ResultadoDeEntrada {
+  /**
+   * O projeto pede confirmação por e-mail: a conta existe, mas só entra depois
+   * de o professor clicar no link. A tela precisa dizer isso, e não parecer
+   * que nada aconteceu.
+   */
+  confirmarPorEmail: boolean;
+}
+
 /**
- * E-mail e senha, primeira vez. Sobre um anônimo é `updateUser`, que promove
- * aquele mesmo usuário a permanente em vez de criar outro — de novo, mesmo
- * `uid`, mesmas sessões.
+ * Conta nova com e-mail e senha, para o professor (D29). Também **nunca
+ * vincula**: é `signUp`, que cria outro usuário, e não `updateUser`, que
+ * promoveria o anônimo do aparelho. A conta nasce como participante, como todo
+ * perfil (D21), e o papel professor é concedido à mão.
  */
-export async function criarContaComSenha(
+export async function criarContaDeProfessor(
   email: string,
   senha: string
-): Promise<ResultadoDeEntrada> {
+): Promise<ResultadoDoCadastro> {
   const cliente = supabase();
-  if (!cliente) return SEM_BANCO;
+  if (!cliente) return { ...SEM_BANCO, confirmarPorEmail: false };
 
-  if (atual.forma === 'anonima') {
-    const { error } = await cliente.auth.updateUser({ email, password: senha });
-    return error ? registrarFalha(error) : { erro: null };
-  }
-  const { error } = await cliente.auth.signUp({ email, password: senha });
-  return error ? registrarFalha(error) : { erro: null };
+  const { data, error } = await cliente.auth.signUp({ email, password: senha });
+  if (error) return { ...registrarFalha(error), confirmarPorEmail: false };
+  // Sem sessão depois do cadastro é o projeto pedindo confirmação.
+  return { erro: null, confirmarPorEmail: !data.session };
 }
 
 /**
- * E-mail e senha de conta que já existe. Não vincula, e não tem como: entrar
- * numa conta existente troca de identidade, e as sessões anônimas deste
- * aparelho ficam com o anônimo. É por isso que vincular acontece antes de
- * haver outra conta, e não depois.
+ * E-mail e senha de conta que já existe: a do professor e a do pesquisador.
+ * Não vincula, e não tem como: entrar numa conta existente troca de
+ * identidade, e as sessões anônimas deste aparelho ficam com o anônimo.
  */
 export async function entrarComSenha(email: string, senha: string): Promise<ResultadoDeEntrada> {
   const cliente = supabase();
