@@ -1,18 +1,14 @@
 import { useEffect, useState } from 'react';
-import type { FormEvent, ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { supabaseConfigurado } from '../supabase/cliente';
-import {
-  criarContaDeProfessor,
-  entrarComGoogle,
-  entrarComSenha,
-  sair,
-} from '../supabase/identidade';
+import { sair } from '../supabase/identidade';
 import { lerMeusExercicios } from '../supabase/exercicios-de-professor';
 import { EditorDeExercicio } from './EditorDeExercicio';
+import { EntradaDoProfessor } from './EntradaDoProfessor';
 import { estadoDaArea } from './estado-da-area';
 import { useIdentidade } from './usar-identidade';
-import { CAMINHO_AUTORIA, CAMINHO_INICIAL, CAMINHO_REVISAO } from './usar-rota';
+import { CAMINHO_INICIAL, CAMINHO_REVISAO } from './usar-rota';
 import type { ExercicioDeProfessor, SituacaoDoExercicio } from '../supabase/exercicios-de-professor';
 import type { Identidade } from '../supabase/identidade';
 import type { RascunhoDeExercicio } from '../nucleo/verificacao-do-exercicio';
@@ -54,101 +50,6 @@ function Moldura({ children, identidade }: { children: ReactNode; identidade?: I
       </header>
       {children}
     </div>
-  );
-}
-
-/**
- * Google ou e-mail e senha, e nenhum dos dois vincula ao anônimo do aparelho
- * (D29): o professor entra numa conta própria.
- */
-function EntradaDoProfessor() {
-  const [modo, setModo] = useState<'entrar' | 'criar'>('entrar');
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
-  const [aviso, setAviso] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
-
-  const enviar = async (evento: FormEvent) => {
-    evento.preventDefault();
-    setEnviando(true);
-    setErro(null);
-    setAviso(null);
-    const resultado =
-      modo === 'entrar'
-        ? await entrarComSenha(email, senha)
-        : await criarContaDeProfessor(email, senha);
-    setErro(resultado.erro);
-    if (!resultado.erro && 'confirmarPorEmail' in resultado && resultado.confirmarPorEmail) {
-      setAviso(
-        `Enviamos um link de confirmação para ${email}. Depois de confirmar, entre aqui com ` +
-          'a senha.'
-      );
-      setModo('entrar');
-    }
-    setEnviando(false);
-    if (!resultado.erro) setSenha('');
-  };
-
-  const comGoogle = async () => {
-    setErro(null);
-    // Volta para cá depois do Google: o código de retorno chega na consulta, e
-    // a rota fica no hash.
-    const resultado = await entrarComGoogle(CAMINHO_AUTORIA);
-    setErro(resultado.erro);
-  };
-
-  return (
-    <section className="painel">
-      <h2>{modo === 'entrar' ? 'Entrar' : 'Criar conta'}</h2>
-      <p className="rodape-painel">
-        A área é para professores convidados. Qualquer pessoa pode entrar, mas a conta só
-        passa a escrever exercícios depois de liberada pela equipe da pesquisa.
-      </p>
-      <p>
-        <button className="primario" onClick={() => void comGoogle()}>
-          Entrar com Google
-        </button>
-      </p>
-      <form className="entrada-conta" onSubmit={(e) => void enviar(e)}>
-        <label>
-          E-mail
-          <input
-            type="email"
-            autoComplete="username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Senha
-          <input
-            type="password"
-            autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            minLength={8}
-            required
-          />
-        </label>
-        <button type="submit" disabled={enviando}>
-          {modo === 'entrar' ? 'Entrar com e-mail' : 'Criar conta'}
-        </button>
-        <button
-          type="button"
-          className="discreto"
-          onClick={() => {
-            setModo(modo === 'entrar' ? 'criar' : 'entrar');
-            setErro(null);
-          }}
-        >
-          {modo === 'entrar' ? 'Não tenho conta' : 'Já tenho conta'}
-        </button>
-        {erro && <p className="erro">{erro}</p>}
-        {aviso && <p className="aviso-conta">{aviso}</p>}
-      </form>
-    </section>
   );
 }
 
@@ -275,7 +176,14 @@ export function AreaDoProfessor() {
     // nada aqui: o professor entra na conta dele.
     return (
       <Moldura>
-        <EntradaDoProfessor />
+        <section className="painel">
+          <h2>Entrar</h2>
+          <p className="rodape-painel">
+            A área é para professores convidados. Qualquer pessoa pode entrar, mas a conta só
+            passa a escrever exercícios depois de liberada pela equipe da pesquisa.
+          </p>
+          <EntradaDoProfessor />
+        </section>
       </Moldura>
     );
   }

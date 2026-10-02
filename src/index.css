@@ -387,16 +387,52 @@ a.botao { display: inline-flex; align-items: center; gap: var(--esp-8);
   font-weight: 700; font-size: var(--fonte-corpo); }
 a.botao.primario { background: var(--acao); color: var(--sobre-acao); }
 a.botao.primario:hover { background: var(--acao-forte); }
-/* A entrada do professor é a segunda, e se lê assim: contornada em grafite,
-   para a anilina cheia continuar sendo a do aluno, que é a entrada de quase
-   todo mundo (D29). */
-a.botao.secundario { border: 1.5px solid var(--grafite); color: var(--grafite); }
-a.botao.secundario:hover { border-color: var(--acao); color: var(--acao); }
-.entradas { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--esp-16) var(--esp-24); }
-.entrada-aluno { display: flex; flex-direction: column; align-items: flex-start; }
-/* Informativo, e não um termo: letra de apoio, logo abaixo do botão do aluno. */
-.chamada .aviso-pesquisa { font-size: var(--fonte-miuda); line-height: 1.5;
-  color: var(--grafite-suave); max-width: 34ch; margin: var(--esp-10) 0 0; }
+
+/* ---------------------------------------------------------------------------
+   Tela de entrada (D32)
+
+   Duas saídas lado a lado, e a do estudante pesa menos de propósito: vem
+   primeiro, tem chão próprio e um botão só, na anilina cheia da ação. A do
+   professor é contornada e mais estreita, com o formulário inteiro — é a
+   segunda opção, e se lê assim. Em tela estreita, o estudante fica em cima.
+--------------------------------------------------------------------------- */
+.tela-de-entrada .saidas-da-entrada { grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--esp-24); align-items: stretch; }
+.saida-estudante, .saida-professor { border-radius: var(--raio-faixa);
+  padding: var(--esp-24); }
+.saidas-da-entrada h2 { font-size: 20px; font-weight: 700; margin: 0 0 var(--esp-8); }
+/* Centrado na altura: o cartão estica até a do formulário do professor, e o
+   botão no meio dele é o alvo maior e mais calmo da tela. */
+.saida-estudante { background: var(--mesa-de-luz); display: flex; flex-direction: column;
+  align-items: flex-start; justify-content: center; padding: var(--esp-32) var(--esp-48); }
+.saida-estudante .leveza { font-size: 18px; line-height: 1.45; margin: 0 0 var(--esp-24);
+  max-width: 32ch; }
+a.botao.entrar-estudante { font-size: 17px; padding: 14px 26px; }
+/* Informativo, e não um termo: letra de apoio, logo abaixo do botão. */
+.aviso-pesquisa { font-size: var(--fonte-miuda); line-height: 1.5;
+  color: var(--grafite-suave); max-width: 40ch; margin: var(--esp-12) 0 0; }
+.saida-professor { border: 1px solid var(--borda-controle); }
+.saida-professor h2 { font-size: var(--fonte-secao); }
+.saida-professor > .rodape-painel { margin: 0 0 var(--esp-16); }
+.campos-da-entrada { border: 0; margin: 0; padding: 0; min-width: 0; }
+.campos-da-entrada:disabled input, .campos-da-entrada:disabled label { opacity: .55; }
+.campos-da-entrada .entrada-conta { flex-direction: column; align-items: stretch; }
+.campos-da-entrada .entrada-conta button[type=submit] { justify-content: center; }
+.campos-da-entrada .entrada-conta .discreto { align-self: flex-start; }
+.entrada-do-professor > .rodape-painel { margin: 0 0 var(--esp-12); }
+/* O botão do Google segue o desenho que ele pede: fundo claro, contorno, o
+   "G" nas cores da marca à esquerda. Não é a ação da tela, e não usa anilina. */
+button.botao-google { width: 100%; justify-content: center; gap: var(--esp-10);
+  padding: 10px 14px; font-size: var(--fonte-corpo); font-weight: 700; }
+.icone-google { width: 18px; height: 18px; flex: none; }
+.separador-da-entrada { display: flex; align-items: center; gap: var(--esp-10);
+  margin: var(--esp-12) 0; font-size: var(--fonte-miuda); color: var(--grafite-suave); }
+.separador-da-entrada::before, .separador-da-entrada::after { content: ''; flex: 1;
+  border-top: 1px solid var(--regua); }
+@media (max-width: 900px) {
+  .tela-de-entrada .saidas-da-entrada { grid-template-columns: 1fr; }
+  .saida-estudante { padding: var(--esp-24); }
+}
 
 .folha { display: block; width: 100%; height: auto; overflow: visible; }
 .folha-de-baixo { fill: var(--areia-200); stroke: var(--areia-400); }

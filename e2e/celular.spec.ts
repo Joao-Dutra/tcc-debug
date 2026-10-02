@@ -14,6 +14,7 @@ import { expect, test } from '@playwright/test';
 
 const TELAS = [
   { nome: 'inicial', rota: '#/' },
+  { nome: 'de entrada', rota: '#/entrar' },
   { nome: 'vitrine', rota: '#/exercicios' },
   { nome: 'exercício', rota: '#/exercicio/pilha-desempilhar?andaime=com-apoio' },
   { nome: 'do professor', rota: '#/autoria' },

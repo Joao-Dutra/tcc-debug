@@ -13,6 +13,7 @@ import type { NivelDeAndaime } from './andaime';
 
 export type Rota =
   | { tela: 'inicial' }
+  | { tela: 'entrar' }
   | { tela: 'exercicios' }
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' }
@@ -20,6 +21,12 @@ export type Rota =
   | { tela: 'revisao' };
 
 export const CAMINHO_INICIAL = '#/';
+
+/**
+ * A entrada, em tela própria (D32): o estudante segue sem conta, e o
+ * professor entra com Google ou e-mail e senha.
+ */
+export const CAMINHO_ENTRAR = '#/entrar';
 
 /** A vitrine: todos os exercícios, em fileiras por estrutura de dados. */
 export const CAMINHO_EXERCICIOS = '#/exercicios';
@@ -70,6 +77,7 @@ export function interpretarHash(hash: string): Rota {
   const [caminho, consulta = ''] = hash.replace(/^#\/?/, '').split('?');
   const partes = caminho.split('/').filter((parte) => parte !== '');
 
+  if (partes[0] === 'entrar') return { tela: 'entrar' };
   if (partes[0] === 'metricas') return { tela: 'metricas' };
   if (partes[0] === 'autoria') return { tela: 'autoria' };
   if (partes[0] === 'revisao') return { tela: 'revisao' };

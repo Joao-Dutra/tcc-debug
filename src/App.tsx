@@ -4,6 +4,7 @@ import { AreaDoProfessor } from './componentes/AreaDoProfessor';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { RevisaoDeExercicios } from './componentes/RevisaoDeExercicios';
 import { TelaExercicio } from './componentes/TelaExercicio';
+import { TelaDeEntrada } from './componentes/TelaDeEntrada';
 import { TelaInicial } from './componentes/TelaInicial';
 import { VitrineDeExercicios } from './componentes/VitrineDeExercicios';
 import { useRota } from './componentes/usar-rota';
@@ -19,6 +20,7 @@ export default function App() {
   const rota = useRota();
 
   if (rota.tela === 'inicial') return <TelaInicial />;
+  if (rota.tela === 'entrar') return <TelaDeEntrada />;
   if (rota.tela === 'exercicios') return <VitrineDeExercicios />;
 
   // Rota do pesquisador (D11). Nenhuma tela do participante aponta para ela.
