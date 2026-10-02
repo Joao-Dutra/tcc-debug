@@ -13,6 +13,16 @@ import { defineConfig } from '@playwright/test';
  * baixado pelo Playwright: a mesma razão de D13 vale aqui, o ambiente do
  * trabalho não deve depender de download em tempo de execução.
  */
+/**
+ * Um aparelho que já viu o tutorial do participante (D32). Sem isto, todo
+ * teste que abre um exercício esbarraria no tutorial aberto na frente da tela;
+ * o teste do próprio tutorial começa de um aparelho limpo.
+ */
+const jaViuOTutorial = (origem: string) => ({
+  cookies: [],
+  origins: [{ origin: origem, localStorage: [{ name: 'depurar:tutorial-visto', value: 'e2e' }] }],
+});
+
 export default defineConfig({
   testDir: './e2e',
   use: { channel: 'msedge' },
@@ -20,14 +30,14 @@ export default defineConfig({
     {
       name: 'sem-banco',
       testIgnore: /propostos\.spec\.ts/,
-      use: { baseURL: 'http://localhost:5199' },
+      use: { baseURL: 'http://localhost:5199', storageState: jaViuOTutorial('http://localhost:5199') },
     },
     {
       // O caminho com banco, sem banco de verdade: o servidor aponta para um
       // endereço que não existe, e o teste responde a cada pedido (D31).
       name: 'banco-falso',
       testMatch: /propostos\.spec\.ts/,
-      use: { baseURL: 'http://localhost:5198' },
+      use: { baseURL: 'http://localhost:5198', storageState: jaViuOTutorial('http://localhost:5198') },
     },
   ],
   webServer: [

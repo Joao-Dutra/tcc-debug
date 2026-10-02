@@ -1013,3 +1013,39 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .apontadas .passou .veredito { color: var(--acerto); }
 .apontadas .falhou .veredito { color: var(--erro); }
 .apontadas .veredito .icone { color: inherit; }
+
+/* ---------------------------------------------------------------------------
+   Tutorial do participante (D32)
+
+   Um diálogo do navegador sobre a sala escurecida: placa clara, ilustração à
+   esquerda e o texto ao lado, os pontos dos passos e a navegação embaixo. O
+   mesmo vocabulário das ilustrações da tela inicial — grafite no traço,
+   anilina no que é ação, nenhuma cor de significado da bancada.
+--------------------------------------------------------------------------- */
+button.ajuda { padding: 5px 12px; border-radius: var(--raio-pilula); background: transparent; }
+dialog.tutorial { width: min(560px, calc(100vw - 32px)); padding: var(--esp-20) var(--esp-24);
+  border: 0; border-radius: var(--raio-faixa); background: var(--mesa-de-luz);
+  color: var(--grafite); box-shadow: 0 18px 48px color-mix(in srgb, var(--grafite) 30%, transparent); }
+dialog.tutorial::backdrop { background: color-mix(in srgb, var(--grafite) 45%, transparent); }
+.tutorial-topo { display: flex; align-items: center; justify-content: space-between;
+  gap: var(--esp-12); margin-bottom: var(--esp-12); }
+.tutorial-contagem { margin: 0; font-size: var(--fonte-miuda); color: var(--grafite-suave); }
+button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content: center;
+  border-color: transparent; background: transparent; }
+.tutorial-corpo { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--esp-20);
+  align-items: start; min-height: 150px; }
+.tutorial-corpo .icone-passo { margin: var(--esp-4) 0 0; }
+.tutorial-corpo h2 { font-size: 20px; font-weight: 700; margin: 0 0 var(--esp-8); }
+.tutorial-corpo p { margin: 0; line-height: 1.6; }
+.icone-passo .halo { fill: none; stroke: var(--acao-rala); stroke-width: 4; }
+.tutorial-pontos { list-style: none; display: flex; gap: var(--esp-6); padding: 0;
+  margin: var(--esp-16) 0; }
+.tutorial-pontos li { width: 8px; height: 8px; border-radius: 50%; background: var(--regua); }
+.tutorial-pontos li.atual { background: var(--grafite); }
+.tutorial-acoes { display: flex; align-items: center; justify-content: space-between;
+  gap: var(--esp-12); }
+.tutorial-navegacao { display: flex; gap: var(--esp-8); margin-left: auto; }
+@media (max-width: 520px) {
+  .tutorial-corpo { grid-template-columns: 1fr; }
+}
+

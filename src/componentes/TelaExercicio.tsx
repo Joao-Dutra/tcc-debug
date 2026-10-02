@@ -7,12 +7,15 @@ import {
   ArrowRightIcon,
   FlagIcon,
   PlayIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/20/solid';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { executar } from '../nucleo/executor';
 import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../nucleo/metricas';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { Cabecalho } from './Cabecalho';
+import { TutorialDoParticipante } from './TutorialDoParticipante';
+import { marcarTutorialVisto, tutorialJaVisto } from './tutorial-visto';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { useMetricas } from './usar-metricas';
 import { CAMINHO_EXERCICIOS, caminhoDoExercicio } from './usar-rota';
@@ -26,7 +29,7 @@ import {
   rotuloDoAndaime,
 } from './andaime';
 import type { DetalheDosCasos, NivelDeAndaime } from './andaime';
-import type { OrigemDaExecucao } from '../nucleo/metricas';
+import type { DesfechoDoTutorial, MotivoDoTutorial, OrigemDaExecucao } from '../nucleo/metricas';
 import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 
 /**
@@ -157,6 +160,7 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
   // Não conta nada: compara dois textos.
   const [codigoExecutado, setCodigoExecutado] = useState<string | null>(null);
   const [rodada, setRodada] = useState(0);
+  const [tutorialAberto, setTutorialAberto] = useState(false);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
   const metricas = useMetricas(exercicio, andaime);
@@ -207,6 +211,18 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
     metricas.registrarEdicao(valor);
   };
 
+  // O tutorial abre por cima da tela, sem mexer em nada dela (D32). A execução
+  // da abertura segue por baixo, como sem ele.
+  const abrirTutorial = (motivo: MotivoDoTutorial) => {
+    metricas.registrarTutorialAberto(motivo);
+    setTutorialAberto(true);
+  };
+
+  const fecharTutorial = (desfecho: DesfechoDoTutorial, alcancado: number, total: number) => {
+    metricas.registrarTutorialFechado(desfecho, alcancado, total);
+    setTutorialAberto(false);
+  };
+
   const revelarDica = () => {
     metricas.registrarDica(dicasAbertas);
     setDicasAbertas((n) => n + 1);
@@ -217,6 +233,13 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
     // do exercício entraria duas vezes no registro da sessão.
     if (jaAbriu.current) return;
     jaAbriu.current = true;
+    // Na primeira entrada do aparelho, o tutorial abre sozinho; depois, só
+    // pelo botão de ajuda. A marca vai na abertura, e não no fim: quem pulou
+    // também viu, e o botão continua ali.
+    if (!tutorialJaVisto()) {
+      marcarTutorialVisto();
+      abrirTutorial('primeira-entrada');
+    }
     void rodar('automatica');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -249,9 +272,10 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
           </a>
         }
         acoes={
-          // Trocar de nível troca de sessão (D8), e por isso o exercício
-          // recomeça: duas tentativas sob apoios diferentes não podem ser
-          // somadas, então nem o código editado atravessa a troca.
+          <>
+          {/* Trocar de nível troca de sessão (D8), e por isso o exercício
+              recomeça: duas tentativas sob apoios diferentes não podem ser
+              somadas, então nem o código editado atravessa a troca. */}
           <p className="abertura">
             <span className="rotulo-abertura">apoio</span>
             {NIVEIS_DE_ANDAIME.map((nivel) =>
@@ -271,6 +295,12 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
             )}
             <span className="aviso-troca">trocar o apoio recomeça o exercício</span>
           </p>
+          {/* Igual nos dois níveis de apoio, como o tutorial que ele abre. */}
+          <button className="ajuda" onClick={() => abrirTutorial('ajuda')}>
+            <QuestionMarkCircleIcon className="icone" aria-hidden="true" />
+            Ajuda
+          </button>
+          </>
         }
         titulo={exercicio.titulo}
       >
@@ -455,6 +485,8 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
           </div>
         </div>
       </main>
+
+      <TutorialDoParticipante aberto={tutorialAberto} aoFechar={fecharTutorial} />
 
       {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
           estudante quantas vezes ele executou ou quantas dicas abriu muda o
