@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { catalogo } from '../exercicios/catalogo';
 import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
 import { complexidadeDe } from './complexidade';
 import { MiniaturaDoExercicio } from './MiniaturaDoExercicio';
 import { useExerciciosPublicados } from './usar-exercicios-publicados';
-import { CAMINHO_INICIAL, caminhoDoExercicio } from './usar-rota';
+import { Cabecalho } from './Cabecalho';
+import { caminhoDoExercicio } from './usar-rota';
 import type { Exercicio, TipoEstrutura } from '../nucleo/tipos';
 
 /**
@@ -121,13 +121,10 @@ export function VitrineDeExercicios() {
       : [];
 
   return (
-    <div className="pagina vitrine">
-      <header>
-        <a className="voltar" href={CAMINHO_INICIAL}>
-          <ArrowLeftIcon className="icone" aria-hidden="true" />
-          Início
-        </a>
-        <h1>Exercícios</h1>
+    <div className="pagina vitrine com-cabecalho">
+      {/* Sem link de volta ao lado da marca: a marca já leva ao início, e dois
+          caminhos para o mesmo lugar, lado a lado, seriam ruído. */}
+      <Cabecalho titulo="Exercícios">
         {/* As duas escalas são fáceis de confundir, então a tela diz qual é
             qual antes de mostrá-las. */}
         <p>
@@ -135,7 +132,7 @@ export function VitrineDeExercicios() {
           exercício e não muda. O apoio você escolhe ao abrir: sem apoio, a ferramenta
           auxilia menos durante a investigação.
         </p>
-      </header>
+      </Cabecalho>
 
       <div className="filtro" role="group" aria-label="Filtrar por estrutura de dados">
         {[{ tipo: 'todas' as const, nome: 'Todas' }, ...fileiras].map((opcao) => (

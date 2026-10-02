@@ -277,6 +277,36 @@ header h1 { font-size: var(--fonte-titulo); line-height: 1.15; font-weight: 700;
 header p { margin: 0; max-width: var(--largura-texto); }
 header { margin-bottom: var(--esp-24); }
 
+/* ---------------------------------------------------------------------------
+   Cabeçalho das telas do participante (D32)
+
+   Uma faixa de ponta a ponta, no chão do painel, com um fio embaixo: a marca e
+   a navegação à esquerda, as ações da tela à direita, o título e o texto da
+   tela logo abaixo. Ancora o que antes pousava solto na sala, sem cor nova.
+
+   A faixa passa das margens da página sem criar rolagem horizontal: o chão e
+   o fio são uma imagem de borda com recuo lateral, e o que ela pinta fora da
+   caixa é só tinta — não conta como conteúdo, e a janela não rola por ele.
+   Um elemento posicionado além das margens rolaria, e rolou na primeira
+   versão, em largura de celular.
+--------------------------------------------------------------------------- */
+.com-cabecalho { padding-top: 0; }
+.cabecalho {
+  border-image: linear-gradient(to top, var(--regua) 1px, var(--painel) 1px) fill 0 / 0 / 0 100vmax;
+  padding: var(--esp-12) 0 var(--esp-20); margin-bottom: var(--esp-24); }
+.cabecalho-barra { display: flex; flex-wrap: wrap; align-items: center;
+  justify-content: space-between; gap: var(--esp-8) var(--esp-20); min-height: 34px; }
+.cabecalho-caminho { display: flex; align-items: center; gap: var(--esp-12); }
+.cabecalho-divisa { width: 1px; height: 18px; background: var(--regua); }
+.cabecalho-acoes { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8) var(--esp-16); }
+.cabecalho h1 { margin: var(--esp-16) 0 var(--esp-8); }
+.cabecalho > p { margin: 0; max-width: var(--largura-texto); color: var(--grafite); }
+.marca { display: inline-flex; align-items: center; gap: var(--esp-8); margin: 0;
+  font-size: 17px; font-weight: 700; letter-spacing: -.01em; color: var(--grafite);
+  text-decoration: none; }
+a.marca:hover { color: var(--acao); }
+.marca svg { width: 20px; height: 22px; }
+
 main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--esp-20);
   align-items: start; }
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
@@ -344,10 +374,8 @@ a.nivel:hover { border-color: var(--acao); color: var(--acao); }
    bastante para não disputar com a leitura. Com movimento reduzido, nenhuma
    roda e a folha fica na posição final.
 --------------------------------------------------------------------------- */
-.inicial { padding-top: var(--esp-20); }
-.marca { display: inline-flex; align-items: center; gap: var(--esp-8); margin: 0;
-  font-size: 18px; font-weight: 700; letter-spacing: -.01em; }
-.marca svg { width: 24px; height: 26px; }
+/* Na inicial a faixa leva só a marca: a tela é a chamada logo abaixo. */
+.inicial .cabecalho { padding-bottom: var(--esp-12); }
 
 .abertura-inicial { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
   gap: var(--esp-48); align-items: center; margin-top: var(--esp-32); }
@@ -735,13 +763,13 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    alta o bastante, a página ocupa exatamente a janela: o editor e a coluna do
    retorno rolam por dentro, e o desenho nunca sai de vista.
 --------------------------------------------------------------------------- */
-.tela-exercicio { padding-top: var(--esp-12); padding-bottom: var(--esp-16); }
-.tela-exercicio header { margin-bottom: var(--esp-16); }
-.linha-topo { display: flex; flex-wrap: wrap; align-items: center;
-  justify-content: space-between; gap: var(--esp-8) var(--esp-20); }
-.tela-exercicio header .abertura { margin: 0; }
-.tela-exercicio header h1 { font-size: 24px; margin: var(--esp-8) 0 var(--esp-4); }
-.tela-exercicio header > p { max-width: 130ch; line-height: 1.5; }
+.tela-exercicio { padding-bottom: var(--esp-16); }
+/* A faixa é mais justa aqui: cada pixel dela sai da altura do editor e do
+   desenho, que dividem a janela (D20). */
+.tela-exercicio .cabecalho { padding: var(--esp-8) 0 var(--esp-12); margin-bottom: var(--esp-16); }
+.tela-exercicio .cabecalho .abertura { margin: 0; }
+.tela-exercicio .cabecalho h1 { font-size: 24px; margin: var(--esp-8) 0 var(--esp-4); }
+.tela-exercicio .cabecalho > p { max-width: 130ch; line-height: 1.5; }
 
 .tela-exercicio .grade-exercicio { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--esp-24); align-items: stretch; }

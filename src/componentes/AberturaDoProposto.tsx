@@ -3,6 +3,7 @@ import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { proximoEm } from '../exercicios/catalogo';
 import { TelaExercicio } from './TelaExercicio';
 import { useExerciciosPublicados } from './usar-exercicios-publicados';
+import { Cabecalho } from './Cabecalho';
 import { CAMINHO_EXERCICIOS } from './usar-rota';
 import type { NivelDeAndaime } from './andaime';
 
@@ -18,15 +19,18 @@ import type { NivelDeAndaime } from './andaime';
 
 function Aviso({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <div className="pagina">
-      <header>
-        <h1>{titulo}</h1>
+    <div className="pagina com-cabecalho">
+      <Cabecalho
+        navegacao={
+          <a className="voltar" href={CAMINHO_EXERCICIOS}>
+            <ArrowLeftIcon className="icone" aria-hidden="true" />
+            Todos os exercícios
+          </a>
+        }
+        titulo={titulo}
+      >
         <p>{children}</p>
-      </header>
-      <a className="voltar" href={CAMINHO_EXERCICIOS}>
-        <ArrowLeftIcon className="icone" aria-hidden="true" />
-        Todos os exercícios
-      </a>
+      </Cabecalho>
     </div>
   );
 }
@@ -36,7 +40,8 @@ export function AberturaDoProposto({ id, andaime }: { id: string; andaime: Nivel
 
   if (publicados.estado === 'lendo') {
     return (
-      <div className="pagina">
+      <div className="pagina com-cabecalho">
+        <Cabecalho />
         <p className="rodape-painel" role="status">
           Abrindo o exercício…
         </p>

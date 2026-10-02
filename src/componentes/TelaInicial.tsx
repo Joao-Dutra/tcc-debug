@@ -1,3 +1,4 @@
+import { Cabecalho, Inseto } from './Cabecalho';
 import { IconeApontar, IconeExecutar, IconeObservar } from './IlustracoesDaInicial';
 import { CAMINHO_AUTORIA, CAMINHO_EXERCICIOS } from './usar-rota';
 
@@ -8,24 +9,6 @@ import { CAMINHO_AUTORIA, CAMINHO_EXERCICIOS } from './usar-rota';
  * Não mostra exercício nenhum, nem quantos existem, nem quais já foram
  * abertos — é a mesma regra da lista, sem progresso (D8).
  */
-
-/**
- * O inseto da marca. Montado com elipses e traços, como o resto da decoração:
- * nenhum arquivo de imagem e nenhum recurso externo (D13).
- */
-function Inseto({ x, y, escala = 1 }: { x: number; y: number; escala?: number }) {
-  return (
-    <g className="inseto" transform={`translate(${x} ${y}) scale(${escala})`}>
-      {/* patas: três de cada lado */}
-      <path d="M -7 -4 L -13 -8 M -8 1 L -14 1 M -7 6 L -13 10 M 7 -4 L 13 -8 M 8 1 L 14 1 M 7 6 L 13 10" />
-      {/* antenas */}
-      <path d="M -3 -11 Q -5 -17 -9 -18 M 3 -11 Q 5 -17 9 -18" />
-      <ellipse cx={0} cy={-9} rx={4.5} ry={3.5} className="inseto-cabeca" />
-      <ellipse cx={0} cy={2} rx={8} ry={10} className="inseto-corpo" />
-      <path d="M 0 -7 L 0 12" className="inseto-risca" />
-    </g>
-  );
-}
 
 /**
  * Uma folha de exercício mimeografada sobre a sala, com as estruturas
@@ -114,13 +97,8 @@ function FolhaDeExercicio() {
 
 export function TelaInicial() {
   return (
-    <div className="pagina inicial">
-      <p className="marca">
-        <svg viewBox="-16 -20 32 34" aria-hidden="true">
-          <Inseto x={0} y={0} />
-        </svg>
-        Depurar
-      </p>
+    <div className="pagina inicial com-cabecalho">
+      <Cabecalho naInicial />
 
       <section className="abertura-inicial">
         <div className="chamada">

@@ -12,6 +12,7 @@ import { CheckIcon, XMarkIcon } from '@heroicons/react/16/solid';
 import { executar } from '../nucleo/executor';
 import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../nucleo/metricas';
 import { visualizadores } from '../visualizacao/visualizadores';
+import { Cabecalho } from './Cabecalho';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { useMetricas } from './usar-metricas';
 import { CAMINHO_EXERCICIOS, caminhoDoExercicio } from './usar-rota';
@@ -239,16 +240,18 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
   }, [linhaNoEditor]);
 
   return (
-    <div className="pagina tela-exercicio">
-      <header>
-        <div className="linha-topo">
+    <div className="pagina tela-exercicio com-cabecalho">
+      <Cabecalho
+        navegacao={
           <a className="voltar" href={CAMINHO_EXERCICIOS}>
             <ArrowLeftIcon className="icone" aria-hidden="true" />
             Todos os exercícios
           </a>
-          {/* Trocar de nível troca de sessão (D8), e por isso o exercício
-              recomeça: duas tentativas sob apoios diferentes não podem ser
-              somadas, então nem o código editado atravessa a troca. */}
+        }
+        acoes={
+          // Trocar de nível troca de sessão (D8), e por isso o exercício
+          // recomeça: duas tentativas sob apoios diferentes não podem ser
+          // somadas, então nem o código editado atravessa a troca.
           <p className="abertura">
             <span className="rotulo-abertura">apoio</span>
             {NIVEIS_DE_ANDAIME.map((nivel) =>
@@ -268,10 +271,11 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
             )}
             <span className="aviso-troca">trocar o apoio recomeça o exercício</span>
           </p>
-        </div>
-        <h1>{exercicio.titulo}</h1>
+        }
+        titulo={exercicio.titulo}
+      >
         <p>{exercicio.enunciado}</p>
-      </header>
+      </Cabecalho>
 
       {/* Arranjo compacto (D20): código, visualização e casos de teste cabem
           juntos numa tela comum, sem rolar a página. Investigar é ir e voltar
