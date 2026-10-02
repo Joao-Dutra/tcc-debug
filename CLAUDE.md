@@ -78,8 +78,9 @@ persistência das sessões são do Supabase (D21), e nenhuma tela do estudante
 pode depender de haver banco — sem chaves configuradas, a coleta continua só no
 aparelho.
 
-**Já feito além disso:** a tela inicial com as entradas de aluno e professor —
-o aluno sempre anônimo, sem conta nem vínculo (D29) — e a área de autoria, com
+**Já feito além disso:** a tela inicial e a tela de entrada, com as saídas de
+estudante e professor — o estudante sempre anônimo, sem conta nem vínculo (D29,
+D32) —, o tutorial do participante (D32) e a área de autoria, com
 a revisão e a publicação pelo pesquisador (D31). Exercícios de professor vivem
 no banco, e não no catálogo; o aluno nunca recebe o código correto deles.
 

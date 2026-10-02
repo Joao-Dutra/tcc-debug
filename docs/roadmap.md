@@ -216,8 +216,9 @@ que o desenho não mostra, que é justamente o que D16 recusa.
 **O desenho ficou pronto** (D27): cada marcador declarado pelo exercício ganha
 faixa e forma próprias — seta cheia, vazada e losango —, as demais variáveis
 observadas viram caixas de valor, e o quadro mostra de onde veio o valor que
-acabou de ser escrito, com o valor percorrendo o caminho. A troca deixou de
-ser o vetor aparecendo trocado no quadro seguinte.
+acabou de ser escrito, com o valor no meio do caminho — percorrendo-o, em
+D27, e parado, desde D32. A troca deixou de ser o vetor aparecendo trocado no
+quadro seguinte.
 
 **Os dois exercícios estão escritos** (D28), sobre a estrutura que o curso mais
 usa, e os defeitos foram escolhidos por execução, medindo os candidatos:
@@ -291,6 +292,11 @@ de acompanhamento, os testes e a documentação.
 
 O congelamento do arranjo da tela de exercício já está em vigor (D20); este
 marco estende a mesma regra ao resto.
+
+**Descongelado e congelado de novo em 02/10/2026 (D32)**, para entrarem o
+cabeçalho das telas, a entrada em tela própria, o valor fixo no meio do arco e
+o tutorial do participante. **O próximo piloto roda já sobre esta versão**, e é
+ela que segue para a coleta se o piloto não pedir mudança.
 
 **Os propostos por professores entram no congelamento.** A seção deles é parte
 da vitrine, e nada é publicado até o fim da coleta (D31): o que for escrito

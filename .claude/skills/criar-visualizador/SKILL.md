@@ -94,10 +94,13 @@ adivinhe pelo nome da variável.
 
 **Movimento de valor entre lugares (D27).** Quando o instantâneo traz
 `escrita`, o quadro é resultado de uma cópia: desenhe o rastro do caminho e
-deixe o valor percorrê-lo. O rastro fica no quadro e a animação é só o valor —
-parado, com movimento reduzido ou na miniatura, o rastro sozinho continua
-contando de onde o valor veio. Se as duas pontas caem no mesmo lugar do
-desenho, não desenhe rastro nenhum.
+ponha o valor parado no meio dele (D32). Os dois ficam no quadro, e não numa
+animação: o modo principal é o passo a passo, e informação que só existe
+durante o movimento some no quadro parado. O valor não pode cair em cima de
+outra peça do desenho — no vetor, quem garante isso é a altura do arco, em
+`disposicao-do-vetor.ts`, com teste sobre cada quadro do catálogo. Se as duas
+pontas caem no mesmo lugar do desenho, ou são dois marcadores, não desenhe
+rastro nenhum.
 
 **Capacidade fixa é dado do instantâneo, não do componente.** Quando o
 exercício declara `capacidade` e a observa, o desenho mostra as posições ainda

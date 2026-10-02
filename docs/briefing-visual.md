@@ -37,12 +37,17 @@ Disso decorre a regra mais importante deste documento: **a interface nunca
 resolve nada pelo estudante.** Todo recurso que torne a caça ao defeito
 desnecessária destrói o propósito da ferramenta.
 
-## As quatro telas
+## As telas
+
+Todas as telas do participante abrem com o mesmo **cabeçalho** (D32): uma
+faixa de ponta a ponta no chão do painel, com um fio embaixo — a marca (o
+inseto e "Depurar", que leva ao início) e a navegação à esquerda, as ações da
+tela à direita, o título e o texto da tela logo abaixo. Nenhuma cor nova.
 
 ### 1. Tela inicial
 
-Apresenta a ferramenta e leva aos exercícios. Texto à esquerda — o que é, como
-funciona, um botão para os exercícios — e, à direita, uma folha de exercício
+Apresenta a ferramenta e leva à entrada. Texto à esquerda — o que é, como
+funciona, e um botão só, **Entrar** — e, à direita, uma folha de exercício
 mimeografada desenhada em SVG: vetor, pilha e lista em tinta de anilina clara,
 uma lupa e um inseto. Abaixo, os três passos do trabalho, numerados porque são
 uma sequência, cada um com a própria ilustração em SVG — a janela de código com
@@ -50,6 +55,16 @@ o botão, a lupa sobre a fileira, o número da linha e o lápis. No rodapé, uma
 linha discreta de autoria: curso, instituição e autor. Três microanimações com nome (`folha-pousa`, `marcador-avanca`,
 `lupa-investiga`), desligadas com movimento reduzido. A folha não usa nenhuma
 cor de significado da bancada.
+
+### Tela de entrada
+
+No padrão das telas de login, com duas saídas. À esquerda (em cima, em tela
+estreita), a do **estudante**: chão claro próprio, "não precisa de conta nem de
+cadastro", um botão grande na cor da ação e, junto dele, o aviso de que a
+interação é registrada anonimamente para pesquisa. À direita, contornada e
+mais estreita, a do **professor**: o botão do Google com o "G" nas cores da
+marca, e e-mail e senha. O caminho do estudante precisa parecer o mais leve —
+uma tela com cara de login pode fazê-lo supor que precisa de conta.
 
 ### 2. Lista de exercícios (vitrine)
 
@@ -83,14 +98,16 @@ apoio escolhido.
 Cabe na janela sem rolar a página, a partir de 901 × 600 px. O estudante vê ao
 mesmo tempo o código, a visualização e os casos de teste.
 
-1. **No topo**: voltar e a escolha do apoio numa linha; título e enunciado
-   logo abaixo.
+1. **No topo**, no cabeçalho: a marca, voltar, a escolha do apoio e o botão
+   **Ajuda** numa linha; título e enunciado logo abaixo.
 2. **À esquerda, o código**, de alto a baixo: editor escuro, numeração de linhas
    e botão de executar. O estudante clica no *número* da linha para declarar
    onde acredita estar o defeito, e recebe na hora se acertou. Pode tentar
    quantas vezes quiser. Logo abaixo do editor, as linhas que ele **apontou**.
 3. **À direita, a visualização**: o desenho animado da estrutura sobre a mesa de
-   luz (anatomia de nó rotulada, ponteiro em seta, nulo aterrado), e numa linha
+   luz (anatomia de nó rotulada, ponteiro em seta, nulo aterrado; no vetor,
+   quando um valor é copiado, um arco da origem ao destino com o valor parado
+   no meio dele, sem cobrir caixa nem marcador), e numa linha
    só o indicador da linha em execução e os controles de reprodução — anterior,
    tocar, próximo, e uma barra de posição com o contador de passos.
 4. **Embaixo da visualização, os casos de teste e as dicas**, que rolam por
@@ -103,6 +120,13 @@ tentativa que o estudante quer conferir.
 
 Em telas estreitas ou baixas tudo empilha e a página volta a rolar, com o
 código antes da visualização.
+
+**Tutorial.** Na primeira entrada do aparelho, um diálogo passo a passo abre
+por cima da tela — e depois só pelo botão Ajuda. Placa clara sobre a sala
+escurecida, uma ilustração por passo no mesmo traço das da tela inicial, os
+pontos dos passos e "Pular tutorial", "Voltar" e "Próximo". Ensina a
+interface, nunca a estratégia de encontrar o defeito, e é idêntico nos dois
+níveis de apoio.
 
 ### 4. Painel de métricas
 

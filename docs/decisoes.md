@@ -1138,7 +1138,9 @@ o código e a visualização para baixo. O sinal de acerto **não mudou** de
 tamanho nem de intensidade: a regra de retorno de acerto do roadmap é que ele fique idêntico
 entre pilotos, e encolhê-lo para caber seria mudá-lo.
 
-**Congelamento (19/09/2026).** A partir desta data o arranjo da tela de
+**Congelamento (19/09/2026).** Descongelado e congelado de novo em D32
+(02/10/2026), com o cabeçalho, a entrada em tela própria, o valor fixo no
+arco e o tutorial. A partir desta data o arranjo da tela de
 exercício está fechado até depois do próximo piloto. O que o estudante vê
 simultaneamente — código, visualização e casos de teste, e onde cada um fica —
 não muda nesse intervalo. É a mesma razão do sinal de acerto: pilotos com
@@ -2146,7 +2148,8 @@ escrita — no quadro da própria sonda a cópia ainda não aconteceu.
 ### O arco, e o que ele não é
 
 O desenho traz o arco de onde o valor veio até onde ele foi, com a ponta de
-seta no destino, e o valor percorre esse arco. O arco **fica no quadro**; a
+seta no destino, e o valor percorre esse arco (revisto em D32: o valor passou
+a ficar parado no meio do arco). O arco **fica no quadro**; a
 animação é só o valor. Parado, com movimento reduzido ou na miniatura, o rastro
 sozinho continua contando de onde o valor veio — o movimento nunca é o único
 portador.
@@ -2689,3 +2692,191 @@ fingi-la pelo banco falso seria testar o arremedo da autenticação. Foram
 conferidos à mão, num arnês provisório; as regras que decidem — o envio só
 com a verificação atual, a publicação só com o refeito — estão em funções
 cobertas pela suíte rápida.
+
+## D32 — Cabeçalhos, entrada em tela própria, valor fixo no arco e tutorial do participante
+
+**Decisão.** Quatro ajustes na interface do participante, pedidos antes do
+congelamento para a coleta: um cabeçalho que ancora cada tela, a entrada em
+tela própria, o valor da escrita parado no meio do arco e um tutorial da
+interface. **Eles descongelam o arranjo de D20**, e a interface é congelada
+de novo ao final desta decisão, com data: o próximo piloto roda sobre esta
+versão.
+
+### O que motivou
+
+Título, ícones e textos pousavam soltos na sala, e a marca só existia na
+tela inicial. A tela inicial tinha duas entradas lado a lado, e a do
+professor pesava quase o mesmo que a do estudante. No passo a passo, que é o
+modo principal de investigar, o valor copiado só aparecia durante a animação
+dele percorrendo o arco — no quadro parado, sumia. E nada na ferramenta
+ensinava a usar a própria tela: o primeiro piloto mostrou o que isso custa,
+com zero declarações de localização em 25 sessões (roadmap, primeiro piloto).
+
+### 1. Cabeçalho
+
+Uma faixa de ponta a ponta no chão do painel, com um fio embaixo: a marca e a
+navegação à esquerda, as ações da tela à direita, o título e o texto logo
+abaixo. Nas telas do participante — inicial, entrada, vitrine, exercício e a
+abertura de um proposto. Nenhuma cor nova e nenhum ícone que não estivesse
+na tela antes; a marca, que leva ao início, passou a estar em todas.
+
+- **Na vitrine saiu o link "Início".** A marca já leva ao início, e dois
+  caminhos iguais lado a lado seriam ruído. Na tela de exercício o link fica,
+  porque leva a outro lugar — todos os exercícios.
+- **Na tela de exercício a faixa é mais justa**, porque cada pixel dela sai
+  da altura do editor e do desenho. O arranjo de D20 continua: código à
+  esquerda, desenho, casos e dicas à direita, tudo na janela a partir de
+  901 × 600 px.
+- **A faixa passa das margens sem criar rolagem.** O chão e o fio são uma
+  imagem de borda com recuo lateral, que só pinta. A primeira versão usava um
+  elemento posicionado além das margens, e a página rolava para o lado em
+  largura de celular — uma captura pegou, e agora um teste cobra.
+- **A área do professor, a revisão e o painel ficaram como estavam.** Não são
+  telas do participante.
+
+### 2. Entrada em tela própria
+
+A tela inicial tem um botão só, **Entrar**, que leva a `#/entrar`: uma tela no
+padrão de login, com duas saídas.
+
+- **Estudante:** um botão só, sem campo nenhum, com o aviso de registro
+  anônimo para pesquisa junto dele (D29). O botão só navega: a identidade
+  anônima já existe desde que a aplicação abriu (D21).
+- **Professor:** Google, com o ícone do Google, e e-mail e senha — a mesma
+  entrada que a área já tinha, agora num componente usado nas duas telas.
+  Quem chega à área pelo endereço continua entrando por lá. Entrando por
+  e-mail, vai para a área; pelo Google, o retorno já é a área.
+
+**O caminho do estudante é visivelmente mais leve, e não só diferente.** Uma
+tela com cara de login pode fazer o estudante supor que precisa de conta, e
+hesitação na porta vira sessão perdida — mais da metade das sessões dos
+pilotos já terminava sem ação nenhuma (D22). Por isso a saída dele vem
+primeiro (à esquerda, e em cima em tela estreita), tem chão próprio e um botão
+grande na cor da ação, e diz com todas as letras que não há conta nem
+cadastro. A do professor é contornada, mais estreita e com o formulário
+inteiro: é a segunda opção e se lê assim.
+
+**Sem banco**, os campos do professor ficam à vista e desligados, com o motivo
+escrito: a tela continua dizendo como se entra, sem prometer uma entrada que
+falharia.
+
+Isto **muda D29** só na forma: as duas entradas saem da tela inicial para uma
+tela própria. O que D29 decidiu — o estudante sempre anônimo, sem conta nem
+vínculo; o professor numa conta própria, sem papel até a liberação à mão —
+continua igual. Na entrada, a interface passa a dizer "estudante", e não
+"aluno".
+
+### 3. O valor fixo no meio do arco
+
+**A animação do valor percorrendo o arco saiu.** O valor copiado fica parado
+no meio do arco, em todo quadro em que o arco aparece, nos dois níveis de
+apoio — como o arco, é mudança de estado, e não rótulo (D27). Sobre um chão
+da mesa de luz com contorno no tom da ligação, para o traço não cortar o
+algarismo.
+
+**O meio não pode cair em cima da caixa de uma variável nem de um marcador.**
+A etiqueta fica sempre no meio da curva; o que se ajusta é a altura do arco,
+partindo da natural e afastando-se dela aos poucos, um degrau abaixo, um
+acima. Mover a etiqueta ao longo da curva também livraria, mas "no meio do
+arco" é uma regra que o estudante aprende de uma vez.
+
+**A disposição do vetor saiu do componente** para `disposicao-do-vetor.ts`,
+sem React. A regra só se verifica sabendo onde estão as caixas, os marcadores
+e os rótulos, e isso precisava ser cálculo que um teste alcança. O componente
+continua puro, e o módulo também.
+
+**A verificação achou dois defeitos no arranjo de D27**, corrigidos aqui:
+
+- **Com a fileira cheia, as caixas subiam para cima dela** — que é a faixa por
+  onde o arco passa e onde o valor passou a ficar. Agora ficam sempre ao lado
+  da fileira, numa linha só, e é o quadro que alarga. A largura sai das
+  variáveis que o exercício observa, e não das que existem no quadro: senão o
+  desenho mudaria de escala entre um passo e outro quando uma variável
+  aparece — como `alvo`, que é parâmetro e some entre duas chamadas. Para
+  isso o instantâneo passou a levar a lista das observadas, pelo mesmo
+  caminho dos marcadores (D27). Cada caixa tem vaga fixa, na ordem delas.
+- **A cópia entre dois marcadores desenhava um arco cortando a fileira.** D27
+  dizia que `inicio = meio` não tem arco, porque o movimento já é o próprio
+  marcador; mas a regra era de distância, e as faixas dos marcadores ficam a
+  alturas diferentes. Agora a regra é explícita: entre dois marcadores, não
+  há arco.
+
+E um terceiro, que a correção do primeiro teria criado: com as caixas ao lado
+da fileira cheia, a de `alvo` cairia exatamente onde estaciona o marcador que
+passou da última posição — `inicio = 8`, na busca binária —, e a haste dele
+pareceria apontar para a caixa. A primeira caixa fica uma posição além do fim
+da fileira.
+
+**Efeito no catálogo:** na ordenação, a caixa de `temp` fica um pouco mais à
+direita; na busca binária, a de `alvo` sai de cima da fileira para o lado, e o
+quadro fica mais largo (548 em vez de 480). Em 1366 × 657 o desenho é limitado
+pela altura, e o tamanho das células não muda.
+
+### 4. Tutorial do participante
+
+Um modal passo a passo na tela de exercício, com seis passos: como a tela se
+organiza, executar, avançar os passos, ler a visualização, apontar a linha,
+editar e executar de novo. **Abre sozinho na primeira entrada do aparelho**, e
+depois só pelo botão **Ajuda**, no cabeçalho.
+
+- **Ensina a interface, nunca a estratégia.** Diz o que cada parte faz e como
+  se usa; nunca onde procurar, o que comparar nem como reconhecer um defeito.
+  As regras moram junto do texto, em `passos-do-tutorial.ts`.
+- **Idêntico nos dois níveis de apoio.** O componente não recebe o nível — o
+  mesmo cuidado do sinal de acerto —, e o texto é uma constante que não
+  descreve nada que só um nível mostra: nem dicas, nem esperado e obtido, nem
+  rótulos, nem a linha marcada no editor. Se variasse com o apoio, o tutorial
+  viraria diferença entre as condições do estudo.
+- **Registrado no log** (`VERSAO_DO_REGISTRO` 9): `tutorial-aberto`, com o
+  motivo — primeira entrada ou ajuda —, e `tutorial-fechado`, com o desfecho
+  — concluído ou pulado — e o passo mais adiantado que chegou a ser mostrado.
+  Esc, o botão de fechar e "Pular tutorial" contam como pulado. Quem sai do
+  exercício com ele aberto não gera fechamento: o log fica com a abertura sem
+  par, que é o que aconteceu.
+- **O tempo dele fica dentro da sessão.** Na primeira sessão de cada
+  participante, os tempos até a primeira execução, até a localização e até a
+  correção incluem o tutorial. Os dois eventos marcam o trecho, e a análise o
+  desconta; o resumo da sessão não foi mudado, porque o dado é o log (D6). Ver
+  o tutorial não torna a sessão válida (D22).
+- **A marca de visto é do aparelho**, como a identidade anônima (D29). Sem
+  armazenamento, ele abre de novo a cada exercício — o erro do lado certo.
+  Num aparelho compartilhado, o participante seguinte não o vê sozinho; o
+  estudo usa um aparelho por participante, e o botão de ajuda está sempre lá.
+- **O diálogo é o do navegador** (`<dialog>`): prende o foco enquanto aberto,
+  devolve ao fechar, e o foco começa no botão de seguir.
+
+### Congelamento de novo (02/10/2026)
+
+**A partir de 02/10/2026, o que o participante vê está congelado de novo**, com
+estes quatro ajustes dentro: o arranjo da tela de exercício de D20 com o
+cabeçalho, a tela inicial com o botão único, a tela de entrada, o desenho do
+vetor com o valor no meio do arco e as caixas ao lado da fileira, e o
+tutorial. **O próximo piloto roda já sobre esta versão**, e os anteriores não
+se comparam a ele nesses pontos — em particular, as sessões da versão 9 do
+registro trazem o tutorial dentro da primeira sessão.
+
+Vale o que D20 dizia do congelamento: corrigir defeito que quebre o
+comportamento descrito é permitido, desde que restaure o que está descrito, e
+não altere.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| O valor fica no meio do arco, dentro do quadro, sem cobrir célula, caixa, nome de caixa, marcador nem rótulo — em cada quadro dos exercícios de vetor, nas duas versões e nos dois níveis, e numa bateria de quadros montados à mão | `src/visualizacao/disposicao-do-vetor.test.ts` |
+| A largura do desenho não muda entre passos; a caixa tem vaga fixa; nenhuma caixa sobre a vaga do marcador estacionado; nenhum arco entre dois marcadores | o mesmo arquivo |
+| O arco muda de altura, e não a etiqueta de lugar, quando há algo no meio | `src/visualizacao/arco-da-escrita.test.ts` |
+| As observadas chegam a todo quadro, antes de existirem | `src/nucleo/marcadores.test.ts` |
+| O valor aparece parado em todo quadro com arco, nos dois níveis | `e2e/vetor.spec.ts` |
+| Marca e título no cabeçalho; a faixa não cria rolagem em 360 px | `e2e/cabecalho.spec.ts` |
+| Um botão só na inicial; o estudante sem campo, com o aviso junto, antes do professor; o professor com Google e o ícone, e e-mail e senha | `e2e/entradas.spec.ts` |
+| Os eventos do tutorial no log, sem mexer no resumo nem na validade da sessão | `src/nucleo/tutorial-no-registro.test.ts` |
+| O texto do tutorial não descreve o que só um nível mostra | `src/componentes/passos-do-tutorial.test.ts` |
+| O tutorial abre na primeira entrada, é idêntico nos dois níveis, depois só pela ajuda, e o log registra visto e pulado | `e2e/tutorial.spec.ts` |
+
+**O que depende de olho:** se o estudante, na tela de entrada, de fato segue
+sem hesitar — é a pergunta que o próximo piloto responde, pela proporção de
+sessões abertas sem ação. E se o texto do tutorial é lido: o passo alcançado
+no log diz até onde ele foi, e não se foi lido. Que "ensina a interface,
+nunca a estratégia" foi cumprido é julgamento sobre o texto, e não teste:
+fica para a leitura da orientadora antes do piloto.
