@@ -134,6 +134,15 @@ export function descreverEvento(evento: Evento): string {
       return `localização · linha ${evento.linha} · ${evento.correta ? 'correta' : 'incorreta'}`;
     case 'localizacao-no-intervalo':
       return `clique na linha ${evento.linha} durante o intervalo · sem veredito`;
+    case 'tutorial-aberto':
+      return evento.motivo === 'primeira-entrada'
+        ? 'tutorial aberto na primeira entrada'
+        : 'tutorial aberto pelo botão de ajuda';
+    case 'tutorial-fechado':
+      return (
+        `tutorial ${evento.desfecho === 'concluido' ? 'concluído' : 'pulado'} · ` +
+        `passo ${evento.passoAlcancado} de ${evento.totalDePassos}`
+      );
   }
 }
 

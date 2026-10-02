@@ -6,7 +6,9 @@ import {
   localizacoesDe,
 } from '../nucleo/metricas';
 import type {
+  DesfechoDoTutorial,
   EventoDeLocalizacao,
+  MotivoDoTutorial,
   ExecucaoDisparada,
   OrigemDaExecucao,
   Sessao,
@@ -156,7 +158,22 @@ export function useMetricas(exercicio: Exercicio, andaime: string) {
     [fecharRajada, esperar]
   );
 
+  // O tutorial não muda nada do que é medido além de entrar no log (D32): o
+  // tempo que ele toma fica na sessão, marcado pelos dois eventos.
+  const registrarTutorialAberto = useCallback((motivo: MotivoDoTutorial) => {
+    sessao.current?.registrarTutorialAberto(motivo);
+  }, []);
+
+  const registrarTutorialFechado = useCallback(
+    (desfecho: DesfechoDoTutorial, passoAlcancado: number, totalDePassos: number) => {
+      sessao.current?.registrarTutorialFechado(desfecho, passoAlcancado, totalDePassos);
+    },
+    []
+  );
+
   return {
+    registrarTutorialAberto,
+    registrarTutorialFechado,
     iniciarExecucao,
     concluirExecucao,
     registrarEdicao,

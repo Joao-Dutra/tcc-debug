@@ -60,8 +60,15 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * Nas versões anteriores o campo não existe, e toda sessão é do catálogo — não
  * havia outra origem. A análise do estudo separa as duas: um exercício de
  * professor não passou pela suíte do catálogo, nem pelo congelamento.
+ *
+ * 9 — a tela de exercício ganhou o tutorial do participante (D32), e o log
+ * ganhou `tutorial-aberto` e `tutorial-fechado`. Ele abre sozinho na primeira
+ * entrada do aparelho, e o tempo dele cai dentro da sessão: na versão 9, o
+ * tempo até a primeira execução da primeira sessão inclui o tutorial, e a
+ * análise o desconta com os dois eventos. Até a versão 8 não havia tutorial, e
+ * a ausência dos eventos não quer dizer que ele foi pulado.
  */
-export const VERSAO_DO_REGISTRO = 8;
+export const VERSAO_DO_REGISTRO = 9;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -92,6 +99,24 @@ export type OrigemDaExecucao = 'estudante' | 'automatica';
  * dele — e quase sempre a mais informativa da sessão (D23).
  */
 export type SituacaoDaExecucao = 'concluida' | 'interrompida';
+
+/**
+ * Por que o tutorial abriu (D32): sozinho, na primeira entrada do aparelho, ou
+ * porque o estudante pediu, no botão de ajuda. São coisas diferentes na
+ * análise — quem volta ao tutorial no meio do exercício está procurando como
+ * usar a ferramenta naquele instante.
+ */
+export type MotivoDoTutorial = 'primeira-entrada' | 'ajuda';
+
+/**
+ * Como o tutorial fechou: chegando ao último passo e encerrando, ou antes
+ * disso — pelo botão de pular, pelo fechar ou pela tecla Esc.
+ *
+ * Quem sai do exercício com o tutorial aberto não gera fechamento: o log fica
+ * com o `tutorial-aberto` sem par, e é isso que ele diz. Inventar um "pulado"
+ * no desmonte afirmaria um gesto que ninguém fez.
+ */
+export type DesfechoDoTutorial = 'concluido' | 'pulado';
 
 /**
  * Toda tentativa de localização vira um evento 'localizacao', acertando ou
@@ -128,7 +153,17 @@ export type Evento =
   | { tipo: 'dica'; t: number; indice: number }
   | { tipo: 'localizacao'; t: number; linha: number; correta: boolean }
   /** Desde a versão 6. Sem veredito: a linha não chegou a ser julgada. */
-  | { tipo: 'localizacao-no-intervalo'; t: number; linha: number };
+  | { tipo: 'localizacao-no-intervalo'; t: number; linha: number }
+  /** Desde a versão 9 (D32). */
+  | { tipo: 'tutorial-aberto'; t: number; motivo: MotivoDoTutorial }
+  | {
+      tipo: 'tutorial-fechado';
+      t: number;
+      desfecho: DesfechoDoTutorial;
+      /** O passo mais adiantado que chegou a ser mostrado, a partir de 1. */
+      passoAlcancado: number;
+      totalDePassos: number;
+    };
 
 /** Métricas agregadas. Sempre deriváveis do log; nunca a única cópia do dado. */
 export interface ResumoDaSessao {
@@ -360,6 +395,14 @@ export interface Sessao {
    * registrado sem veredito, e não adia o fim do intervalo.
    */
   registrarLocalizacao(linha: number): DeclaracaoDeLocalizacao;
+  /** O tutorial do participante abriu (D32). */
+  registrarTutorialAberto(motivo: MotivoDoTutorial): void;
+  /** O tutorial fechou, com o passo mais adiantado que chegou a mostrar. */
+  registrarTutorialFechado(
+    desfecho: DesfechoDoTutorial,
+    passoAlcancado: number,
+    totalDePassos: number
+  ): void;
   /** Retrato do registro no instante da chamada; pode ser pedido quantas vezes for. */
   registro(): RegistroDeSessao;
 }
@@ -464,6 +507,14 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
       const correta = (opcoes.linhasAceitas ?? [opcoes.linhaDoDefeito]).includes(linha);
       eventos.push({ tipo: 'localizacao', t: tRelativo, linha, correta });
       return { julgada: true, correta };
+    },
+
+    registrarTutorialAberto(motivo) {
+      eventos.push({ tipo: 'tutorial-aberto', t: t(), motivo });
+    },
+
+    registrarTutorialFechado(desfecho, passoAlcancado, totalDePassos) {
+      eventos.push({ tipo: 'tutorial-fechado', t: t(), desfecho, passoAlcancado, totalDePassos });
     },
 
     registro() {
