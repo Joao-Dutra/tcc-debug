@@ -71,3 +71,28 @@ test('a caixa da temporária mostra o valor que saiu do vetor', async ({ page })
   await expect(desenho.getByText('temp', { exact: true })).toBeVisible();
   await expect(desenho.getByText('5', { exact: true }).first()).toBeVisible();
 });
+
+// O modo principal é o passo a passo, e informação que só existe durante o
+// movimento some no quadro parado (D32). O valor fica no meio do arco em todo
+// quadro em que o arco aparece, nos dois níveis de apoio.
+test('o valor copiado fica parado no meio do arco, em todo quadro com arco', async ({ page }) => {
+  for (const andaime of ['com-apoio', 'sem-apoio']) {
+    const barra = await abrir(page, 'vetor-ordenar', andaime);
+    const rastro = page.locator('.bancada svg path.svg-ligacao');
+    const valor = page.locator('.bancada svg .valor-do-arco text');
+
+    let quadrosComArco = 0;
+    for (let passo = 0; passo <= 30; passo++) {
+      await barra.fill(String(passo));
+      const comArco = (await rastro.count()) > 0;
+      await expect(valor, `passo ${passo} (${andaime})`).toHaveCount(comArco ? 1 : 0);
+      if (!comArco) continue;
+      quadrosComArco++;
+      await expect(valor).toHaveText(/^-?\d+$/);
+      // Parado: nenhuma transição em curso no valor, e ele já está visível
+      // no instante em que o quadro aparece.
+      expect(await valor.evaluate((el) => getComputedStyle(el.parentElement!).opacity)).toBe('1');
+    }
+    expect(quadrosComArco, andaime).toBeGreaterThan(2);
+  }
+});

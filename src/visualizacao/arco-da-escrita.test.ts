@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { MARGEM_DO_ARCO, controleDoArco, meioDoArco, pontaDoArco } from './arco-da-escrita';
+import {
+  FOLGA_DA_ETIQUETA,
+  MARGEM_DO_ARCO,
+  arcoComValor,
+  controleDoArco,
+  etiquetaDoValor,
+  meioDoArco,
+  pontaDoArco,
+  seSobrepoem,
+} from './arco-da-escrita';
 import type { Ponto } from './arco-da-escrita';
 
 /**
@@ -51,5 +60,34 @@ describe('a forma do arco', () => {
     expect(pontaDoArco(topoDaCelula(77), para)).toMatch(
       new RegExp(`^M ${para.x} ${para.y} L .+ L .+ Z$`)
     );
+  });
+});
+
+describe('o valor no meio do arco (D32)', () => {
+  const quadro = { x: 0, y: 0, largura: 480, altura: 220 };
+  const de = topoDaCelula(77);
+  const para = topoDaCelula(125);
+
+  it('sem nada no caminho, o arco fica na altura natural', () => {
+    const arco = arcoComValor(de, para, '5', [], quadro);
+    expect(arco.livre).toBe(true);
+    expect(arco.controle).toEqual(controleDoArco(de, para));
+  });
+
+  it('com algo no meio, o arco muda de altura e o valor continua no meio dele', () => {
+    const natural = arcoComValor(de, para, '5', [], quadro);
+    const obstaculo = { ...natural.etiqueta };
+    const arco = arcoComValor(de, para, '5', [obstaculo], quadro);
+    expect(arco.livre).toBe(true);
+    expect(arco.controle.y).not.toBe(natural.controle.y);
+    expect(arco.meio).toEqual(meioDoArco(de, para, arco.controle));
+    expect(seSobrepoem(arco.etiqueta, obstaculo, FOLGA_DA_ETIQUETA)).toBe(false);
+  });
+
+  it('a etiqueta cresce com o texto, que é monoespaçado', () => {
+    const curta = etiquetaDoValor({ x: 0, y: 0 }, '5');
+    const longa = etiquetaDoValor({ x: 0, y: 0 }, '1234567');
+    expect(longa.largura).toBeGreaterThan(curta.largura);
+    expect(longa.x + longa.largura / 2).toBeCloseTo(0);
   });
 });

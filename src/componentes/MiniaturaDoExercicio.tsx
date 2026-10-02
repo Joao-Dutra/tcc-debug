@@ -53,6 +53,7 @@ export function MiniaturaDoExercicio({ exercicio }: { exercicio: Exercicio }) {
     linha: null,
     variaveis: exercicio.miniatura.variaveis,
     marcadores: exercicio.marcadores,
+    observadas: exercicio.variaveisObservadas,
   };
 
   return (

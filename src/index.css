@@ -691,6 +691,10 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
    com a própria mesa de luz, e não vazada: o arco da escrita passa por trás
    dela sem atravessar o valor escrito dentro. */
 .svg-caixa-valor { fill: var(--mesa-de-luz); stroke: var(--contorno-fileira); }
+/* Chão do valor parado no meio do arco (D32): a mesa de luz por trás do
+   número, para o traço do arco não cortar o algarismo, e o contorno no tom da
+   ligação, que diz de qual traço o valor é. */
+.svg-etiqueta-do-arco { fill: var(--mesa-de-luz); stroke: var(--ligacao); }
 .svg-base { stroke: var(--traco-estrutura); }
 .svg-ligacao { stroke: var(--ligacao); }
 .svg-ligacao-seta { fill: var(--ligacao); }
