@@ -37,6 +37,15 @@ export interface Instantaneo {
    * que guarda um valor: os dois são números.
    */
   marcadores?: string[];
+  /**
+   * Todas as variáveis que o exercício observa, na ordem declarada (D32),
+   * inclusive as que ainda não existem neste quadro. O desenho reserva lugar
+   * para elas desde o primeiro passo: sem a lista, ele só conheceria as do
+   * quadro, e o lugar de cada caixa — e a largura do desenho — mudaria quando
+   * uma variável aparece ou some, como o parâmetro de uma função entre duas
+   * chamadas.
+   */
+  observadas?: string[];
 }
 
 /** Um lugar que guarda valor: uma posição de um vetor, ou uma variável. */

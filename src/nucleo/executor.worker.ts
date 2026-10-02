@@ -156,6 +156,7 @@ self.onmessage = (evento: MessageEvent<Pedido>) => {
       linha,
       variaveis: filtradas,
       ...(marcadores ? { marcadores } : {}),
+      observadas: variaveisObservadas,
       ...(escritaPendente ? { escrita: escritaPendente } : {}),
     });
     escritaPendente = escritaUtil(escritaPrevista);

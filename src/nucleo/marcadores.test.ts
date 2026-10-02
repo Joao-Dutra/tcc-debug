@@ -52,6 +52,20 @@ describe('marcadores no instantâneo', () => {
   });
 });
 
+describe('variáveis observadas no instantâneo (D32)', () => {
+  // O desenho reserva lugar para cada caixa desde o primeiro passo; para isso
+  // a lista precisa estar em todo quadro, inclusive nos que vêm antes de a
+  // variável existir.
+  it('chegam a todos os quadros, na ordem declarada, mesmo antes de existirem', () => {
+    const { instantaneos } = executar(['j']);
+    const antesDaTemp = instantaneos.filter((i) => !('temp' in i.variaveis));
+    expect(antesDaTemp.length).toBeGreaterThan(0);
+    for (const instantaneo of instantaneos) {
+      expect(instantaneo.observadas).toEqual(['itens', 'j', 'temp']);
+    }
+  });
+});
+
 describe('o catálogo', () => {
   it.each(catalogo.filter((e) => e.marcadores !== undefined))(
     '$id declara só marcadores que são variáveis observadas',
