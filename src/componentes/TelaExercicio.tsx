@@ -141,6 +141,18 @@ export function PainelDeCasos({
   );
 }
 
+/**
+ * A tela como o autor a vê antes de publicar (D33): idêntica à do aluno, mas
+ * sem gravar sessão, sem abrir o tutorial sozinho e com a navegação apontando
+ * para a própria pré-visualização.
+ */
+export interface ModoDePrevia {
+  /** Para onde o link de volta leva, e com que nome. */
+  voltar: { href: string; rotulo: string };
+  /** O endereço da pré-visualização em outro nível de apoio. */
+  enderecoDoNivel: (nivel: NivelDeAndaime) => string;
+}
+
 interface Props {
   exercicio: Exercicio;
   andaime: NivelDeAndaime;
@@ -149,9 +161,11 @@ interface Props {
    * conhece o catálogo — ela desenha um exercício, não uma sequência.
    */
   proximo?: Exercicio;
+  /** Presente, a tela é a pré-visualização do autor, e não a do aluno. */
+  previa?: ModoDePrevia;
 }
 
-export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
+export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
   const [codigo, setCodigo] = useState(exercicio.codigoComDefeito);
   const [resultado, setResultado] = useState<ResultadoExecucao | null>(null);
   const [rodando, setRodando] = useState(false);
@@ -163,7 +177,7 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
   const [tutorialAberto, setTutorialAberto] = useState(false);
 
   const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
-  const metricas = useMetricas(exercicio, andaime);
+  const metricas = useMetricas(exercicio, andaime, previa === undefined);
   const jaAbriu = useRef(false);
   const editor = useRef<ReactCodeMirrorRef>(null);
 
@@ -236,7 +250,9 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
     // Na primeira entrada do aparelho, o tutorial abre sozinho; depois, só
     // pelo botão de ajuda. A marca vai na abertura, e não no fim: quem pulou
     // também viu, e o botão continua ali.
-    if (!tutorialJaVisto()) {
+    // Na pré-visualização, não: quem olha é o autor, e marcar o aparelho como
+    // visto tiraria o tutorial de um aluno que usasse este aparelho depois.
+    if (!previa && !tutorialJaVisto()) {
       marcarTutorialVisto();
       abrirTutorial('primeira-entrada');
     }
@@ -264,11 +280,18 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
 
   return (
     <div className="pagina tela-exercicio com-cabecalho">
+      {/* Acima de tudo, e fora do cabeçalho: o resto da tela fica exatamente
+          como o aluno a vê. */}
+      {previa && (
+        <p className="faixa-da-previa" role="note">
+          Pré-visualização: é assim que o aluno verá este exercício. Nada aqui é gravado.
+        </p>
+      )}
       <Cabecalho
         navegacao={
-          <a className="voltar" href={CAMINHO_EXERCICIOS}>
+          <a className="voltar" href={previa?.voltar.href ?? CAMINHO_EXERCICIOS}>
             <ArrowLeftIcon className="icone" aria-hidden="true" />
-            Todos os exercícios
+            {previa?.voltar.rotulo ?? 'Todos os exercícios'}
           </a>
         }
         acoes={
@@ -287,7 +310,7 @@ export function TelaExercicio({ exercicio, andaime, proximo }: Props) {
                 <a
                   key={nivel}
                   className="nivel"
-                  href={caminhoDoExercicio(exercicio.id, nivel)}
+                  href={previa ? previa.enderecoDoNivel(nivel) : caminhoDoExercicio(exercicio.id, nivel)}
                 >
                   {rotuloDoAndaime(nivel)}
                 </a>

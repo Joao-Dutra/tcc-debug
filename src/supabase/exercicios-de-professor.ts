@@ -7,19 +7,25 @@ import type {
 import type { CasoDeTeste, CategoriaDefeito, Exercicio, TipoEstrutura } from '../nucleo/tipos';
 
 /**
- * Os exercícios de professor no banco (D31): o que a área de autoria, a
- * revisão e a vitrine leem e escrevem.
+ * Os exercícios de professor no banco (D31, D33): o que a área de autoria, a
+ * pré-visualização e a vitrine leem e escrevem, e o interruptor da coleta.
  *
  * Mora fora do núcleo pelo mesmo motivo das sessões (D21): fala com a rede. O
  * formato do conteúdo é do núcleo — o `RascunhoDeExercicio` —, e é por ele que
  * o banco e as telas se entendem.
  *
- * Quem decide o que cada um pode é o RLS e o gatilho da migração 0002, e não
+ * Quem decide o que cada um pode é o RLS e os gatilhos das migrações 0002 e
+ * 0003, e não
  * este módulo: ele só pergunta. Mas uma alteração barrada pelo RLS volta sem
  * erro nenhum, só sem linha — por isso toda escrita confere que alcançou a
  * linha, e diz quando não alcançou, em vez de deixar a tela achar que salvou.
  */
 
+/**
+ * `em_revisao` continua no tipo porque continua no banco, mas desde D33
+ * nenhuma transição leva a ele: a migração 0003 devolveu os que havia a
+ * rascunho.
+ */
 export type SituacaoDoExercicio = 'rascunho' | 'em_revisao' | 'publicado' | 'retirado';
 
 /** Muda quando a forma de `conteudo` mudar, para os antigos continuarem legíveis. */
@@ -27,8 +33,8 @@ export const FORMATO_DO_CONTEUDO = 1;
 
 /**
  * O que fica em `conteudo`: o rascunho e, depois da publicação, a linha do
- * defeito e as linhas aceitas — calculadas pela verificação refeita no
- * navegador do pesquisador. O aluno recebe o exercício sem o código correto
+ * defeito e as linhas aceitas — calculadas pela verificação que o autor fez
+ * na hora de publicar (D33). O aluno recebe o exercício sem o código correto
  * (D31), e não teria como derivá-las.
  */
 export interface ConteudoDoExercicio extends RascunhoDeExercicio {
@@ -38,9 +44,8 @@ export interface ConteudoDoExercicio extends RascunhoDeExercicio {
 
 /**
  * Só o que o professor escreveu. A linha do defeito e as linhas aceitas quem
- * grava é a publicação, a partir da verificação refeita; se vierem no conteúdo
- * de um exercício em revisão, foram escritas por outro caminho, e a revisão
- * não as usa.
+ * grava é a publicação, a partir da verificação feita na hora; criar um
+ * rascunho a partir de um publicado não as leva junto.
  */
 export function rascunhoDoConteudo(conteudo: ConteudoDoExercicio): RascunhoDeExercicio {
   return {
@@ -64,17 +69,16 @@ export interface ExercicioDeProfessor {
   situacao: SituacaoDoExercicio;
   conteudo: ConteudoDoExercicio;
   /**
-   * O relatório que o navegador de quem enviou gravou. **Não prova nada**: pode
-   * ter sido escrito por acesso direto à API. Serve para o pesquisador ver o
-   * que o professor viu, e a decisão de publicar depende só da verificação
-   * refeita no navegador dele (D31).
+   * O comentário de uma devolução da antiga revisão (D31). Ninguém escreve
+   * mais nenhum (D33); o que existe aparece ao autor como registro.
    */
-  verificacaoDoProfessor: unknown;
   comentarioDaRevisao: string | null;
   criadoEm: string;
   atualizadoEm: string;
-  enviadoEm: string | null;
   publicadoEm: string | null;
+  retiradoEm: string | null;
+  /** Quem tirou do ar: o próprio autor, ou o pesquisador puxando o freio (D33). */
+  retiradoPor: string | null;
 }
 
 // ------------------------------------------------------------ leitura ---
@@ -153,17 +157,17 @@ interface LinhaDeExercicio {
   autor_id: string;
   situacao: SituacaoDoExercicio;
   conteudo: unknown;
-  verificacao: unknown;
   comentario_da_revisao: string | null;
   criado_em: string;
   atualizado_em: string;
-  enviado_em: string | null;
   publicado_em: string | null;
+  retirado_em: string | null;
+  retirado_por: string | null;
 }
 
 const COLUNAS =
-  'id, autor_id, situacao, conteudo, verificacao, comentario_da_revisao, criado_em, ' +
-  'atualizado_em, enviado_em, publicado_em';
+  'id, autor_id, situacao, conteudo, comentario_da_revisao, criado_em, atualizado_em, ' +
+  'publicado_em, retirado_em, retirado_por';
 
 function deLinha(linha: LinhaDeExercicio): ExercicioDeProfessor | null {
   const conteudo = conteudoValido(linha.conteudo);
@@ -173,12 +177,12 @@ function deLinha(linha: LinhaDeExercicio): ExercicioDeProfessor | null {
     autorId: linha.autor_id,
     situacao: linha.situacao,
     conteudo,
-    verificacaoDoProfessor: linha.verificacao,
     comentarioDaRevisao: linha.comentario_da_revisao,
     criadoEm: linha.criado_em,
     atualizadoEm: linha.atualizado_em,
-    enviadoEm: linha.enviado_em,
     publicadoEm: linha.publicado_em,
+    retiradoEm: linha.retirado_em,
+    retiradoPor: linha.retirado_por,
   };
 }
 
@@ -221,21 +225,34 @@ export async function lerMeusExercicios(autorId: string): Promise<ExercicioDePro
 }
 
 /**
- * O que o pesquisador revisa: tudo o que saiu do rascunho. O RLS é que deixa o
- * pesquisador ler todos; para qualquer outra conta, a mesma consulta devolve só
- * os próprios.
+ * Os publicados de todos os professores, para o pesquisador poder retirar
+ * qualquer um (D33). O RLS é que deixa o pesquisador ler todos; para qualquer
+ * outra conta, a mesma consulta devolve só os próprios.
  */
-export async function lerExerciciosDaRevisao(): Promise<ExercicioDeProfessor[]> {
+export async function lerTodosOsPublicados(): Promise<ExercicioDeProfessor[]> {
   const linhas = await lerTodas<LinhaDeExercicio>((de, ate) =>
     cliente()
       .from('exercicios_de_professor')
       .select(COLUNAS)
-      .in('situacao', ['em_revisao', 'publicado', 'retirado'])
-      .order('atualizado_em', { ascending: false })
+      .eq('situacao', 'publicado')
+      .order('publicado_em', { ascending: false })
       .order('id', { ascending: true })
       .range(de, ate)
   );
   return linhas.map(deLinha).filter((e): e is ExercicioDeProfessor => e !== null);
+}
+
+/**
+ * Um exercício pela tabela, e não pela visão dos publicados: é a leitura da
+ * pré-visualização (D33). O autor lê o próprio em qualquer situação, inclusive
+ * com a seção oculta aos alunos; o pesquisador lê todos. Nulo se não existe,
+ * se não está ao alcance desta conta ou se o conteúdo não tem a forma esperada.
+ */
+export async function lerExercicioPelaTabela(id: string): Promise<ExercicioDeProfessor | null> {
+  const linhas = await lerTodas<LinhaDeExercicio>((de, ate) =>
+    cliente().from('exercicios_de_professor').select(COLUNAS).eq('id', id).range(de, ate)
+  );
+  return linhas.length === 1 ? deLinha(linhas[0]) : null;
 }
 
 interface LinhaPublicada {
@@ -319,31 +336,6 @@ export function salvarRascunho(id: string, rascunho: RascunhoDeExercicio): Promi
   );
 }
 
-/**
- * Envia para revisão, com o relatório que o navegador do professor produziu. O
- * relatório vai junto para o pesquisador ver o que o professor viu — e só para
- * isso: quem decide a publicação é a verificação refeita na revisão.
- */
-export async function enviarParaRevisao(
-  id: string,
-  rascunho: RascunhoDeExercicio,
-  relatorio: RelatorioDaVerificacao
-): Promise<void> {
-  if (!relatorio.aprovado) {
-    throw new Error('Só se envia um exercício que passou na verificação.');
-  }
-  await alterar(
-    id,
-    {
-      formato: FORMATO_DO_CONTEUDO,
-      conteudo: rascunho,
-      verificacao: relatorio,
-      situacao: 'em_revisao',
-    },
-    'O exercício não pôde ser enviado: ele não está mais em rascunho, ou não é seu.'
-  );
-}
-
 export async function apagarRascunho(id: string): Promise<void> {
   const { data, error } = await cliente()
     .from('exercicios_de_professor')
@@ -357,36 +349,73 @@ export async function apagarRascunho(id: string): Promise<void> {
 }
 
 /**
- * Publica, gravando junto a linha do defeito e as linhas aceitas que a
- * verificação refeita derivou. O banco carimba quem publicou (0002).
+ * Publica pelo próprio autor (D33), com o rascunho exatamente como foi
+ * verificado e o relatório dessa verificação. A linha do defeito e as linhas
+ * aceitas vão para o conteúdo, porque o aluno não recebe o código correto e
+ * não teria como derivá-las.
+ *
+ * Quem decide se publica é `publicacaoLiberada`, com a verificação feita
+ * agora; o banco ainda recusa sem o relatório aprovado (0003), contra um
+ * defeito desta tela, e carimba quem publicou.
  */
-export function publicar(
+export async function publicar(
   id: string,
   rascunho: RascunhoDeExercicio,
-  derivado: { linhaDoDefeito: number; linhasAceitas: number[] }
+  relatorio: RelatorioDaVerificacao
 ): Promise<void> {
-  const conteudo: ConteudoDoExercicio = { ...rascunho, ...derivado };
-  return alterar(
+  if (!relatorio.aprovado || !relatorio.derivado) {
+    throw new Error('Só se publica um exercício que passou na verificação.');
+  }
+  const conteudo: ConteudoDoExercicio = { ...rascunho, ...relatorio.derivado };
+  await alterar(
     id,
-    { formato: FORMATO_DO_CONTEUDO, conteudo, situacao: 'publicado' },
-    'O exercício não pôde ser publicado: ele não está mais em revisão, ou esta conta não é de ' +
-      'pesquisador.'
+    { formato: FORMATO_DO_CONTEUDO, conteudo, verificacao: relatorio, situacao: 'publicado' },
+    'O exercício não pôde ser publicado: ele não está mais em rascunho, não é seu, ou esta ' +
+      'conta não tem o papel de professor.'
   );
 }
 
-export function devolver(id: string, comentario: string): Promise<void> {
-  return alterar(
-    id,
-    { situacao: 'rascunho', comentario_da_revisao: comentario },
-    'O exercício não pôde ser devolvido: ele não está mais em revisão, ou esta conta não é de ' +
-      'pesquisador.'
-  );
-}
-
+/** O autor retira o próprio; o pesquisador, qualquer um (D33). */
 export function retirar(id: string): Promise<void> {
   return alterar(
     id,
     { situacao: 'retirado' },
-    'O exercício não pôde ser retirado: ele não está publicado, ou esta conta não é de pesquisador.'
+    'O exercício não pôde ser retirado: ele não está publicado, ou esta conta não pode retirá-lo.'
   );
+}
+
+// ----------------------------------------------- interruptor da coleta ---
+
+export interface EstadoDaColeta {
+  /** Ligado, a seção dos propostos não chega a aluno nenhum, pelo banco (0003). */
+  propostosOcultos: boolean;
+  alteradoEm: string;
+}
+
+/**
+ * O estado do interruptor. Qualquer conta lê; nulo se a linha não está lá — a
+ * migração 0003 não rodou —, e aí a visão dos publicados também não devolve
+ * nada.
+ */
+export async function lerEstadoDaColeta(): Promise<EstadoDaColeta | null> {
+  const { data, error } = await cliente()
+    .from('coleta')
+    .select('propostos_ocultos, alterado_em')
+    .range(0, 0);
+  if (error) throw new Error(error.message);
+  const linha = (data ?? [])[0] as { propostos_ocultos: boolean; alterado_em: string } | undefined;
+  return linha ? { propostosOcultos: linha.propostos_ocultos, alteradoEm: linha.alterado_em } : null;
+}
+
+/** Só o pesquisador mexe (0003); para outra conta, a escrita não alcança a linha. */
+export async function mudarInterruptor(propostosOcultos: boolean): Promise<void> {
+  const { data, error } = await cliente()
+    .from('coleta')
+    .update({ propostos_ocultos: propostosOcultos })
+    .eq('unica', true)
+    .select('unica');
+  if (error) throw new Error(error.message);
+  if ((data ?? []).length !== 1) {
+    throw new Error('O interruptor não mudou: só a conta de pesquisador pode mexer nele.');
+  }
 }

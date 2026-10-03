@@ -78,12 +78,14 @@ test('a área do professor, pelo endereço, diz sem banco por que não funciona'
   await expect(page.getByText(/o banco não está configurado/).first()).toBeVisible();
 });
 
-test('a revisão fica fora das entradas, e sem banco diz por quê', async ({ page }) => {
-  for (const rota of ['/#/', '/#/entrar']) {
+// A pré-visualização é do autor (D33): nenhuma tela do aluno aponta para ela,
+// e sem banco ela diz por que não funciona.
+test('a pré-visualização fica fora das entradas, e sem banco diz por quê', async ({ page }) => {
+  for (const rota of ['/#/', '/#/entrar', '/#/exercicios']) {
     await page.goto(rota);
-    await expect(page.locator('a[href="#/revisao"]')).toHaveCount(0);
+    await expect(page.locator('a[href^="#/previa"]')).toHaveCount(0);
   }
-  await page.goto('/#/revisao');
-  await expect(page.getByRole('heading', { name: 'Revisão dos exercícios', level: 1 })).toBeVisible();
+  await page.goto('/#/previa/qualquer-id?andaime=com-apoio');
+  await expect(page.getByRole('heading', { name: 'Pré-visualização', level: 1 })).toBeVisible();
   await expect(page.getByText(/o banco não está configurado/)).toBeVisible();
 });

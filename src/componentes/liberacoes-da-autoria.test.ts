@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import { vetorDobrar } from '../exercicios/vetor-dobrar';
-import {
-  envioLiberado,
-  publicacaoLiberada,
-  verificacaoValeParaOAtual,
-} from './liberacoes-da-autoria';
+import { publicacaoLiberada, verificacaoValeParaOAtual } from './liberacoes-da-autoria';
 import type {
   RascunhoDeExercicio,
   RelatorioDaVerificacao,
 } from '../nucleo/verificacao-do-exercicio';
 
-/** As travas do envio e da publicação (D31). */
+/**
+ * A trava da publicação (D31, D33). Desde D33 quem publica é o autor, com a
+ * verificação que ele acabou de fazer: ela precisa ser do que está no
+ * formulário agora, e o relatório gravado no banco nem entra na assinatura.
+ */
 
 const RASCUNHO: RascunhoDeExercicio = {
   titulo: vetorDobrar.titulo,
@@ -34,44 +34,30 @@ const relatorio = (aprovado: boolean, comDerivado = true): RelatorioDaVerificaca
   ...(comDerivado ? { derivado: { linhaDoDefeito: 4, linhasAceitas: [4] } } : {}),
 });
 
-describe('o envio para a revisão', () => {
+describe('a publicação pelo autor', () => {
   const verificado = JSON.stringify(RASCUNHO);
+  const derivado = { linhaDoDefeito: 4, linhasAceitas: [4] };
 
-  it('é liberado pela verificação aprovada do que está no formulário', () => {
-    expect(envioLiberado(relatorio(true), verificado, RASCUNHO)).toBe(true);
+  it('é liberada pela verificação aprovada do que está no formulário, com a linha derivada', () => {
+    expect(publicacaoLiberada(relatorio(true), verificado, RASCUNHO)).toEqual(derivado);
   });
 
-  it('não é liberado pela verificação recusada', () => {
-    expect(envioLiberado(relatorio(false), verificado, RASCUNHO)).toBe(false);
+  it('não é liberada pela verificação recusada', () => {
+    expect(publicacaoLiberada(relatorio(false), verificado, RASCUNHO)).toBeUndefined();
   });
 
   it('volta a travar quando o formulário muda depois de verificar', () => {
     const editado = { ...RASCUNHO, enunciado: RASCUNHO.enunciado + ' ' };
     expect(verificacaoValeParaOAtual(relatorio(true), verificado, editado)).toBe(false);
-    expect(envioLiberado(relatorio(true), verificado, editado)).toBe(false);
+    expect(publicacaoLiberada(relatorio(true), verificado, editado)).toBeUndefined();
   });
 
-  it('não é liberado sem verificação, nem com o formulário inválido', () => {
-    expect(envioLiberado(null, null, RASCUNHO)).toBe(false);
-    expect(envioLiberado(relatorio(true), verificado, null)).toBe(false);
-  });
-});
-
-describe('a publicação', () => {
-  it('é liberada pela verificação refeita aprovada, com a linha que ela derivou', () => {
-    expect(publicacaoLiberada(relatorio(true))).toEqual({ linhaDoDefeito: 4, linhasAceitas: [4] });
-  });
-
-  it('não é liberada pela refeita recusada, qualquer que seja o relatório gravado', () => {
-    // O gravado nem entra na assinatura: um aprovado forjado não tem por onde passar.
-    expect(publicacaoLiberada(relatorio(false))).toBeUndefined();
-  });
-
-  it('não é liberada enquanto a refeita não terminou', () => {
-    expect(publicacaoLiberada(null)).toBeUndefined();
+  it('não é liberada sem verificação, nem com o formulário inválido', () => {
+    expect(publicacaoLiberada(null, null, RASCUNHO)).toBeUndefined();
+    expect(publicacaoLiberada(relatorio(true), verificado, null)).toBeUndefined();
   });
 
   it('não é liberada sem a linha do defeito, que o aluno precisa', () => {
-    expect(publicacaoLiberada(relatorio(true, false))).toBeUndefined();
+    expect(publicacaoLiberada(relatorio(true, false), verificado, RASCUNHO)).toBeUndefined();
   });
 });

@@ -2,7 +2,7 @@ import { catalogo, proximoDoCatalogo } from './exercicios/catalogo';
 import { AberturaDoProposto } from './componentes/AberturaDoProposto';
 import { AreaDoProfessor } from './componentes/AreaDoProfessor';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
-import { RevisaoDeExercicios } from './componentes/RevisaoDeExercicios';
+import { PreviaComoAluno } from './componentes/PreviaComoAluno';
 import { TelaExercicio } from './componentes/TelaExercicio';
 import { TelaDeEntrada } from './componentes/TelaDeEntrada';
 import { TelaInicial } from './componentes/TelaInicial';
@@ -29,8 +29,10 @@ export default function App() {
   // Área do professor (D29, D31), com entrada própria na tela inicial.
   if (rota.tela === 'autoria') return <AreaDoProfessor />;
 
-  // Revisão dos exercícios de professor, pelo pesquisador (D31).
-  if (rota.tela === 'revisao') return <RevisaoDeExercicios />;
+  // O exercício de um professor como o aluno o verá, sem gravar sessão (D33).
+  if (rota.tela === 'previa') {
+    return <PreviaComoAluno key={`${rota.id}:${rota.andaime}`} id={rota.id} andaime={rota.andaime} />;
+  }
 
   const exercicio = catalogo.find((e) => e.id === rota.id);
 

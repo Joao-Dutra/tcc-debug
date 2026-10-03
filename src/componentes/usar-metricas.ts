@@ -23,7 +23,12 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 /** Silêncio de digitação que fecha uma rajada de edição. */
 const PAUSA_DA_RAJADA_MS = 2000;
 
-export function useMetricas(exercicio: Exercicio, andaime: string) {
+/**
+ * `gravar` falso é a pré-visualização do autor (D33): a sessão existe, para a
+ * tela funcionar igual, mas nunca é arquivada — nem no aparelho, nem no banco.
+ * O que um professor faz vendo o próprio exercício não é dado do estudo.
+ */
+export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true) {
   // Criada uma única vez: o instante de início é o instante em que o estudante
   // passou a encarar o exercício, não o de um render qualquer. Do exercício
   // saem o id, a origem (D31) e as linhas que julgam a localização (D7, D30) —
@@ -75,8 +80,8 @@ export function useMetricas(exercicio: Exercicio, andaime: string) {
   // no log antes do retrato.
   const arquivarRetrato = useCallback(() => {
     fecharRajada();
-    if (sessao.current) arquivarSessao(sessao.current.registro());
-  }, [fecharRajada]);
+    if (gravar && sessao.current) arquivarSessao(sessao.current.registro());
+  }, [fecharRajada, gravar]);
 
   // Sair do exercício encerra a sessão. Uma execução ainda no Worker fica
   // gravada como interrompida, com o código que foi executado (D23): ela entra

@@ -29,14 +29,14 @@ export default defineConfig({
   projects: [
     {
       name: 'sem-banco',
-      testIgnore: /propostos\.spec\.ts/,
+      testIgnore: /(propostos|autoria)\.spec\.ts/,
       use: { baseURL: 'http://localhost:5199', storageState: jaViuOTutorial('http://localhost:5199') },
     },
     {
       // O caminho com banco, sem banco de verdade: o servidor aponta para um
       // endereço que não existe, e o teste responde a cada pedido (D31).
       name: 'banco-falso',
-      testMatch: /propostos\.spec\.ts/,
+      testMatch: /(propostos|autoria)\.spec\.ts/,
       use: { baseURL: 'http://localhost:5198', storageState: jaViuOTutorial('http://localhost:5198') },
     },
   ],

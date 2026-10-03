@@ -10,7 +10,7 @@ import {
 import {
   apagarRascunho,
   criarRascunho,
-  enviarParaRevisao,
+  publicar,
   salvarRascunho,
 } from '../supabase/exercicios-de-professor';
 import { complexidadeDe } from './complexidade';
@@ -21,10 +21,11 @@ import {
   formularioVazio,
   rascunhoDoFormulario,
 } from './formulario-do-exercicio';
-import { envioLiberado, verificacaoValeParaOAtual } from './liberacoes-da-autoria';
+import { publicacaoLiberada, verificacaoValeParaOAtual } from './liberacoes-da-autoria';
 import { PreviaDoExercicio } from './PreviaDoExercicio';
 import { RelatorioDeVerificacao } from './RelatorioDeVerificacao';
 import { temaDoEditor } from './tema-do-editor';
+import { caminhoDaPrevia } from './usar-rota';
 import type { FormularioDoExercicio } from './formulario-do-exercicio';
 import type {
   RascunhoDeExercicio,
@@ -40,9 +41,15 @@ import type { Exercicio, TipoEstrutura } from '../nucleo/tipos';
  * professor escrever a primeira linha de código. Recusar só na verificação
  * seria deixá-lo descobrir a regra depois de escrever o programa inteiro.
  *
- * Enviar exige a verificação aprovada **do que está no formulário agora**: se
- * algo mudou depois de verificar, verifica-se de novo. Sem isso, verificar e
- * depois editar mandaria para a revisão um exercício que ninguém verificou.
+ * Desde D33 o próprio autor publica, e o caminho está nos botões, em ordem:
+ * salvar, verificar, ver como o aluno veria, publicar. Publicar exige a
+ * verificação aprovada **do que está no formulário agora**: se algo mudou
+ * depois de verificar, verifica-se de novo. A verificação é a única porta —
+ * não há revisão depois dela —, e por isso ela não pode valer para um texto
+ * que não foi o verificado.
+ *
+ * Ver como o aluno veria é consulta, e não etapa: abre a pré-visualização em
+ * outra aba, com o rascunho salvo, e o editor fica como estava.
  */
 
 const CONFIGURACAO_DO_EDITOR = {
@@ -89,9 +96,15 @@ interface Props {
   id: string | null;
   inicial: RascunhoDeExercicio | null;
   aoFechar: (mudou: boolean) => void;
+  /**
+   * A seção dos propostos está oculta aos alunos pelo interruptor da coleta
+   * (D33). A publicação avisa: senão o professor publica, não vê o exercício
+   * na vitrine e supõe que falhou.
+   */
+  propostosOcultos: boolean;
 }
 
-export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
+export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosOcultos }: Props) {
   const [formulario, setFormulario] = useState<FormularioDoExercicio>(() =>
     inicial ? formularioDe(inicial) : formularioVazio()
   );
@@ -100,7 +113,9 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
   // O rascunho exatamente como estava quando foi verificado.
   const [verificado, setVerificado] = useState<string | null>(null);
   const [previa, setPrevia] = useState<Exercicio | null>(null);
-  const [ocupado, setOcupado] = useState<null | 'salvando' | 'verificando' | 'enviando'>(null);
+  const [ocupado, setOcupado] = useState<null | 'salvando' | 'verificando' | 'abrindo' | 'publicando'>(
+    null
+  );
   const [erros, setErros] = useState<string[]>([]);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [mudou, setMudou] = useState(false);
@@ -119,7 +134,7 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
 
   const atual = rascunhoDoFormulario(formulario).rascunho;
   const valeParaOAtual = verificacaoValeParaOAtual(relatorio, verificado, atual);
-  const podeEnviar = envioLiberado(relatorio, verificado, atual);
+  const liberada = publicacaoLiberada(relatorio, verificado, atual);
 
   const falhou = (e: unknown) => {
     setMensagem(null);
@@ -167,12 +182,40 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
     }
   };
 
-  const enviar = async () => {
-    if (!atual || !relatorio || !podeEnviar) return;
-    setOcupado('enviando');
+  // A aba é aberta já, no clique, e o endereço vem depois de salvar: aberta
+  // depois de uma espera, o navegador a trataria como janela não pedida.
+  const verComoOAluno = async () => {
+    if (!atual || !liberada) return;
+    const aba = window.open('about:blank', '_blank');
+    setOcupado('abrindo');
     try {
       const alvo = await gravar(atual);
-      await enviarParaRevisao(alvo, atual, relatorio);
+      setMudou(true);
+      if (aba) aba.location.href = `${window.location.pathname}${caminhoDaPrevia(alvo)}`;
+    } catch (e) {
+      aba?.close();
+      falhou(e);
+    } finally {
+      setOcupado(null);
+    }
+  };
+
+  const publicarAgora = async () => {
+    if (!atual || !relatorio || !liberada) return;
+    const aviso = propostosOcultos
+      ? '\n\nA seção dos propostos está oculta aos alunos enquanto durar a coleta da pesquisa: ' +
+        'o exercício fica publicado, e aparece para eles quando a seção voltar.'
+      : '';
+    const confirmado = window.confirm(
+      'Publicar este exercício? Os alunos passam a vê-lo, e o conteúdo publicado não muda mais: ' +
+        'para corrigir, você cria um rascunho novo a partir dele e retira este.' +
+        aviso
+    );
+    if (!confirmado) return;
+    setOcupado('publicando');
+    try {
+      const alvo = await gravar(atual);
+      await publicar(alvo, atual, relatorio);
       aoFechar(true);
     } catch (e) {
       falhou(e);
@@ -435,26 +478,48 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar }: Props) {
       )}
       {mensagem && <p className="mensagem-do-editor" role="status">{mensagem}</p>}
 
+      {/* O caminho até o aluno, em ordem (D33). Ver o desenho fica à parte:
+          é ferramenta de escrita, e não passo da publicação. */}
+      <ol className="etapas-da-publicacao" aria-label="Caminho até a publicação">
+        <li>
+          <button onClick={() => void salvar()} disabled={ocupado !== null}>
+            {ocupado === 'salvando' ? 'Salvando…' : 'Salvar rascunho'}
+          </button>
+        </li>
+        <li>
+          <button onClick={() => void verificar()} disabled={ocupado !== null}>
+            {ocupado === 'verificando' ? 'Verificando…' : 'Verificar'}
+          </button>
+        </li>
+        <li>
+          <button onClick={() => void verComoOAluno()} disabled={!liberada || ocupado !== null}>
+            {ocupado === 'abrindo' ? 'Abrindo…' : 'Ver como o aluno veria'}
+          </button>
+        </li>
+        <li>
+          <button
+            className="primario"
+            onClick={() => void publicarAgora()}
+            disabled={!liberada || ocupado !== null}
+          >
+            {ocupado === 'publicando' ? 'Publicando…' : 'Publicar'}
+          </button>
+        </li>
+      </ol>
       <div className="acoes-painel">
-        <button onClick={() => void salvar()} disabled={ocupado !== null}>
-          {ocupado === 'salvando' ? 'Salvando…' : 'Salvar rascunho'}
-        </button>
         <button onClick={verPrevia} disabled={ocupado !== null}>
           Ver o desenho
-        </button>
-        <button onClick={() => void verificar()} disabled={ocupado !== null}>
-          {ocupado === 'verificando' ? 'Verificando…' : 'Verificar'}
-        </button>
-        <button className="primario" onClick={() => void enviar()} disabled={!podeEnviar || ocupado !== null}>
-          {ocupado === 'enviando' ? 'Enviando…' : 'Enviar para revisão'}
         </button>
         <button className="perigo" onClick={() => void apagar()} disabled={ocupado !== null}>
           {id ? 'Apagar rascunho' : 'Descartar'}
         </button>
       </div>
-      {relatorio && !valeParaOAtual && (
+      {!liberada && (
         <p className="rodape-painel">
-          O exercício mudou desde a última verificação. Verifique de novo antes de enviar.
+          {relatorio && !valeParaOAtual
+            ? 'O exercício mudou desde a última verificação. Verifique de novo antes de publicar.'
+            : 'Ver como o aluno veria e publicar dependem da verificação aprovada do que está no ' +
+              'formulário.'}
         </p>
       )}
 

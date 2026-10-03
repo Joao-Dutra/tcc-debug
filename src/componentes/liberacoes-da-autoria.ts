@@ -4,9 +4,8 @@ import type {
 } from '../nucleo/verificacao-do-exercicio';
 
 /**
- * As duas travas da área de autoria (D31), fora dos componentes para serem
- * cobradas pela suíte rápida: são elas que decidem o que chega à revisão e o
- * que chega ao aluno.
+ * As travas da área de autoria (D31, D33), fora dos componentes para serem
+ * cobradas pela suíte rápida: são elas que decidem o que chega ao aluno.
  */
 
 /**
@@ -22,24 +21,22 @@ export function verificacaoValeParaOAtual(
   return relatorio !== null && atual !== null && verificado === JSON.stringify(atual);
 }
 
-/** Enviar exige a verificação aprovada do que está no formulário agora. */
-export function envioLiberado(
-  relatorio: RelatorioDaVerificacao | null,
-  verificado: string | null,
-  atual: RascunhoDeExercicio | null
-): boolean {
-  return verificacaoValeParaOAtual(relatorio, verificado, atual) && relatorio?.aprovado === true;
-}
-
 /**
  * O que a publicação grava, se ela estiver liberada; nada, se não estiver.
  *
- * Recebe só a verificação refeita no navegador do pesquisador, e não o
- * relatório gravado pelo professor — de propósito, na assinatura: o gravado
- * pode ter sido forjado por acesso direto à API, e não tem como decidir nada.
+ * Desde D33 quem publica é o próprio autor, e a verificação é a que ele acabou
+ * de fazer, no navegador dele: vale só se for do que está no formulário agora.
+ * Verificar e depois editar não publica nada.
+ *
+ * Não recebe o relatório gravado no banco — de propósito, na assinatura: o
+ * gravado é de outra verificação, e pode ter sido escrito por acesso direto à
+ * API. Não tem como decidir nada.
  */
 export function publicacaoLiberada(
-  refeito: RelatorioDaVerificacao | null
+  relatorio: RelatorioDaVerificacao | null,
+  verificado: string | null,
+  atual: RascunhoDeExercicio | null
 ): { linhaDoDefeito: number; linhasAceitas: number[] } | undefined {
-  return refeito?.aprovado ? refeito.derivado : undefined;
+  if (!verificacaoValeParaOAtual(relatorio, verificado, atual)) return undefined;
+  return relatorio?.aprovado ? relatorio.derivado : undefined;
 }

@@ -18,7 +18,7 @@ export type Rota =
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' }
   | { tela: 'autoria' }
-  | { tela: 'revisao' };
+  | { tela: 'previa'; id: string; andaime: NivelDeAndaime };
 
 export const CAMINHO_INICIAL = '#/';
 
@@ -45,11 +45,13 @@ export const CAMINHO_METRICAS = '#/metricas';
 export const CAMINHO_AUTORIA = '#/autoria';
 
 /**
- * Revisão dos exercícios de professor, pelo pesquisador (D31). Como o painel,
- * fora da navegação do participante; a área do professor aponta para cá quando
- * quem entrou é pesquisador.
+ * O exercício de um professor como o aluno o verá, sem gravar sessão (D33).
+ * Era a revisão do pesquisador (D31); virou consulta do autor. O nível vai
+ * sempre explícito, porque a prévia existe para comparar os dois.
  */
-export const CAMINHO_REVISAO = '#/revisao';
+export function caminhoDaPrevia(id: string, andaime: NivelDeAndaime = 'com-apoio'): string {
+  return `#/previa/${encodeURIComponent(id)}?andaime=${andaime}`;
+}
 
 /**
  * O nível vai explícito no link quando informado, mesmo sendo `com-apoio` o
@@ -80,7 +82,13 @@ export function interpretarHash(hash: string): Rota {
   if (partes[0] === 'entrar') return { tela: 'entrar' };
   if (partes[0] === 'metricas') return { tela: 'metricas' };
   if (partes[0] === 'autoria') return { tela: 'autoria' };
-  if (partes[0] === 'revisao') return { tela: 'revisao' };
+  if (partes[0] === 'previa' && partes[1]) {
+    return {
+      tela: 'previa',
+      id: decodificar(partes[1]),
+      andaime: interpretarAndaime(new URLSearchParams(consulta).get('andaime')),
+    };
+  }
   if (partes[0] === 'exercicios') return { tela: 'exercicios' };
 
   if (partes[0] === 'exercicio' && partes[1]) {

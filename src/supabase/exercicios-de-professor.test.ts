@@ -193,24 +193,56 @@ describe('escrita', () => {
     );
   });
 
-  it('enviar exige o relatório aprovado, e nem chega ao banco sem ele', async () => {
+  it('publicar exige o relatório aprovado, e nem chega ao banco sem ele', async () => {
     const reprovado = { aprovado: false } as RelatorioDaVerificacao;
-    await expect(modulo.enviarParaRevisao('uuid-1', RASCUNHO, reprovado)).rejects.toThrow(
+    await expect(modulo.publicar('uuid-1', RASCUNHO, reprovado)).rejects.toThrow(
       /passou na verificação/
     );
     expect(chamadas).toEqual([]);
   });
 
-  it('publicar grava a linha do defeito e as linhas aceitas no conteúdo', async () => {
+  it('publicar grava a linha do defeito no conteúdo e o relatório ao lado (D33)', async () => {
     responder = () => ({ data: [{ id: 'uuid-1' }], error: null });
-    await modulo.publicar('uuid-1', RASCUNHO, { linhaDoDefeito: 2, linhasAceitas: [2] });
+    const relatorio = {
+      aprovado: true,
+      itens: [],
+      avisos: [],
+      avisosDeEstilo: [],
+      derivado: { linhaDoDefeito: 2, linhasAceitas: [2] },
+    } as RelatorioDaVerificacao;
+    await modulo.publicar('uuid-1', RASCUNHO, relatorio);
     expect(chamadas[0]).toMatchObject({
       operacao: 'update',
       filtros: [['id', 'uuid-1']],
       dados: {
         situacao: 'publicado',
         conteudo: { ...RASCUNHO, linhaDoDefeito: 2, linhasAceitas: [2] },
+        // O banco só publica com o relatório aprovado (0003).
+        verificacao: relatorio,
       },
+    });
+  });
+
+  it('o interruptor que não mudou — conta sem o papel — não passa por mudado', async () => {
+    responder = () => ({ data: [], error: null });
+    await expect(modulo.mudarInterruptor(false)).rejects.toThrow(/pesquisador/);
+    expect(chamadas[0]).toMatchObject({
+      tabela: 'coleta',
+      operacao: 'update',
+      dados: { propostos_ocultos: false },
+    });
+  });
+
+  it('sem a linha da coleta, o estado é nulo, e não "visível"', async () => {
+    responder = () => ({ data: [], error: null });
+    expect(await modulo.lerEstadoDaColeta()).toBeNull();
+    responder = () => ({
+      data: [{ propostos_ocultos: true, alterado_em: '2026-10-03T00:00:00Z' }],
+      error: null,
+    });
+    expect(await modulo.lerEstadoDaColeta()).toEqual({
+      propostosOcultos: true,
+      alteradoEm: '2026-10-03T00:00:00Z',
     });
   });
 

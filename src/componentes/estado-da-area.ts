@@ -16,7 +16,7 @@ export type EstadoDaArea =
   /** Entrou numa conta, e o papel ainda está sendo lido de `perfis`. */
   | 'conferindo'
   | 'professor'
-  /** O pesquisador revisa e publica, mas não escreve por aqui (D31). */
+  /** O pesquisador mexe no interruptor e retira publicados; não escreve nem publica (D33). */
   | 'pesquisador'
   /** Entrou, mas o perfil ainda é de participante: a liberação é à mão. */
   | 'aguardando';
