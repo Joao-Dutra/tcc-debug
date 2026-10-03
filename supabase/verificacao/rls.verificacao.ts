@@ -128,14 +128,14 @@ async function criarConta(
 async function removerConta(id: string): Promise<void> {
   // Os exercícios saem antes da conta: a tabela recusa apagar quem escreveu ou
   // publicou um exercício (`on delete restrict`), para uma conta apagada não
-  // levar junto um publicado com sessões apontando para ele. Aqui são todos de
+  // levar junto um publicado com sessões apontando para ele, nem quem o retirou. Aqui são todos de
   // teste — uma conta de teste só escreve e publica exercícios de teste. Se a
   // migração 0002 ainda não rodou, a tabela não existe e não há o que apagar;
   // as verificações dela é que vão dizer isso.
   await admin
     .from('exercicios_de_professor')
     .delete()
-    .or(`autor_id.eq.${id},publicado_por.eq.${id}`);
+    .or(`autor_id.eq.${id},publicado_por.eq.${id},retirado_por.eq.${id}`);
   const primeira = await admin.auth.admin.deleteUser(id);
   if (!primeira.error) return;
   await admin.from('sessoes').delete().eq('participante_id', id);
@@ -251,8 +251,9 @@ beforeAll(async () => {
 });
 
 // Rede de segurança: se algo acima derrubar a execução antes da última
-// verificação, as contas saem mesmo assim.
+// verificação, as contas saem mesmo assim, e o interruptor volta ao que era.
 afterAll(async () => {
+  await devolverInterruptor();
   await removerTodasAsContasDeTeste();
 });
 
@@ -411,7 +412,7 @@ const conteudoDeTeste = (rotulo: string) => ({
 async function exercicioNoBanco(id: string) {
   const { data, error } = await admin
     .from('exercicios_de_professor')
-    .select('id, autor_id, situacao, conteudo, publicado_por, enviado_em, publicado_em')
+    .select('id, autor_id, situacao, conteudo, publicado_por, retirado_por, publicado_em')
     .eq('id', id)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -429,11 +430,25 @@ async function rascunhoDe(professor: Conta, rotulo: string): Promise<string> {
   return data.id as string;
 }
 
-// Os blocos abaixo contam uma história só, em ordem — rascunho, envio,
-// publicação, retirada —, e cada um parte do estado em que o anterior deixou
-// o exercício de A. O de B existe para haver o que um professor não pode ver.
+// Os blocos abaixo contam uma história só, em ordem — rascunho, publicação
+// pelo autor, interruptor, publicado, retirada —, e cada um parte do estado em
+// que o anterior deixou os exercícios. O de B existe para haver o que um
+// professor não pode tocar, e para o pesquisador ter o que retirar.
 let exercicioDeA = '';
 let exercicioDeB = '';
+
+/**
+ * O relatório que a interface grava ao publicar. O banco só olha `aprovado`
+ * (0003): é guarda contra defeito da interface, e não prova de nada.
+ */
+const relatorioAprovado = { aprovado: true, itens: [], avisos: [] };
+const relatorioRecusado = { aprovado: false, itens: [], avisos: [] };
+
+/** O que a interface manda ao publicar: a situação e o relatório, juntos. */
+const publicacao = (relatorio: object = relatorioAprovado) => ({
+  situacao: 'publicado',
+  verificacao: relatorio,
+});
 
 describe('exercícios de professor: rascunho', () => {
   it('o participante não cria exercício', async () => {
@@ -496,87 +511,198 @@ describe('exercícios de professor: rascunho', () => {
     expect(data ?? []).toHaveLength(1);
   });
 
-  it('o professor não publica o próprio rascunho', async () => {
-    const { error } = await professorA.cliente
-      .from('exercicios_de_professor')
-      .update({ situacao: 'publicado' })
-      .eq('id', exercicioDeA);
-    recusadaPeloBanco(error);
-    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('rascunho');
+  it('a visão não mostra rascunho, e a tabela não se abre ao visitante', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const pelaVisao = await visitante
+      .from('exercicios_publicados')
+      .select('id')
+      .eq('id', exercicioDeB);
+    expect(pelaVisao.data ?? []).toEqual([]);
+
+    const pelaTabela = await visitante.from('exercicios_de_professor').select('id');
+    if (pelaTabela.error) recusadaPeloRls(pelaTabela.error);
+    else expect(pelaTabela.data ?? []).toEqual([]);
   });
 });
 
-describe('exercícios de professor: envio e revisão', () => {
-  it('o professor envia o próprio rascunho para revisão', async () => {
-    const { error } = await professorA.cliente
-      .from('exercicios_de_professor')
-      .update({ situacao: 'em_revisao' })
-      .eq('id', exercicioDeA);
-    expect(error).toBeNull();
-    const noBanco = await exercicioNoBanco(exercicioDeA);
-    expect(noBanco?.situacao).toBe('em_revisao');
-    // O carimbo é do banco.
-    expect(noBanco?.enviado_em).not.toBeNull();
+describe('exercícios de professor: publicação pelo autor (D33)', () => {
+  it('sem a verificação aprovada, nem o autor publica', async () => {
+    for (const tentativa of [{ situacao: 'publicado' }, publicacao(relatorioRecusado)]) {
+      const { error } = await professorA.cliente
+        .from('exercicios_de_professor')
+        .update(tentativa)
+        .eq('id', exercicioDeA);
+      recusadaPeloBanco(error);
+    }
+    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('rascunho');
   });
 
-  it('depois de enviar, o professor não edita, não apaga e não publica', async () => {
-    const edicao = await professorA.cliente
+  it('outro professor não publica o rascunho de A', async () => {
+    const { data } = await professorB.cliente
       .from('exercicios_de_professor')
-      .update({ conteudo: conteudoDeTeste('depois-de-enviar') })
+      .update(publicacao())
       .eq('id', exercicioDeA)
       .select('id');
-    expect(edicao.data ?? []).toEqual([]);
+    expect(data ?? []).toEqual([]);
+    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('rascunho');
+  });
 
-    const apagar = await professorA.cliente
+  it('o pesquisador não publica nem edita o rascunho de ninguém', async () => {
+    // Lê, para a análise; mas a revisão saiu, e com ela o caminho de escrita.
+    const leitura = await pesquisador.cliente
       .from('exercicios_de_professor')
-      .delete()
-      .eq('id', exercicioDeA)
-      .select('id');
-    expect(apagar.data ?? []).toEqual([]);
+      .select('id')
+      .eq('id', exercicioDeA);
+    expect(leitura.data ?? []).toHaveLength(1);
 
-    const publicar = await professorA.cliente
-      .from('exercicios_de_professor')
-      .update({ situacao: 'publicado' })
-      .eq('id', exercicioDeA)
-      .select('id');
-    expect(publicar.data ?? []).toEqual([]);
-
+    for (const alteracao of [publicacao(), { conteudo: conteudoDeTeste('pelo-pesquisador') }]) {
+      const { data } = await pesquisador.cliente
+        .from('exercicios_de_professor')
+        .update(alteracao)
+        .eq('id', exercicioDeA)
+        .select('id');
+      expect(data ?? []).toEqual([]);
+    }
     expect(await exercicioNoBanco(exercicioDeA)).toMatchObject({
-      situacao: 'em_revisao',
+      situacao: 'rascunho',
       conteudo: conteudoDeTeste('a-editado'),
     });
   });
 
-  it('o pesquisador lê o exercício em revisão', async () => {
-    const { data, error } = await pesquisador.cliente
-      .from('exercicios_de_professor')
-      .select('id')
-      .eq('id', exercicioDeA);
+  it('o autor publica o próprio rascunho, e o banco carimba quem publicou', async () => {
+    for (const [professor, id] of [
+      [professorA, exercicioDeA],
+      [professorB, exercicioDeB],
+    ] as const) {
+      const { data, error } = await professor.cliente
+        .from('exercicios_de_professor')
+        .update(publicacao())
+        .eq('id', id)
+        .select('id');
+      expect(error).toBeNull();
+      expect(data ?? []).toHaveLength(1);
+      expect(await exercicioNoBanco(id)).toMatchObject({
+        situacao: 'publicado',
+        publicado_por: professor.id,
+      });
+    }
+  });
+});
+
+/** O valor do interruptor antes desta execução, para devolvê-lo no fim. */
+let interruptorOriginal: boolean | null = null;
+
+async function interruptorNoBanco(): Promise<boolean | null> {
+  const { data, error } = await admin.from('coleta').select('propostos_ocultos').maybeSingle();
+  if (error) throw new Error(error.message);
+  return (data?.propostos_ocultos as boolean | undefined) ?? null;
+}
+
+/**
+ * Devolve o interruptor ao que era: a verificação roda contra o banco do
+ * estudo, e deixar a seção visível no meio de uma coleta mudaria a vitrine dos
+ * participantes. Os carimbos ficam com a hora desta execução e sem autor — a
+ * chave secreta não tem uid.
+ */
+async function devolverInterruptor(): Promise<void> {
+  if (interruptorOriginal === null) return;
+  const { error } = await admin
+    .from('coleta')
+    .update({ propostos_ocultos: interruptorOriginal })
+    .eq('unica', true);
+  if (error) throw new Error(`não foi possível devolver o interruptor: ${error.message}`);
+}
+
+const verPelaVisao = async (cliente: SupabaseClient, id: string) =>
+  (await cliente.from('exercicios_publicados').select('id').eq('id', id)).data ?? [];
+
+describe('interruptor da coleta (D33)', () => {
+  it('existe, com uma linha só, e todos leem o estado', async () => {
+    interruptorOriginal = await interruptorNoBanco();
+    expect(interruptorOriginal, 'a migração 0003 rodou?').not.toBeNull();
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const { data, error } = await visitante.from('coleta').select('propostos_ocultos');
     expect(error).toBeNull();
     expect(data ?? []).toHaveLength(1);
   });
 
-  it('o pesquisador publica, e o banco carimba quem publicou', async () => {
-    const { error } = await pesquisador.cliente
+  it('participante, professor e visitante não mexem nele', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const valor = await interruptorNoBanco();
+    for (const cliente of [visitante, a.cliente, professorA.cliente]) {
+      const { data, error } = await cliente
+        .from('coleta')
+        .update({ propostos_ocultos: !valor })
+        .eq('unica', true)
+        .select('unica');
+      if (error) recusadaPeloRls(error);
+      else expect(data ?? []).toEqual([]);
+    }
+    expect(await interruptorNoBanco()).toBe(valor);
+
+    // Nem criar outra linha, nem apagar a que existe.
+    const nova = await professorA.cliente.from('coleta').insert({ propostos_ocultos: false });
+    recusadaPeloRls(nova.error);
+    const apagada = await professorA.cliente.from('coleta').delete().eq('unica', true).select('unica');
+    if (apagada.error) recusadaPeloRls(apagada.error);
+    else expect(apagada.data ?? []).toEqual([]);
+    expect(await interruptorNoBanco()).toBe(valor);
+  });
+
+  it('o pesquisador mexe, e ligado ele esconde os propostos pelo banco', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+
+    const desligar = await pesquisador.cliente
+      .from('coleta')
+      .update({ propostos_ocultos: false })
+      .eq('unica', true)
+      .select('alterado_por');
+    expect(desligar.error).toBeNull();
+    expect(desligar.data?.[0]?.alterado_por).toBe(pesquisador.id);
+    expect(await verPelaVisao(visitante, exercicioDeA)).toHaveLength(1);
+
+    const ligar = await pesquisador.cliente
+      .from('coleta')
+      .update({ propostos_ocultos: true })
+      .eq('unica', true)
+      .select('unica');
+    expect(ligar.error).toBeNull();
+    // Nem pela lista, nem pelo id do link direto.
+    expect(await verPelaVisao(visitante, exercicioDeA)).toEqual([]);
+    expect(await verPelaVisao(a.cliente, exercicioDeA)).toEqual([]);
+    const { data } = await visitante.from('exercicios_publicados').select('id');
+    expect(data ?? []).toEqual([]);
+
+    // O autor continua lendo o próprio pela tabela: é por ela que ele vê o
+    // exercício como o aluno veria, com a seção oculta.
+    const peloAutor = await professorA.cliente
       .from('exercicios_de_professor')
-      .update({ situacao: 'publicado' })
+      .select('id')
       .eq('id', exercicioDeA);
-    expect(error).toBeNull();
-    expect(await exercicioNoBanco(exercicioDeA)).toMatchObject({
-      situacao: 'publicado',
-      publicado_por: pesquisador.id,
-    });
+    expect(peloAutor.data ?? []).toHaveLength(1);
+
+    // Desligado de novo, para os blocos seguintes verem a visão.
+    const religar = await pesquisador.cliente
+      .from('coleta')
+      .update({ propostos_ocultos: false })
+      .eq('unica', true);
+    expect(religar.error).toBeNull();
   });
 });
 
 describe('exercícios de professor: publicado', () => {
-  it('o conteúdo publicado não muda, nem pelo pesquisador', async () => {
+  it('o publicado não muda — nem o conteúdo, nem o relatório —, nem pelo autor', async () => {
     // O id numa sessão precisa identificar exatamente o que o aluno viu.
-    const { error } = await pesquisador.cliente
-      .from('exercicios_de_professor')
-      .update({ conteudo: conteudoDeTeste('reescrito') })
-      .eq('id', exercicioDeA);
-    recusadaPeloBanco(error);
+    for (const alteracao of [
+      { conteudo: conteudoDeTeste('reescrito') },
+      { verificacao: relatorioRecusado },
+    ]) {
+      const { error } = await professorA.cliente
+        .from('exercicios_de_professor')
+        .update(alteracao)
+        .eq('id', exercicioDeA);
+      recusadaPeloBanco(error);
+    }
     expect((await exercicioNoBanco(exercicioDeA))?.conteudo).toEqual(conteudoDeTeste('a-editado'));
   });
 
@@ -593,22 +719,8 @@ describe('exercícios de professor: publicado', () => {
     expect(conteudo).toHaveProperty('codigoComDefeito');
   });
 
-  it('a visão não mostra rascunho, e a tabela não se abre ao visitante', async () => {
-    const visitante = createClient(url, chavePublica, semPersistencia);
-    const pelaVisao = await visitante
-      .from('exercicios_publicados')
-      .select('id')
-      .eq('id', exercicioDeB);
-    expect(pelaVisao.data ?? []).toEqual([]);
-
-    const pelaTabela = await visitante.from('exercicios_de_professor').select('id');
-    if (pelaTabela.error) recusadaPeloRls(pelaTabela.error);
-    else expect(pelaTabela.data ?? []).toEqual([]);
-  });
-
   it('o participante lê o publicado pela visão', async () => {
-    const { data } = await a.cliente.from('exercicios_publicados').select('id').eq('id', exercicioDeA);
-    expect(data ?? []).toHaveLength(1);
+    expect(await verPelaVisao(a.cliente, exercicioDeA)).toHaveLength(1);
   });
 
   it('ninguém apaga um publicado — nem o autor, nem o pesquisador', async () => {
@@ -622,42 +734,69 @@ describe('exercícios de professor: publicado', () => {
     }
     expect(await exercicioNoBanco(exercicioDeA)).not.toBeNull();
   });
+});
 
-  it('o professor não retira, e o pesquisador retira', async () => {
-    const peloProfessor = await professorA.cliente
+describe('exercícios de professor: retirada (D33)', () => {
+  it('outro professor não retira o publicado de A', async () => {
+    const { data } = await professorB.cliente
       .from('exercicios_de_professor')
       .update({ situacao: 'retirado' })
       .eq('id', exercicioDeA)
       .select('id');
-    expect(peloProfessor.data ?? []).toEqual([]);
+    expect(data ?? []).toEqual([]);
+    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('publicado');
+  });
 
-    const { error } = await pesquisador.cliente
+  it('o pesquisador retira qualquer publicado, e o banco carimba quem retirou', async () => {
+    // O freio de emergência, no exercício de B, que não é dele.
+    const { data, error } = await pesquisador.cliente
+      .from('exercicios_de_professor')
+      .update({ situacao: 'retirado' })
+      .eq('id', exercicioDeB)
+      .select('id');
+    expect(error).toBeNull();
+    expect(data ?? []).toHaveLength(1);
+    expect(await exercicioNoBanco(exercicioDeB)).toMatchObject({
+      situacao: 'retirado',
+      retirado_por: pesquisador.id,
+    });
+    expect(await verPelaVisao(a.cliente, exercicioDeB)).toEqual([]);
+  });
+
+  it('o autor retira o próprio publicado', async () => {
+    const { error } = await professorA.cliente
       .from('exercicios_de_professor')
       .update({ situacao: 'retirado' })
       .eq('id', exercicioDeA);
     expect(error).toBeNull();
-    expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('retirado');
-
+    expect(await exercicioNoBanco(exercicioDeA)).toMatchObject({
+      situacao: 'retirado',
+      retirado_por: professorA.id,
+    });
     // Retirado sai da vitrine.
-    const { data } = await a.cliente.from('exercicios_publicados').select('id').eq('id', exercicioDeA);
-    expect(data ?? []).toEqual([]);
+    expect(await verPelaVisao(a.cliente, exercicioDeA)).toEqual([]);
   });
 
   it('retirado não volta a publicado: a transição não existe', async () => {
-    const { error } = await pesquisador.cliente
-      .from('exercicios_de_professor')
-      .update({ situacao: 'publicado' })
-      .eq('id', exercicioDeA);
-    recusadaPeloBanco(error);
+    for (const conta of [professorA, pesquisador]) {
+      const { data, error } = await conta.cliente
+        .from('exercicios_de_professor')
+        .update(publicacao())
+        .eq('id', exercicioDeA)
+        .select('id');
+      if (error) recusadaPeloBanco(error);
+      else expect(data ?? []).toEqual([]);
+    }
     expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('retirado');
   });
 
   it('o professor apaga o próprio rascunho', async () => {
     // Rascunho não tem sessão nenhuma apontando para ele.
+    const rascunho = await rascunhoDe(professorB, 'b-apagar');
     const { data, error } = await professorB.cliente
       .from('exercicios_de_professor')
       .delete()
-      .eq('id', exercicioDeB)
+      .eq('id', rascunho)
       .select('id');
     expect(error).toBeNull();
     expect(data ?? []).toHaveLength(1);
@@ -680,6 +819,8 @@ describe('sessões em exercício de professor', () => {
 
 describe('limpeza', () => {
   it('não deixa resíduo no banco do estudo', async () => {
+    await devolverInterruptor();
+    expect(await interruptorNoBanco(), 'interruptor da coleta').toBe(interruptorOriginal);
     await removerTodasAsContasDeTeste();
 
     expect(await contasDeTesteNoProjeto(), 'contas de teste').toEqual([]);
