@@ -111,9 +111,12 @@ ordenar();`,
   dicas: [
     'Avance uma passagem em que algum valor precise ser deslocado, e acompanhe os marcadores j e ' +
       'i a cada passo.',
-    'Repare em qual posição o marcador j está no instante em que cada valor é copiado para a ' +
-      'direita.',
+    // Da observação geral à pista mais certeira (D34, ajuste de 04/10/2026): a
+    // propriedade que deveria valer vem antes do instante exato em que ela
+    // deixa de valer.
     'Cada valor maior que a chave precisa ir da posição em que estava para a casa logo à direita ' +
       'dela, e nenhum valor do vetor pode desaparecer no caminho.',
+    'Repare em qual posição o marcador j está no instante em que cada valor é copiado para a ' +
+      'direita.',
   ],
 };
