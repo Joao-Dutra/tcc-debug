@@ -4,6 +4,7 @@ import { vetorDobrar } from './vetor-dobrar';
 import { vetorOrdenar } from './vetor-ordenar';
 import { vetorBuscaBinaria } from './vetor-busca-binaria';
 import { vetorOrdenarPorSelecao } from './vetor-ordenar-por-selecao';
+import { vetorOrdenarPorInsercao } from './vetor-ordenar-por-insercao';
 import { pilhaDesempilhar } from './pilha-desempilhar';
 import { pilhaReverter } from './pilha-reverter';
 import { pilhaInverterPalavra } from './pilha-inverter-palavra';
@@ -28,6 +29,7 @@ export const catalogo: Exercicio[] = [
   vetorDobrar,
   vetorOrdenar,
   vetorOrdenarPorSelecao,
+  vetorOrdenarPorInsercao,
   vetorBuscaBinaria,
   pilhaDesempilhar,
   pilhaReverter,
