@@ -203,6 +203,48 @@ test.describe('o professor', () => {
   });
 });
 
+test.describe('os exemplos do formulário (D35)', () => {
+  test('o exemplo entra no campo vazio, e com conteúdo só é mostrado', async ({ page }) => {
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, bancoDoProfessor(false));
+    await page.goto('/#/autoria');
+    await page.getByRole('button', { name: 'Novo exercício' }).click();
+
+    const titulo = page.getByLabel('Título', { exact: true });
+    await page.getByRole('button', { name: 'Ver exemplo de título' }).click();
+    const exemplo = page.getByRole('note', { name: 'Exemplo de título' });
+    await expect(exemplo).toContainText('Vetor: os dobros não batem');
+    await exemplo.getByRole('button', { name: 'Usar este exemplo' }).click();
+    await expect(titulo).toHaveValue('Vetor: os dobros não batem com os valores originais');
+
+    // Com conteúdo, o exemplo não oferece mais inserir, e o texto do professor fica.
+    await titulo.fill('Meu título');
+    await expect(exemplo.getByRole('button', { name: 'Usar este exemplo' })).toHaveCount(0);
+    await expect(exemplo).toContainText('só para consulta');
+    await expect(titulo).toHaveValue('Meu título');
+  });
+
+  test('trocar a estrutura, ou agrupar em ordenação, troca os exemplos', async ({ page }) => {
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, bancoDoProfessor(false));
+    await page.goto('/#/autoria');
+    await page.getByRole('button', { name: 'Novo exercício' }).click();
+    await page.getByRole('button', { name: 'Ver exemplo de título' }).click();
+    const exemplo = page.getByRole('note', { name: 'Exemplo de título' });
+
+    await page.getByLabel(/Agrupamento na vitrine/).selectOption('ordenacao');
+    await expect(exemplo).toContainText('a ordenação termina com valores repetidos');
+    await page.getByRole('button', { name: 'Ver exemplo de variáveis de valor' }).click();
+    await expect(page.getByRole('note', { name: 'Exemplo de variáveis de valor' })).toContainText('temp');
+
+    await page.getByLabel('Estrutura de dados').selectOption('pilha');
+    await expect(exemplo).toContainText('Pilha:');
+    // Fora do vetor não há agrupamento, nem marcadores.
+    await expect(page.getByLabel(/Agrupamento na vitrine/)).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Ver exemplo de marcadores' })).toHaveCount(0);
+  });
+});
+
 test.describe('o tutorial do professor', () => {
   test('abre sozinho para quem ainda não tem exercício, e o fim leva ao editor', async ({ page }) => {
     const banco = bancoDoProfessor(false);

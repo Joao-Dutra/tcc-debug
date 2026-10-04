@@ -60,6 +60,7 @@ export function rascunhoDoConteudo(conteudo: ConteudoDoExercicio): RascunhoDeExe
     dicas: conteudo.dicas,
     marcadores: conteudo.marcadores,
     variaveisDeValor: conteudo.variaveisDeValor,
+    ...(conteudo.secao ? { secao: conteudo.secao } : {}),
   };
 }
 
@@ -131,7 +132,10 @@ export function conteudoValido(
     ehListaDeTexto(c.marcadores) &&
     ehListaDeTexto(c.variaveisDeValor) &&
     (c.linhaDoDefeito === undefined || Number.isInteger(c.linhaDoDefeito)) &&
-    (c.linhasAceitas === undefined || ehListaDeNumeros(c.linhasAceitas));
+    (c.linhasAceitas === undefined || ehListaDeNumeros(c.linhasAceitas)) &&
+    // O agrupamento da ordenação só existe no vetor (D35): a estrutura decide o
+    // desenho, e ordenar é coisa que se faz num vetor.
+    (c.secao === undefined || (c.secao === 'ordenacao' && c.estrutura === 'vetor'));
   if (!valido) return null;
   return {
     titulo: c.titulo as string,
@@ -146,6 +150,7 @@ export function conteudoValido(
     dicas: c.dicas as string[],
     marcadores: c.marcadores as string[],
     variaveisDeValor: c.variaveisDeValor as string[],
+    ...(c.secao !== undefined ? { secao: 'ordenacao' as const } : {}),
     ...(c.linhaDoDefeito !== undefined ? { linhaDoDefeito: c.linhaDoDefeito as number } : {}),
     ...(c.linhasAceitas !== undefined ? { linhasAceitas: c.linhasAceitas as number[] } : {}),
   };

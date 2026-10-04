@@ -713,6 +713,21 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .avisos-da-verificacao h3 { font-size: var(--fonte-apoio); margin: 0 0 var(--esp-4); }
 .avisos-da-verificacao ul { margin: var(--esp-8) 0 0; padding-left: var(--esp-20); font-size: var(--fonte-apoio); }
 
+/* O exemplo de cada campo (D35): discreto até ser pedido, e então numa caixa
+   da mesa de luz com o fio da ação à esquerda, como uma nota ao lado do campo. */
+.campo-com-exemplo { display: flex; flex-direction: column; gap: var(--esp-6); }
+.exemplo-do-campo { display: flex; flex-direction: column; align-items: flex-start;
+  gap: var(--esp-6); font-weight: 500; }
+.caixa-do-exemplo { align-self: stretch; background: var(--mesa-de-luz);
+  border-left: 3px solid var(--acao); border-radius: var(--raio-faixa);
+  padding: var(--esp-8) var(--esp-12); font-size: var(--fonte-apoio); }
+.caixa-do-exemplo .texto-do-exemplo { margin: var(--esp-6) 0; white-space: pre-wrap;
+  line-height: 1.55; }
+.caixa-do-exemplo .texto-do-exemplo.mono { font-family: var(--familia-mono);
+  font-size: var(--fonte-miuda); }
+.caixa-do-exemplo p { margin: 0 0 var(--esp-6); }
+.origem-do-exemplo { color: var(--grafite-suave); font-size: var(--fonte-miuda); }
+
 /* O caminho até o aluno (D33): os passos numerados, em ordem, porque são de
    fato uma sequência — salvar, verificar, ver como o aluno veria, publicar. */
 .etapas-da-publicacao { list-style: none; counter-reset: etapa; display: flex; flex-wrap: wrap;

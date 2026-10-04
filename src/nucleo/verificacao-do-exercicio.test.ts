@@ -1,10 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { catalogo } from '../exercicios/catalogo';
 import { vetorDobrar } from '../exercicios/vetor-dobrar';
-import { verificarExercicio } from './verificacao-do-exercicio';
+import { rascunhoDoExercicio, verificarExercicio } from './verificacao-do-exercicio';
 import { abrirWorker } from './worker-em-teste';
 import type { Executor, RascunhoDeExercicio } from './verificacao-do-exercicio';
-import type { Exercicio } from './tipos';
 
 /**
  * A verificação da submissão de um professor (D31), por execução.
@@ -32,26 +31,7 @@ beforeAll(async () => {
     );
 });
 
-/** Um exercício do catálogo escrito como o formulário do professor o escreveria. */
-function rascunhoDe(exercicio: Exercicio): RascunhoDeExercicio {
-  const marcadores = exercicio.marcadores ?? [];
-  return {
-    titulo: exercicio.titulo,
-    enunciado: exercicio.enunciado,
-    estrutura: exercicio.estrutura,
-    dificuldade: exercicio.dificuldade,
-    categoriaDefeito: exercicio.categoriaDefeito,
-    codigoCorreto: exercicio.codigoCorreto,
-    codigoComDefeito: exercicio.codigoComDefeito,
-    casosDeTeste: exercicio.casosDeTeste,
-    dicas: exercicio.dicas,
-    marcadores,
-    variaveisDeValor:
-      exercicio.estrutura === 'vetor'
-        ? exercicio.variaveisObservadas.filter((v) => v !== 'itens' && !marcadores.includes(v))
-        : [],
-  };
-}
+const rascunhoDe = rascunhoDoExercicio;
 
 const itemDe = async (rascunho: RascunhoDeExercicio, chave: string) =>
   (await verificarExercicio(rascunho, executar)).itens.find((i) => i.chave === chave);

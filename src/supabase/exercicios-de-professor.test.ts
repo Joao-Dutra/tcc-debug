@@ -262,6 +262,15 @@ describe('o conteúdo guardado', () => {
     expect(modulo.conteudoValido({ ...RASCUNHO, casosDeTeste: [{ descricao: 'x' }] })).toBeNull();
   });
 
+  // O agrupamento da ordenação (D35) só existe no vetor; um conteúdo que o
+  // traga em outra estrutura não tem a forma esperada.
+  it('o agrupamento da ordenação vale no vetor, e só nele', () => {
+    expect(modulo.conteudoValido({ ...RASCUNHO, secao: 'ordenacao' })?.secao).toBe('ordenacao');
+    expect(modulo.conteudoValido({ ...RASCUNHO, estrutura: 'pilha', secao: 'ordenacao' })).toBeNull();
+    expect(modulo.conteudoValido({ ...RASCUNHO, secao: 'outra' })).toBeNull();
+    expect(modulo.conteudoValido(RASCUNHO)).not.toHaveProperty('secao');
+  });
+
   it('sem o código correto só vale na leitura dos publicados', () => {
     const { codigoCorreto: _semEle, ...semCorreto } = RASCUNHO;
     expect(modulo.conteudoValido(semCorreto)).toBeNull();

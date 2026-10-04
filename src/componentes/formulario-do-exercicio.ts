@@ -1,7 +1,7 @@
 import type {
   RascunhoDeExercicio,
 } from '../nucleo/verificacao-do-exercicio';
-import type { CategoriaDefeito, TipoEstrutura } from '../nucleo/tipos';
+import type { CategoriaDefeito, SecaoEspecial, TipoEstrutura } from '../nucleo/tipos';
 
 /**
  * O formulário da área do professor, e a conversão dele para o rascunho que o
@@ -35,6 +35,11 @@ export interface FormularioDoExercicio {
   /** Nomes separados por vírgula, na ordem; só no vetor. */
   marcadores: string;
   variaveisDeValor: string;
+  /**
+   * O agrupamento na vitrine, quando não é o da estrutura (D35): só a
+   * ordenação, e só no vetor. Serve ao filtro dentro da seção dos propostos.
+   */
+  agrupamento: SecaoEspecial | null;
 }
 
 export const ESTRUTURAS: readonly { valor: TipoEstrutura; rotulo: string }[] = [
@@ -65,6 +70,7 @@ export function formularioVazio(): FormularioDoExercicio {
     dicas: ['', '', ''],
     marcadores: '',
     variaveisDeValor: '',
+    agrupamento: null,
   };
 }
 
@@ -86,6 +92,7 @@ export function formularioDe(rascunho: RascunhoDeExercicio): FormularioDoExercic
     dicas,
     marcadores: rascunho.marcadores.join(', '),
     variaveisDeValor: rascunho.variaveisDeValor.join(', '),
+    agrupamento: rascunho.secao ?? null,
   };
 }
 
@@ -159,6 +166,8 @@ export function rascunhoDoFormulario(formulario: FormularioDoExercicio): Convers
       dicas: formulario.dicas.map((d) => d.trim()),
       marcadores: marcadores.nomes,
       variaveisDeValor: valores.nomes,
+      // Fora do vetor, o agrupamento não vale: a ordenação é sobre vetor.
+      ...(vetor && formulario.agrupamento ? { secao: formulario.agrupamento } : {}),
     },
     erros: [],
   };

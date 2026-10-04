@@ -37,7 +37,8 @@ export const PASSOS_DO_TUTORIAL_DO_PROFESSOR: readonly PassoDoTutorialDoProfesso
       'Comece pela estrutura de dados: vetor, pilha, fila ou lista encadeada. Logo abaixo ' +
       'aparecem os nomes que o desenho procura no código — no vetor, por exemplo, itens. Use ' +
       'exatamente esses nomes nas duas versões do código. No vetor, diga também quais ' +
-      'variáveis apontam posições e quais guardam valores.',
+      'variáveis apontam posições e quais guardam valores. Um algoritmo de ordenação é vetor, ' +
+      'agrupado em Ordenação: ele aparece nesse filtro, dentro dos propostos por professores.',
     ilustracao: 'estrutura',
   },
   {
@@ -45,7 +46,8 @@ export const PASSOS_DO_TUTORIAL_DO_PROFESSOR: readonly PassoDoTutorialDoProfesso
     texto:
       'Escreva o programa funcionando, no estilo de Java ou C que a disciplina usa: var, ' +
       'laços for e while, funções. Ele define o comportamento certo, e o aluno nunca o recebe. ' +
-      'A verificação avisa quando o código usa algo que só existe em JavaScript.',
+      'Cada campo tem um botão de exemplo, tirado de um exercício do catálogo da mesma ' +
+      'estrutura; com o campo vazio, dá para usá-lo como ponto de partida.',
     ilustracao: 'codigo',
   },
   {

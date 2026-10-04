@@ -14,6 +14,7 @@ import {
   salvarRascunho,
 } from '../supabase/exercicios-de-professor';
 import { complexidadeDe } from './complexidade';
+import { ExemploDoCampo } from './ExemploDoCampo';
 import {
   CATEGORIAS,
   ESTRUTURAS,
@@ -119,6 +120,13 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
   const [erros, setErros] = useState<string[]>([]);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [mudou, setMudou] = useState(false);
+
+  // O exemplo entra pelo formulário inteiro que `inserirExemplo` devolve: é lá
+  // que mora a regra de nunca cobrir o que o professor escreveu (D35).
+  const substituir = (novo: FormularioDoExercicio) => {
+    setFormulario(novo);
+    setMensagem(null);
+  };
 
   const mudar = (parcial: Partial<FormularioDoExercicio>) => {
     setFormulario((f) => ({ ...f, ...parcial }));
@@ -270,29 +278,58 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
           </select>
         </label>
 
+        {/* A ordenação é agrupamento, e não estrutura (D34): o exercício continua
+            vetor, com os marcadores e a temporária da troca, e o agrupamento
+            só o põe no filtro da ordenação, dentro da seção dos propostos. */}
+        {vetor && (
+          <label>
+            Agrupamento na vitrine
+            <span className="ajuda">
+              Um algoritmo de ordenação continua sendo vetor. Agrupado em ordenação, ele aparece
+              no filtro Ordenação, dentro da seção dos propostos por professores, e os exemplos
+              passam a vir de um exercício de ordenação.
+            </span>
+            <select
+              value={formulario.agrupamento ?? ''}
+              onChange={(e) =>
+                mudar({ agrupamento: e.target.value === 'ordenacao' ? 'ordenacao' : null })
+              }
+            >
+              <option value="">Vetor</option>
+              <option value="ordenacao">Ordenação</option>
+            </select>
+          </label>
+        )}
+
         <NomesEsperados estrutura={formulario.estrutura} />
 
-        <label>
-          Título
-          <input
-            value={formulario.titulo}
-            onChange={(e) => mudar({ titulo: e.target.value })}
-            placeholder="Vetor: o que o estudante vê de errado"
-          />
-        </label>
+        <div className="campo-com-exemplo">
+          <label>
+            Título
+            <input
+              value={formulario.titulo}
+              onChange={(e) => mudar({ titulo: e.target.value })}
+              placeholder="Vetor: o que o estudante vê de errado"
+            />
+          </label>
+          <ExemploDoCampo formulario={formulario} campo="titulo" aoInserir={substituir} />
+        </div>
 
-        <label>
-          Enunciado
-          <span className="ajuda">
-            O comportamento esperado, e um convite a olhar o desenho — nunca o sintoma nem a
-            região do código.
-          </span>
-          <textarea
-            rows={4}
-            value={formulario.enunciado}
-            onChange={(e) => mudar({ enunciado: e.target.value })}
-          />
-        </label>
+        <div className="campo-com-exemplo">
+          <label>
+            Enunciado
+            <span className="ajuda">
+              O comportamento esperado, e um convite a olhar o desenho — nunca o sintoma nem a
+              região do código.
+            </span>
+            <textarea
+              rows={4}
+              value={formulario.enunciado}
+              onChange={(e) => mudar({ enunciado: e.target.value })}
+            />
+          </label>
+          <ExemploDoCampo formulario={formulario} campo="enunciado" aoInserir={substituir} />
+        </div>
 
         <div className="lado-a-lado">
           <label>
@@ -327,29 +364,36 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
 
         {vetor && (
           <div className="lado-a-lado">
-            <label>
-              Marcadores de posição
-              <span className="ajuda">Em ordem, separados por vírgula; o primeiro é o principal.</span>
-              <input
-                value={formulario.marcadores}
-                onChange={(e) => mudar({ marcadores: e.target.value })}
-                placeholder="j, ultimo"
-              />
-            </label>
-            <label>
-              Variáveis de valor
-              <span className="ajuda">Desenhadas em caixas, como a temporária de uma troca.</span>
-              <input
-                value={formulario.variaveisDeValor}
-                onChange={(e) => mudar({ variaveisDeValor: e.target.value })}
-                placeholder="temp"
-              />
-            </label>
+            <div className="campo-com-exemplo">
+              <label>
+                Marcadores de posição
+                <span className="ajuda">Em ordem, separados por vírgula; o primeiro é o principal.</span>
+                <input
+                  value={formulario.marcadores}
+                  onChange={(e) => mudar({ marcadores: e.target.value })}
+                  placeholder="j, ultimo"
+                />
+              </label>
+              <ExemploDoCampo formulario={formulario} campo="marcadores" aoInserir={substituir} />
+            </div>
+            <div className="campo-com-exemplo">
+              <label>
+                Variáveis de valor
+                <span className="ajuda">Desenhadas em caixas, como a temporária de uma troca.</span>
+                <input
+                  value={formulario.variaveisDeValor}
+                  onChange={(e) => mudar({ variaveisDeValor: e.target.value })}
+                  placeholder="temp"
+                />
+              </label>
+              <ExemploDoCampo formulario={formulario} campo="variaveisDeValor" aoInserir={substituir} />
+            </div>
           </div>
         )}
 
         <div className="campo-de-codigo">
           <span className="rotulo-do-campo">Código correto</span>
+          <ExemploDoCampo formulario={formulario} campo="codigoCorreto" aoInserir={substituir} />
           <CodeMirror
             value={formulario.codigoCorreto}
             height="240px"
@@ -366,6 +410,7 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
             O mesmo programa, com um defeito só: uma linha alterada, ou uma linha fora do lugar.
             A linha do defeito sai da comparação entre as duas versões.
           </span>
+          <ExemploDoCampo formulario={formulario} campo="codigoComDefeito" aoInserir={substituir} />
           {formulario.codigoComDefeito.trim() === '' && formulario.codigoCorreto.trim() !== '' && (
             <button
               type="button"
@@ -391,6 +436,7 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
             A expressão é avaliada depois do programa. O valor esperado vai em JSON: números como
             42, textos entre aspas como "ana", vetores como [1, 2].
           </span>
+          <ExemploDoCampo formulario={formulario} campo="casos" aoInserir={substituir} />
           {formulario.casos.map((caso, i) => (
             <div key={i} className="caso-do-formulario">
               <input
@@ -451,6 +497,7 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
             onde está o problema, a terceira diz a propriedade que deveria valer. Nenhuma nomeia
             a linha do defeito.
           </span>
+          <ExemploDoCampo formulario={formulario} campo="dicas" aoInserir={substituir} />
           {formulario.dicas.map((dica, i) => (
             <textarea
               key={i}

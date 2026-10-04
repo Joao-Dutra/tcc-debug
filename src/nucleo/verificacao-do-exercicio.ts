@@ -10,6 +10,7 @@ import type {
   Exercicio,
   Instantaneo,
   ResultadoExecucao,
+  SecaoEspecial,
   TipoEstrutura,
 } from './tipos';
 
@@ -98,6 +99,40 @@ export interface RascunhoDeExercicio {
   marcadores: string[];
   /** Só no vetor: variáveis de valor desenhadas em caixas, como a temporária. */
   variaveisDeValor: string[];
+  /**
+   * O agrupamento na vitrine, quando não é o da estrutura (D34, D35): hoje, só
+   * a ordenação, e só no vetor. Ausente nos rascunhos anteriores a D35.
+   */
+  secao?: SecaoEspecial;
+}
+
+/**
+ * Um exercício do catálogo escrito como o formulário do professor o escreveria.
+ *
+ * É a ponte entre o catálogo e a área de autoria nos dois sentidos que importam:
+ * o teste que exige que todo exercício do catálogo passe na verificação do
+ * professor (D31), e os exemplos de cada campo do formulário (D35), que vêm
+ * de um exercício do catálogo da estrutura escolhida.
+ */
+export function rascunhoDoExercicio(exercicio: Exercicio): RascunhoDeExercicio {
+  const marcadores = exercicio.marcadores ?? [];
+  return {
+    titulo: exercicio.titulo,
+    enunciado: exercicio.enunciado,
+    estrutura: exercicio.estrutura,
+    dificuldade: exercicio.dificuldade,
+    categoriaDefeito: exercicio.categoriaDefeito,
+    codigoCorreto: exercicio.codigoCorreto,
+    codigoComDefeito: exercicio.codigoComDefeito,
+    casosDeTeste: exercicio.casosDeTeste,
+    dicas: exercicio.dicas,
+    marcadores,
+    variaveisDeValor:
+      exercicio.estrutura === 'vetor'
+        ? exercicio.variaveisObservadas.filter((v) => v !== 'itens' && !marcadores.includes(v))
+        : [],
+    ...(exercicio.secao ? { secao: exercicio.secao } : {}),
+  };
 }
 
 /** As variáveis que o desenho recebe, fixas pela estrutura (D31). */
@@ -126,6 +161,9 @@ export function exercicioDoRascunho(
     titulo: rascunho.titulo,
     enunciado: rascunho.enunciado,
     estrutura: rascunho.estrutura,
+    // O agrupamento só serve ao filtro, dentro da seção dos propostos (D35):
+    // o proposto nunca entra na seção do catálogo.
+    ...(rascunho.secao ? { secao: rascunho.secao } : {}),
     categoriaDefeito: rascunho.categoriaDefeito,
     dificuldade: rascunho.dificuldade,
     codigoComDefeito: rascunho.codigoComDefeito,

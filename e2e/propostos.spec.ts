@@ -15,6 +15,7 @@ import type { Exercicio } from '../src/nucleo/tipos';
 const BANCO = 'http://supabase-falso.invalid';
 const ID_VETOR = '11111111-1111-4111-8111-111111111111';
 const ID_PILHA = '22222222-2222-4222-8222-222222222222';
+const ID_ORDENACAO = '55555555-5555-4555-8555-555555555555';
 
 /** Uma linha da visão dos publicados: o conteúdo sem o código correto. */
 function publicado(id: string, e: Exercicio, titulo: string) {
@@ -44,14 +45,18 @@ const PUBLICADOS = [
 ];
 
 /** Responde pelo banco. A entrada anônima falha, e a tela do aluno não depende dela. */
-async function bancoFalso(page: import('@playwright/test').Page, leituraFalha = false) {
+async function bancoFalso(
+  page: import('@playwright/test').Page,
+  leituraFalha = false,
+  publicados: unknown[] = PUBLICADOS
+) {
   await page.route(`${BANCO}/**`, async (rota) => {
     const url = new URL(rota.request().url());
     if (url.pathname === '/rest/v1/exercicios_publicados') {
       if (leituraFalha) return rota.fulfill({ status: 500, json: { message: 'fora do ar' } });
       // Paginado até a página vazia (D22).
       const inicio = Number(url.searchParams.get('offset') ?? '0');
-      return rota.fulfill({ status: 200, json: inicio === 0 ? PUBLICADOS : [] });
+      return rota.fulfill({ status: 200, json: inicio === 0 ? publicados : [] });
     }
     return rota.fulfill({ status: 400, json: { message: 'banco de mentira' } });
   });
@@ -84,6 +89,30 @@ test('o proposto abre pelo identificador, e a sessão grava a origem', async ({ 
   expect(arquivadas).toEqual([
     expect.objectContaining({ exercicioId: ID_PILHA, origemDoExercicio: 'professor' }),
   ]);
+});
+
+// O agrupamento da ordenação (D35) serve ao filtro dentro da seção dos
+// propostos: o proposto de ordenação nunca entra na fileira do catálogo, porque
+// o interruptor da coleta depende dessa separação.
+test('o proposto de ordenação aparece no filtro Ordenação, e só na seção dos propostos', async ({
+  page,
+}) => {
+  const ordenacao = { ...publicado(ID_ORDENACAO, vetorDobrar, 'Proposto: uma ordenação') };
+  ordenacao.conteudo = { ...ordenacao.conteudo, secao: 'ordenacao' } as typeof ordenacao.conteudo;
+  await bancoFalso(page, false, [...PUBLICADOS, ordenacao]);
+  await page.goto('/#/exercicios');
+
+  await page.getByRole('button', { name: 'Ordenação', exact: true }).click();
+  const secao = page.getByRole('region', { name: 'Propostos por professores' });
+  await expect(secao.locator('.cartao')).toHaveCount(1);
+  await expect(secao.getByRole('heading', { name: 'Proposto: uma ordenação' })).toBeVisible();
+  const doCatalogo = page.getByRole('region', { name: 'Ordenação' });
+  await expect(doCatalogo.getByText('Proposto: uma ordenação')).toHaveCount(0);
+
+  // No filtro Vetor ele não aparece: o agrupamento tirou ele de lá.
+  await page.getByRole('button', { name: 'Vetor', exact: true }).click();
+  await expect(secao.getByRole('heading', { name: 'Proposto: os dobros' })).toBeVisible();
+  await expect(secao.getByText('Proposto: uma ordenação')).toHaveCount(0);
 });
 
 test('um identificador que não é de nenhum publicado não abre nada', async ({ page }) => {
