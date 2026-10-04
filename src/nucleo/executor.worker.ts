@@ -1,15 +1,21 @@
 /// <reference lib="webworker" />
 import { LIMITE_DE_PASSOS, MENSAGEM_DO_LIMITE_DE_PASSOS } from './limites';
+import { bloquearRede } from './rede-bloqueada';
 import type { Escrita, Instantaneo, LugarDoValor, ResultadoCaso, ResultadoExecucao } from './tipos';
 
 /**
  * Executa o código já instrumentado dentro do Worker.
  *
  * O Worker existe por dois motivos: não travar a interface durante laços longos
- * e isolar o código do estudante do restante da aplicação. Não é uma sandbox de
- * segurança — o código executado é o do próprio catálogo, não código arbitrário
- * vindo da internet.
+ * e isolar o código do estudante do restante da aplicação. Não é uma sandbox
+ * completa: desde D33 o código de um exercício publicado por professor roda
+ * aqui sem que ninguém o leia antes, e o que o Worker garante é não alcançar a
+ * página nem a sessão guardada, e não ter os caminhos comuns de rede (D33).
  */
+
+// Antes de qualquer código de exercício, e uma vez só: o Worker vive o tempo
+// de uma execução, e nada dele mesmo usa rede depois de carregado.
+bloquearRede(globalThis);
 
 interface Pedido {
   codigo: string;
