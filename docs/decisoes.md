@@ -2610,6 +2610,9 @@ Worker.
 
 ### Publicar durante a coleta
 
+*Substituído em D33: os professores publicam durante a coleta, e o que guarda
+a vitrine dos participantes é o interruptor da coleta, no banco.*
+
 **Decisão, do autor: nada é publicado até o fim da coleta.** Publicar muda a
 vitrine que os participantes veem, e o congelamento (roadmap, item 5) exige que
 ela seja a mesma do começo ao fim. Sem nenhum publicado, a seção dos propostos
@@ -2880,3 +2883,185 @@ sessões abertas sem ação. E se o texto do tutorial é lido: o passo alcançad
 no log diz até onde ele foi, e não se foi lido. Que "ensina a interface,
 nunca a estratégia" foi cumprido é julgamento sobre o texto, e não teste:
 fica para a leitura da orientadora antes do piloto.
+
+## D33 — Publicação pelo próprio professor, interruptor da coleta e freio do pesquisador
+
+**Decisão.** A área de autoria muda de modelo, pensando no uso dentro da
+universidade e não só no estudo. A revisão manual pelo pesquisador deixa de
+existir: o próprio autor verifica, vê o exercício como o aluno o verá e
+publica. A verificação automática passa a ser a única porta de entrada. O
+pesquisador fica com duas coisas: um **interruptor da coleta**, que oculta a
+seção dos propostos aos alunos, e um **freio de emergência**, que retira
+qualquer publicado. Um tutorial ensina o professor a criar a primeira
+atividade.
+
+### O que motivou
+
+Com a revisão como etapa, todo exercício de todo professor passava pelo
+pesquisador antes de chegar a um aluno. Para o estudo isso era controle; para
+uma universidade, é um gargalo de uma pessoa só, e a ferramenta não
+sobreviveria ao fim do TCC dependendo dele (roadmap, área de autoria).
+
+### O caminho, agora
+
+Rascunho → verificar → ver como o aluno veria → publicar, tudo pelo autor, e
+nesta ordem nos botões do editor, numerados.
+
+- **A verificação é a única porta, e continua bloqueando.** Publicar e ver
+  como o aluno veria só se liberam com a verificação aprovada **do que está no
+  formulário agora**: editou depois de verificar, trava de novo. É a mesma
+  regra de D31 para o envio, e pesa mais agora, porque não há ninguém depois
+  dela.
+- **A função que decide a publicação não recebe o relatório gravado.**
+  `publicacaoLiberada` recebe a verificação que o autor acabou de fazer, o
+  texto verificado e o formulário atual — o gravado nem entra na assinatura.
+- **O banco ainda confere o relatório** (0003): sem `aprovado` verdadeiro, a
+  publicação é recusada. É guarda contra defeito da interface, e não contra
+  quem forja: o relatório vem do navegador.
+- **Publicado continua imutável**, agora também o formato e o relatório com
+  que foi publicado. Para corrigir, cria-se um rascunho a partir dele e
+  retira-se o antigo.
+- **O autor retira o próprio**, inclusive depois de perder o papel de
+  professor: retirar só reduz exposição.
+
+### A revisão virou pré-visualização
+
+A tela de revisão (`#/revisao`) saiu, e no lugar dela há `#/previa/<id>`: **a
+própria tela do aluno**, o mesmo componente, em modo de pré-visualização, nos
+dois níveis de apoio. Deixou de ser etapa e virou consulta: o autor a abre
+antes de publicar, numa aba própria, e o pesquisador, diante de um publicado,
+antes de decidir se o retira.
+
+- **Não grava sessão.** A sessão de métricas existe, para a tela funcionar
+  igual, mas nunca é arquivada — nem no aparelho, nem no banco. O que um
+  professor faz vendo o próprio exercício não é dado do estudo.
+- **Não abre o tutorial do participante sozinho**, nem marca o aparelho como
+  visto: um aluno que usasse o aparelho depois perderia o dele. O botão de
+  ajuda continua lá, e mostra ao professor o que o aluno lê.
+- **Lê pela tabela, e não pela visão dos publicados.** O autor vê o rascunho,
+  e vê o publicado mesmo com a seção oculta aos alunos.
+- **De um rascunho, a linha do defeito sai da verificação feita ali.** Sem
+  ela não haveria veredito para a linha apontada, e a tela deixaria de ser a
+  do aluno.
+- **Uma faixa no alto diz que é pré-visualização** e que nada é gravado; o
+  convite para o próximo exercício não aparece, porque não há sequência. Fora
+  isso, é a tela do aluno.
+
+A tela do aluno ganhou o modo como uma propriedade opcional; sem ela, o
+comportamento é o de antes, e é o que o participante vê. O congelamento de
+D32 continua de pé.
+
+O conferente do relatório gravado (`relatorio-gravado.ts`), que comparava o
+relatório do professor com a verificação refeita na revisão, saiu junto com
+ela: era a revisão quem o usava.
+
+### Interruptor da coleta
+
+Com qualquer professor publicando, o pesquisador perde o controle do que os
+participantes veem durante o estudo — e o congelamento exige a mesma vitrine
+do começo ao fim. O interruptor oculta a seção "Propostos por professores"
+inteira.
+
+- **Vale pelo banco, e não só pela tela.** A visão dos publicados filtra por
+  ele: ligado, ela não devolve nada, nem a quem abre o link direto de um
+  proposto. Sem a linha da coleta, também não devolve nada — o lado seguro.
+- **Só o pesquisador mexe nele**, pelo RLS; qualquer conta lê o estado. É uma
+  tabela de uma linha só (`coleta`), com o carimbo de quem mexeu e quando.
+- **Nasce oculto.** A coleta vem aí, e oculto é o lado seguro.
+- **A área do professor avisa quando está oculto.** Com a seção oculta, o
+  professor publica e não vê o exercício na vitrine; sem o aviso, ele suporia
+  que a publicação falhou. O aviso diz que a seção está temporariamente oculta
+  aos alunos durante a coleta, que o publicado fica guardado e aparece quando
+  ela voltar, e aponta a pré-visualização. A confirmação de publicar repete
+  isso, e cada publicado da lista diz que está oculto.
+
+Isto **substitui o procedimento de D31** ("nada é publicado até o fim da
+coleta", conferido à mão antes do início): os professores podem publicar
+durante a coleta, e o que garante a vitrine dos participantes é o interruptor
+ligado — no banco, e não numa regra que alguém precisa lembrar.
+
+### O freio do pesquisador
+
+**O pesquisador retira qualquer publicado**, e não publica nem edita
+exercício de ninguém. É diferente da revisão que saiu: a revisão era uma
+etapa no caminho de todo exercício; a retirada é freio de emergência, usado
+raramente, sem atrasar ninguém. Para uso na universidade, tirar do ar um
+exercício com erro ou conteúdo inadequado não pode depender do autor nem de
+acesso ao painel do Supabase.
+
+`retirado_por` registra quem puxou — o autor ou o pesquisador —, e a área do
+autor diz qual dos dois foi.
+
+A conta de pesquisador, na área do professor, vê o interruptor e a lista dos
+publicados de todos, com "ver como o aluno veria" e "retirar", e mais nada.
+
+### O controle humano que sobra
+
+**O único controle humano no caminho de um exercício até o aluno é a
+concessão do papel de professor**, feita à mão, no banco (D29). Ninguém lê o
+exercício antes de ele chegar a um aluno; a verificação automática confere o
+que é executável — os nomes, os casos, o defeito numa linha só, a divergência
+no desenho — e não julga o texto do enunciado nem das dicas. O freio do
+pesquisador age depois, e só se alguém notar.
+
+**Abrir a área ao público exigiria revisitar isso.** Já valia o que D31
+registrou — a verificação roda no navegador de quem escreve e um acesso
+direto à API a contorna; o código de um publicado executa no navegador de
+cada aluno, e o Worker faz pedidos de rede —, e agora sem o olho do
+pesquisador no meio. Com professores sem convite seriam precisos, no mínimo,
+a verificação fora do navegador, uma restrição de rede para o Worker e alguma
+forma de revisão ou de denúncia antes do aluno.
+
+### O tutorial do professor
+
+Um modal passo a passo para criar a primeira atividade, na ordem do editor:
+escolher a estrutura e ver os nomes esperados, escrever o código correto,
+implantar o defeito numa única linha, escrever os casos de teste e as três
+dicas, verificar, ver como o aluno veria e publicar. Abre sozinho para o
+professor que ainda não tem exercício nenhum, uma vez por aparelho, e depois
+pelo botão "Como criar uma atividade". O último botão, "Escrever a
+atividade", abre o editor.
+
+Sem revisão, o tutorial é também onde se diz o que a verificação não julga —
+o texto das dicas — e que a seção pode estar oculta durante a coleta. Não
+entra no log: o professor não é participante do estudo. A marca de visto é
+separada da do participante, para um não apagar o outro no mesmo aparelho.
+
+O modal é o mesmo do tutorial do participante (D32): o mecanismo saiu para um
+guia passo a passo genérico, e cada tutorial passa os próprios passos. O do
+participante continua idêntico, e o teste de ponta a ponta dele cobra isso.
+
+### No banco: migração 0003
+
+- Os exercícios em revisão voltaram a rascunho do autor. O valor
+  `em_revisao` continua no tipo, mas nenhuma transição leva a ele.
+- Transições: rascunho → publicado, só pelo autor com o papel de professor e
+  o relatório aprovado; publicado → retirado, pelo autor ou pelo pesquisador.
+- As políticas de update do professor e do pesquisador foram trocadas. Como
+  políticas permissivas se somam, combinações cruzadas — rascunho → retirado,
+  por exemplo — passam pelo RLS e param no gatilho, que repete as regras.
+
+**Falta, à mão:** rodar a 0003 no editor SQL do projeto e, em seguida,
+`npm run verificar-rls`. A verificação foi reescrita para a história nova e
+devolve o interruptor ao valor que encontrou, porque roda contra o banco do
+estudo; ela **não foi rodada contra o projeto**, porque depende da migração
+aplicada e da chave secreta. As regras foram exercitadas antes num Postgres
+local (PGlite), com as migrações 0001 a 0003 e um esboço do `auth` do
+Supabase: 36 conferências, todas passando.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Quem publica, retira e mexe no interruptor; publicado imutável; a visão vazia com o interruptor ligado, inclusive pelo id; o interruptor devolvido ao valor original | `supabase/verificacao/rls.verificacao.ts` (`npm run verificar-rls`) |
+| A publicação só com a verificação aprovada do formulário atual, sem o relatório gravado na assinatura | `src/componentes/liberacoes-da-autoria.test.ts` |
+| Publicar não chega ao banco sem relatório aprovado, e leva o relatório junto; o interruptor que não mudou não passa por mudado; sem a linha da coleta, o estado é nulo | `src/supabase/exercicios-de-professor.test.ts` |
+| O aviso da seção oculta, e a ausência dele com a seção visível; o autor retira o próprio; o editor libera publicar e ver como o aluno veria só depois de verificar, e trava ao editar | `e2e/autoria.spec.ts` |
+| A pré-visualização é a tela do aluno nos dois níveis, sem tutorial sozinho e **sem gravar sessão** — conferido também com a trava desligada de propósito, e o teste falha | o mesmo arquivo |
+| O pesquisador mexe no interruptor e retira o publicado de outra pessoa, sem botão de publicar nem de editar | o mesmo arquivo |
+| O tutorial do professor percorre o caminho em ordem, abre sozinho para quem não tem exercício, uma vez, e volta pela ajuda | `src/componentes/passos-do-tutorial-do-professor.test.ts` e `e2e/autoria.spec.ts` |
+
+Os testes da área rodam no projeto `banco-falso` com a sessão posta no
+armazenamento do navegador, onde o supabase-js a procura. **Não testam a
+autenticação** — D31 recusou fingi-la para isso —, e sim o que a área faz com
+cada papel; o que cada papel pode no banco quem cobra é a verificação do RLS.

@@ -145,8 +145,9 @@ Nesta ordem, e a ordem importa: cada item depende do anterior estar de pé.
    do dado em dia (D23, D25, D26)
 3. **Visualizador de vetor com dois índices, e então ordenação e busca** —
    feito: o desenho (D27) e os dois exercícios (D28)
-4. **Área de autoria para professores** — feita (D31): escrita, verificação,
-   revisão e publicação, com o RLS verificado contra o projeto
+4. **Área de autoria para professores** — feita (D31), e revista em D33:
+   o próprio professor publica, a revisão virou pré-visualização, e o
+   interruptor da coleta oculta os propostos aos alunos
 5. **Congelamento do que o participante vê**
 6. **Experimento**
 
@@ -253,8 +254,8 @@ ninguém. Isso é parte do valor do trabalho, e não um apêndice dele.
 separada e restrita, e não toca em nenhuma tela do participante. Pode continuar
 evoluindo durante a coleta sem mudar uma linha do que o participante vê.
 **Com uma exceção, que veio com a publicação:** os exercícios publicados
-aparecem na vitrine. Por isso nada é publicado até o fim da coleta (D31, e o
-item 5).
+aparecem na vitrine. Por isso a seção dos propostos fica oculta aos alunos
+durante a coleta, pelo interruptor (D33, e o item 5).
 
 Área restrita, liberada a pessoas selecionadas. Sem preocupação com código
 malicioso nesta etapa, por decisão registrada: o acesso é controlado.
@@ -276,8 +277,16 @@ aparecem numa seção à parte da vitrine, sem o código correto chegar ao
 navegador do aluno. O campo de miniatura (D20) não entrou no modelo: o
 proposto aparece num cartão sem miniatura.
 
+**Revista em D33, para o uso na universidade.** A revisão do pesquisador
+deixou de ser etapa: o autor verifica, vê o exercício como o aluno veria em
+`#/previa` — a tela do aluno, sem gravar sessão — e publica. A verificação
+automática é a única porta; o controle humano que sobra é a concessão do
+papel de professor. O pesquisador fica com o interruptor da coleta e com o
+freio de emergência, que retira qualquer publicado.
+
 **Falta, à mão, no painel do Supabase:** o provedor Google e as URLs de retorno
-da área (D31, configuração). Sem eles, o professor entra só por e-mail e senha.
+da área (D31, configuração) — sem eles, o professor entra só por e-mail e
+senha —, e rodar a migração 0003 seguida de `npm run verificar-rls` (D33).
 
 ### 5. Congelamento do que o participante vê
 
@@ -299,10 +308,10 @@ o tutorial do participante. **O próximo piloto roda já sobre esta versão**, e
 ela que segue para a coleta se o piloto não pedir mudança.
 
 **Os propostos por professores entram no congelamento.** A seção deles é parte
-da vitrine, e nada é publicado até o fim da coleta (D31): o que for escrito
-antes disso espera em revisão, que o aluno não vê, e é publicado depois. A
-retirada, definitiva, não é usada para segurar exercício. Antes do início,
-confere-se que não há nenhum publicado.
+da vitrine, e fica oculta aos alunos durante toda a coleta pelo interruptor
+(D33): os professores continuam publicando, e o banco não entrega nada da
+seção a participante nenhum. Antes do início, confere-se na área, com a conta
+de pesquisador, que o interruptor está em "oculta" — ele nasce assim.
 
 ### 6. Experimento
 

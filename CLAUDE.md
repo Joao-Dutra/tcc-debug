@@ -81,8 +81,10 @@ aparelho.
 **Já feito além disso:** a tela inicial e a tela de entrada, com as saídas de
 estudante e professor — o estudante sempre anônimo, sem conta nem vínculo (D29,
 D32) —, o tutorial do participante (D32) e a área de autoria, com
-a revisão e a publicação pelo pesquisador (D31). Exercícios de professor vivem
-no banco, e não no catálogo; o aluno nunca recebe o código correto deles.
+a publicação pelo próprio professor depois da verificação automática, a
+pré-visualização como o aluno veria e o interruptor da coleta (D31, D33).
+Exercícios de professor vivem no banco, e não no catálogo; o aluno nunca recebe
+o código correto deles.
 
 **Depois, e só depois:** modo avaliação com sequência fixa de exercícios,
 publicação na Vercel. Árvores e grafos ficam para o fim, condicionados ao
