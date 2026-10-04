@@ -38,6 +38,18 @@ test.describe('vitrine de exercícios', () => {
     await expect(page.getByRole('heading', { name: /ordenação/i, level: 3 })).toHaveCount(0);
   });
 
+  // Filtro e fileiras em caixas, com cabeçalho próprio (D34).
+  test('o filtro e cada fileira ficam dentro de uma caixa com cabeçalho', async ({ page }) => {
+    await page.goto('/#/exercicios');
+    await expect(page.locator('.barra-do-filtro .filtro')).toHaveCount(1);
+    const fileiras = page.locator('section.fileira');
+    const total = await fileiras.count();
+    expect(total).toBe(5);
+    for (let i = 0; i < total; i++) {
+      await expect(fileiras.nth(i).locator('.cabecalho-da-fileira')).toHaveCount(1);
+    }
+  });
+
   // A cor da etiqueta de complexidade não pode ser o único portador do nível
   // (D20): cada cartão diz a palavra.
   test('cada cartão diz a complexidade por escrito', async ({ page }) => {

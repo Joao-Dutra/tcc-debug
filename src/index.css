@@ -526,15 +526,25 @@ button.botao-google { width: 100%; justify-content: center; gap: var(--esp-10);
 /* ---------------------------------------------------------------------------
    Lista de exercícios em vitrine (D20)
 
-   Uma fileira por estrutura, com os cartões lado a lado e rolagem horizontal
-   quando não cabem. A miniatura é o visualizador de verdade, sobre a mesma
-   mesa de luz da tela do exercício. Nenhuma marca de progresso (D8).
+   Uma fileira por seção — cada estrutura, e a ordenação (D34) —, com os
+   cartões lado a lado e rolagem horizontal quando não cabem. A miniatura é o
+   visualizador de verdade, sobre a mesma mesa de luz da tela do exercício.
+   Nenhuma marca de progresso (D8).
+
+   A barra do filtro e cada fileira são caixas (D34), no tratamento do topo da
+   página (D32): o cabeçalho no chão do painel, com um fio embaixo, e os
+   cartões na sala, dentro de um contorno. Antes, filtro, títulos e cartões
+   pousavam soltos no fundo.
 --------------------------------------------------------------------------- */
 .vitrine header { margin-bottom: var(--esp-20); }
 
+.barra-do-filtro { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8) var(--esp-16);
+  background: var(--painel); border: 1px solid var(--regua); border-radius: var(--raio-faixa);
+  padding: var(--esp-10) var(--esp-16); margin-bottom: var(--esp-24); }
+.rotulo-do-filtro { font-size: var(--fonte-apoio); font-weight: 700; color: var(--grafite-suave); }
 /* O filtro é grafite quando escolhido, e não anilina: a pílula anilina cheia
    é a do apoio escolhido, e as duas escalas não podem se parecer. */
-.filtro { display: flex; flex-wrap: wrap; gap: var(--esp-8); margin-bottom: var(--esp-32); }
+.filtro { display: flex; flex-wrap: wrap; gap: var(--esp-8); }
 button.opcao-filtro { border-radius: var(--raio-pilula); padding: 6px 14px;
   background: transparent; }
 button.opcao-filtro[aria-pressed="true"],
@@ -544,20 +554,24 @@ button.opcao-filtro[aria-pressed="true"]:hover:not(:disabled) {
   stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .opcao-filtro .glifo { width: 22px; height: 16px; }
 
-.fileira { margin-bottom: var(--esp-32); }
-.fileira h2 { display: flex; align-items: center; gap: var(--esp-10); margin: 0 0 var(--esp-12);
-  font-size: 20px; font-weight: 700; }
-/* Os propostos por professores (D31) vêm depois das estruturas, separados por
-   um fio: são outra origem, e não uma quinta estrutura. */
-.fileira.propostos { border-top: 1px solid var(--regua); padding-top: var(--esp-24); }
-.fileira.propostos h2 { margin-bottom: var(--esp-4); }
-.nota-da-fileira { margin: 0 0 var(--esp-12); font-size: var(--fonte-apoio); color: var(--grafite-suave); }
+.fileira { border: 1px solid var(--regua); border-radius: var(--raio-faixa); overflow: hidden;
+  margin-bottom: var(--esp-24); }
+.cabecalho-da-fileira { background: var(--painel); border-bottom: 1px solid var(--regua);
+  padding: var(--esp-10) var(--esp-16); margin: 0; }
+h2.cabecalho-da-fileira, .cabecalho-da-fileira h2 { display: flex; align-items: center;
+  gap: var(--esp-10); font-size: 18px; font-weight: 700; }
+.cabecalho-da-fileira h2 { margin: 0; }
+/* Os propostos por professores (D31) vêm depois das seções do catálogo, com
+   uma nota no cabeçalho: são outra origem, e não uma seção a mais dele. */
+.fileira.propostos { margin-top: var(--esp-32); }
+.nota-da-fileira { margin: 2px 0 0; font-size: var(--fonte-apoio); color: var(--grafite-suave); }
 /* O respiro em volta é do anel de foco dos links, que a rolagem cortaria. */
 .prateleira { list-style: none; display: flex; gap: var(--esp-20); overflow-x: auto;
-  scroll-snap-type: x proximity; margin: 0 -6px; padding: 6px 6px var(--esp-12); }
+  scroll-snap-type: x proximity; margin: 0; padding: var(--esp-16); }
 
 .cartao { flex: 0 0 300px; scroll-snap-align: start; display: flex; flex-direction: column;
-  background: var(--painel); border-radius: var(--raio-faixa); overflow: hidden; }
+  background: var(--painel); border-radius: var(--raio-faixa); overflow: hidden;
+  box-shadow: 0 0 0 1px var(--regua); }
 .miniatura { height: 150px; padding: var(--esp-8); border-bottom: 1px solid var(--regua); }
 .miniatura svg { display: block; width: 100%; height: 100%; }
 /* Sem instantâneo escolhido, o glifo da estrutura, grande e quieto. Nada aqui

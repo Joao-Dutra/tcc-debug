@@ -134,23 +134,31 @@ export function VitrineDeExercicios() {
         </p>
       </Cabecalho>
 
-      <div className="filtro" role="group" aria-label="Filtrar por estrutura de dados">
-        {[{ tipo: 'todas' as const, nome: 'Todas' }, ...fileiras].map((opcao) => (
-          <button
-            key={opcao.tipo}
-            className="opcao-filtro"
-            aria-pressed={filtro === opcao.tipo}
-            onClick={() => setFiltro(opcao.tipo)}
-          >
-            {opcao.tipo !== 'todas' && <GlifoDaEstrutura tipo={opcao.tipo} />}
-            {opcao.nome}
-          </button>
-        ))}
+      {/* A barra do filtro e cada fileira têm chão e cabeçalho próprios (D34),
+          no mesmo tratamento do topo da página (D32): antes, filtro, títulos e
+          cartões pousavam soltos na sala. */}
+      <div className="barra-do-filtro">
+        <span className="rotulo-do-filtro" id="rotulo-do-filtro">
+          Mostrar
+        </span>
+        <div className="filtro" role="group" aria-labelledby="rotulo-do-filtro">
+          {[{ tipo: 'todas' as const, nome: 'Todas' }, ...fileiras].map((opcao) => (
+            <button
+              key={opcao.tipo}
+              className="opcao-filtro"
+              aria-pressed={filtro === opcao.tipo}
+              onClick={() => setFiltro(opcao.tipo)}
+            >
+              {opcao.tipo !== 'todas' && <GlifoDaEstrutura tipo={opcao.tipo} />}
+              {opcao.nome}
+            </button>
+          ))}
+        </div>
       </div>
 
       {visiveis.map((fileira) => (
         <section key={fileira.tipo} className="fileira" aria-labelledby={`fileira-${fileira.tipo}`}>
-          <h2 id={`fileira-${fileira.tipo}`}>
+          <h2 id={`fileira-${fileira.tipo}`} className="cabecalho-da-fileira">
             <GlifoDaEstrutura tipo={fileira.tipo} />
             {fileira.nome}
           </h2>
@@ -168,8 +176,10 @@ export function VitrineDeExercicios() {
           para o próximo. */}
       {propostos.length > 0 && (
         <section className="fileira propostos" aria-labelledby="fileira-propostos">
-          <h2 id="fileira-propostos">Propostos por professores</h2>
-          <p className="nota-da-fileira">Escritos por professores convidados.</p>
+          <div className="cabecalho-da-fileira">
+            <h2 id="fileira-propostos">Propostos por professores</h2>
+            <p className="nota-da-fileira">Escritos por professores convidados.</p>
+          </div>
           <ul className="prateleira">
             {propostos.map((exercicio) => (
               <CartaoDoExercicio key={exercicio.id} exercicio={exercicio} />
