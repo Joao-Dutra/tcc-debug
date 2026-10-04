@@ -25,6 +25,9 @@ export const vetorOrdenar: Exercicio = {
     'fora de ordem, de modo que o maior valor que resta vai parar em ultimo. Execute e ' +
     'acompanhe, na visualização, uma troca inteira: de onde sai cada valor e onde ele chega.',
   estrutura: 'vetor',
+  // Seção da ordenação na vitrine (D34). A estrutura continua vetor, e o id
+  // continua o mesmo: as sessões já gravadas apontam para ele.
+  secao: 'ordenacao',
   categoriaDefeito: 'referencia-incorreta',
   dificuldade: 2,
   linhaDoDefeito: 12,

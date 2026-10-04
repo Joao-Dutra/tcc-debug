@@ -15,8 +15,11 @@ import { listaInserirPosicao } from './lista-inserir-posicao';
 
 /**
  * Catálogo de exercícios disponíveis, na ordem de apresentação (D8): vetor,
- * pilha, fila e lista encadeada, e dentro de cada estrutura por complexidade
- * crescente. É a ordem em que a disciplina apresenta as estruturas.
+ * ordenação, pilha, fila e lista encadeada, e dentro de cada seção por
+ * complexidade crescente. É a ordem em que a disciplina apresenta as
+ * estruturas, com os algoritmos de ordenação logo depois do vetor sobre o qual
+ * trabalham (D34). É também a ordem da vitrine, e por isso a do convite para o
+ * próximo exercício.
  *
  * Ordem de apresentação não é sequência obrigatória: nenhum exercício é
  * bloqueado, e todos ficam abertos nos dois níveis de apoio desde o começo.
@@ -27,10 +30,10 @@ import { listaInserirPosicao } from './lista-inserir-posicao';
 export const catalogo: Exercicio[] = [
   vetorZerarNegativos,
   vetorDobrar,
+  vetorBuscaBinaria,
   vetorOrdenar,
   vetorOrdenarPorSelecao,
   vetorOrdenarPorInsercao,
-  vetorBuscaBinaria,
   pilhaDesempilhar,
   pilhaReverter,
   pilhaInverterPalavra,

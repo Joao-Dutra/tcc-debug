@@ -29,6 +29,7 @@ export const vetorOrdenarPorInsercao: Exercicio = {
     'acompanhe, na visualização, um deslocamento inteiro: de onde sai cada valor copiado e onde ' +
     'ele chega.',
   estrutura: 'vetor',
+  secao: 'ordenacao',
   categoriaDefeito: 'ordem-de-operacoes',
   dificuldade: 3,
   linhaDoDefeito: 11,

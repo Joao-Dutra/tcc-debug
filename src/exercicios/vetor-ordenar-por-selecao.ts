@@ -26,6 +26,7 @@ export const vetorOrdenarPorSelecao: Exercicio = {
     'visualização, uma passagem inteira: as posições que menor aponta enquanto j percorre o ' +
     'vetor, e a troca do fim.',
   estrutura: 'vetor',
+  secao: 'ordenacao',
   categoriaDefeito: 'referencia-incorreta',
   dificuldade: 2,
   linhaDoDefeito: 11,

@@ -5,37 +5,36 @@ import { complexidadeDe } from './complexidade';
 import { MiniaturaDoExercicio } from './MiniaturaDoExercicio';
 import { useExerciciosPublicados } from './usar-exercicios-publicados';
 import { Cabecalho } from './Cabecalho';
+import { SECOES, secaoDe } from './secoes-da-vitrine';
 import { caminhoDoExercicio } from './usar-rota';
-import type { Exercicio, TipoEstrutura } from '../nucleo/tipos';
+import type { SecaoDaVitrine } from './secoes-da-vitrine';
+import type { Exercicio } from '../nucleo/tipos';
 
 /**
- * Lista de exercícios em vitrine: uma fileira por estrutura de dados, com um
- * cartão por exercício.
+ * Lista de exercícios em vitrine: uma fileira por seção — cada estrutura de
+ * dados, e a ordenação (D34) —, com um cartão por exercício.
  *
  * Nada de progresso, pontuação ou marca de resolvido: saber de antemão quais
  * já foram resolvidos muda a forma como o estudante encara os que faltam.
  */
 
-/** Na ordem em que a disciplina apresenta as estruturas (D8). */
-const ESTRUTURAS: readonly { tipo: TipoEstrutura; nome: string }[] = [
-  { tipo: 'vetor', nome: 'Vetor' },
-  { tipo: 'pilha', nome: 'Pilha' },
-  { tipo: 'fila', nome: 'Fila' },
-  { tipo: 'lista-encadeada', nome: 'Lista encadeada' },
-];
-
-type Filtro = TipoEstrutura | 'todas';
+type Filtro = SecaoDaVitrine | 'todas';
 
 /**
- * Glifo de cada estrutura, montado com as mesmas primitivas do desenho de
+ * Glifo de cada seção, montado com as mesmas primitivas do desenho de
  * verdade. Em grafite e sem nenhuma cor de significado: é ícone de fileira, não
- * estado de estrutura (D19).
+ * estado de estrutura (D19). O da ordenação são três posições em degrau, de
+ * altura crescente: o vetor, e o que se faz com ele.
  */
-function GlifoDaEstrutura({ tipo }: { tipo: TipoEstrutura }) {
+function GlifoDaEstrutura({ tipo }: { tipo: SecaoDaVitrine }) {
   return (
     <svg className="glifo" viewBox="0 0 32 24" aria-hidden="true">
       {tipo === 'vetor' &&
         [0, 1, 2].map((i) => <rect key={i} x={2 + i * 10} y={7} width={8} height={10} rx={1.5} />)}
+      {tipo === 'ordenacao' &&
+        [0, 1, 2].map((i) => (
+          <rect key={i} x={3 + i * 9.5} y={15 - i * 4.5} width={7.5} height={5 + i * 4.5} rx={1.5} />
+        ))}
       {tipo === 'pilha' &&
         [0, 1, 2].map((i) => <rect key={i} x={8} y={16 - i * 7} width={16} height={6} rx={1.5} />)}
       {tipo === 'fila' && (
@@ -101,10 +100,11 @@ export function VitrineDeExercicios() {
 
   // O tutorial abre a fileira dele. A ordenação é estável, então o resto
   // mantém a ordem do catálogo, que já é por complexidade (D8).
-  const fileiras = ESTRUTURAS.map((estrutura) => ({
-    ...estrutura,
+  const fileiras = SECOES.map(({ secao, nome }) => ({
+    tipo: secao,
+    nome,
     exercicios: catalogo
-      .filter((e) => e.estrutura === estrutura.tipo)
+      .filter((e) => secaoDe(e) === secao)
       .sort((a, b) => Number(b.tutorial ?? false) - Number(a.tutorial ?? false)),
   })).filter((fileira) => fileira.exercicios.length > 0);
 
@@ -117,7 +117,7 @@ export function VitrineDeExercicios() {
   const publicados = useExerciciosPublicados();
   const propostos =
     publicados.estado === 'pronto'
-      ? publicados.exercicios.filter((e) => filtro === 'todas' || e.estrutura === filtro)
+      ? publicados.exercicios.filter((e) => filtro === 'todas' || secaoDe(e) === filtro)
       : [];
 
   return (

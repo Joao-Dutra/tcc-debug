@@ -102,12 +102,26 @@ export type OrigemDoExercicio = 'catalogo' | 'professor';
 /** Estrutura de dados que o exercício manipula (define qual visualizador é usado). */
 export type TipoEstrutura = 'vetor' | 'pilha' | 'fila' | 'lista-encadeada';
 
+/**
+ * Seção da vitrine que não é uma estrutura de dados (D34). Os algoritmos de
+ * ordenação continuam sendo exercícios de vetor — a estrutura decide o desenho
+ * e o contrato de nomes da área do professor —, mas na vitrine formam um grupo
+ * próprio. Por isso o agrupamento é um campo à parte, e não uma estrutura nova.
+ */
+export type SecaoEspecial = 'ordenacao';
+
 export interface Exercicio {
   id: string;
   titulo: string;
   /** O que o programa deveria fazer, na visão do estudante. */
   enunciado: string;
   estrutura: TipoEstrutura;
+  /**
+   * A seção da vitrine em que o exercício aparece, quando não é a da
+   * estrutura (D34). Ausente, ele fica na seção da estrutura. Não muda o
+   * desenho, a execução nem o registro da sessão.
+   */
+  secao?: SecaoEspecial;
   categoriaDefeito: CategoriaDefeito;
   dificuldade: 1 | 2 | 3;
   /** Marca o exercício de entrada do catálogo, apresentado antes dos demais. */

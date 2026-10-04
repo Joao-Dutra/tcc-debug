@@ -6,7 +6,7 @@ test.describe('vitrine de exercícios', () => {
     await page.goto('/#/exercicios');
 
     const fileiras = page.getByRole('heading', { level: 2 });
-    await expect(fileiras).toHaveText(['Vetor', 'Pilha', 'Fila', 'Lista encadeada']);
+    await expect(fileiras).toHaveText(['Vetor', 'Ordenação', 'Pilha', 'Fila', 'Lista encadeada']);
 
     const pilha = page.getByRole('button', { name: 'Pilha', exact: true });
     await pilha.click();
@@ -17,7 +17,25 @@ test.describe('vitrine de exercícios', () => {
     await expect(page.locator('.cartao')).toHaveCount(3);
 
     await page.getByRole('button', { name: 'Todas', exact: true }).click();
-    await expect(fileiras).toHaveText(['Vetor', 'Pilha', 'Fila', 'Lista encadeada']);
+    await expect(fileiras).toHaveText(['Vetor', 'Ordenação', 'Pilha', 'Fila', 'Lista encadeada']);
+  });
+
+  // A ordenação tem seção e filtro próprios (D34), sem deixar de ser vetor: os
+  // cartões abrem pelo mesmo id de sempre, e a busca binária fica em vetor.
+  test('o filtro da ordenação mostra os três algoritmos, e a busca fica em vetor', async ({ page }) => {
+    await page.goto('/#/exercicios');
+    await page.getByRole('button', { name: 'Ordenação', exact: true }).click();
+    await expect(page.getByRole('heading', { level: 2 })).toHaveText(['Ordenação']);
+    const cartoes = page.locator('.cartao');
+    await expect(cartoes).toHaveCount(3);
+    await expect(cartoes.first().getByRole('link', { name: 'com apoio' })).toHaveAttribute(
+      'href',
+      '#/exercicio/vetor-ordenar?andaime=com-apoio'
+    );
+
+    await page.getByRole('button', { name: 'Vetor', exact: true }).click();
+    await expect(page.getByRole('heading', { name: /a busca não acha/, level: 3 })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /ordenação/i, level: 3 })).toHaveCount(0);
   });
 
   // A cor da etiqueta de complexidade não pode ser o único portador do nível
