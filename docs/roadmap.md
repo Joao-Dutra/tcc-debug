@@ -284,9 +284,11 @@ automática é a única porta; o controle humano que sobra é a concessão do
 papel de professor. O pesquisador fica com o interruptor da coleta e com o
 freio de emergência, que retira qualquer publicado.
 
+A migração 0003 rodou no projeto, e `npm run verificar-rls` passou as 37
+verificações em 03/10/2026 (D33).
+
 **Falta, à mão, no painel do Supabase:** o provedor Google e as URLs de retorno
-da área (D31, configuração) — sem eles, o professor entra só por e-mail e
-senha —, e rodar a migração 0003 seguida de `npm run verificar-rls` (D33).
+da área (D31, configuração). Sem eles, o professor entra só por e-mail e senha.
 
 ### 5. Congelamento do que o participante vê
 

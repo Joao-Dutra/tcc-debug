@@ -3041,13 +3041,16 @@ participante continua idêntico, e o teste de ponta a ponta dele cobra isso.
   políticas permissivas se somam, combinações cruzadas — rascunho → retirado,
   por exemplo — passam pelo RLS e param no gatilho, que repete as regras.
 
-**Falta, à mão:** rodar a 0003 no editor SQL do projeto e, em seguida,
-`npm run verificar-rls`. A verificação foi reescrita para a história nova e
-devolve o interruptor ao valor que encontrou, porque roda contra o banco do
-estudo; ela **não foi rodada contra o projeto**, porque depende da migração
-aplicada e da chave secreta. As regras foram exercitadas antes num Postgres
-local (PGlite), com as migrações 0001 a 0003 e um esboço do `auth` do
-Supabase: 36 conferências, todas passando.
+**Verificado contra o projeto em 03/10/2026.** A 0003 rodou no editor SQL, e
+em seguida `npm run verificar-rls`: 37 verificações, todas passando — a
+publicação só pelo autor e só com o relatório aprovado, o pesquisador sem
+publicar nem editar e retirando qualquer publicado, o interruptor só nas mãos
+do pesquisador e escondendo os propostos pela visão, inclusive pelo id, e a
+limpeza sem resíduo no banco do estudo. A verificação devolve o interruptor ao
+valor que encontrou, porque roda contra o banco do estudo. Antes disso, as
+regras tinham sido exercitadas num Postgres local (PGlite), com as migrações
+0001 a 0003 e um esboço do `auth` do Supabase. Roda de novo a cada migração
+que mexa numa política.
 
 ### O que virou teste
 
