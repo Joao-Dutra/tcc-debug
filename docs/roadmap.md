@@ -232,9 +232,12 @@ usa, e os defeitos foram escolhidos por execução, medindo os candidatos:
   posição só, e é ali que estão os valores das pontas. O cálculo do meio e a
   atualização dos limites entram em laço infinito em alguma entrada, e o
   estudante receberia o limite de passos do Worker em vez de um quadro.
-- **Selection sort e insertion sort** — continuam bons candidatos e continuam
-  de fora: o estudo prevê dois desta família, e dois bem feitos valem mais que
-  três medianos.
+- **Selection sort e insertion sort** — entraram depois (D34): a seleção com
+  a busca pelo menor comparando com o primeiro do trecho, a inserção com o
+  `j` diminuindo antes da cópia. Os três algoritmos ganharam seção própria na
+  vitrine, sem deixar de ser vetor. O shell sort foi considerado e descartado:
+  a última passada é uma inserção completa, e ordena por cima de quase todo
+  defeito.
 
 **Merge sort fica de fora.** É recursivo e opera sobre sublistas simultâneas: a
 visualização exigiria representar vários vetores e a pilha de chamadas, o que
@@ -304,7 +307,10 @@ de acompanhamento, os testes e a documentação.
 O congelamento do arranjo da tela de exercício já está em vigor (D20); este
 marco estende a mesma regra ao resto.
 
-**Descongelado e congelado de novo em 02/10/2026 (D32)**, para entrarem o
+**Descongelado e congelado de novo em 04/10/2026 (D34)**, para entrarem a
+seleção e a inserção, a seção da ordenação e as caixas da vitrine.
+
+**Antes, descongelado e congelado em 02/10/2026 (D32)**, para entrarem o
 cabeçalho das telas, a entrada em tela própria, o valor fixo no meio do arco e
 o tutorial do participante. **O próximo piloto roda já sobre esta versão**, e é
 ela que segue para a coleta se o piloto não pedir mudança.

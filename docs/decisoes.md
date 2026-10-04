@@ -2265,6 +2265,8 @@ o contrário do que o trabalho defende.
 
 ### Nenhum terceiro exercício
 
+*Revisto em D34: os dois entraram, com os defeitos escolhidos por execução.*
+
 Selection sort e insertion sort continuam bons candidatos e continuam de fora.
 O estudo prevê dois exercícios desta família, e dois bem feitos valem mais que
 três medianos: cada exercício a mais é outro defeito a escolher, outro
@@ -3068,3 +3070,182 @@ Os testes da área rodam no projeto `banco-falso` com a sessão posta no
 armazenamento do navegador, onde o supabase-js a procura. **Não testam a
 autenticação** — D31 recusou fingi-la para isso —, e sim o que a área faz com
 cada papel; o que cada papel pode no banco quem cobra é a verificação do RLS.
+
+## D34 — Seleção e inserção, a seção da ordenação e as caixas da vitrine
+
+**Decisão.** Dois exercícios novos de ordenação sobre vetor — `vetor-ordenar-por-selecao`
+e `vetor-ordenar-por-insercao` —, uma seção própria para os algoritmos de
+ordenação na vitrine, e a área de seleção da vitrine em caixas. As três coisas
+mudam o que o participante vê: **descongelam D32**, e a interface é congelada de
+novo ao final desta decisão.
+
+### Como os defeitos foram escolhidos
+
+Como em D28, por execução, e não por leitura. Cada candidato rodou pelo mesmo
+Worker do navegador em sete entradas — a do exercício, uma já ordenada, uma
+invertida, uma com repetidos, uma de oito posições e duas menores —, e para
+cada uma se mediu: se termina, se ordena mesmo assim, se os valores do vetor se
+preservam, se o quadro-denúncia aprova (D16) e como a comparação de linhas
+classifica o defeito (D30). Os dois códigos corretos seguem D17 e cabem nas
+oito posições do desenho; os exercícios usam cinco.
+
+**O critério de categoria.** Antes destes dois, o catálogo tinha quatro defeitos
+de condição de parada, dois de índice deslocado, dois de referência incorreta,
+dois de inicialização incorreta e um só de ordem de operações. Categoria
+sub-representada desempatou entre defeitos bons; nunca justificou um fraco.
+
+### Seleção: comparar com o primeiro do trecho, e não com o menor
+
+| Candidato | Categoria | Quebra | Por que não |
+|---|---|---|---|
+| Laço interno começa em `i` | inicialização | 0 de 7 | **Mutante equivalente**: só compara o menor consigo mesmo |
+| `menor = i` antes do laço externo | inicialização | 3 de 7 | Na entrada do catálogo, o `menor` velho coincide com `i` nas duas primeiras passagens: o defeito só aparece na terceira, e some na ordenada e na invertida |
+| As duas últimas atribuições da troca invertidas | ordem | 6 de 7 | A troca perde um valor e repete outro — **o mesmo sintoma da ordenação por bolha** (D28) |
+| `temp` lido depois de sobrescrever `itens[i]` | ordem | 6 de 7 | Idem |
+| `temp = itens[menor]` | referência | 6 de 7 | Idem |
+| `menor = i` dentro do `if` | referência | 6 de 7 | O vetor sai intacto; e um `menor = i` dentro do `if` chama atenção na leitura |
+| `menor = 0` | inicialização | 7 de 7 | Bom candidato; perdeu no desempate para o escolhido, que obriga a raciocinar sobre o que `menor` guarda |
+| `menor = i + 1` | inicialização | 4 de 7 | Some na metade das entradas |
+| Laço interno para antes do fim | parada | 6 de 7 | Categoria já com quatro |
+| Laço externo para cedo | parada | 3 de 7 | Idem, e fraco |
+| `itens[j] = temp` na troca | índice | 7 de 7 | **Não termina**: escreve além do fim, o vetor cresce, e o laço não acaba |
+| **`itens[j] < itens[i]`** | **referência** | **5 de 7** | **Escolhido** |
+
+**O escolhido.** A busca pelo menor compara cada valor com `itens[i]`, o
+primeiro do trecho, e não com `itens[menor]`, o menor encontrado até ali.
+`menor` passa a guardar o último valor menor que o primeiro, e não o menor de
+todos. Termina sempre e preserva os valores; o vetor sai fora de ordem.
+
+**O quadro que denuncia está na primeira passagem:** `menor` aponta o 10 e,
+dois quadros depois, salta para o 14 — um valor maior que o que ele já
+apontava. O nome do marcador diz o que ele deveria guardar, e o desenho mostra
+que ele não guarda. É um defeito de invariante: encontrá-lo pede raciocinar
+sobre o que uma variável deveria valer a cada passo, que é o uso da
+visualização que o trabalho defende. Na leitura, `itens[i]` no lugar de
+`itens[menor]` não chama atenção — comparar com a posição da passagem parece
+razoável.
+
+Três marcadores: `j` (o principal, examinado agora), `menor` e `i`; `temp` é
+caixa. Falham "o vetor termina ordenado" e "o menor valor termina na primeira
+posição"; passam a soma e o maior no fim, que dizem ao estudante que nenhum
+valor se perdeu.
+
+### Inserção: `j` diminui antes da cópia
+
+| Candidato | Categoria | Quebra | Por que não |
+|---|---|---|---|
+| `chave = itens[i]` depois de `j = i - 1` | ordem | 0 de 7 | **Mutante equivalente** |
+| Colocar a chave dentro do laço | ordem | 0 de 7 | **Mutante equivalente** no resultado: vira uma inserção por trocas sucessivas |
+| Laço externo começa em 0 | inicialização | 0 de 7 | **Mutante equivalente** |
+| `j = i` | inicialização | 7 de 7 | **Não termina** |
+| Laço externo começa em 2 | inicialização | 5 de 7 | O primeiro valor nunca entra na ordenação, e um `i = 2` se lê na hora |
+| `itens[j] = chave` | índice | 7 de 7 | Repete valores e, em `j = -1`, escreve numa posição que o vetor não tem |
+| `itens[j] = itens[j - 1]` | índice | 6 de 7 | Faz exatamente o mesmo que o escolhido, com uma linha alterada em vez de duas trocadas; perdeu no desempate pela categoria |
+| `itens[j] > itens[i]` na condição | referência | 5 de 7 | Bom candidato; perdeu no desempate pela categoria |
+| `itens[j + 1] = itens[i]` | referência | 6 de 7 | Repete valores — o sintoma da bolha |
+| `j > 0` | parada | 6 de 7 | Categoria já com quatro |
+| Laço externo para antes do último | parada | 6 de 7 | Idem |
+| **`j = j - 1` antes da cópia** | **ordem** | **6 de 7** | **Escolhido** |
+
+**O escolhido.** Dentro do deslocamento, `j` diminui antes da cópia, e não
+depois. A cópia `itens[j + 1] = itens[j]` continua escrita como na versão
+correta, mas com `j` já movido ela leva para a direita o vizinho da esquerda,
+e não o valor maior que a chave. O valor que deveria andar uma casa é coberto
+e some. É uma troca de ordem entre duas linhas vizinhas, e as duas contam como
+acerto ao apontar (D30). Na leitura, as duas linhas são exatamente as da
+versão correta, só em outra ordem.
+
+**O quadro que denuncia é a segunda passagem:** o 29 precisa abrir espaço para
+o 14, e o arco da cópia sai do 10, à esquerda dele. Quando a passagem termina,
+o 29 não está em posição nenhuma. Falham "o vetor termina ordenado" e "a soma
+continua a mesma".
+
+**A entrada começa pelo menor valor, de propósito.** Com o defeito, um
+deslocamento que chega à frente do vetor lê `itens[-1]`: em Java, uma exceção;
+aqui, um vazio na posição 0. É comportamento que quem estudou Java ou C não
+espera (D17), e o estudante passaria a investigar a linguagem, e não o
+programa. Com o menor na posição 0, nenhum deslocamento chega lá — e a
+execução conferiu que nenhum quadro do defeito tem posição vazia.
+
+**A semelhança com a bolha.** Os dois exercícios perdem um valor. O mecanismo e
+o quadro são outros — na bolha o valor fica preso na temporária; aqui ele é
+coberto por um vizinho —, mas um estudante que fizer os dois reconhece o
+sintoma. A seleção, que preserva os valores, desequilibra isso dentro da seção.
+
+**Equilíbrio depois:** condição de parada 4, referência incorreta 3, índice
+deslocado 2, inicialização incorreta 2, ordem de operações 2.
+
+### Shell sort, considerado e descartado
+
+A última passada do shell sort, com intervalo 1, **é um insertion sort
+completo**. A maior parte dos defeitos implantados nos intervalos maiores —
+comparar com o vizinho errado, deslocar com o intervalo errado — deixa o vetor
+desarrumado de um jeito diferente antes da última passada, e ela ordena tudo
+mesmo assim: os casos passam, e o defeito é o análogo do mutante equivalente.
+O que sobra é errar a **atualização do intervalo**, e isso tende a laço
+infinito: um intervalo que não chega a 1, ou que para de diminuir, e o
+estudante recebe o limite de passos do Worker em vez de um quadro. É o mesmo
+motivo que tirou da busca binária o cálculo do meio (D28).
+
+### A seção da ordenação
+
+Os três algoritmos de ordenação — a bolha de D28 e os dois novos — ganham seção
+e filtro próprios na vitrine, logo depois do vetor.
+
+- **Continuam sendo vetor.** A estrutura decide o desenho e o contrato de nomes
+  da área do professor (D31); mudar a estrutura mudaria os dois. O agrupamento
+  vem de um campo à parte, `secao`, que só diz onde o cartão aparece. Ausente,
+  o exercício fica na seção da estrutura.
+- **Nenhum id muda.** A bolha continua `vetor-ordenar`: as sessões já gravadas
+  identificam o exercício pelo id, e mudá-lo separaria as sessões dele em dois
+  exercícios.
+- **A busca binária fica em vetor.** Ela não ordena nada: pressupõe o vetor
+  ordenado e procura nele. Na seção da ordenação, o filtro diria que ela é o
+  que não é, e o estudante que filtra por ordenação para praticar ordenação
+  encontraria uma busca. E a seção do vetor ficaria com dois exercícios
+  introdutórios só; com a busca, ela vai do introdutório ao desafiador.
+- **O catálogo segue a ordem da vitrine:** vetor (zerar negativos, dobrar,
+  busca binária), ordenação (bolha, seleção, inserção), pilha, fila, lista.
+  Como o convite para o próximo exercício segue o catálogo (D20), ele passa a
+  seguir a vitrine — a busca binária, que vinha depois da bolha, vem antes
+  dela.
+- **Os propostos por professores** não têm o campo, e o filtro os recorta pela
+  estrutura, como antes.
+
+### As caixas da vitrine
+
+A área de seleção — o filtro, os títulos das seções e as fileiras de cartões —
+pousava solta na sala. Agora cada uma é uma caixa, no tratamento do topo da
+página (D32): o filtro numa barra com o chão do painel e um contorno, com o
+rótulo "Mostrar"; cada seção num contorno, com o cabeçalho no chão do painel e
+um fio embaixo, e os cartões na sala, dentro dele. Os cartões ganharam o mesmo
+contorno fino. Nenhuma cor nova.
+
+O glifo da ordenação são três posições em degrau, de altura crescente — o
+vetor, e o que se faz com ele —, nas mesmas primitivas dos glifos das
+estruturas.
+
+### Congelamento de novo (04/10/2026)
+
+**A partir de 04/10/2026, o que o participante vê está congelado de novo**, com
+estes ajustes dentro: os dois exercícios novos, a seção da ordenação, a ordem
+nova do catálogo e do convite para o próximo, e as caixas da vitrine. **O
+próximo piloto roda sobre esta versão.** Vale o que D20 diz do congelamento:
+corrigir defeito que quebre o comportamento descrito é permitido, desde que
+restaure o que está descrito.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Os dois divergem da versão correta em estado observável, e a miniatura é anterior à divergência | `src/exercicios/quadro-denuncia.test.ts` |
+| A linha do defeito e as linhas aceitas batem com a comparação das versões | `src/exercicios/linha-do-defeito.test.ts` |
+| Os dois passam na verificação do professor, sem aviso de estilo, com a mesma linha que o catálogo declara | `src/nucleo/verificacao-do-exercicio.test.ts` |
+| Marcadores declarados e observados | `src/nucleo/marcadores.test.ts` |
+| O valor do arco não cobre nada em nenhum quadro dos dois | `src/visualizacao/disposicao-do-vetor.test.ts` |
+| A seção da ordenação tem os três e só eles; continuam vetor; a busca fica em vetor; o id da bolha não muda; o catálogo segue a ordem das seções | `src/componentes/secoes-da-vitrine.test.ts` |
+| O filtro da ordenação mostra os três, e o cartão da bolha abre pelo id de sempre; o filtro e cada fileira em caixa com cabeçalho | `e2e/vitrine.spec.ts` |
+
+A medição dos candidatos foi um teste provisório, fora do repositório: o que
+ela decidiu está nas tabelas acima, e o que precisa continuar valendo está nos
+testes da suíte.

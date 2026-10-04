@@ -68,8 +68,10 @@ uma tela com cara de login pode fazê-lo supor que precisa de conta.
 
 ### 2. Lista de exercícios (vitrine)
 
-Uma fileira por estrutura de dados — vetor, pilha, fila, lista encadeada —, com
-filtro por estrutura. Cada exercício é um cartão com uma **miniatura**, o
+Uma fileira por seção — vetor, ordenação, pilha, fila, lista encadeada —, com
+filtro por seção. A ordenação reúne os algoritmos de ordenação, que continuam
+sendo exercícios de vetor (D34). O filtro fica numa barra própria, e cada
+seção numa caixa com cabeçalho, no mesmo tratamento do topo da página. Cada exercício é um cartão com uma **miniatura**, o
 título, a complexidade e, no pé, as duas aberturas — com apoio ou sem apoio. Um
 dos exercícios é marcado como tutorial. Nenhum botão de exportar: a exportação
 fica só no painel de métricas.
