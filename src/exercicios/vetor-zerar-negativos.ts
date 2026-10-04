@@ -6,6 +6,9 @@ import type { Exercicio } from '../nucleo/tipos';
  *
  * Defeito e sintoma na mesma função, de propósito: é exercício de entrada, e a
  * distância entre a causa e o efeito é o que se guarda para os próximos.
+ *
+ * O enunciado não explica mais a tela: isso passou ao tutorial em modal, que
+ * abre na primeira entrada e é o mesmo nos dois níveis de apoio (D32, D35).
  */
 export const vetorZerarNegativos: Exercicio = {
   id: 'vetor-zerar-negativos',
@@ -13,12 +16,7 @@ export const vetorZerarNegativos: Exercicio = {
   enunciado:
     'O programa deve percorrer o vetor e substituir por zero todo valor negativo, ' +
     'deixando os demais como estão. Execute e acompanhe o índice na visualização ' +
-    'enquanto as posições são verificadas. ' +
-    'Este é o exercício de entrada, e vale conhecer a tela: os casos de teste, logo ' +
-    'abaixo, dizem o que era esperado e o que o programa devolveu; a visualização anima ' +
-    'a execução, e os controles dela avançam, voltam e param em qualquer passo; clicar ' +
-    'no número de uma linha declara onde você acredita que está o defeito, quantas vezes ' +
-    'quiser; e o editor aceita correções, que valem na execução seguinte.',
+    'enquanto as posições são verificadas.',
   estrutura: 'vetor',
   categoriaDefeito: 'inicializacao-incorreta',
   dificuldade: 1,
