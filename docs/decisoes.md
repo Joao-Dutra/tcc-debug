@@ -2864,6 +2864,27 @@ Vale o que D20 dizia do congelamento: corrigir defeito que quebre o
 comportamento descrito é permitido, desde que restaure o que está descrito, e
 não altere.
 
+**Ajuste no congelamento (04/10/2026): o exercício tutorial sem a explicação da
+tela.** O enunciado de `vetor-zerar-negativos` — o exercício marcado como
+tutorial no catálogo — ainda trazia um parágrafo que ensinava a tela, escrito
+antes do tutorial em modal. Ele saiu, e o enunciado ficou do tamanho dos
+outros: o comportamento esperado e o convite a acompanhar o índice. Defeito,
+casos e dicas não mudaram, e ele continua passando no quadro-denúncia.
+
+Antes de apagar, o parágrafo foi conferido contra o modal, ponto por ponto:
+
+| O parágrafo ensinava | No modal |
+|---|---|
+| Os controles avançam, voltam e param em qualquer passo | "Avançar os passos" |
+| Clicar no número de uma linha declara onde está o defeito, quantas vezes quiser | "Apontar a linha" — e o estado vazio de "Onde você apontou" repete que se pode tentar quantas vezes quiser |
+| O editor aceita correções, que valem na execução seguinte | "Editar e executar de novo" |
+| Os casos de teste dizem **o que era esperado e o que o programa devolveu** | **Não está, de propósito.** O modal diz que os casos mostram o resultado; esperado e obtido só aparecem com apoio (D9), e o tutorial não descreve o que só um nível mostra (D32). O parágrafo, no enunciado, dizia isso também a quem estava sem apoio, que não o vê |
+
+Nada se perdeu que o tutorial devesse ter. O ponto que não foi para o modal é
+justamente o que não pode ir. A mudança é do que o participante vê, e entra no
+congelamento de D34, com a mesma data: **o próximo piloto roda sobre esta
+versão.**
+
 ### O que virou teste
 
 | Regra | Onde |
@@ -3249,3 +3270,83 @@ restaure o que está descrito.
 A medição dos candidatos foi um teste provisório, fora do repositório: o que
 ela decidiu está nas tabelas acima, e o que precisa continuar valendo está nos
 testes da suíte.
+
+## D35 — Exemplos no formulário do professor, e a ordenação nos propostos
+
+**Decisão.** Cada campo do formulário da área do professor ganha um botão que
+mostra um exemplo de como preenchê-lo, tirado de um exercício do catálogo da
+estrutura escolhida. O formulário passa a oferecer o agrupamento da ordenação
+criado em D34. E o exercício tutorial do catálogo deixa de explicar a tela no
+enunciado — isso é do tutorial em modal (D32); o registro dessa parte está
+junto ao congelamento de D32.
+
+### Os exemplos vêm de um exercício só
+
+Os exemplos de um formulário vêm todos de **um** exercício do catálogo: o da
+estrutura escolhida, ou o da ordenação, quando é esse o agrupamento. Assim
+eles são coerentes entre si — o código com defeito é o do código correto ao
+lado, os casos testam aquele programa, os marcadores são as variáveis dele — e
+seguem o contrato de nomes da estrutura (D31). Trocar a estrutura, ou o
+agrupamento, troca o exercício e todos os exemplos.
+
+| Estrutura | Exemplo | Por quê |
+|---|---|---|
+| Vetor | `vetor-dobrar` | Um marcador só, um laço, um caso por posição: o vetor mais simples que não é o tutorial |
+| Vetor, agrupado em ordenação | `vetor-ordenar` | Dois marcadores e a temporária da troca: mostra tudo o que um exercício de ordenação declara |
+| Pilha | `pilha-desempilhar` | A pilha de capacidade fixa, com `capacidade` declarada |
+| Fila | `fila-atender-todos` | A fila de vetor com início e fim |
+| Lista encadeada | `lista-inserir-depois` | Nós criados com `new No`, um por linha (D28) |
+
+A conversão do exercício do catálogo para o formulário é a mesma que o teste
+da verificação do professor já usava para exigir que todo o catálogo passe
+nela (D31); ela saiu do teste para o núcleo (`rascunhoDoExercicio`), e os dois
+usos passaram a ser a mesma função.
+
+O vetor simples não tem variável de valor; o botão desse campo diz que o
+exercício de exemplo não tem, e que o campo pode ficar vazio.
+
+### O exemplo nunca cobre o que o professor escreveu
+
+Inserir só é oferecido com o campo vazio; com conteúdo, o exemplo só é
+mostrado, e a caixa diz que ele fica para consulta. Casos e dicas são grupos:
+vazios só quando todas as linhas estão — uma dica escrita e duas em branco não
+recebem o exemplo, que completaria o que o professor começou com o texto de
+outro exercício. A regra mora em `exemplos-do-formulario.ts`, e é a única
+porta por onde um exemplo entra no formulário; o componente só pergunta.
+
+Estrutura, complexidade e tipo do defeito não têm exemplo: são escolhas numa
+lista, e não texto.
+
+### A ordenação para os professores
+
+O formulário oferece, só no vetor, o "Agrupamento na vitrine": vetor ou
+ordenação. A estrutura continua sendo vetor, com os marcadores e a variável
+auxiliar da troca, e o rascunho guarda o agrupamento no campo `secao`, o mesmo
+do catálogo (D34).
+
+- **Os propostos continuam na seção "Propostos por professores"**, separada
+  do catálogo: o interruptor da coleta (D33) esconde a seção inteira, e isso só
+  funciona se nenhum proposto morar numa seção do catálogo. O agrupamento serve
+  ao filtro dentro dela: com o filtro Ordenação, a seção dos propostos mostra
+  os de ordenação, e com o filtro Vetor, os de vetor sem agrupamento.
+- **Só no vetor.** Fora dele o formulário não oferece o agrupamento, a
+  conversão o descarta, e a leitura do banco recusa um conteúdo que o traga em
+  outra estrutura — a mesma recusa silenciosa de qualquer conteúdo sem a forma
+  esperada (D31).
+- **Sem migração.** O conteúdo é JSON, e o campo novo vai dentro dele; a visão
+  dos publicados o entrega como entrega o resto.
+- **O tutorial do professor** diz, no primeiro passo, que um algoritmo de
+  ordenação é vetor agrupado em Ordenação e aparece nesse filtro dentro dos
+  propostos; e, no segundo, que cada campo tem um botão de exemplo.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| O formulário inteiro preenchido com os exemplos, campo a campo, pelo mesmo caminho do botão, passa na verificação — em cada estrutura e na ordenação, sem aviso de estilo | `src/componentes/exemplos-do-formulario.test.ts` |
+| O exemplo não entra em campo com conteúdo; uma dica ou um caso escrito bastam para o grupo não receber exemplo | o mesmo arquivo |
+| Cada estrutura, e a ordenação, têm exemplo próprio da estrutura certa; trocar a estrutura troca o texto | o mesmo arquivo |
+| O agrupamento chega ao rascunho só no vetor, e a estrutura continua vetor, com a temporária | o mesmo arquivo |
+| A leitura do banco aceita a ordenação só no vetor | `src/supabase/exercicios-de-professor.test.ts` |
+| No editor, o exemplo entra no campo vazio, e com conteúdo só é mostrado; trocar a estrutura ou agrupar em ordenação troca os exemplos; fora do vetor não há agrupamento nem marcadores | `e2e/autoria.spec.ts` |
+| O proposto de ordenação aparece no filtro Ordenação, só na seção dos propostos, e sai do filtro Vetor | `e2e/propostos.spec.ts` |

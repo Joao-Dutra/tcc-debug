@@ -308,7 +308,9 @@ O congelamento do arranjo da tela de exercício já está em vigor (D20); este
 marco estende a mesma regra ao resto.
 
 **Descongelado e congelado de novo em 04/10/2026 (D34)**, para entrarem a
-seleção e a inserção, a seção da ordenação e as caixas da vitrine.
+seleção e a inserção, a seção da ordenação e as caixas da vitrine. Na mesma data, o enunciado do exercício tutorial
+perdeu a explicação da tela, que é do tutorial em modal (D32, ajuste de
+04/10/2026).
 
 **Antes, descongelado e congelado em 02/10/2026 (D32)**, para entrarem o
 cabeçalho das telas, a entrada em tela própria, o valor fixo no meio do arco e
