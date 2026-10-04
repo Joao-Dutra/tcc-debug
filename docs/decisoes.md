@@ -2606,7 +2606,8 @@ dá para pôr na fila um exercício com qualquer código e qualquer relatório. 
 que hoje segura é a verificação refeita e o olho do pesquisador — mas o código
 de um exercício em revisão **executa no navegador do pesquisador**, e o de um
 publicado, no de cada aluno. O Worker não alcança a página nem a sessão
-guardada, mas faz pedidos de rede. Com professores sem convite, seria preciso
+guardada, mas faz pedidos de rede (desde 04/10/2026, não pelos caminhos comuns:
+ver D33, "O Worker sem rede"). Com professores sem convite, seria preciso
 ao menos uma verificação fora do navegador e uma restrição de rede para o
 Worker.
 
@@ -3030,10 +3031,51 @@ pesquisador age depois, e só se alguém notar.
 **Abrir a área ao público exigiria revisitar isso.** Já valia o que D31
 registrou — a verificação roda no navegador de quem escreve e um acesso
 direto à API a contorna; o código de um publicado executa no navegador de
-cada aluno, e o Worker faz pedidos de rede —, e agora sem o olho do
-pesquisador no meio. Com professores sem convite seriam precisos, no mínimo,
-a verificação fora do navegador, uma restrição de rede para o Worker e alguma
-forma de revisão ou de denúncia antes do aluno.
+cada aluno —, e agora sem o olho do pesquisador no meio. Com professores sem
+convite seriam precisos, no mínimo, a verificação fora do navegador, o
+fechamento do que resta de rede no Worker (abaixo) e alguma forma de revisão
+ou de denúncia antes do aluno.
+
+### O Worker sem rede (04/10/2026)
+
+**Antes de rodar qualquer código, o Worker de execução torna indisponíveis
+`fetch`, `XMLHttpRequest`, `WebSocket`, `EventSource` e `importScripts`.**
+Nenhum exercício precisa de rede, e o código publicado por um professor roda
+no navegador de cada aluno sem que ninguém o leia antes. Até aqui o Worker não
+alcançava a página nem a sessão guardada, mas podia mandar dado para fora e
+buscar código de fora.
+
+- **Cada nome vira uma função que recusa**, ao ser chamada e ao ser
+  construída com `new`, com uma mensagem em português que diz o nome — e não
+  `undefined`, que daria ao estudante um "fetch is not a function" sem
+  explicação.
+- **O original sai do escopo global e de toda a cadeia de protótipos dele**, e
+  a troca não se desfaz: nem gravável, nem configurável. Pelo nome solto ou
+  por `globalThis.fetch`, é a mesma recusa.
+- **Uma vez, quando o Worker carrega**, e antes de qualquer mensagem: o Worker
+  vive o tempo de uma execução, e nada dele mesmo usa rede depois de
+  carregado.
+- O módulo é `src/nucleo/rede-bloqueada.ts`, sem DOM: recebe o escopo, e o
+  Worker passa `globalThis`.
+
+**O limite que fica.** Os cinco caminhos comuns estão fechados, e não todos.
+Continuam abertos, porque não são nomes que se trocam no escopo: o `import()`
+dinâmico de um endereço externo — o Worker é módulo —, um Worker aninhado
+criado de dentro dele, e as APIs que buscam por conta própria, como a de
+cache. Fechá-los de verdade é uma política de segurança de conteúdo no
+cabeçalho do script do Worker (`connect-src 'none'`, e `script-src` só da
+própria origem), que é configuração da hospedagem, e não do código: entra
+quando a publicação na Vercel entrar. Até lá, o que segura é o mesmo de antes
+— o papel de professor dado à mão, a pessoas convidadas.
+
+**O que virou teste.** Num escopo de mentira, que cada nome recusa ao ser
+chamado e construído, que o original some do protótipo e que a troca não se
+desfaz (`src/nucleo/rede-bloqueada.test.ts`). No Worker de verdade, rodando no
+Node, que código de exercício tentando cada caminho recebe a recusa — e, como
+controle, que código sem rede continua rodando; o teste falha nos seis casos
+com o bloqueio desligado. No Edge, pelo editor de um exercício, que cada
+tentativa é recusada com o nome dela e que nenhum pedido sai para o endereço
+tentado (`e2e/rede.spec.ts`).
 
 ### O tutorial do professor
 
@@ -3254,6 +3296,17 @@ nova do catálogo e do convite para o próximo, e as caixas da vitrine. **O
 próximo piloto roda sobre esta versão.** Vale o que D20 diz do congelamento:
 corrigir defeito que quebre o comportamento descrito é permitido, desde que
 restaure o que está descrito.
+
+**Ajuste no congelamento (04/10/2026): as dicas 2 e 3 da inserção trocam de
+lugar.** A dica 2 — em que posição o marcador `j` está no instante da cópia —
+era a mais próxima do defeito, e a 3 voltava a descrever o comportamento
+esperado, que é mais geral. A progressão das dicas vai da observação geral à
+pista mais certeira (skill criar-exercicio): agora a 2 diz a propriedade que
+deveria valer — cada valor maior que a chave vai para a casa à direita, e
+nenhum desaparece —, e a 3 aponta o instante em que ela deixa de valer. O
+texto de cada dica não mudou, só a ordem; defeito e casos também não. Entra
+neste congelamento, com a mesma data: **o próximo piloto roda sobre esta
+versão.**
 
 ### O que virou teste
 
