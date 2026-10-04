@@ -3,6 +3,7 @@ import { vetorZerarNegativos } from './vetor-zerar-negativos';
 import { vetorDobrar } from './vetor-dobrar';
 import { vetorOrdenar } from './vetor-ordenar';
 import { vetorBuscaBinaria } from './vetor-busca-binaria';
+import { vetorOrdenarPorSelecao } from './vetor-ordenar-por-selecao';
 import { pilhaDesempilhar } from './pilha-desempilhar';
 import { pilhaReverter } from './pilha-reverter';
 import { pilhaInverterPalavra } from './pilha-inverter-palavra';
@@ -26,6 +27,7 @@ export const catalogo: Exercicio[] = [
   vetorZerarNegativos,
   vetorDobrar,
   vetorOrdenar,
+  vetorOrdenarPorSelecao,
   vetorBuscaBinaria,
   pilhaDesempilhar,
   pilhaReverter,
