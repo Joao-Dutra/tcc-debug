@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
-import { ArrowLeftIcon } from '@heroicons/react/20/solid';
+import { ArrowLeftIcon, QuestionMarkCircleIcon } from '@heroicons/react/20/solid';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { sair } from '../supabase/identidade';
 import {
@@ -13,6 +13,8 @@ import {
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
 import { estadoDaArea } from './estado-da-area';
+import { TutorialDoProfessor } from './TutorialDoProfessor';
+import { marcarTutorialDoProfessorVisto, tutorialDoProfessorJaVisto } from './tutorial-visto';
 import { useIdentidade } from './usar-identidade';
 import { CAMINHO_INICIAL, caminhoDaPrevia } from './usar-rota';
 import type {
@@ -162,6 +164,16 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
   const [erro, setErro] = useState<string | null>(null);
   const [aberto, setAberto] = useState<Aberto | null>(null);
   const [leitura, setLeitura] = useState(0);
+  const [tutorialAberto, setTutorialAberto] = useState(false);
+
+  // O tutorial abre sozinho para quem ainda não tem exercício nenhum, uma vez
+  // por aparelho; depois, pelo botão de ajuda (D33).
+  useEffect(() => {
+    if (exercicios?.length === 0 && !tutorialDoProfessorJaVisto()) {
+      marcarTutorialDoProfessorVisto();
+      setTutorialAberto(true);
+    }
+  }, [exercicios]);
 
   useEffect(() => {
     let valida = true;
@@ -173,8 +185,21 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
     };
   }, [autorId, leitura]);
 
+  const tutorial = (
+    <TutorialDoProfessor
+      aberto={tutorialAberto}
+      aoFechar={(desfecho) => {
+        setTutorialAberto(false);
+        // Concluído pelo último botão, "Escrever a atividade": o editor abre.
+        if (desfecho === 'concluido' && !aberto) setAberto({ tipo: 'novo', inicial: null });
+      }}
+    />
+  );
+
   if (aberto) {
     return (
+      <>
+      {tutorial}
       <EditorDeExercicio
         // Chave nova a cada abertura: o editor começa do que foi aberto, e
         // não do que ficou de outro exercício.
@@ -187,6 +212,7 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
           if (mudou) setLeitura((n) => n + 1);
         }}
       />
+      </>
     );
   }
 
@@ -209,13 +235,20 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
 
   return (
     <>
+      {tutorial}
       {coleta.ocultos && <AvisoDaSecaoOculta />}
       <section className="painel">
         <div className="cabecalho-painel">
           <h2>Seus exercícios</h2>
-          <button className="primario" onClick={() => setAberto({ tipo: 'novo', inicial: null })}>
-            Novo exercício
-          </button>
+          <span className="acoes-painel">
+            <button className="ajuda" onClick={() => setTutorialAberto(true)}>
+              <QuestionMarkCircleIcon className="icone" aria-hidden="true" />
+              Como criar uma atividade
+            </button>
+            <button className="primario" onClick={() => setAberto({ tipo: 'novo', inicial: null })}>
+              Novo exercício
+            </button>
+          </span>
         </div>
         {exercicios.length === 0 ? (
           <p className="rodape-painel">Você ainda não escreveu nenhum exercício.</p>

@@ -203,6 +203,57 @@ test.describe('o professor', () => {
   });
 });
 
+test.describe('o tutorial do professor', () => {
+  test('abre sozinho para quem ainda não tem exercício, e o fim leva ao editor', async ({ page }) => {
+    const banco = bancoDoProfessor(false);
+    banco.linhas = [];
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, banco);
+    await page.goto('/#/autoria');
+
+    const dialogo = page.getByRole('dialog');
+    await expect(dialogo).toContainText('Sua primeira atividade');
+    const titulos: string[] = [];
+    for (;;) {
+      titulos.push(await dialogo.getByRole('heading').innerText());
+      const botao = dialogo.getByRole('button', { name: /^(Próximo|Escrever a atividade)$/ });
+      if ((await botao.innerText()) === 'Escrever a atividade') {
+        await botao.click();
+        break;
+      }
+      await botao.click();
+    }
+    expect(titulos).toHaveLength(8);
+    await expect(page.getByRole('heading', { name: 'Novo exercício' })).toBeVisible();
+  });
+
+  test('não abre de novo sozinho, e volta pelo botão de ajuda', async ({ page }) => {
+    const banco = bancoDoProfessor(false);
+    banco.linhas = [];
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, banco);
+    await page.goto('/#/autoria');
+    // O tutorial abre depois que a lista chega: Esc antes disso não fecharia nada.
+    await expect(page.getByRole('dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog')).toBeHidden();
+
+    await page.reload();
+    await expect(page.getByText('Você ainda não escreveu nenhum exercício.')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeHidden();
+    await page.getByRole('button', { name: 'Como criar uma atividade' }).click();
+    await expect(page.getByRole('dialog')).toContainText('passo 1 de 8');
+  });
+
+  test('quem já tem exercício não o vê sozinho', async ({ page }) => {
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, bancoDoProfessor(false));
+    await page.goto('/#/autoria');
+    await expect(page.getByText('Meu publicado')).toBeVisible();
+    await expect(page.getByRole('dialog')).toBeHidden();
+  });
+});
+
 test.describe('a pré-visualização', () => {
   // Aparelho limpo: na tela do aluno, o tutorial abriria sozinho aqui.
   test.use({ storageState: { cookies: [], origins: [] } });

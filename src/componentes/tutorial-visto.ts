@@ -13,18 +13,29 @@
 
 const CHAVE = 'depurar:tutorial-visto';
 
-export function tutorialJaVisto(): boolean {
+/**
+ * O do professor (D33) tem marca própria: o professor que testa a tela do
+ * aluno no mesmo aparelho não pode apagar o tutorial dele, nem o contrário.
+ */
+const CHAVE_DO_PROFESSOR = 'depurar:tutorial-do-professor-visto';
+
+function jaVisto(chave: string): boolean {
   try {
-    return window.localStorage.getItem(CHAVE) !== null;
+    return window.localStorage.getItem(chave) !== null;
   } catch {
     return false;
   }
 }
 
-export function marcarTutorialVisto(): void {
+function marcar(chave: string): void {
   try {
-    window.localStorage.setItem(CHAVE, new Date().toISOString());
+    window.localStorage.setItem(chave, new Date().toISOString());
   } catch {
     // Sem armazenamento, fica sem marca: ver a explicação acima.
   }
 }
+
+export const tutorialJaVisto = () => jaVisto(CHAVE);
+export const marcarTutorialVisto = () => marcar(CHAVE);
+export const tutorialDoProfessorJaVisto = () => jaVisto(CHAVE_DO_PROFESSOR);
+export const marcarTutorialDoProfessorVisto = () => marcar(CHAVE_DO_PROFESSOR);
