@@ -3403,3 +3403,106 @@ do catálogo (D34).
 | A leitura do banco aceita a ordenação só no vetor | `src/supabase/exercicios-de-professor.test.ts` |
 | No editor, o exemplo entra no campo vazio, e com conteúdo só é mostrado; trocar a estrutura ou agrupar em ordenação troca os exemplos; fora do vetor não há agrupamento nem marcadores | `e2e/autoria.spec.ts` |
 | O proposto de ordenação aparece no filtro Ordenação, só na seção dos propostos, e sai do filtro Vetor | `e2e/propostos.spec.ts` |
+
+## D36 — A navegação no reprodutor entra no registro
+
+**Decisão.** O log da sessão passa a guardar o que o estudante faz no
+reprodutor: avançar, voltar, tocar, pausar e arrastar a barra, cada gesto com o
+passo de saída e o de chegada. O resumo derivado ganha quatro campos de
+navegação. A interface não muda. `VERSAO_DO_REGISTRO` passa a 10.
+
+### O que motivou
+
+A tese do trabalho é que a visualização é instrumento de investigação, e não
+espetáculo. Até a versão 9, o registro não tinha nenhuma interação com o
+reprodutor: dava para saber que o estudante executou, editou e apontou, mas
+não que voltou três passos para olhar de novo a troca que deu errado. Sem esse
+dado, a análise não tem como mostrar que a visualização foi usada para
+investigar — e é exatamente o que o estudo precisa mostrar. D26 já registrava
+a lacuna do outro lado: a navegação não entrava no log, e quem passava minutos
+olhando a animação aparecia para o sinal de ociosidade como silêncio.
+
+### Um evento por gesto, e não por passo
+
+| Gesto | `de` | `para` |
+|---|---|---|
+| avançar, voltar | passo de saída | passo de chegada |
+| tocar | passo de partida | o mesmo |
+| pausar | onde a reprodução começou | onde o estudante a parou |
+| arrastar | passo antes de arrastar | passo onde soltou |
+| parou (sozinha) | onde a reprodução começou | onde ela parou |
+
+Os passos contam a partir de 1, como o contador da tela ("passo 3 / 12"), e
+todo evento leva o `total` de passos da execução exibida.
+
+- **A reprodução automática não gera evento por passo.** Ela avança um passo
+  a cada 600 ms, e um evento por passo encheria o log de ruído. Tocar e pausar
+  já descrevem o trecho assistido inteiro: de onde a reprodução começou até
+  onde parou.
+- **A parada sem gesto também entra**, como `parou`, com o motivo: `fim`
+  quando a reprodução chega ao último passo, e `nova-execucao` quando o
+  resultado de outra execução substitui o que estava tocando. Não é gesto e não
+  conta como navegação, mas sem ela o trecho assistido ficaria sem fim no log.
+- **Um arrasto contínuo vira um evento só.** Arrastar a barra dispara dezenas
+  de mudanças por segundo. Elas se juntam num evento com `t` no começo, `tFim`
+  no último movimento, o passo de antes e o de chegada. O arrasto acaba quando o
+  ponteiro solta a barra, ou depois de meio segundo sem movimento — o caminho
+  das setas do teclado sobre a barra, que não têm "soltar". Os passos
+  atravessados no meio não ficam: passaram diante do estudante por frações de
+  segundo.
+- **O arrasto nunca sai fora de ordem.** O núcleo guarda o arrasto aberto fora
+  do log e o fecha antes de qualquer outro evento entrar. Quem arrasta e logo
+  aponta uma linha aparece com o arrasto antes do palpite, e não depois. Um
+  retrato tirado no meio do arrasto o leva como está, e o movimento seguinte
+  continua o mesmo arrasto.
+
+O agrupamento mora no núcleo, e não no hook, ao contrário da rajada de edição:
+o instante de começo do arrasto é do relógio da sessão, e a regra de ordem só
+pode ser garantida por quem escreve o log. O hook só decide quando o arrasto
+acabou.
+
+### O resumo
+
+| Campo | O que conta |
+|---|---|
+| `navegacoes` | Gestos do estudante; `parou` não conta |
+| `passosDistintosVisitados` | Pares (execução, passo) a que o estudante chegou por ação própria: a chegada de avançar, voltar e arrastar, e cada passo de um trecho tocado |
+| `retrocessos` | Voltar, e arrastos que terminam antes de onde começaram |
+| `tempoAtePrimeiraNavegacaoMs` | Nulo quando não houve navegação |
+
+O passo é contado **por execução**: o passo 5 de uma execução e o passo 5 da
+seguinte mostram estados diferentes. O evento não diz a que execução se
+refere, e não precisa: o reprodutor mostra sempre o resultado da última
+execução concluída. A exceção é a parada por `nova-execucao`, registrada
+justamente quando o resultado novo chega — o trecho que ela fecha é o do
+anterior, e é a ele que a contagem o atribui.
+
+Voltar ganha campo próprio porque é o sinal mais direto de investigação:
+voltar a um passo é conferir de novo o que se acabou de ver.
+
+Nos registros da versão 9 e anteriores, os quatro campos ficam **ausentes**, e
+não zerados. Lá a navegação não foi coletada, e "não coletado" não pode virar
+"não navegou" (D6).
+
+### O que muda em D26
+
+O sinal de ociosidade conta todo evento como atividade. Da versão 10 em
+diante, quem passa minutos navegando deixa de aparecer como ocioso — era a
+lacuna que D26 registrava. O sinal muda de sentido entre as versões 9 e 10, e
+a análise que o use precisa separá-las.
+
+### Navegar não torna a sessão válida
+
+Tocar a animação da execução automática não é ação sobre o código. O critério
+de sessão válida (D22) continua sendo ao menos uma execução do estudante.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Cada gesto entra com o passo de saída, o de chegada e o total | `src/nucleo/navegacao-no-registro.test.ts` |
+| Movimentos seguidos da barra viram um arrasto só; depois de encerrado, o seguinte é outro; a barra de outra execução começa outro | o mesmo arquivo |
+| O arrasto aberto entra no log antes de qualquer outro evento; o retrato do meio o leva, e o arrasto continua | o mesmo arquivo |
+| O resumo conta gestos sem as paradas, retrocessos, o instante do primeiro gesto e os passos distintos por execução; o trecho fechado por execução nova é do resultado anterior | o mesmo arquivo |
+| Navegar não muda as métricas anteriores nem torna a sessão válida | o mesmo arquivo |
+| Os controles de verdade produzem os eventos, e um arrasto com o ponteiro chega ao log como um evento só | `e2e/navegacao.spec.ts` |
