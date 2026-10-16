@@ -143,6 +143,25 @@ export function descreverEvento(evento: Evento): string {
         `tutorial ${evento.desfecho === 'concluido' ? 'concluído' : 'pulado'} · ` +
         `passo ${evento.passoAlcancado} de ${evento.totalDePassos}`
       );
+    case 'navegacao':
+      switch (evento.gesto) {
+        case 'tocar':
+          return `tocou no passo ${evento.de} de ${evento.total}`;
+        case 'pausar':
+          return `pausou no passo ${evento.para} de ${evento.total} · tocou desde o ${evento.de}`;
+        case 'parou':
+          return (
+            `reprodução parou no passo ${evento.para} de ${evento.total} · ` +
+            (evento.motivo === 'fim' ? 'chegou ao fim' : 'outra execução chegou')
+          );
+        case 'arrastar':
+          return (
+            `arrastou a barra do passo ${evento.de} ao ${evento.para} de ${evento.total} · ` +
+            duracao(evento.tFim - evento.t)
+          );
+        default:
+          return `${evento.gesto === 'avancar' ? 'avançou' : 'voltou'} do passo ${evento.de} ao ${evento.para} de ${evento.total}`;
+      }
   }
 }
 

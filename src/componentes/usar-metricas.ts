@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   INTERVALO_ENTRE_LOCALIZACOES_MS,
   arquivarSessao,
@@ -14,6 +14,7 @@ import type {
   Sessao,
 } from '../nucleo/metricas';
 import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
+import type { ObservadorDoReprodutor } from './Reprodutor';
 
 /**
  * Liga o gravador de métricas ao ciclo de vida do React, no mesmo espírito do
@@ -22,6 +23,14 @@ import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 
 /** Silêncio de digitação que fecha uma rajada de edição. */
 const PAUSA_DA_RAJADA_MS = 2000;
+
+/**
+ * Parada da barra que fecha um arrasto (D36), quando o ponteiro não avisa que
+ * soltou — as setas do teclado sobre a barra, por exemplo. Curta de
+ * propósito: quem segura a barra parada por meio segundo já está olhando o
+ * passo, e o movimento seguinte é outro gesto.
+ */
+const PAUSA_DO_ARRASTO_MS = 500;
 
 /**
  * `gravar` falso é a pré-visualização do autor (D33): a sessão existe, para a
@@ -46,6 +55,7 @@ export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true
 
   const temporizador = useRef<number | undefined>(undefined);
   const rascunho = useRef<string | null>(null);
+  const fimDoArrasto = useRef<number | undefined>(undefined);
 
   // Espelho das tentativas para a tela poder redesenhar. É preenchido lendo o
   // log da sessão, nunca montado à parte: o log é a única versão do dado.
@@ -64,7 +74,13 @@ export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true
     fimDoIntervalo.current = window.setTimeout(() => setEmIntervalo(false), ms);
   }, []);
 
-  useEffect(() => () => window.clearTimeout(fimDoIntervalo.current), []);
+  useEffect(
+    () => () => {
+      window.clearTimeout(fimDoIntervalo.current);
+      window.clearTimeout(fimDoArrasto.current);
+    },
+    []
+  );
 
   const fecharRajada = useCallback(() => {
     window.clearTimeout(temporizador.current);
@@ -176,7 +192,33 @@ export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true
     []
   );
 
+  // A navegação no reprodutor (D36). O núcleo junta os movimentos da barra num
+  // arrasto só; aqui só se decide quando ele acabou. Estável entre renders, e
+  // o reprodutor o lê por referência a cada aviso.
+  const observadorDoReprodutor = useMemo<ObservadorDoReprodutor>(() => {
+    const encerrarArrasto = () => {
+      window.clearTimeout(fimDoArrasto.current);
+      sessao.current?.encerrarArrasto();
+    };
+    return {
+      navegou(gesto, de, para, total) {
+        if (gesto === 'arrastar') {
+          sessao.current?.moverBarra(de, para, total);
+          window.clearTimeout(fimDoArrasto.current);
+          fimDoArrasto.current = window.setTimeout(encerrarArrasto, PAUSA_DO_ARRASTO_MS);
+          return;
+        }
+        sessao.current?.registrarNavegacao(gesto, de, para, total);
+      },
+      parou(motivo, de, para, total) {
+        sessao.current?.registrarParada(motivo, de, para, total);
+      },
+      soltouBarra: encerrarArrasto,
+    };
+  }, []);
+
   return {
+    observadorDoReprodutor,
     registrarTutorialAberto,
     registrarTutorialFechado,
     iniciarExecucao,

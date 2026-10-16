@@ -67,8 +67,15 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * tempo até a primeira execução da primeira sessão inclui o tutorial, e a
  * análise o desconta com os dois eventos. Até a versão 8 não havia tutorial, e
  * a ausência dos eventos não quer dizer que ele foi pulado.
+ *
+ * 10 — o log ganhou `navegacao`: os gestos no reprodutor e as paradas da
+ * reprodução (D36). Até a versão 9 a navegação não era registrada, e a
+ * ausência dos eventos quer dizer "não coletado", e não "não navegou"; os
+ * campos de navegação do resumo ficam ausentes nesses registros. O sinal de
+ * ociosidade (D26) muda junto: ele conta todo evento como atividade, e da
+ * versão 10 em diante quem passa minutos navegando deixa de parecer ocioso.
  */
-export const VERSAO_DO_REGISTRO = 9;
+export const VERSAO_DO_REGISTRO = 10;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -119,6 +126,31 @@ export type MotivoDoTutorial = 'primeira-entrada' | 'ajuda';
 export type DesfechoDoTutorial = 'concluido' | 'pulado';
 
 /**
+ * Os gestos do estudante no reprodutor (D36). Os passos que a reprodução
+ * automática percorre sozinha não entram — um a cada 600 ms seria ruído —;
+ * o trecho assistido fica descrito pelo passo em que tocou e pelo passo em
+ * que parou.
+ */
+export type GestoDeNavegacao = 'avancar' | 'voltar' | 'tocar' | 'pausar' | 'arrastar';
+
+/**
+ * Por que a reprodução parou sem gesto do estudante: chegou ao último passo,
+ * ou o resultado de outra execução substituiu o que estava tocando.
+ */
+export type MotivoDaParada = 'fim' | 'nova-execucao';
+
+/**
+ * Campos comuns a todo evento de navegação. Os passos contam a partir de 1,
+ * como o contador que o estudante vê; `total` é o número de passos da
+ * execução exibida, que muda de uma execução para outra.
+ */
+interface PosicaoNoReprodutor {
+  de: number;
+  para: number;
+  total: number;
+}
+
+/**
  * Toda tentativa de localização vira um evento 'localizacao', acertando ou
  * errando. É de propósito: a sequência de palpites é o registro da estratégia
  * de investigação do estudante, e uma tentativa descartada some para sempre.
@@ -163,7 +195,24 @@ export type Evento =
       /** O passo mais adiantado que chegou a ser mostrado, a partir de 1. */
       passoAlcancado: number;
       totalDePassos: number;
-    };
+    }
+  /**
+   * Desde a versão 10 (D36). Em avançar e voltar, `de` é o passo de saída e
+   * `para` o de chegada; em tocar, os dois são o passo de partida; em pausar,
+   * `de` é onde a reprodução começou e `para` onde o estudante a parou.
+   */
+  | ({ tipo: 'navegacao'; t: number; gesto: Exclude<GestoDeNavegacao, 'arrastar'> } &
+      PosicaoNoReprodutor)
+  /**
+   * Um arrasto contínuo da barra vira um evento só: `t` é o começo, `tFim` o
+   * último movimento, `de` o passo antes de arrastar e `para` o de chegada. Os
+   * passos atravessados no meio não ficam: passaram diante do estudante por
+   * frações de segundo.
+   */
+  | ({ tipo: 'navegacao'; t: number; gesto: 'arrastar'; tFim: number } & PosicaoNoReprodutor)
+  /** A reprodução parou sozinha. Não é gesto, e não conta como navegação. */
+  | ({ tipo: 'navegacao'; t: number; gesto: 'parou'; motivo: MotivoDaParada } &
+      PosicaoNoReprodutor);
 
 /** Métricas agregadas. Sempre deriváveis do log; nunca a única cópia do dado. */
 export interface ResumoDaSessao {
@@ -177,6 +226,18 @@ export interface ResumoDaSessao {
   edicoes: number;
   localizacoesTentadas: number;
   corrigido: boolean;
+  // Navegação no reprodutor (D36). Ausentes nos registros anteriores à versão
+  // 10, que não a coletavam: ausente é "não coletado", e nunca 0.
+  /** Gestos do estudante no reprodutor; as paradas sozinhas não contam. */
+  navegacoes?: number;
+  /**
+   * Pares (execução, passo) a que o estudante chegou por ação própria: a
+   * chegada de avançar, voltar e arrastar, e cada passo de um trecho tocado.
+   */
+  passosDistintosVisitados?: number;
+  /** Voltar, e arrastos que terminam antes de onde começaram. */
+  retrocessos?: number;
+  tempoAtePrimeiraNavegacaoMs?: number | null;
 }
 
 export interface RegistroDeSessao {
@@ -232,6 +293,8 @@ export interface RecorteDaExportacao {
 
 type EventoDeExecucao = Extract<Evento, { tipo: 'execucao' }>;
 export type EventoDeLocalizacao = Extract<Evento, { tipo: 'localizacao' }>;
+export type EventoDeNavegacao = Extract<Evento, { tipo: 'navegacao' }>;
+type EventoDeArrasto = Extract<EventoDeNavegacao, { gesto: 'arrastar' }>;
 
 /**
  * Leitura das tentativas de localização direto do log. A interface consome
@@ -300,6 +363,53 @@ export function filtrarSessoes(
   );
 }
 
+/**
+ * Quantos passos distintos o estudante visitou, contados por execução (D36).
+ *
+ * O evento de navegação não diz a que execução se refere, e não precisa: o
+ * reprodutor mostra sempre o resultado da última execução concluída. A
+ * exceção é a parada por `nova-execucao`, registrada justamente quando o
+ * resultado novo chega — e o trecho que ela fecha é o do resultado anterior.
+ */
+function passosDistintosVisitados(eventos: Evento[]): number {
+  // As execuções na ordem em que o resultado chegou, que é a ordem em que
+  // passaram a ser exibidas. A posição no log identifica cada uma.
+  const chegadas = eventos
+    .flatMap((e, posicao) =>
+      e.tipo === 'execucao' && typeof e.tResultado === 'number'
+        ? [{ posicao, tResultado: e.tResultado }]
+        : []
+    )
+    .sort((a, b) => a.tResultado - b.tResultado);
+
+  const exibidaEm = (t: number, anterior: boolean): number => {
+    const ate = chegadas.filter((c) => c.tResultado <= t);
+    return ate.at(anterior ? -2 : -1)?.posicao ?? -1;
+  };
+
+  const visitados = new Set<string>();
+  for (const e of eventos) {
+    if (e.tipo !== 'navegacao') continue;
+    const execucao = exibidaEm(e.t, e.gesto === 'parou' && e.motivo === 'nova-execucao');
+    const visitar = (passo: number) => visitados.add(`${execucao}:${passo}`);
+    switch (e.gesto) {
+      case 'avancar':
+      case 'voltar':
+      case 'arrastar':
+        visitar(e.para);
+        break;
+      case 'pausar':
+      case 'parou':
+        for (let p = Math.min(e.de, e.para); p <= Math.max(e.de, e.para); p++) visitar(p);
+        break;
+      case 'tocar':
+        // O passo de partida já estava na tela; o trecho entra quando fecha.
+        break;
+    }
+  }
+  return visitados.size;
+}
+
 export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
   const doEstudante = eventos.filter(
     (e): e is EventoDeExecucao => e.tipo === 'execucao' && e.origem === 'estudante'
@@ -307,6 +417,9 @@ export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
   const localizacoes = localizacoesDe(eventos);
   const primeiraCorreta = localizacoes.find((e) => e.correta);
   const primeiraCorrecao = doEstudante.find((e) => e.todosPassaram);
+  const gestos = eventos.filter(
+    (e): e is EventoDeNavegacao => e.tipo === 'navegacao' && e.gesto !== 'parou'
+  );
 
   return {
     tempoAtePrimeiraExecucaoMs: doEstudante[0]?.t ?? null,
@@ -318,6 +431,12 @@ export function resumirSessao(eventos: Evento[]): ResumoDaSessao {
     edicoes: eventos.filter((e) => e.tipo === 'edicao').length,
     localizacoesTentadas: localizacoes.length,
     corrigido: primeiraCorrecao !== undefined,
+    navegacoes: gestos.length,
+    passosDistintosVisitados: passosDistintosVisitados(eventos),
+    retrocessos: gestos.filter(
+      (e) => e.gesto === 'voltar' || (e.gesto === 'arrastar' && e.para < e.de)
+    ).length,
+    tempoAtePrimeiraNavegacaoMs: gestos[0]?.t ?? null,
   };
 }
 
@@ -403,6 +522,22 @@ export interface Sessao {
     passoAlcancado: number,
     totalDePassos: number
   ): void;
+  /** Um gesto no reprodutor, menos o arrasto, que tem caminho próprio (D36). */
+  registrarNavegacao(
+    gesto: Exclude<GestoDeNavegacao, 'arrastar'>,
+    de: number,
+    para: number,
+    total: number
+  ): void;
+  /** A reprodução parou sozinha. */
+  registrarParada(motivo: MotivoDaParada, de: number, para: number, total: number): void;
+  /**
+   * Um movimento da barra. Movimentos seguidos se juntam num arrasto só, até
+   * `encerrarArrasto` ou até qualquer outro evento entrar no log — o que
+   * garante que o arrasto apareça antes dele na sequência, e não depois.
+   */
+  moverBarra(de: number, para: number, total: number): void;
+  encerrarArrasto(): void;
   /** Retrato do registro no instante da chamada; pode ser pedido quantas vezes for. */
   registro(): RegistroDeSessao;
 }
@@ -432,6 +567,24 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
 
   const t = () => Math.round(agora() - referencia);
 
+  /**
+   * O arrasto da barra ainda aberto (D36). Fica fora do log até fechar,
+   * porque o `para` e o `tFim` dele ainda mudam; um retrato tirado nesse meio
+   * o leva como está.
+   */
+  let arrasto: EventoDeArrasto | null = null;
+
+  const fecharArrasto = () => {
+    if (arrasto) eventos.push(arrasto);
+    arrasto = null;
+  };
+
+  /** Todo evento entra por aqui, para o arrasto aberto vir antes dele no log. */
+  const anotar = (evento: Evento) => {
+    fecharArrasto();
+    eventos.push(evento);
+  };
+
   const sessao: Sessao = {
     id,
 
@@ -439,7 +592,7 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
       // Entra no log já na forma interrompida: se a sessão acabar sem
       // resultado, é exatamente isto que deve ficar, e nenhum passo posterior
       // precisa lembrar de escrevê-lo. O resultado, quando vem, substitui.
-      eventos.push({
+      anotar({
         tipo: 'execucao',
         t: t(),
         origem,
@@ -482,11 +635,11 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
     },
 
     registrarEdicao(codigo) {
-      eventos.push({ tipo: 'edicao', t: t(), codigo });
+      anotar({ tipo: 'edicao', t: t(), codigo });
     },
 
     registrarDica(indice) {
-      eventos.push({ tipo: 'dica', t: t(), indice });
+      anotar({ tipo: 'dica', t: t(), indice });
     },
 
     registrarLocalizacao(linha) {
@@ -497,7 +650,7 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         // Registrado, e não descartado: insistir durante a espera é dado. O
         // intervalo continua contando da última julgada — se cada clique o
         // reiniciasse, quem clica de novo por impaciência esperaria para sempre.
-        eventos.push({ tipo: 'localizacao-no-intervalo', t: tRelativo, linha });
+        anotar({ tipo: 'localizacao-no-intervalo', t: tRelativo, linha });
         return {
           julgada: false,
           restanteMs: Math.ceil(INTERVALO_ENTRE_LOCALIZACOES_MS - decorrido),
@@ -505,19 +658,45 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
       }
       ultimaJulgada = instante;
       const correta = (opcoes.linhasAceitas ?? [opcoes.linhaDoDefeito]).includes(linha);
-      eventos.push({ tipo: 'localizacao', t: tRelativo, linha, correta });
+      anotar({ tipo: 'localizacao', t: tRelativo, linha, correta });
       return { julgada: true, correta };
     },
 
     registrarTutorialAberto(motivo) {
-      eventos.push({ tipo: 'tutorial-aberto', t: t(), motivo });
+      anotar({ tipo: 'tutorial-aberto', t: t(), motivo });
     },
 
     registrarTutorialFechado(desfecho, passoAlcancado, totalDePassos) {
-      eventos.push({ tipo: 'tutorial-fechado', t: t(), desfecho, passoAlcancado, totalDePassos });
+      anotar({ tipo: 'tutorial-fechado', t: t(), desfecho, passoAlcancado, totalDePassos });
+    },
+
+    registrarNavegacao(gesto, de, para, total) {
+      anotar({ tipo: 'navegacao', t: t(), gesto, de, para, total });
+    },
+
+    registrarParada(motivo, de, para, total) {
+      anotar({ tipo: 'navegacao', t: t(), gesto: 'parou', motivo, de, para, total });
+    },
+
+    moverBarra(de, para, total) {
+      const instante = t();
+      // Outra execução na tela é outro arrasto, mesmo sem pausa no meio.
+      if (arrasto && arrasto.total === total) {
+        arrasto = { ...arrasto, para, tFim: instante };
+        return;
+      }
+      fecharArrasto();
+      arrasto = { tipo: 'navegacao', t: instante, gesto: 'arrastar', de, para, total, tFim: instante };
+    },
+
+    encerrarArrasto() {
+      fecharArrasto();
     },
 
     registro() {
+      // O arrasto aberto entra no retrato sem ser fechado: quem continua
+      // arrastando depois do retrato continua o mesmo arrasto.
+      const comArrasto = arrasto ? [...eventos, arrasto] : [...eventos];
       return {
         versao: VERSAO_DO_REGISTRO,
         id,
@@ -527,8 +706,8 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         andaime: opcoes.andaime ?? null,
         instanteDeInicio,
         duracaoTotalMs: t(),
-        eventos: [...eventos],
-        resumo: resumirSessao(eventos),
+        eventos: comArrasto,
+        resumo: resumirSessao(comArrasto),
       };
     },
   };

@@ -152,8 +152,10 @@ export function varreduraDe(eventos: Evento[]): Varredura | null {
  * Cinco minutos: é da ordem de uma sessão resolvida inteira — nos pilotos, a
  * correção levou de 27 s a 313 s —, e um silêncio desse tamanho, sem executar,
  * editar, abrir dica nem apontar, não é parte de resolver. E é folgado para
- * quem passa minutos assistindo à animação e pensando: a navegação no
- * reprodutor não entra no log, e esse tempo aparece aqui como silêncio.
+ * quem passa minutos assistindo à animação e pensando: até a versão 9 do
+ * registro, a navegação no reprodutor não entrava no log, e esse tempo
+ * aparece aqui como silêncio. Da versão 10 em diante ela entra (D36), e conta
+ * como atividade.
  */
 export const LIMIAR_DE_OCIOSIDADE_MS = 5 * 60_000;
 

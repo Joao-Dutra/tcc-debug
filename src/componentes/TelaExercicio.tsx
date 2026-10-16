@@ -176,8 +176,9 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
   const [rodada, setRodada] = useState(0);
   const [tutorialAberto, setTutorialAberto] = useState(false);
 
-  const reprodutor = useReprodutor(resultado?.instantaneos ?? []);
   const metricas = useMetricas(exercicio, andaime, previa === undefined);
+  // A navegação entra no log da sessão (D36); a tela não muda com isso.
+  const reprodutor = useReprodutor(resultado?.instantaneos ?? [], metricas.observadorDoReprodutor);
   const jaAbriu = useRef(false);
   const editor = useRef<ReactCodeMirrorRef>(null);
 
