@@ -138,6 +138,8 @@ async function removerConta(id: string): Promise<void> {
     .or(`autor_id.eq.${id},publicado_por.eq.${id},retirado_por.eq.${id}`);
   const primeira = await admin.auth.admin.deleteUser(id);
   if (!primeira.error) return;
+  await admin.from('respostas_do_questionario').delete().eq('participante_id', id);
+  await admin.from('participantes_do_estudo').delete().eq('participante_id', id);
   await admin.from('sessoes').delete().eq('participante_id', id);
   await admin.from('perfis').delete().eq('id', id);
   const segunda = await admin.auth.admin.deleteUser(id);
@@ -174,6 +176,18 @@ async function linhasNoBanco(
 async function removerTodasAsContasDeTeste(): Promise<void> {
   const ids = new Set([...criadas, ...(await contasDeTesteNoProjeto())]);
   for (const id of ids) await removerConta(id);
+  await removerAplicacoesDeTeste();
+}
+
+/**
+ * As aplicações do estudo criadas pela verificação (D37), reconhecidas pelo
+ * prefixo, que nenhuma aplicação real tem. Saem depois das contas: a remoção
+ * das contas leva participações, respostas e sessões, e só então a aplicação
+ * deixa de ser referenciada (`on delete restrict`). Se a migração 0004 ainda
+ * não rodou, a tabela não existe e não há o que apagar.
+ */
+async function removerAplicacoesDeTeste(): Promise<void> {
+  await admin.from('aplicacoes_do_estudo').delete().like('codigo', `${PREFIXO_DO_EMAIL}%`);
 }
 
 /** Uma linha de `sessoes` que não se confunde com dado do estudo em hipótese nenhuma. */
@@ -817,6 +831,360 @@ describe('sessões em exercício de professor', () => {
   });
 });
 
+// ---------------------------------------------------- área do estudo (D37) ---
+
+/**
+ * Códigos de aplicação só da verificação. O prefixo é o mesmo das contas de
+ * teste, e é por ele que as sobras de uma execução derrubada são removidas.
+ */
+const aplicacaoDeTeste = (rotulo: string) => `${PREFIXO_DO_EMAIL}${carimbo}-${rotulo}`;
+const sequencial = aplicacaoDeTeste('sequencial');
+const simultanea = aplicacaoDeTeste('simultanea');
+const fechada = aplicacaoDeTeste('fechada');
+
+/** Perfil válido; cada verificação muda só o que ela testa. */
+const entrada = (aplicacao: string, mudanca: Record<string, unknown> = {}) => ({
+  p_aplicacao: aplicacao,
+  p_versao_do_aviso: 1,
+  p_aeds1: 'cursando',
+  p_depurador: 'nunca',
+  p_usou_visualizacao: 'nao',
+  ...mudanca,
+});
+
+async function entrar(conta: Conta, aplicacao: string, mudanca: Record<string, unknown> = {}) {
+  const { data, error } = await conta.cliente.rpc('entrar_no_estudo', entrada(aplicacao, mudanca));
+  const linha = (data as { grupo: string; ordem_de_entrada: number }[] | null)?.[0] ?? null;
+  return { linha, error };
+}
+
+async function entradasNoBanco(aplicacao: string): Promise<number> {
+  const { data, error } = await admin
+    .from('aplicacoes_do_estudo')
+    .select('entradas')
+    .eq('codigo', aplicacao)
+    .single();
+  if (error) throw new Error(error.message);
+  return data.entradas as number;
+}
+
+/** Resposta mínima válida: duas escalas, os dois tipos de item. */
+const respostaDeTeste = (aplicacao: string, mudanca: Record<string, unknown> = {}) => ({
+  aplicacao,
+  versao_do_questionario: 1,
+  escalas: { 'sus-1': 4, 'vis-1': 5 },
+  ...mudanca,
+});
+
+async function respostasNoBanco(participanteId: string) {
+  return linhasNoBanco(
+    admin
+      .from('respostas_do_questionario')
+      .select('participante_id, aplicacao, escalas, respondido_em')
+      .eq('participante_id', participanteId)
+  );
+}
+
+/** Um conflito de chave: a resposta já existe. É o que o navegador lê como "já gravada". */
+function recusadaPorDuplicata(error: PostgrestError | null) {
+  expect(error, 'a operação deveria ter sido recusada').not.toBeNull();
+  expect(error?.code, `recusada por outro motivo: ${error?.message}`).toBe('23505');
+}
+
+/** Recusa pelo `check` da tabela, e não pela política nem pela forma da linha. */
+function recusadaPeloCheck(error: PostgrestError | null) {
+  expect(error, 'a operação deveria ter sido recusada').not.toBeNull();
+  expect(error?.code, `recusada por outro motivo: ${error?.message}`).toBe('23514');
+}
+
+describe('área do estudo: entrada e grupo (D37)', () => {
+  /** Dez contas que entram ao mesmo tempo, e quatro delas antes, em fila. */
+  const turma: Conta[] = [];
+  let fora: Conta;
+
+  beforeAll(async () => {
+    const { error } = await admin.from('aplicacoes_do_estudo').insert([
+      { codigo: sequencial },
+      { codigo: simultanea },
+      { codigo: fechada, aberta: false },
+    ]);
+    if (error) throw new Error(`não foi possível criar as aplicações de teste: ${error.message}`);
+    for (let i = 0; i < 10; i++) turma.push(await criarConta(`turma-${i}`));
+    fora = await criarConta('fora-do-estudo');
+  });
+
+  // Só que existe, e não que está aberta: depois do piloto ela é fechada à mão,
+  // e a verificação precisa continuar passando.
+  it('a aplicação do piloto existe', async () => {
+    const { data, error } = await admin
+      .from('aplicacoes_do_estudo')
+      .select('codigo')
+      .eq('codigo', 'piloto-nov')
+      .maybeSingle();
+    expect(error).toBeNull();
+    expect(data).not.toBeNull();
+  });
+
+  it('entradas em fila alternam A, B, A, B na ordem de entrada', async () => {
+    const lidos: string[] = [];
+    for (const conta of turma.slice(0, 4)) {
+      const { linha, error } = await entrar(conta, sequencial);
+      expect(error).toBeNull();
+      lidos.push(`${linha?.grupo}${linha?.ordem_de_entrada}`);
+    }
+    expect(lidos).toEqual(['A1', 'B2', 'A3', 'B4']);
+  });
+
+  it('entrar de novo devolve o mesmo grupo e não consome vaga', async () => {
+    const { linha, error } = await entrar(turma[1], sequencial, { p_aeds1: 'nao' });
+    expect(error).toBeNull();
+    expect(linha).toEqual({ grupo: 'B', ordem_de_entrada: 2 });
+    expect(await entradasNoBanco(sequencial)).toBe(4);
+    // O perfil da segunda chamada é ignorado: vale o que entrou com a vaga.
+    const { data } = await admin
+      .from('participantes_do_estudo')
+      .select('aeds1, versao_do_aviso')
+      .eq('participante_id', turma[1].id)
+      .eq('aplicacao', sequencial)
+      .single();
+    expect(data).toEqual({ aeds1: 'cursando', versao_do_aviso: 1 });
+  });
+
+  // A razão de a alternância morar no banco. Dez entradas ao mesmo tempo, como
+  // uma turma clicando "Começar" junto: cada uma precisa sair com um número
+  // diferente, sem buraco, e os grupos com cinco de cada lado.
+  it('entradas simultâneas saem em fila: ordens 1 a 10, cinco em cada grupo', async () => {
+    const resultados = await Promise.all(turma.map((conta) => entrar(conta, simultanea)));
+    for (const { error } of resultados) expect(error).toBeNull();
+    const ordens = resultados.map(({ linha }) => linha?.ordem_de_entrada).sort((x, y) => x! - y!);
+    expect(ordens).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    for (const { linha } of resultados) {
+      expect(linha?.grupo).toBe(linha!.ordem_de_entrada % 2 === 1 ? 'A' : 'B');
+    }
+    expect(resultados.filter(({ linha }) => linha?.grupo === 'A')).toHaveLength(5);
+    expect(await entradasNoBanco(simultanea)).toBe(10);
+  });
+
+  it('aplicação inexistente ou fechada não recebe ninguém', async () => {
+    for (const aplicacao of [aplicacaoDeTeste('nao-cadastrada'), fechada]) {
+      const { error } = await entrar(fora, aplicacao);
+      expect(error?.code, aplicacao).toBe('P0001');
+    }
+    expect(await entradasNoBanco(fechada)).toBe(0);
+  });
+
+  it('perfil fora da lista é recusado, e a vaga não se perde', async () => {
+    const { error } = await entrar(fora, sequencial, { p_depurador: 'sempre' });
+    recusadaPeloCheck(error);
+    const semAviso = await entrar(fora, sequencial, { p_versao_do_aviso: 0 });
+    recusadaPeloCheck(semAviso.error);
+    expect(await entradasNoBanco(sequencial)).toBe(4);
+  });
+
+  it('o visitante sem identidade não entra', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const { error } = await visitante.rpc('entrar_no_estudo', entrada(sequencial));
+    recusadaPeloRls(error);
+  });
+
+  it('conferir a aplicação, mesmo sem identidade, não grava nada nem consome vaga', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const situacao = async (codigo: string) =>
+      (await visitante.rpc('situacao_da_aplicacao', { p_codigo: codigo })).data;
+    expect(await situacao(sequencial)).toBe('aberta');
+    expect(await situacao(fechada)).toBe('encerrada');
+    expect(await situacao(aplicacaoDeTeste('nao-cadastrada'))).toBe('inexistente');
+    expect(await entradasNoBanco(sequencial)).toBe(4);
+  });
+
+  it('o participante não lê aplicações, participantes nem respostas — nem as próprias', async () => {
+    for (const tabela of ['aplicacoes_do_estudo', 'participantes_do_estudo', 'respostas_do_questionario']) {
+      const { data, error } = await turma[0].cliente.from(tabela).select('*');
+      expect(error, tabela).toBeNull();
+      expect(data ?? [], tabela).toEqual([]);
+    }
+  });
+
+  it('o participante não entra por fora da função, nem muda o próprio grupo', async () => {
+    const direto = await fora.cliente.from('participantes_do_estudo').insert({
+      participante_id: fora.id,
+      aplicacao: sequencial,
+      ordem_de_entrada: 99,
+      grupo: 'A',
+      versao_do_aviso: 1,
+      aeds1: 'nao',
+      depurador: 'nunca',
+      usou_visualizacao: 'nao',
+    });
+    recusadaPeloRls(direto.error);
+
+    const trocar = await turma[1].cliente
+      .from('participantes_do_estudo')
+      .update({ grupo: 'A' })
+      .eq('participante_id', turma[1].id);
+    recusadaPeloRls(trocar.error);
+
+    const zerar = await turma[1].cliente
+      .from('aplicacoes_do_estudo')
+      .update({ entradas: 0, aberta: true })
+      .eq('codigo', fechada);
+    recusadaPeloRls(zerar.error);
+
+    const { data } = await admin
+      .from('participantes_do_estudo')
+      .select('grupo')
+      .eq('participante_id', turma[1].id)
+      .eq('aplicacao', sequencial)
+      .single();
+    expect(data?.grupo).toBe('B');
+    expect(await entradasNoBanco(sequencial)).toBe(4);
+  });
+
+  it('o pesquisador lê aplicações e participantes', async () => {
+    const participantes = await pesquisador.cliente
+      .from('participantes_do_estudo')
+      .select('participante_id')
+      .eq('aplicacao', simultanea);
+    expect(participantes.error).toBeNull();
+    expect(participantes.data ?? []).toHaveLength(10);
+    const aplicacoes = await pesquisador.cliente
+      .from('aplicacoes_do_estudo')
+      .select('codigo')
+      .in('codigo', [sequencial, simultanea, fechada]);
+    expect(aplicacoes.data ?? []).toHaveLength(3);
+  });
+
+  describe('sessões do estudo', () => {
+    it('quem entrou na aplicação grava a sessão marcada com ela', async () => {
+      const id = `${EXERCICIO_DE_TESTE}-estudo-${carimbo}`;
+      const { error } = await turma[0].cliente
+        .from('sessoes')
+        .upsert({ ...linhaDeSessao(id, turma[0].id), aplicacao: sequencial, estudo: { etapa: 1 } });
+      expect(error).toBeNull();
+      // E não a passa para uma aplicação em que não entrou.
+      const mudar = await turma[0].cliente
+        .from('sessoes')
+        .update({ aplicacao: fechada })
+        .eq('id', id);
+      recusadaPeloRls(mudar.error);
+      const { data } = await admin.from('sessoes').select('aplicacao').eq('id', id).single();
+      expect(data?.aplicacao).toBe(sequencial);
+    });
+
+    it('quem não entrou não grava sessão marcada com a aplicação', async () => {
+      const id = `${EXERCICIO_DE_TESTE}-fora-${carimbo}`;
+      const { error } = await fora.cliente
+        .from('sessoes')
+        .insert({ ...linhaDeSessao(id, fora.id), aplicacao: sequencial, estudo: { etapa: 1 } });
+      recusadaPeloRls(error);
+      expect(await sessaoNoBanco(id)).toBeNull();
+    });
+
+    it('sem aplicação, a sessão continua como antes', async () => {
+      const id = `${EXERCICIO_DE_TESTE}-sem-estudo-${carimbo}`;
+      const { error } = await fora.cliente.from('sessoes').insert(linhaDeSessao(id, fora.id));
+      expect(error).toBeNull();
+    });
+  });
+
+  describe('questionário', () => {
+    it('o participante grava a própria resposta, com a identidade e o instante do banco', async () => {
+      // Insert simples, sem pedir a linha de volta: é como o navegador grava,
+      // e o participante não tem leitura.
+      const antes = Date.now();
+      const { error } = await turma[0].cliente
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(sequencial));
+      expect(error).toBeNull();
+      const [linha] = (await respostasNoBanco(turma[0].id)) as { respondido_em: string }[];
+      expect(linha).toMatchObject({ participante_id: turma[0].id, aplicacao: sequencial });
+      expect(Math.abs(new Date(linha.respondido_em).getTime() - antes)).toBeLessThan(60_000);
+      // Gravada, e mesmo assim fora do alcance de quem a gravou.
+      const lida = await turma[0].cliente.from('respostas_do_questionario').select('*');
+      expect(lida.error).toBeNull();
+      expect(lida.data ?? []).toEqual([]);
+    });
+
+    it('a segunda resposta é recusada como duplicata, e a primeira fica', async () => {
+      const { error } = await turma[0].cliente
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(sequencial, { escalas: { 'sus-1': 1 } }));
+      recusadaPorDuplicata(error);
+      const [linha] = (await respostasNoBanco(turma[0].id)) as { escalas: unknown }[];
+      expect(linha.escalas).toEqual({ 'sus-1': 4, 'vis-1': 5 });
+    });
+
+    it('não grava em nome de outro, nem com o instante forjado', async () => {
+      const outro = await turma[1].cliente
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(sequencial, { participante_id: turma[2].id }));
+      recusadaPeloRls(outro.error);
+      const antigo = await turma[1].cliente
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(sequencial, { respondido_em: '2000-01-01T00:00:00Z' }));
+      recusadaPeloRls(antigo.error);
+      expect(await respostasNoBanco(turma[2].id)).toEqual([]);
+      expect(await respostasNoBanco(turma[1].id)).toEqual([]);
+    });
+
+    it('quem não entrou na aplicação não responde', async () => {
+      const { error } = await fora.cliente
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(sequencial));
+      recusadaPeloRls(error);
+      // Nem quem entrou, numa aplicação em que não entrou.
+      const outra = await turma[0].cliente
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(fechada));
+      recusadaPeloRls(outra.error);
+    });
+
+    it('as escalas aceitam só inteiros de 1 a 5', async () => {
+      for (const valor of [0, 6, 3.5, '3', null]) {
+        const { error } = await turma[1].cliente
+          .from('respostas_do_questionario')
+          .insert(respostaDeTeste(sequencial, { escalas: { 'sus-1': valor } }));
+        recusadaPeloCheck(error);
+      }
+      expect(await respostasNoBanco(turma[1].id)).toEqual([]);
+    });
+
+    it('o participante não altera nem apaga a própria resposta', async () => {
+      const alterar = await turma[0].cliente
+        .from('respostas_do_questionario')
+        .update({ escalas: { 'sus-1': 1 } })
+        .eq('participante_id', turma[0].id);
+      recusadaPeloRls(alterar.error);
+      const apagar = await turma[0].cliente
+        .from('respostas_do_questionario')
+        .delete()
+        .eq('participante_id', turma[0].id);
+      recusadaPeloRls(apagar.error);
+      expect(await respostasNoBanco(turma[0].id)).toHaveLength(1);
+    });
+
+    it('o visitante sem identidade não responde nem lê', async () => {
+      const visitante = createClient(url, chavePublica, semPersistencia);
+      const gravar = await visitante
+        .from('respostas_do_questionario')
+        .insert(respostaDeTeste(sequencial));
+      recusadaPeloRls(gravar.error);
+      const { data, error } = await visitante.from('respostas_do_questionario').select('*');
+      if (error) recusadaPeloRls(error);
+      else expect(data ?? []).toEqual([]);
+    });
+
+    it('o pesquisador lê as respostas', async () => {
+      const { data, error } = await pesquisador.cliente
+        .from('respostas_do_questionario')
+        .select('participante_id')
+        .eq('aplicacao', sequencial);
+      expect(error).toBeNull();
+      expect((data ?? []).map((l) => l.participante_id)).toEqual([turma[0].id]);
+    });
+  });
+});
+
 describe('limpeza', () => {
   it('não deixa resíduo no banco do estudo', async () => {
     await devolverInterruptor();
@@ -831,7 +1199,19 @@ describe('limpeza', () => {
         admin.from('exercicios_de_professor').select('id').in('autor_id', criadas)
       );
       expect(exercicios, 'exercícios das contas de teste').toEqual([]);
+      const participacoes = await linhasNoBanco(
+        admin.from('participantes_do_estudo').select('participante_id').in('participante_id', criadas)
+      );
+      expect(participacoes, 'participações das contas de teste').toEqual([]);
+      const respostas = await linhasNoBanco(
+        admin.from('respostas_do_questionario').select('participante_id').in('participante_id', criadas)
+      );
+      expect(respostas, 'respostas das contas de teste').toEqual([]);
     }
+    const aplicacoes = await linhasNoBanco(
+      admin.from('aplicacoes_do_estudo').select('codigo').like('codigo', `${PREFIXO_DO_EMAIL}%`)
+    );
+    expect(aplicacoes, 'aplicações de teste').toEqual([]);
     // Pelo exercício, e não só pelas contas: pega também a linha que tivesse
     // escapado de uma recusa e ficado sob outra identidade.
     const sessoes = await linhasNoBanco(
