@@ -903,9 +903,11 @@ describe('área do estudo: entrada e grupo (D37)', () => {
   let fora: Conta;
 
   beforeAll(async () => {
+    // `aberta` em todas as linhas: num insert em lote, o PostgREST manda null,
+    // e não o default, na coluna que falta em alguma delas.
     const { error } = await admin.from('aplicacoes_do_estudo').insert([
-      { codigo: sequencial },
-      { codigo: simultanea },
+      { codigo: sequencial, aberta: true },
+      { codigo: simultanea, aberta: true },
       { codigo: fechada, aberta: false },
     ]);
     if (error) throw new Error(`não foi possível criar as aplicações de teste: ${error.message}`);
