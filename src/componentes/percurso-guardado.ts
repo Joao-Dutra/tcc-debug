@@ -1,5 +1,6 @@
 import { interpretarPercurso } from '../estudo/percurso';
 import type { EstadoDoPercurso, GrupoDoEstudo } from '../estudo/percurso';
+import type { RespostaDoQuestionario } from '../estudo/questionario';
 
 /**
  * O percurso do estudo guardado na aba (D37).
@@ -56,5 +57,30 @@ export function grupoNoAparelho(): GrupoDoEstudo {
     return entradas % 2 === 1 ? 'A' : 'B';
   } catch {
     return 'A';
+  }
+}
+
+const CHAVE_DAS_RESPOSTAS = 'depurar:respostas-do-questionario';
+
+/** A resposta guardada no aparelho, quando não há banco para recebê-la. */
+export interface RespostaNoAparelho extends RespostaDoQuestionario {
+  aplicacao: string;
+  grupoNoAparelho: GrupoDoEstudo | null;
+  respondidoEm: string;
+}
+
+/**
+ * Sem banco, a resposta do questionário fica no aparelho, ao lado das sessões
+ * arquivadas: nenhuma tela do estudante depende do banco, e a coleta continua
+ * só no aparelho. Como o grupo, é coisa de desenvolvimento e de teste.
+ */
+export function guardarRespostasNoAparelho(resposta: RespostaNoAparelho): void {
+  try {
+    const bruto = window.localStorage.getItem(CHAVE_DAS_RESPOSTAS);
+    const guardadas: unknown = bruto === null ? [] : JSON.parse(bruto);
+    const lista = Array.isArray(guardadas) ? guardadas : [];
+    window.localStorage.setItem(CHAVE_DAS_RESPOSTAS, JSON.stringify([...lista, resposta]));
+  } catch {
+    // Sem armazenamento, a resposta se perde, e o percurso segue para o fim.
   }
 }

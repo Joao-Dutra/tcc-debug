@@ -74,6 +74,7 @@ export type PassoDoPercurso =
   | { tela: 'perfil' }
   | { tela: 'exercicio'; etapa: number }
   | { tela: 'tempo-esgotado'; etapa: number }
+  | { tela: 'questionario' }
   | { tela: 'agradecimento' };
 
 /**
@@ -134,9 +135,9 @@ export function abrirEtapa(estado: EstadoDoPercurso, etapa: number, agora: numbe
   return { ...estado, prazos };
 }
 
-/** O que vem depois de uma etapa: a seguinte, ou o fim dos exercícios. */
+/** O que vem depois de uma etapa: a seguinte, ou, depois da última, o questionário. */
 function depoisDa(etapa: number): PassoDoPercurso {
-  return ultimaEtapa(etapa) ? { tela: 'agradecimento' } : { tela: 'exercicio', etapa: etapa + 1 };
+  return ultimaEtapa(etapa) ? { tela: 'questionario' } : { tela: 'exercicio', etapa: etapa + 1 };
 }
 
 /**
@@ -159,6 +160,16 @@ export function encerrarEtapa(
 export function continuarDepoisDoTempo(estado: EstadoDoPercurso): EstadoDoPercurso {
   if (estado.passo.tela !== 'tempo-esgotado') return estado;
   return { ...estado, passo: depoisDa(estado.passo.etapa) };
+}
+
+/**
+ * Do questionário respondido ao agradecimento. O questionário vem antes, e não
+ * depois, porque é no agradecimento que o aparelho troca de identidade (D37):
+ * a resposta precisa ser gravada pela identidade do participante.
+ */
+export function concluirQuestionario(estado: EstadoDoPercurso): EstadoDoPercurso {
+  if (estado.passo.tela !== 'questionario') return estado;
+  return { ...estado, passo: { tela: 'agradecimento' } };
 }
 
 /** A marca que vai em cada sessão aberta numa etapa. */
@@ -190,6 +201,9 @@ export function interpretarPercurso(valor: unknown, aplicacao: string): EstadoDo
   if (temEtapa) {
     if (!Number.isInteger(passo.etapa) || passo.etapa < 0 || passo.etapa >= ETAPAS.length) return null;
     // Exercício sem grupo seria exercício sem apoio definido.
+    if (e.grupo === null) return null;
+  } else if (passo.tela === 'questionario') {
+    // Só se chega ao questionário depois dos exercícios, e eles pedem grupo.
     if (e.grupo === null) return null;
   } else if (passo.tela !== 'perfil' && passo.tela !== 'agradecimento') {
     return null;

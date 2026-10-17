@@ -1109,6 +1109,32 @@ button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content:
 button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula); background: transparent; }
 .confirmar-seguir { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8);
   margin: 0; font-size: var(--fonte-apoio); }
+/* O questionário: uma afirmação por faixa, e a escala de 1 a 5 em cinco
+   colunas iguais, para os números ficarem alinhados de uma afirmação para a
+   outra. As âncoras ficam sob os extremos, como no papel. */
+.questionario-do-estudo > p { margin: 0 0 var(--esp-12); line-height: 1.6; }
+.questionario-do-estudo section { margin: var(--esp-24) 0; }
+.questionario-do-estudo h2 { font-size: var(--fonte-corpo); margin: 0 0 var(--esp-12); }
+.questionario-do-estudo .afirmacao { border: 0; border-top: 1px solid var(--regua); margin: 0;
+  padding: var(--esp-12) 0 var(--esp-16); min-width: 0; }
+/* A legenda flutuando vira um bloco comum: sem isso, a de duas linhas fica
+   presa no canto do fieldset. */
+.questionario-do-estudo legend { float: left; width: 100%; padding: 0; font-weight: 700; line-height: 1.5; }
+.questionario-do-estudo .escala { clear: both; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--esp-4); padding-top: var(--esp-8); }
+.questionario-do-estudo .escala label { display: flex; flex-direction: column; align-items: center;
+  gap: var(--esp-4); padding: var(--esp-4) 0; cursor: pointer; text-align: center; }
+.questionario-do-estudo .escala input { width: 18px; height: 18px; margin: 0; accent-color: var(--acao); }
+.questionario-do-estudo .valor { font-weight: 700; }
+.questionario-do-estudo .ancora { font-size: var(--fonte-miuda); color: var(--grafite-suave);
+  line-height: 1.3; }
+.questionario-do-estudo .aberta { display: flex; flex-direction: column; gap: var(--esp-6);
+  margin: 0 0 var(--esp-16); font-weight: 700; }
+.questionario-do-estudo .opcional { font-weight: 500; color: var(--grafite-suave); }
+.questionario-do-estudo textarea { font: inherit; font-weight: 500; color: var(--grafite);
+  padding: var(--esp-6) var(--esp-10); border-radius: var(--raio-controle);
+  border: 1px solid var(--borda-controle); background: var(--mesa-de-luz); resize: vertical; }
+.questionario-do-estudo .rodape-painel, .questionario-do-estudo .erro { margin: 0 0 var(--esp-12); }
 .conferencia { list-style: none; margin: 0 0 var(--esp-20); padding: 0; display: flex;
   flex-direction: column; gap: var(--esp-10); }
 .conferencia li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto;

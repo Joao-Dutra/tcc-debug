@@ -3,6 +3,7 @@ import { identidadeAtual, sair } from './identidade';
 import { sincronizarPendentes } from '../nucleo/metricas';
 import type { GrupoDoEstudo } from '../estudo/percurso';
 import type { PerfilDoParticipante } from '../estudo/perfil';
+import type { RespostaDoQuestionario } from '../estudo/questionario';
 
 /**
  * A área do estudo no banco (D37, migração 0004).
@@ -57,6 +58,34 @@ export async function entrarNoEstudo(
   const linha = (data as { grupo: GrupoDoEstudo; ordem_de_entrada: number }[] | null)?.[0];
   if (!linha) throw new Error('o banco não devolveu o grupo');
   return { grupo: linha.grupo, ordemDeEntrada: linha.ordem_de_entrada };
+}
+
+export type GravacaoDaResposta = 'gravada' | 'ja-gravada';
+
+/**
+ * Grava a resposta do questionário com a identidade atual, que é a do
+ * participante: o questionário vem antes da troca de identidade do fim.
+ *
+ * Insert simples, sem pedir a linha de volta: o participante não tem leitura
+ * da tabela, e um `select` depois do insert seria recusado. Sem upsert pelo
+ * mesmo motivo, e porque a resposta não se refaz. O reenvio de quem perdeu a
+ * confirmação na rede bate na chave (participante, aplicação), e o conflito
+ * quer dizer que a primeira chegou.
+ */
+export async function gravarRespostas(
+  aplicacao: string,
+  resposta: RespostaDoQuestionario
+): Promise<GravacaoDaResposta> {
+  const { error } = await cliente().from('respostas_do_questionario').insert({
+    aplicacao,
+    versao_do_questionario: resposta.versao,
+    escalas: resposta.escalas,
+    o_que_ajudou: resposta.oQueAjudou,
+    o_que_atrapalhou: resposta.oQueAtrapalhou,
+  });
+  if (!error) return 'gravada';
+  if (error.code === '23505') return 'ja-gravada';
+  throw new Error(error.message);
 }
 
 /**

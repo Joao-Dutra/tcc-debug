@@ -7,6 +7,7 @@ import {
   ETAPAS,
   abrirEtapa,
   comecarPercurso,
+  concluirQuestionario,
   continuarDepoisDoTempo,
   encerrarEtapa,
   entrarComGrupo,
@@ -19,19 +20,27 @@ import { PERGUNTAS_DO_PERFIL, perfilCompleto } from '../estudo/perfil';
 import type { PerfilDoParticipante, PerfilEmAndamento } from '../estudo/perfil';
 import { haPendentesDe, sincronizarPendentes } from '../nucleo/metricas';
 import { supabaseConfigurado } from '../supabase/cliente';
-import { entrarNoEstudo, situacaoDaAplicacao, trocarPorAnonimaNova } from '../supabase/estudo';
+import { entrarNoEstudo, gravarRespostas, situacaoDaAplicacao, trocarPorAnonimaNova } from '../supabase/estudo';
 import type { SituacaoDaAplicacao } from '../supabase/estudo';
 import { identidadeAtual, sair } from '../supabase/identidade';
 import { Cabecalho } from './Cabecalho';
+import { QUESTIONARIO } from '../estudo/questionario';
+import { QuestionarioDoEstudo } from './QuestionarioDoEstudo';
 import { TelaExercicio } from './TelaExercicio';
-import { esquecerPercurso, grupoNoAparelho, guardarPercurso, lerPercurso } from './percurso-guardado';
+import {
+  esquecerPercurso,
+  grupoNoAparelho,
+  guardarPercurso,
+  guardarRespostasNoAparelho,
+  lerPercurso,
+} from './percurso-guardado';
 import { useIdentidade } from './usar-identidade';
 
 /**
  * A área do estudo (D37): `#/estudo/<codigo>`, fora da navegação.
  *
  * Um percurso guiado e fixo — aviso com consentimento, perfil, aquecimento
- * com o tutorial, cinco exercícios e o fim —, que envolve a tela de exercício
+ * com o tutorial, cinco exercícios, questionário e o fim —, que envolve a tela de exercício
  * sem mudar o miolo dela. O que o percurso decide mora em `src/estudo/`; aqui
  * fica só a passagem de uma tela para outra.
  *
@@ -258,7 +267,7 @@ function Agradecimento({ participanteId }: { participanteId: string | null }) {
 
   return (
     <TelaDoEstudo titulo="Obrigado pela participação">
-      <p>Os exercícios terminaram. Você já pode fechar esta página.</p>
+      <p>As suas respostas foram registradas. Você já pode fechar esta página.</p>
     </TelaDoEstudo>
   );
 }
@@ -344,6 +353,30 @@ export function AreaDoEstudo({ aplicacao }: { aplicacao: string }) {
           {ultimo ? 'Concluir' : 'Continuar'}
           <ArrowRightIcon className="icone" aria-hidden="true" />
         </button>
+      </TelaDoEstudo>
+    );
+  }
+
+  if (passo.tela === 'questionario') {
+    return (
+      <TelaDoEstudo titulo={QUESTIONARIO.titulo}>
+        <QuestionarioDoEstudo
+          aoEnviar={async (resposta) => {
+            if (comBanco) {
+              // "Já gravada" também segue: é o reenvio de quem recarregou a
+              // página antes de a confirmação chegar.
+              await gravarRespostas(aplicacao, resposta);
+            } else {
+              guardarRespostasNoAparelho({
+                ...resposta,
+                aplicacao,
+                grupoNoAparelho: estado.grupo,
+                respondidoEm: new Date().toISOString(),
+              });
+            }
+            mudar(concluirQuestionario(estado));
+          }}
+        />
       </TelaDoEstudo>
     );
   }

@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
 import { LIMITE_POR_EXERCICIO_MS } from '../src/estudo/percurso';
+import { ITENS_DAS_ESCALAS, VERSAO_DO_QUESTIONARIO } from '../src/estudo/questionario';
+import { responderQuestionario } from './questionario-do-estudo';
 
 /**
  * A área do estudo, sem banco (D37).
@@ -8,7 +10,7 @@ import { LIMITE_POR_EXERCICIO_MS } from '../src/estudo/percurso';
  * O percurso inteiro com os controles de verdade: o consentimento que segura a
  * entrada, o tutorial que abre no aquecimento mesmo num aparelho que já o viu,
  * a tela sem caminho para fora, o apoio do plano em cada etapa, o seguir com
- * confirmação, o prazo invisível e o fim sem resultado. O que cada sessão leva
+ * confirmação, o prazo invisível, o questionário e o fim sem resultado. O que cada sessão leva
  * — a marca e o encerramento — é lido do arquivo do aparelho.
  *
  * O aparelho deste projeto já viu o tutorial (playwright.config.ts): é o que
@@ -129,9 +131,17 @@ test('o percurso inteiro: plano do grupo A, seguir, prazo, recarga e fim', async
   await exercicioAberto(page, 'Exercício 5 de 5');
   await seguir(page, true);
 
+  // Depois do último, o questionário; recarregar também não perde o lugar.
+  await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
+  await responderQuestionario(page);
+
   // O fim não mostra resultado nenhum.
   await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
-  await expect(page.locator('main')).toHaveText('Os exercícios terminaram. Você já pode fechar esta página.');
+  await expect(page.locator('main')).toHaveText(
+    'As suas respostas foram registradas. Você já pode fechar esta página.'
+  );
 
   const sessoes = await sessoesDoEstudo(page);
   expect(sessoes.map(descrever)).toEqual([
@@ -158,6 +168,56 @@ test('o percurso inteiro: plano do grupo A, seguir, prazo, recarga e fim', async
   // Recarregar depois do fim abre o aviso, para o próximo participante.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Antes de começar' })).toBeVisible();
+});
+
+test('o questionário: as afirmações são obrigatórias, e as abertas, não', async ({ page }) => {
+  await aceitarEEntrar(page);
+  await page.evaluate(() => {
+    // Direto ao questionário: o caminho até ele é o do teste do percurso.
+    const chave = 'depurar:percurso-do-estudo';
+    const estado = JSON.parse(sessionStorage.getItem(chave)!);
+    estado.passo = { tela: 'questionario' };
+    sessionStorage.setItem(chave, JSON.stringify(estado));
+  });
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
+  // Sem caminho para fora aqui também.
+  await expect(page.getByRole('link')).toHaveCount(0);
+
+  const enviar = page.getByRole('button', { name: 'Enviar respostas' });
+  await expect(enviar).toBeDisabled();
+  await expect(page.getByRole('status')).toHaveText('Faltam 16 afirmações para marcar.');
+  // As âncoras da fonte, sob os extremos de cada afirmação.
+  await expect(page.locator('.ancora', { hasText: 'Discordo fortemente' })).toHaveCount(16);
+  await expect(page.locator('.ancora', { hasText: 'Concordo fortemente' })).toHaveCount(16);
+
+  // Todas menos uma: ainda não envia.
+  for (const item of ITENS_DAS_ESCALAS.slice(0, -1)) {
+    await page.getByRole('group', { name: item.texto }).locator('input[value="2"]').check();
+  }
+  await expect(page.getByRole('status')).toHaveText('Falta 1 afirmação para marcar.');
+  await expect(enviar).toBeDisabled();
+  await page.getByRole('group', { name: ITENS_DAS_ESCALAS.at(-1)!.texto }).locator('input[value="5"]').check();
+  await expect(enviar).toBeEnabled();
+
+  await page.getByLabel('O que mais ajudou?').fill('  ver a fila andando  ');
+  await enviar.click();
+  await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
+
+  // Sem banco, a resposta fica no aparelho, com a versão do texto.
+  const guardadas = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('depurar:respostas-do-questionario') ?? '[]')
+  );
+  expect(guardadas).toHaveLength(1);
+  expect(guardadas[0]).toMatchObject({
+    aplicacao: 'piloto-nov',
+    versao: VERSAO_DO_QUESTIONARIO,
+    oQueAjudou: 'ver a fila andando',
+    oQueAtrapalhou: null,
+  });
+  expect(Object.keys(guardadas[0].escalas)).toEqual(ITENS_DAS_ESCALAS.map((i) => i.id));
+  expect(guardadas[0].escalas['sus-1']).toBe(2);
+  expect(guardadas[0].escalas['vis-6']).toBe(5);
 });
 
 test('quem recarrega depois do prazo vai direto à tela do tempo, sem abrir sessão', async ({ page }) => {

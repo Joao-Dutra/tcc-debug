@@ -6,6 +6,7 @@ import {
   LIMITE_POR_EXERCICIO_MS,
   abrirEtapa,
   comecarPercurso,
+  concluirQuestionario,
   continuarDepoisDoTempo,
   encerrarEtapa,
   entrarComGrupo,
@@ -93,11 +94,18 @@ describe('as passagens', () => {
     expect(continuarDepoisDoTempo(esgotado).passo).toEqual({ tela: 'exercicio', etapa: 1 });
   });
 
-  it('depois do último exercício, o fim, pelos dois caminhos', () => {
+  it('depois do último exercício, o questionário, pelos dois caminhos', () => {
     const ultima = ETAPAS.length - 1;
-    expect(encerrarEtapa(inicio(), ultima, 'seguir').passo).toEqual({ tela: 'agradecimento' });
+    expect(encerrarEtapa(inicio(), ultima, 'seguir').passo).toEqual({ tela: 'questionario' });
     const esgotado = encerrarEtapa(inicio(), ultima, 'tempo-esgotado');
-    expect(continuarDepoisDoTempo(esgotado).passo).toEqual({ tela: 'agradecimento' });
+    expect(continuarDepoisDoTempo(esgotado).passo).toEqual({ tela: 'questionario' });
+  });
+
+  it('o questionário respondido leva ao agradecimento, e só ele', () => {
+    const noQuestionario = encerrarEtapa(inicio(), ETAPAS.length - 1, 'seguir');
+    expect(concluirQuestionario(noQuestionario).passo).toEqual({ tela: 'agradecimento' });
+    // Fora do questionário, nada muda: não se pula um exercício por ele.
+    expect(concluirQuestionario(inicio())).toEqual(inicio());
   });
 
   it('a marca da sessão leva o grupo só quando ele foi escolhido no aparelho', () => {
@@ -118,6 +126,8 @@ describe('o percurso guardado', () => {
 
   it('volta igual', () => {
     expect(interpretarPercurso(ida(guardado), 'piloto-nov')).toEqual(guardado);
+    const noQuestionario = { ...guardado, passo: { tela: 'questionario' } };
+    expect(interpretarPercurso(ida(noQuestionario), 'piloto-nov')).toEqual(noQuestionario);
   });
 
   it('não serve a outra aplicação', () => {
@@ -132,6 +142,7 @@ describe('o percurso guardado', () => {
     // Exercício sem grupo seria exercício sem apoio definido.
     expect(com({ grupo: null })).toBeNull();
     expect(com({ grupo: 'C' })).toBeNull();
+    expect(com({ passo: { tela: 'questionario' }, grupo: null })).toBeNull();
     expect(com({ prazos: [] })).toBeNull();
     expect(interpretarPercurso('lixo', 'piloto-nov')).toBeNull();
   });

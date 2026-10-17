@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page, Request } from '@playwright/test';
+import { responderQuestionario } from './questionario-do-estudo';
 
 /**
  * A área do estudo com banco (D37), no projeto `banco-falso`: nada sai da
@@ -7,8 +8,9 @@ import type { Page, Request } from '@playwright/test';
  *
  * Cobra o que a tela faz com o banco: que a entrada troca a identidade por
  * uma anônima nova, que o grupo vem do banco e decide o apoio, que a versão do
- * aviso e o perfil vão na entrada, e que as sessões sobem com a aplicação e a
- * marca. O que o banco aceita ou recusa quem cobra é `npm run verificar-rls`.
+ * aviso e o perfil vão na entrada, que as sessões sobem com a aplicação e a
+ * marca, e que a resposta do questionário é gravada pelo participante, antes
+ * da troca de identidade do fim. O que o banco aceita ou recusa quem cobra é `npm run verificar-rls`.
  */
 
 const BANCO = 'http://supabase-falso.invalid';
@@ -24,10 +26,25 @@ interface Banco {
   sessoes: { participante_id: string; aplicacao: string | null; estudo: unknown; exercicio_id: string }[];
   /** A rede da gravação das sessões caiu. */
   sessoesFalham: boolean;
+  /** Os pedidos de gravação da resposta, com quem pediu e quem já tinha saído. */
+  respostas: { corpo: unknown; quem: string; consulta: string; prefer: string; saidasAntes: string[] }[];
+  /** Como o banco responde à gravação da resposta. */
+  resposta: 'gravada' | 'ja-gravada' | 'fora-do-ar';
 }
 
 function novoBanco(mudanca: Partial<Banco> = {}): Banco {
-  return { situacao: 'aberta', grupo: 'B', anonimas: [], saidas: [], entradas: [], sessoes: [], sessoesFalham: false, ...mudanca };
+  return {
+    situacao: 'aberta',
+    grupo: 'B',
+    anonimas: [],
+    saidas: [],
+    entradas: [],
+    sessoes: [],
+    sessoesFalham: false,
+    respostas: [],
+    resposta: 'gravada',
+    ...mudanca,
+  };
 }
 
 /** A sessão que o supabase-js espera da entrada anônima. */
@@ -75,6 +92,23 @@ async function bancoFalso(page: Page, banco: Banco) {
     if (caminho === '/rest/v1/sessoes' && pedido.method() === 'POST') {
       if (banco.sessoesFalham) return rota.fulfill({ status: 503, json: { message: 'sem rede' } });
       banco.sessoes.push(...pedido.postDataJSON());
+      return rota.fulfill({ status: 201, body: '' });
+    }
+    if (caminho === '/rest/v1/respostas_do_questionario' && pedido.method() === 'POST') {
+      banco.respostas.push({
+        corpo: pedido.postDataJSON(),
+        quem: (pedido.headers()['authorization'] ?? '').replace('Bearer token-', ''),
+        consulta: new URL(pedido.url()).search,
+        prefer: pedido.headers()['prefer'] ?? '',
+        saidasAntes: [...banco.saidas],
+      });
+      if (banco.resposta === 'fora-do-ar') return rota.fulfill({ status: 503, json: { message: 'sem rede' } });
+      if (banco.resposta === 'ja-gravada') {
+        return rota.fulfill({
+          status: 409,
+          json: { code: '23505', message: 'duplicate key value violates unique constraint' },
+        });
+      }
       return rota.fulfill({ status: 201, body: '' });
     }
     return rota.fulfill({ status: 400, json: { message: 'banco de mentira' } });
@@ -130,8 +164,8 @@ test('a entrada troca de identidade, o grupo vem do banco, e as sessões sobem m
   });
 });
 
-/** Do aviso ao fim, seguindo em cada etapa. Devolve a identidade do participante. */
-async function percorrerTudo(page: Page, banco: Banco): Promise<string> {
+/** Do aviso ao questionário, seguindo em cada etapa. Devolve a identidade do participante. */
+async function chegarAoQuestionario(page: Page, banco: Banco): Promise<string> {
   await page.goto('/#/estudo/piloto-nov');
   await expect.poll(() => banco.anonimas.length).toBe(1);
   await page.getByLabel('Concordo em participar').check();
@@ -147,8 +181,16 @@ async function percorrerTudo(page: Page, banco: Banco): Promise<string> {
     await page.getByRole('button', { name: ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo' }).click();
     await page.getByRole('button', { name: ultimo ? 'Concluir' : 'Seguir', exact: true }).click();
   }
-  await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
   return banco.anonimas[1];
+}
+
+/** Do aviso ao fim, com o questionário respondido. */
+async function percorrerTudo(page: Page, banco: Banco): Promise<string> {
+  const participante = await chegarAoQuestionario(page, banco);
+  await responderQuestionario(page);
+  await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
+  return participante;
 }
 
 test('no fim, com as sessões no banco, o aparelho troca de identidade', async ({ page }) => {
@@ -179,6 +221,62 @@ test('no fim, com sessão do participante sem subir, a identidade fica para tent
   expect(await page.evaluate(() => localStorage.getItem('sb-supabase-falso-auth-token'))).toContain(
     participante
   );
+});
+
+test('a resposta é gravada pelo participante, antes da troca, sem pedir a linha de volta', async ({ page }) => {
+  const banco = novoBanco();
+  await bancoFalso(page, banco);
+  const participante = await chegarAoQuestionario(page, banco);
+  await responderQuestionario(page, (i) => (i % 5) + 1);
+  await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
+
+  expect(banco.respostas).toHaveLength(1);
+  const [pedido] = banco.respostas;
+  expect(pedido.quem).toBe(participante);
+  // A identidade do participante ainda não tinha saído.
+  expect(pedido.saidasAntes).toEqual([banco.anonimas[0]]);
+  // Insert simples: o participante não lê a tabela.
+  expect(pedido.consulta).not.toContain('select');
+  expect(pedido.consulta).not.toContain('on_conflict');
+  expect(pedido.prefer).not.toContain('return=representation');
+  expect(pedido.prefer).not.toContain('resolution=');
+  expect(pedido.corpo).toMatchObject({
+    aplicacao: 'piloto-nov',
+    versao_do_questionario: 1,
+    o_que_ajudou: null,
+    o_que_atrapalhou: null,
+  });
+  const escalas = (pedido.corpo as { escalas: Record<string, number> }).escalas;
+  expect(Object.keys(escalas)).toHaveLength(16);
+  expect(escalas).toMatchObject({ 'sus-1': 1, 'sus-2': 2, 'sus-5': 5, 'sus-6': 1, 'vis-6': 1 });
+  // Depois da resposta, a troca do fim.
+  await expect.poll(() => banco.saidas).toEqual([banco.anonimas[0], participante]);
+});
+
+test('a resposta que já estava no banco segue para o fim, como gravada', async ({ page }) => {
+  const banco = novoBanco({ resposta: 'ja-gravada' });
+  await bancoFalso(page, banco);
+  await percorrerTudo(page, banco);
+  expect(banco.respostas).toHaveLength(1);
+});
+
+test('sem rede no envio, a resposta fica no formulário e a identidade não troca', async ({ page }) => {
+  const banco = novoBanco({ resposta: 'fora-do-ar' });
+  await bancoFalso(page, banco);
+  const participante = await chegarAoQuestionario(page, banco);
+  await page.getByLabel('O que atrapalhou ou faltou?').fill('o tempo');
+  await responderQuestionario(page);
+  await expect(page.getByText('Não foi possível enviar as respostas.', { exact: false })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
+  expect(banco.saidas).toEqual([banco.anonimas[0]]);
+
+  // A rede volta: o mesmo envio, com as mesmas respostas.
+  banco.resposta = 'gravada';
+  await page.getByRole('button', { name: 'Enviar respostas' }).click();
+  await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
+  expect(banco.respostas).toHaveLength(2);
+  expect(banco.respostas[1].corpo).toEqual(banco.respostas[0].corpo);
+  expect(banco.respostas[1]).toMatchObject({ quem: participante, corpo: { o_que_atrapalhou: 'o tempo' } });
 });
 
 for (const [situacao, titulo] of [
