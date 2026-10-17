@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import type { Page, Request } from '@playwright/test';
+import { VERSAO_DO_AVISO } from '../src/estudo/aviso';
 import { responderQuestionario } from './questionario-do-estudo';
 
 /**
@@ -137,7 +138,7 @@ test('a entrada troca de identidade, o grupo vem do banco, e as sessões sobem m
   expect(banco.entradas).toEqual([
     {
       p_aplicacao: 'piloto-nov',
-      p_versao_do_aviso: 1,
+      p_versao_do_aviso: VERSAO_DO_AVISO,
       p_aeds1: 'ja-cursou',
       p_depurador: 'frequentemente',
       p_usou_visualizacao: 'sim',

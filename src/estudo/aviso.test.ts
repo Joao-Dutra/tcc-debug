@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AVISO, VERSAO_DO_AVISO, textoDoAviso } from './aviso';
+import { AVISO, CONTATO_DO_ESTUDO, VERSAO_DO_AVISO, textoDoAviso } from './aviso';
 
 /**
  * O aviso da entrada no estudo (D37).
@@ -13,6 +13,7 @@ import { AVISO, VERSAO_DO_AVISO, textoDoAviso } from './aviso';
 
 const IMPRESSOES: Record<number, string> = {
   1: 'abb5fc58',
+  2: 'e804e274',
 };
 
 /** FNV-1a de 32 bits: basta para notar uma mudança, e não depende de nada. */
@@ -39,6 +40,15 @@ describe('o aviso do estudo', () => {
     expect(texto).toMatch(/parar a qualquer momento/);
     expect(texto).toMatch(/anônimo/);
     expect(texto).toMatch(/código que você escrever/);
+    expect(texto).toMatch(/Só os pesquisadores têm acesso aos dados/);
+    expect(texto).toMatch(/apenas de forma agregada, no TCC e em possíveis publicações/);
+    expect(texto).toMatch(/já tiver sido registrado até ali permanece/);
+    expect(texto).toMatch(/não há como identificar depois os dados de uma pessoa para excluí-los/);
+  });
+
+  it('termina com o contato para dúvidas', () => {
+    expect(AVISO.paragrafos.at(-1)).toBe(`Dúvidas sobre o estudo: ${CONTATO_DO_ESTUDO}.`);
+    expect(CONTATO_DO_ESTUDO).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]+$/);
   });
 
   it('cita os tempos do percurso', () => {
