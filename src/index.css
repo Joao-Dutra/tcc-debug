@@ -1135,6 +1135,10 @@ button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula)
   padding: var(--esp-6) var(--esp-10); border-radius: var(--raio-controle);
   border: 1px solid var(--borda-controle); background: var(--mesa-de-luz); resize: vertical; }
 .questionario-do-estudo .rodape-painel, .questionario-do-estudo .erro { margin: 0 0 var(--esp-12); }
+/* O envio que não esvaziou no fim: o recado ao participante, e embaixo, em
+   letra de apoio, o que o pesquisador precisa para decidir. */
+.envio-pendente > p { margin: 0 0 var(--esp-12); line-height: 1.6; }
+.acoes-do-envio { display: flex; flex-wrap: wrap; gap: var(--esp-8); }
 .conferencia { list-style: none; margin: 0 0 var(--esp-20); padding: 0; display: flex;
   flex-direction: column; gap: var(--esp-10); }
 .conferencia li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto;

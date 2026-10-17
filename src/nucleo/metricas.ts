@@ -976,7 +976,12 @@ export function sincronizarPendentes(): Promise<void> {
  * o RLS recusaria se subisse.
  */
 export function haPendentesDe(participanteId: string): boolean {
-  return pendentes().some((s) => s.participanteId === participanteId);
+  return pendentesDe(participanteId) > 0;
+}
+
+/** Quantas sessões desta identidade ainda não têm confirmação do banco. */
+export function pendentesDe(participanteId: string): number {
+  return pendentes().filter((s) => s.participanteId === participanteId).length;
 }
 
 export function estadoDoEnvio(): EstadoDoEnvio {

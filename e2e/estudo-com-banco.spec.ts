@@ -210,18 +210,69 @@ test('no fim, com as sessões no banco, o aparelho troca de identidade', async (
   expect([...etapas].sort()).toEqual([0, 1, 2, 3, 4, 5]);
 });
 
-test('no fim, com sessão do participante sem subir, a identidade fica para tentar de novo', async ({ page }) => {
+test('no fim, com sessão do participante sem subir, a tela chama o pesquisador e não troca', async ({ page }) => {
   const banco = novoBanco({ sessoesFalham: true });
   await bancoFalso(page, banco);
-  const participante = await percorrerTudo(page, banco);
+  const participante = await chegarAoQuestionario(page, banco);
 
-  // Dá tempo de a troca acontecer, se fosse acontecer.
-  await page.waitForTimeout(1000);
+  // A tela insiste sozinha antes de desistir, e só então chama o pesquisador:
+  // a tentativa da chegada e mais uma por espera.
+  const envios = await contarEnviosDeSessoes(page, async () => {
+    await responderQuestionario(page);
+    await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
+    await expect(page.getByText('Não feche esta página ainda.')).toBeVisible();
+    await expect(page.getByText('chame o pesquisador')).toBeVisible({ timeout: 15_000 });
+  });
+  expect(envios).toBe(3);
+  await expect(page.getByText('Você já pode fechar esta página')).toHaveCount(0);
+  await expect(page.getByText(/sessões deste participante estão só neste aparelho/)).toBeVisible();
   expect(banco.saidas).toEqual([banco.anonimas[0]]);
   expect(await page.evaluate(() => localStorage.getItem('sb-supabase-falso-auth-token'))).toContain(
     participante
   );
+
+  // O pesquisador exporta o JSON do aparelho: as sessões do participante estão nele.
+  const baixando = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar JSON local' }).click();
+  const baixado = await baixando;
+  expect(baixado.suggestedFilename()).toBe('metricas-aparelho-piloto-nov.json');
+  const exportado = JSON.parse(await streamParaTexto(await baixado.createReadStream()));
+  const etapas = (exportado.sessoes as { participanteId: string; estudo: { etapa: number } }[])
+    .filter((s) => s.participanteId === participante)
+    .map((s) => s.estudo.etapa);
+  expect(new Set(etapas)).toEqual(new Set([0, 1, 2, 3, 4, 5]));
+
+  // A tentativa de novo, ainda sem rede, continua sem trocar.
+  await page.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(page.getByText('chame o pesquisador')).toBeVisible();
+  expect(banco.saidas).toEqual([banco.anonimas[0]]);
+
+  // A rede volta: a fila esvazia, e só então o aparelho troca.
+  banco.sessoesFalham = false;
+  await page.getByRole('button', { name: 'Tentar de novo' }).click();
+  await expect(page.getByText('As suas respostas foram registradas. Você já pode fechar esta página.')).toBeVisible();
+  await expect.poll(() => banco.saidas).toEqual([banco.anonimas[0], participante]);
+  const subidas = new Set(banco.sessoes.filter((l) => l.participante_id === participante).map((l) => (l.estudo as { etapa: number }).etapa));
+  expect(subidas).toEqual(new Set([0, 1, 2, 3, 4, 5]));
 });
+
+/** Quantos envios de sessões o navegador fez enquanto `durante` corria. */
+async function contarEnviosDeSessoes(page: Page, durante: () => Promise<void>): Promise<number> {
+  let n = 0;
+  const contar = (pedido: Request) => {
+    if (pedido.url().includes('/rest/v1/sessoes') && pedido.method() === 'POST') n++;
+  };
+  page.on('request', contar);
+  await durante();
+  page.off('request', contar);
+  return n;
+}
+
+async function streamParaTexto(fluxo: NodeJS.ReadableStream): Promise<string> {
+  const pedacos: Buffer[] = [];
+  for await (const pedaco of fluxo) pedacos.push(Buffer.from(pedaco));
+  return Buffer.concat(pedacos).toString('utf-8');
+}
 
 test('a resposta é gravada pelo participante, antes da troca, sem pedir a linha de volta', async ({ page }) => {
   const banco = novoBanco();

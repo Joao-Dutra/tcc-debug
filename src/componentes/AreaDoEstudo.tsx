@@ -18,7 +18,7 @@ import {
 import type { EstadoDoPercurso } from '../estudo/percurso';
 import { PERGUNTAS_DO_PERFIL, perfilCompleto } from '../estudo/perfil';
 import type { PerfilDoParticipante, PerfilEmAndamento } from '../estudo/perfil';
-import { haPendentesDe, sincronizarPendentes } from '../nucleo/metricas';
+import { exportarSessoes, pendentesDe, sessoesArquivadas, sincronizarPendentes } from '../nucleo/metricas';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { entrarNoEstudo, gravarRespostas, situacaoDaAplicacao, trocarPorAnonimaNova } from '../supabase/estudo';
 import type { SituacaoDaAplicacao } from '../supabase/estudo';
@@ -35,6 +35,7 @@ import {
   lerPercurso,
 } from './percurso-guardado';
 import { useIdentidade } from './usar-identidade';
+import { baixarMetricas } from './usar-metricas';
 
 /**
  * A área do estudo (D37): `#/estudo/<codigo>`, fora da navegação.
@@ -242,32 +243,94 @@ function PerfilDoEstudo({ aoConfirmar }: { aoConfirmar: (perfil: PerfilDoPartici
 }
 
 /**
+ * Quanto o agradecimento espera antes de cada nova tentativa de subir o que
+ * ficou pendente. A primeira é na chegada; depois destas, a tela chama o
+ * pesquisador. Curtas de propósito: o participante está parado esperando.
+ */
+const ESPERAS_DO_ENVIO_FINAL_MS = [2_000, 5_000];
+
+type EnvioFinal = 'enviando' | 'pronto' | 'pendente';
+
+/**
+ * Sobe o que ficou pendente do participante e, só com a fila dele vazia,
+ * troca a identidade do aparelho. Devolve quantas sessões dele ficaram.
+ */
+async function enviarETrocar(participanteId: string): Promise<number> {
+  await sincronizarPendentes();
+  const restantes = pendentesDe(participanteId);
+  if (restantes === 0 && identidadeAtual().usuarioId === participanteId) await sair();
+  return restantes;
+}
+
+/**
  * O fim do percurso. Nenhum resultado: nem quantos exercícios foram
  * corrigidos, nem tempo, nem comparação — o participante que soubesse o
  * próprio desempenho poderia contá-lo ao colega do lado, que ainda está no
  * meio.
  *
  * Ao chegar aqui, o que ficou pendente sobe, e o aparelho troca de identidade
- * para o uso seguinte deste navegador não cair no participante. Se ainda
- * houver sessão dele sem confirmação do banco, a troca espera: o próximo
- * "Começar" tenta subir de novo antes de trocar.
+ * para o uso seguinte deste navegador não cair no participante. A troca só
+ * acontece com a fila do participante vazia: depois dela, a identidade
+ * anterior não volta, e o RLS recusaria a sessão dela subindo pela nova. Se a
+ * fila não esvazia depois de algumas tentativas, a tela pede o pesquisador, e
+ * ele resolve ali mesmo: tenta de novo, ou exporta o JSON do aparelho.
  */
-function Agradecimento({ participanteId }: { participanteId: string | null }) {
-  // Uma troca só, mesmo com o efeito rodando duas vezes no StrictMode.
-  const trocou = useRef(false);
+function Agradecimento({ aplicacao, participanteId }: { aplicacao: string; participanteId: string | null }) {
+  // Sem banco não há fila nem troca: a coleta é só do aparelho.
+  const [envio, setEnvio] = useState<EnvioFinal>(participanteId === null ? 'pronto' : 'enviando');
+  const [restantes, setRestantes] = useState(0);
+  const [tentativa, setTentativa] = useState(0);
+  // Uma rodada por tentativa, mesmo com o efeito rodando duas vezes no StrictMode.
+  const rodada = useRef(-1);
+
   useEffect(() => {
-    if (trocou.current) return;
-    trocou.current = true;
+    if (participanteId === null || rodada.current === tentativa) return;
+    rodada.current = tentativa;
+    // A rodada da chegada insiste sozinha; a do botão é uma tentativa só.
+    const esperas = tentativa === 0 ? ESPERAS_DO_ENVIO_FINAL_MS : [];
     void (async () => {
-      await sincronizarPendentes();
-      if (participanteId === null || haPendentesDe(participanteId)) return;
-      if (identidadeAtual().usuarioId === participanteId) await sair();
+      setEnvio('enviando');
+      let faltam = await enviarETrocar(participanteId);
+      for (const espera of esperas) {
+        if (faltam === 0) break;
+        await new Promise((pronto) => window.setTimeout(pronto, espera));
+        faltam = await enviarETrocar(participanteId);
+      }
+      setRestantes(faltam);
+      setEnvio(faltam === 0 ? 'pronto' : 'pendente');
     })();
-  }, [participanteId]);
+  }, [participanteId, tentativa]);
+
+  const exportar = () =>
+    baixarMetricas(exportarSessoes(sessoesArquivadas()), `metricas-aparelho-${aplicacao}.json`);
 
   return (
     <TelaDoEstudo titulo="Obrigado pela participação">
-      <p>As suas respostas foram registradas. Você já pode fechar esta página.</p>
+      {envio === 'enviando' && (
+        <p role="status">Enviando as suas respostas. Não feche esta página ainda.</p>
+      )}
+      {envio === 'pronto' && <p>As suas respostas foram registradas. Você já pode fechar esta página.</p>}
+      {envio === 'pendente' && (
+        <div className="envio-pendente">
+          <p className="erro">
+            Parte do que você fez ainda não chegou ao servidor do estudo. Não feche esta página: chame o
+            pesquisador.
+          </p>
+          {/* Para o pesquisador: a identidade fica a do participante até a fila esvaziar. */}
+          <p className="rodape-painel">
+            {restantes === 1
+              ? '1 sessão deste participante está só neste aparelho.'
+              : `${restantes} sessões deste participante estão só neste aparelho.`}{' '}
+            A identidade não foi trocada.
+          </p>
+          <div className="acoes-do-envio">
+            <button className="primario" onClick={() => setTentativa((n) => n + 1)}>
+              Tentar de novo
+            </button>
+            <button onClick={exportar}>Exportar JSON local</button>
+          </div>
+        </div>
+      )}
     </TelaDoEstudo>
   );
 }
@@ -382,7 +445,7 @@ export function AreaDoEstudo({ aplicacao }: { aplicacao: string }) {
   }
 
   if (passo.tela === 'agradecimento') {
-    return <Agradecimento participanteId={estado.participanteId} />;
+    return <Agradecimento aplicacao={aplicacao} participanteId={estado.participanteId} />;
   }
 
   const etapa = ETAPAS[passo.etapa];
