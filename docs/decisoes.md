@@ -3568,8 +3568,14 @@ abre igual, e o erro só apareceria na análise.
 
 - **O aviso tem consentimento.** A caixa "Concordo em participar" é
   obrigatória, e quem não marca não entra. O texto diz que a participação é
-  voluntária, que não afeta a nota, que se pode parar a qualquer momento e que
-  o registro é anônimo e inclui o código escrito. Ele vive em
+  voluntária, que não afeta a nota, que se pode parar a qualquer momento —
+  e que o que já foi registrado até ali permanece, porque o registro é
+  anônimo e não há como achar depois os dados de uma pessoa para excluí-los
+  —, que o registro inclui o código escrito, que só os pesquisadores têm
+  acesso aos dados, que os resultados saem só de forma agregada, no TCC e em
+  publicações, e um contato para dúvidas, por enquanto o e-mail do autor. É
+  curto porque é lido em pé, na sala. A versão 2 acrescentou o acesso, a
+  apresentação agregada, o que fica de quem para e o contato. Ele vive em
   `src/estudo/aviso.ts`, **pendente da orientadora**, que ainda vai decidir se
   o estudo passa por comitê de ética. A versão aceita vai para o banco com a
   entrada. Para a versão valer alguma coisa, cada versão precisa ter um texto
