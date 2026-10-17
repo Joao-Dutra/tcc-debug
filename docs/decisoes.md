@@ -3517,8 +3517,8 @@ questionário e agradecimento —, que envolve a tela de exercício sem mudar o
 miolo dela. O piloto de novembro já roda por aqui, com o código `piloto-nov`.
 O banco da área é a migração 0004. `VERSAO_DO_REGISTRO` passa a 11.
 
-Esta seção registra a área, o percurso e o questionário. A exportação do
-painel entra numa seção seguinte, quando for feita.
+Esta seção registra a área, o percurso, o questionário e o que o painel do
+pesquisador ganhou para o estudo: o filtro por aplicação e o CSV.
 
 ### O código da aplicação
 
@@ -3743,6 +3743,68 @@ grava sessão, não consome vaga e não troca a identidade do aparelho:
 - o Worker executa o código do aquecimento, que é o primeiro que a turma vai
   rodar.
 
+### O painel e o CSV do estudo
+
+O painel de métricas (D11, D22) ganha um filtro por **aplicação**, e o botão
+**"Exportar CSV do estudo"**.
+
+- **A lista de aplicações vem do banco**, de `aplicacoes_do_estudo`, somada às
+  que aparecem nas sessões. As outras opções do painel saem só das sessões; a
+  aplicação, não, para a que abre hoje aparecer antes da primeira sessão dela.
+  Escolhida, a tabela fica com as sessões do percurso daquela aplicação, e o
+  filtro entra no recorte da exportação em JSON.
+- **O CSV leva todas as sessões do percurso da aplicação escolhida**, ou de
+  todas, e só esse filtro vale para ele. O JSON diz no próprio arquivo que
+  recorte foi aplicado (D22); um CSV não tem onde dizer, e um arquivo
+  recortado seria lido depois como a coleta inteira. A validade e o
+  aquecimento são colunas, e a análise filtra por elas.
+- **Do banco, ele espera os participantes e as respostas.** Se a leitura
+  deles falha, o painel diz que falhou e o botão fica desligado: o CSV
+  sairia com o grupo, o perfil e o questionário vazios, como se ninguém
+  tivesse respondido. A tabela e o JSON continuam. Sem banco, o CSV sai do
+  aparelho, com o grupo da marca e sem perfil nem questionário, que só o
+  banco junta à pessoa.
+
+**O formato.** RFC 4180, UTF-8 sem BOM, vírgula como separador, ponto como
+decimal e CRLF no fim de cada linha: é o que `read.csv` e `pandas.read_csv`
+leem sem configuração. Ausente é campo vazio, que os dois leem como NA, e
+nunca 0. Verdadeiro e falso saem `true` e `false`. O texto das respostas
+abertas sai como foi escrito, entre aspas quando precisa: um texto que comece
+com `=` seria lido como fórmula por uma planilha, mas o arquivo é para R e
+pandas, e mexer no que o participante escreveu seria mexer no dado.
+
+**Uma linha por sessão**, na ordem da análise — aplicação, ordem de entrada,
+etapa e, numa etapa com mais de uma sessão, o instante —, com estas colunas:
+
+| Grupo | Colunas |
+|---|---|
+| Participante | `aplicacao`, `participante_id`, `grupo`, `ordem_de_entrada`, `perfil_aeds1`, `perfil_depurador`, `perfil_visualizacao` |
+| Sessão | `sessao_id`, `versao_do_registro`, `exercicio_id`, `etapa`, `aquecimento`, `apoio`, `apoio_confere_com_plano`, `instante_de_inicio`, `duracao_total_ms`, `duracao_ativa_ms`, `sessao_valida`, `desfecho` |
+| Métricas | `tempo_ate_primeira_execucao_ms`, `tempo_ate_localizacao_ms`, `tempo_ate_correcao_ms`, `execucoes`, `execucoes_com_erro`, `dicas_reveladas`, `edicoes`, `localizacoes_tentadas`, `corrigido` |
+| Navegação (D36) | `navegacoes`, `passos_distintos_visitados`, `retrocessos`, `tempo_ate_primeira_navegacao_ms` |
+| Questionário | `versao_do_questionario`, `sus_1` a `sus_10`, `sus_escore`, `vis_1` a `vis_6`, `ajudou`, `atrapalhou` |
+
+- **As métricas são recalculadas do log**, e não lidas do `resumo` gravado: é
+  o log que é o dado (D6). A navegação sai vazia nos registros anteriores à
+  versão 10, que não a coletavam.
+- **O grupo vem de `participantes_do_estudo`**, que só o banco escreve; sem
+  banco, da marca do aparelho.
+- **`apoio_confere_com_plano`** diz se a sessão é o que o plano manda para
+  aquela etapa e aquele grupo: o exercício e o apoio. Ela compara com o plano
+  de agora, em `percurso.ts`. Se o plano for recalibrado depois do piloto, as
+  sessões do piloto passam a sair com `false`, e é o filtro por aplicação que
+  separa as duas coletas.
+- **`desfecho`** é derivado do log: `corrigido` se alguma execução do
+  estudante passou em todos os casos, mesmo que ele tenha clicado em seguir
+  depois; senão, `desistencia` pelo botão, `tempo-esgotado` pelo prazo, e
+  `sem-encerramento` quando a página foi recarregada ou fechada no meio.
+- **O questionário e o perfil se repetem** em cada linha do mesmo
+  participante, e saem vazios para quem não respondeu. É o formato longo: a
+  análise agrupa como quiser. O `sus_escore` é calculado na exportação, pela
+  regra da seção do questionário, e não gravado.
+- **Quem entrou e não abriu sessão nenhuma**, ou respondeu sem sessão, não
+  aparece: a linha é a sessão. Essas pessoas continuam nas tabelas do banco.
+
 ### O que virou teste
 
 | Regra | Onde |
@@ -3757,4 +3819,7 @@ grava sessão, não consome vaga e não troca a identidade do aparelho:
 | A marca vai e volta do banco em duas colunas; fora do estudo, as colunas vão nulas | `src/supabase/sessoes-remotas.test.ts` |
 | O consentimento segura a entrada; o tutorial abre no aquecimento num aparelho que já o viu; nenhum link para fora; seguir pede confirmação; o apoio de cada etapa segue o plano dos dois grupos; o prazo vence sem relógio na tela; recarregar não perde o lugar; recarregar depois do prazo não abre sessão; o questionário segura o envio até a última afirmação, aceita as abertas em branco e, sem banco, guarda a resposta no aparelho; o fim não mostra resultado | `e2e/estudo.spec.ts` |
 | Com banco: a entrada troca de identidade, o grupo vem do banco e decide o apoio, a versão do aviso e o perfil vão na entrada, as sessões sobem marcadas; a resposta do questionário é gravada pelo participante, antes da troca, num insert simples, o conflito segue como gravada, e sem rede ela fica no formulário; no fim, a troca de identidade acontece só com a fila do participante vazia; com a fila presa, a tela tenta de novo sozinha, chama o pesquisador sem trocar, exporta o JSON do aparelho e troca quando a tentativa manual esvazia a fila; aplicação encerrada, inexistente ou banco fora do ar não deixam entrar; a conferência não grava nem pede vaga | `e2e/estudo-com-banco.spec.ts` |
+| O CSV: as colunas na ordem combinada; CRLF, sem BOM, aspas só quando precisa; o texto com vírgula, aspas e quebra de linha volta inteiro; as métricas saem do log, e não do resumo; a navegação vazia antes da versão 10; o questionário vazio para quem não respondeu e repetido para quem respondeu; a junção pela mesma aplicação; o grupo do aparelho sem banco; a ordem das linhas; o desfecho; o apoio conferido com o plano; o filtro e o CSV por aplicação | `src/estudo/exportacao.test.ts` |
+| Sem banco: o filtro por aplicação recorta a tabela, e o CSV leva só as sessões do estudo daquela aplicação, ignorando os outros filtros, em UTF-8 sem BOM | `e2e/painel.spec.ts` |
+| Com o pesquisador: a lista de aplicações vem do banco, e o CSV junta grupo, perfil e questionário; sem as respostas, o CSV fica desligado e o resto do painel segue | `e2e/painel-do-estudo.spec.ts` |
 | O que o banco aceita e recusa na área do estudo | `npm run verificar-rls` (D24) |
