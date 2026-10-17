@@ -53,6 +53,7 @@ Três regras que não devem ser quebradas:
 | `src/nucleo/`       | Tipos, instrumentação, execução. Sem React aqui.        |
 | `src/exercicios/`   | Catálogo de exercícios, um arquivo por exercício.       |
 | `src/visualizacao/` | Um visualizador por tipo de estrutura de dados.         |
+| `src/estudo/`       | Percurso, aviso e perfil da área do estudo. Sem React.  |
 | `src/componentes/`  | Interface genérica (reprodutor, painéis, controles).    |
 | `src/supabase/`     | Identidade e gravação das sessões no banco.             |
 | `supabase/`         | Esquema e políticas do banco, em SQL, e a verificação.  |

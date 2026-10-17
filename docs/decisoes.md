@@ -3506,3 +3506,192 @@ de sessão válida (D22) continua sendo ao menos uma execução do estudante.
 | O resumo conta gestos sem as paradas, retrocessos, o instante do primeiro gesto e os passos distintos por execução; o trecho fechado por execução nova é do resultado anterior | o mesmo arquivo |
 | Navegar não muda as métricas anteriores nem torna a sessão válida | o mesmo arquivo |
 | Os controles de verdade produzem os eventos, e um arrasto com o ponteiro chega ao log como um evento só | `e2e/navegacao.spec.ts` |
+
+## D37 — A área do estudo
+
+**Decisão.** O estudo de validação roda numa área própria,
+`#/estudo/<codigo-da-aplicacao>`, fora da navegação: nenhuma tela aponta para
+ela, e o pesquisador entrega o endereço na aula. É um percurso guiado e fixo —
+aviso com consentimento, perfil, aquecimento com o tutorial, cinco exercícios,
+questionário e agradecimento —, que envolve a tela de exercício sem mudar o
+miolo dela. O piloto de novembro já roda por aqui, com o código `piloto-nov`.
+O banco da área é a migração 0004. `VERSAO_DO_REGISTRO` passa a 11.
+
+Esta seção registra a área e o percurso. O questionário e a exportação do
+painel entram nas seções seguintes, quando forem feitos.
+
+### O código da aplicação
+
+Cada aplicação do estudo tem um código, gravado em toda sessão e em toda
+resposta: é ele que separa o piloto da coleta (`piloto-nov`, `aeds1-2026`). Os
+códigos são cadastrados à mão, em `aplicacoes_do_estudo`, e não criados pela
+URL: um código digitado errado partiria a alternância dos grupos e o dado em
+dois, sem ninguém perceber até a análise. Depois da aula, a aplicação é
+fechada à mão, e quem abrir o link depois não entra.
+
+### O percurso
+
+| Etapa | Exercício | Grupo A | Grupo B | Tempo |
+|---|---|---|---|---|
+| aquecimento | vetor-zerar-negativos | com | com | 10 min |
+| 1 | pilha-desempilhar | com | sem | 8 min |
+| 2 | fila-atender-todos | sem | com | 8 min |
+| 3 | lista-inserir-depois | com | sem | 8 min |
+| 4 | vetor-ordenar-por-selecao | sem | com | 8 min |
+| 5 | vetor-ordenar | com | sem | 8 min |
+
+Tudo o que o piloto pode recalibrar — a sequência, o plano e os tempos — mora
+num lugar só, `src/estudo/percurso.ts`, e o teste do percurso cobra a tabela
+inteira. Um apoio trocado numa etapa não quebra nada que se veja: o exercício
+abre igual, e o erro só apareceria na análise.
+
+- **O aquecimento é com apoio para todos e fica fora da análise.** É onde o
+  participante aprende a tela, e o tutorial (D32) abre sozinho sobre ele.
+- **Os tempos.** A aula tem 1h30. Dez minutos de aquecimento e oito em cada
+  exercício somam 50 minutos; a folga fica para os imprevistos do laboratório,
+  e não para alongar os limites. Nos pilotos, a correção levou de 27 s a
+  313 s, e oito minutos são cerca de 1,5 vez o máximo observado — mas seleção
+  e `vetor-ordenar` ainda não tinham sido pilotados.
+- **O relógio é invisível.** Nenhum contador e nenhum aviso de tempo
+  acabando: o limite é dito no aviso da entrada, e quando ele vence aparece a
+  tela "O tempo deste exercício terminou". Um contador à vista muda o
+  comportamento que o estudo mede — e mudaria só em quem olha para ele.
+- **O prazo é do relógio de parede, gravado na primeira abertura da etapa.**
+  Recarregar a página não devolve o tempo. Quem recarrega depois do prazo vai
+  direto à tela do tempo esgotado, sem abrir uma sessão que nasceria vencida.
+- **O percurso fica na aba** (`sessionStorage`). Recarregar mantém o lugar;
+  outra aba, ou o navegador aberto de novo pelo próximo participante, começa
+  do aviso. Um percurso que atravessasse pessoas levaria o grupo e o prazo de
+  uma para a outra.
+
+### A entrada
+
+- **O aviso tem consentimento.** A caixa "Concordo em participar" é
+  obrigatória, e quem não marca não entra. O texto diz que a participação é
+  voluntária, que não afeta a nota, que se pode parar a qualquer momento e que
+  o registro é anônimo e inclui o código escrito. Ele vive em
+  `src/estudo/aviso.ts`, **pendente da orientadora**, que ainda vai decidir se
+  o estudo passa por comitê de ética. A versão aceita vai para o banco com a
+  entrada. Para a versão valer alguma coisa, cada versão precisa ter um texto
+  só: o teste do aviso guarda a impressão do texto de cada versão e falha se o
+  texto mudar sem a versão mudar. Os tempos entram no texto a partir do
+  percurso, e por isso recalibrá-los também sobe a versão.
+- **Sempre uma identidade anônima nova.** O laboratório tem computadores
+  compartilhados, e reaproveitar a identidade do navegador misturaria
+  participantes. Ao começar, o que estiver pendente no aparelho sobe, e o
+  aparelho sai da identidade atual e entra numa anônima nova. Pelo mesmo
+  motivo, a marca de tutorial visto não é lida nem gravada na área do estudo.
+- **O perfil**, sem nenhum dado pessoal: se já cursou AEDS 1, com que
+  frequência usa depurador passo a passo e se já usou ferramenta de
+  visualização de algoritmos. Os valores são os que o banco aceita, e o teste
+  do perfil os compara com os `check` da migração.
+- **O grupo é atribuído pelo banco só ao confirmar o perfil**, por
+  `entrar_no_estudo`, alternando A e B na ordem de entrada. Quem abandona antes
+  não ocupa vaga. A alternância, e não um sorteio, porque com turmas de vinte
+  ou trinta um sorteio desequilibra os grupos com frequência; a alternância os
+  mantém com no máximo um de diferença. A operação trava a linha da aplicação,
+  e entradas simultâneas saem em fila. Repetir a chamada, porque a resposta se
+  perdeu, devolve o mesmo grupo.
+- **Com o banco configurado, entrar exige o banco.** Sem ele não há grupo
+  balanceado, nem como juntar as sessões de uma pessoa ao questionário dela.
+  Se o banco não responde, a tela diz que não foi possível falar com o
+  servidor do estudo e pede para chamar o pesquisador.
+- **Sem chaves configuradas** — desenvolvimento e testes —, o percurso roda
+  com o grupo escolhido no aparelho, alternando como o banco faz, e marcado
+  como tal em cada sessão. É o que mantém a regra de que nenhuma tela depende
+  do banco, e o que deixa o percurso ser testado.
+
+### A tela de exercício dentro do percurso
+
+O miolo é o mesmo: código, visualização, casos, dicas e tutorial. Muda só o
+que leva para fora do exercício, por uma prop `percurso` na `TelaExercicio`,
+no molde da `previa` de D33:
+
+- no lugar do link "Todos os exercícios", a posição: "Aquecimento" ou
+  "Exercício 2 de 5" — posição na sequência, igual para todos, e nunca o que
+  foi resolvido;
+- no lugar do seletor de apoio, o botão "Seguir para o próximo" ("Concluir os
+  exercícios" no último), com confirmação, porque um clique por engano perderia
+  o exercício sem volta. A pergunta é a mesma tenha o estudante corrigido ou
+  não: se mudasse, ela própria diria se o código está certo;
+- sem o convite de próximo exercício no sinal de acerto;
+- a marca do cabeçalho deixa de ser link, porque levaria à tela inicial, e
+  dela à vitrine.
+
+Fora da área do estudo nada muda, e o congelamento de D32 e D34 continua
+valendo para a navegação comum. A área do estudo é uma superfície nova, e é
+sobre ela que o piloto de novembro roda.
+
+### O registro
+
+- **A marca do estudo.** Cada sessão aberta no percurso leva
+  `estudo: { aplicacao, etapa, aquecimento }`. A etapa 0 é o aquecimento. O
+  grupo **não** vai na sessão: a fonte dele é `participantes_do_estudo`, que
+  só o banco escreve. A exceção é a instalação sem banco, em que o grupo vai na
+  marca como `grupoNoAparelho`. No banco, `aplicacao` vai em coluna própria —
+  é por ela que o RLS confere a participação e que o painel filtra — e o resto
+  da marca na coluna `estudo`. Fora do estudo, o registro não ganha o campo, e
+  as duas colunas vão nulas.
+- **O encerramento.** O fim da sessão pelo botão ou pelo prazo entra no log
+  como `encerramento`, com o motivo `seguir` ou `tempo-esgotado`, e a sessão é
+  arquivada nesse instante: o que viesse depois — a reprodução chegando ao fim
+  por baixo da tela de tempo esgotado — ficaria depois do fim. Uma execução
+  ainda no Worker fica como interrompida, pelo mecanismo de D23.
+- **O log guarda o gesto, e não o juízo.** "Desistência" é derivada na
+  análise: seguir sem nenhuma execução que passou em todos os casos. Quem
+  corrige e depois clica em seguir sai como corrigido. Se o clique entrasse no
+  log como desistência, esse estudante seria contado como desistente.
+- **A identidade da sessão é fixada na criação**, e não lida no arquivamento,
+  como nas sessões comuns: no fim do percurso o aparelho troca de identidade,
+  e a última sessão não pode sair com a do próximo participante.
+- **Versão 11.** A sessão do estudo tem prazo, e a duração dela deixa de ser
+  só a vontade do estudante. Sem a versão, uma sessão de oito minutos cortada
+  pelo prazo seria lida como alguém que ficou oito minutos e saiu.
+- **Uma etapa pode ter mais de uma sessão.** Quem recarrega a página no meio
+  de uma etapa deixa a sessão em curso arquivada sem encerramento (D15), e a
+  etapa abre outra sessão, com o mesmo prazo.
+
+### O fim
+
+Por enquanto, o agradecimento vem logo depois do último exercício; o
+questionário entra antes dele, na seção seguinte.
+
+O agradecimento não mostra resultado nenhum: nem quantos exercícios foram
+corrigidos, nem tempo, nem comparação. Quem soubesse o próprio desempenho
+poderia contá-lo ao colega do lado, que ainda está no meio.
+
+Ao chegar ao fim, o que ficou pendente sobe, e o aparelho troca de novo para
+uma anônima nova, para o uso seguinte do navegador não cair no participante.
+**A troca espera** se ainda houver sessão dele sem confirmação do banco:
+depois da troca, a identidade anterior não volta, e o que ficou no aparelho só
+sairia de lá à mão, pelo painel. O próximo "Começar" tenta subir de novo antes
+de trocar.
+
+### A conferência das máquinas
+
+A rede institucional pode bloquear domínios. `#/estudo/<codigo>/conferir`
+testa, em cada máquina, a leitura do banco, a criação de uma identidade
+anônima e a execução no Worker, e mostra ok ou falha em cada item. Ela não
+grava sessão, não consome vaga e não troca a identidade do aparelho:
+
+- a leitura do banco é `situacao_da_aplicacao`, que diz se o código existe e
+  está aberto sem gravar nada, e funciona até sem identidade;
+- a identidade de teste nasce num cliente à parte, que não guarda nada no
+  navegador, e sai em seguida. Ela fica no projeto como um usuário anônimo a
+  mais, sem sessão nenhuma — é a criação dela que se está testando;
+- o Worker executa o código do aquecimento, que é o primeiro que a turma vai
+  rodar.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| A sequência, o plano A/B, os tempos e a posição de cada etapa; toda etapa está no catálogo | `src/estudo/percurso.test.ts` |
+| As passagens do percurso; o prazo gravado uma vez; o percurso guardado que não tem a forma esperada é descartado | o mesmo arquivo |
+| O texto do aviso não muda sem a versão mudar; ele diz o que precisa dizer e cita os tempos | `src/estudo/aviso.test.ts` |
+| O perfil oferece exatamente os valores que o banco aceita | `src/estudo/perfil.test.ts` |
+| A marca vai só na sessão do estudo; o encerramento entra no log depois do arrasto aberto e não muda o resumo | `src/nucleo/estudo-no-registro.test.ts` |
+| A marca vai e volta do banco em duas colunas; fora do estudo, as colunas vão nulas | `src/supabase/sessoes-remotas.test.ts` |
+| O consentimento segura a entrada; o tutorial abre no aquecimento num aparelho que já o viu; nenhum link para fora; seguir pede confirmação; o apoio de cada etapa segue o plano dos dois grupos; o prazo vence sem relógio na tela; recarregar não perde o lugar; recarregar depois do prazo não abre sessão; o fim não mostra resultado | `e2e/estudo.spec.ts` |
+| Com banco: a entrada troca de identidade, o grupo vem do banco e decide o apoio, a versão do aviso e o perfil vão na entrada, as sessões sobem marcadas; no fim, a troca de identidade acontece só com as sessões no banco; aplicação encerrada, inexistente ou banco fora do ar não deixam entrar; a conferência não grava nem pede vaga | `e2e/estudo-com-banco.spec.ts` |
+| O que o banco aceita e recusa na área do estudo | `npm run verificar-rls` (D24) |
