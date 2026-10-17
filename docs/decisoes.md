@@ -3517,8 +3517,8 @@ questionário e agradecimento —, que envolve a tela de exercício sem mudar o
 miolo dela. O piloto de novembro já roda por aqui, com o código `piloto-nov`.
 O banco da área é a migração 0004. `VERSAO_DO_REGISTRO` passa a 11.
 
-Esta seção registra a área e o percurso. O questionário e a exportação do
-painel entram nas seções seguintes, quando forem feitos.
+Esta seção registra a área, o percurso e o questionário. A exportação do
+painel entra numa seção seguinte, quando for feita.
 
 ### O código da aplicação
 
@@ -3651,10 +3651,52 @@ sobre ela que o piloto de novembro roda.
   de uma etapa deixa a sessão em curso arquivada sem encerramento (D15), e a
   etapa abre outra sessão, com o mesmo prazo.
 
-### O fim
+### O questionário
 
-Por enquanto, o agradecimento vem logo depois do último exercício; o
-questionário entra antes dele, na seção seguinte.
+Depois do último exercício — pelo botão ou pelo prazo —, o questionário; dele,
+o agradecimento. Ele vem **antes** do agradecimento porque é no agradecimento
+que o aparelho troca de identidade, e a resposta precisa ser gravada pela
+identidade do participante: é ela que junta a resposta às sessões e ao grupo.
+
+- **O SUS, na versão brasileira de Lourenço, Carmona e Lopes (2022)**:
+  Lourenço DF, Carmona EV, Lopes MHBM. Tradução e adaptação transcultural da
+  System Usability Scale para o português do Brasil. *Aquichan*.
+  2022;22(2):e2228. DOI: 10.5294/aqui.2022.22.2.8. Os dez itens foram
+  transcritos da Tabela 1 do PDF em português — a versão que os autores
+  aplicaram no teste, que não recebeu mudança depois dele —, e não escritos de
+  memória. As âncoras são as da fonte, que nomeia só os extremos: 1, "discordo
+  fortemente"; 5, "concordo fortemente". "O sistema" fica como na fonte, e a
+  introdução diz que ele é a ferramenta. **Pendente da orientadora**, como o
+  texto do aviso.
+- **Seis afirmações sobre a visualização e os exercícios**, na mesma escala e
+  na redação do pesquisador, e **duas perguntas abertas**, "O que mais
+  ajudou?" e "O que atrapalhou ou faltou?".
+- **As afirmações são obrigatórias, e as abertas, não.** O SUS não tem escore
+  parcial. O botão de enviar só se libera com todas as dezesseis marcadas, e a
+  tela diz quantas faltam — e não quais, para não apontar uma pergunta como se
+  ela tivesse resposta certa. A aberta em branco vai nula, e não texto vazio.
+- **O texto é versionado como o do aviso.** `VERSAO_DO_QUESTIONARIO` vai com
+  cada resposta, e o teste guarda a impressão do texto de cada versão. O SUS
+  tem uma regra a mais: o teste cobra os dez itens por extenso, em qualquer
+  versão. Mudar um item do SUS não é subir a versão; é deixar de aplicar o
+  SUS, e o escore deixa de ser comparável com o da literatura.
+- **A gravação é um insert simples**, sem pedir a linha de volta e sem
+  upsert: o participante não tem leitura da tabela, e a resposta não se
+  refaz. Quem recarrega a página antes de a confirmação chegar reenvia; o
+  reenvio bate na chave (participante, aplicação), e o conflito (23505) é
+  lido como "já gravada". Sem rede, a tela diz que não foi possível enviar,
+  as respostas continuam no formulário, e a identidade não troca.
+- **Sem banco**, a resposta fica no aparelho, ao lado das sessões arquivadas,
+  como o grupo escolhido no aparelho: coisa de desenvolvimento e de teste.
+- **O escore do SUS** é o de Brooke (1996), o mesmo da fonte: nos itens
+  ímpares, a resposta menos 1; nos pares, 5 menos a resposta; a soma, vezes
+  2,5, de 0 a 100. A fonte escreve a regra dos pares como "subtraindo-se 5 do
+  escore", mas lida ao pé da letra a soma sairia negativa, fora da faixa de 0
+  a 100 que o próprio artigo usa. Falta algum dos dez, o escore é nulo, e não
+  zero. Ele não é gravado: é derivado das respostas, como o resumo é derivado
+  do log (D6).
+
+### O fim
 
 O agradecimento não mostra resultado nenhum: nem quantos exercícios foram
 corrigidos, nem tempo, nem comparação. Quem soubesse o próprio desempenho
@@ -3662,10 +3704,23 @@ poderia contá-lo ao colega do lado, que ainda está no meio.
 
 Ao chegar ao fim, o que ficou pendente sobe, e o aparelho troca de novo para
 uma anônima nova, para o uso seguinte do navegador não cair no participante.
-**A troca espera** se ainda houver sessão dele sem confirmação do banco:
-depois da troca, a identidade anterior não volta, e o que ficou no aparelho só
-sairia de lá à mão, pelo painel. O próximo "Começar" tenta subir de novo antes
-de trocar.
+**A troca só acontece com a fila do participante vazia**: depois dela, a
+identidade anterior não volta, e o RLS recusaria a sessão dela subindo pela
+nova. Enquanto envia, a tela pede para não fechar a página. Se a fila não
+esvazia, ela tenta de novo sozinha, duas vezes, com esperas curtas — o
+participante está parado esperando —, e então diz "chame o pesquisador", sem
+trocar a identidade e sem dizer que já se pode fechar. O pesquisador resolve
+ali mesmo:
+
+- **"Tentar de novo"**, quando a rede voltou. Com a fila vazia, o aparelho
+  troca, e a tela diz que já se pode fechar;
+- **"Exportar JSON local"**, quando a rede não volta: o arquivo do aparelho
+  inteiro, no formato da exportação do painel, com as sessões do participante
+  e a identidade dele em cada uma.
+
+A tela diz ao pesquisador quantas sessões do participante estão só no aparelho,
+e que a identidade não foi trocada. Se mesmo assim a página for fechada, o
+próximo "Começar" ainda tenta subir antes de trocar.
 
 ### A conferência das máquinas
 
@@ -3690,8 +3745,10 @@ grava sessão, não consome vaga e não troca a identidade do aparelho:
 | As passagens do percurso; o prazo gravado uma vez; o percurso guardado que não tem a forma esperada é descartado | o mesmo arquivo |
 | O texto do aviso não muda sem a versão mudar; ele diz o que precisa dizer e cita os tempos | `src/estudo/aviso.test.ts` |
 | O perfil oferece exatamente os valores que o banco aceita | `src/estudo/perfil.test.ts` |
+| O texto do questionário não muda sem a versão mudar; o SUS é o da fonte, por extenso, em qualquer versão; as seis afirmações e as duas abertas são as pedidas; a resposta só sai completa, com as abertas em branco nulas; o escore do SUS vai de 0 a 100, com os pares invertidos, e é nulo se falta item | `src/estudo/questionario.test.ts` |
+| Depois do último exercício vem o questionário, pelos dois caminhos, e dele o agradecimento | `src/estudo/percurso.test.ts` |
 | A marca vai só na sessão do estudo; o encerramento entra no log depois do arrasto aberto e não muda o resumo | `src/nucleo/estudo-no-registro.test.ts` |
 | A marca vai e volta do banco em duas colunas; fora do estudo, as colunas vão nulas | `src/supabase/sessoes-remotas.test.ts` |
-| O consentimento segura a entrada; o tutorial abre no aquecimento num aparelho que já o viu; nenhum link para fora; seguir pede confirmação; o apoio de cada etapa segue o plano dos dois grupos; o prazo vence sem relógio na tela; recarregar não perde o lugar; recarregar depois do prazo não abre sessão; o fim não mostra resultado | `e2e/estudo.spec.ts` |
-| Com banco: a entrada troca de identidade, o grupo vem do banco e decide o apoio, a versão do aviso e o perfil vão na entrada, as sessões sobem marcadas; no fim, a troca de identidade acontece só com as sessões no banco; aplicação encerrada, inexistente ou banco fora do ar não deixam entrar; a conferência não grava nem pede vaga | `e2e/estudo-com-banco.spec.ts` |
+| O consentimento segura a entrada; o tutorial abre no aquecimento num aparelho que já o viu; nenhum link para fora; seguir pede confirmação; o apoio de cada etapa segue o plano dos dois grupos; o prazo vence sem relógio na tela; recarregar não perde o lugar; recarregar depois do prazo não abre sessão; o questionário segura o envio até a última afirmação, aceita as abertas em branco e, sem banco, guarda a resposta no aparelho; o fim não mostra resultado | `e2e/estudo.spec.ts` |
+| Com banco: a entrada troca de identidade, o grupo vem do banco e decide o apoio, a versão do aviso e o perfil vão na entrada, as sessões sobem marcadas; a resposta do questionário é gravada pelo participante, antes da troca, num insert simples, o conflito segue como gravada, e sem rede ela fica no formulário; no fim, a troca de identidade acontece só com a fila do participante vazia; com a fila presa, a tela tenta de novo sozinha, chama o pesquisador sem trocar, exporta o JSON do aparelho e troca quando a tentativa manual esvazia a fila; aplicação encerrada, inexistente ou banco fora do ar não deixam entrar; a conferência não grava nem pede vaga | `e2e/estudo-com-banco.spec.ts` |
 | O que o banco aceita e recusa na área do estudo | `npm run verificar-rls` (D24) |
