@@ -16,10 +16,12 @@ import {
   intervalosOciosos,
   varreduraDe,
 } from '../nucleo/sinais-de-sessao';
+import { csvDoEstudo, sessoesDoEstudo } from '../estudo/exportacao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { sair } from '../supabase/identidade';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
 import { baixarMetricas } from './usar-metricas';
+import { useDadosDoEstudo } from './usar-dados-do-estudo';
 import { useIdentidade } from './usar-identidade';
 import { useSessoesDoBanco } from './usar-sessoes-do-banco';
 import type { Identidade } from '../supabase/identidade';
@@ -243,6 +245,7 @@ function Sequencia({ sessao }: { sessao: RegistroDeSessao }) {
 }
 
 const ROTULOS_DO_FILTRO = {
+  aplicacao: 'Aplicação',
   participanteId: 'Participante',
   exercicioId: 'Exercício',
   origemDoExercicio: 'Origem',
@@ -254,16 +257,22 @@ const CAMPOS_DO_FILTRO = Object.keys(ROTULOS_DO_FILTRO) as CampoDoFiltro[];
 
 function Filtros({
   sessoes,
+  aplicacoes,
   filtro,
   mudar,
 }: {
   sessoes: RegistroDeSessao[];
+  /** As aplicações cadastradas no banco (D37); vazia fora do modo do pesquisador. */
+  aplicacoes: string[];
   filtro: FiltroDeSessoes;
   mudar: (filtro: FiltroDeSessoes) => void;
 }) {
   // As opções saem das sessões da origem, e não do catálogo: filtrar por um
-  // exercício que ninguém abriu só produziria tabela vazia.
+  // exercício que ninguém abriu só produziria tabela vazia. A aplicação é a
+  // exceção: a lista vem do banco, para a aplicação aberta hoje aparecer
+  // antes da primeira sessão dela.
   const opcoes: Record<CampoDoFiltro, string[]> = {
+    aplicacao: [...new Set([...aplicacoes, ...opcoesDe(sessoes, (s) => s.estudo?.aplicacao ?? null)])].sort(),
     participanteId: opcoesDe(sessoes, (s) => s.participanteId),
     exercicioId: opcoesDe(sessoes, (s) => s.exercicioId),
     origemDoExercicio: opcoesDe(sessoes, (s) => origemDe(s)),
@@ -279,7 +288,7 @@ function Filtros({
             value={filtro[campo] ?? ''}
             onChange={(e) => mudar({ ...filtro, [campo]: e.target.value || null })}
           >
-            <option value="">todos</option>
+            <option value="">{campo === 'aplicacao' ? 'todas' : 'todos'}</option>
             {opcoes[campo].map((valor) => (
               <option key={valor} value={valor}>
                 {campo === 'participanteId' ? participanteCurto(valor) : valor}
@@ -304,6 +313,7 @@ export function PainelDeMetricas() {
   const identidade = useIdentidade();
   const pesquisador = identidade.papel === 'pesquisador';
   const banco = useSessoesDoBanco(pesquisador);
+  const estudo = useDadosDoEstudo(pesquisador);
   const origem = pesquisador ? 'banco' : 'aparelho';
 
   const espelho = estadoDoEspelho();
@@ -340,6 +350,21 @@ export function PainelDeMetricas() {
     baixarMetricas(
       exportarSessoes(sessoes, { origem, filtro, totalNaOrigem: todas.length }),
       `metricas-${origem}.json`
+    );
+
+  // O CSV do estudo (D37) leva todas as sessões do percurso da aplicação
+  // escolhida, e só esse filtro vale para ele: um CSV não tem onde dizer que
+  // recorte foi aplicado, e a validade e o aquecimento já são colunas, que a
+  // análise filtra. Do banco, ele espera os participantes e as respostas:
+  // sem eles, sairia com essas colunas vazias, como se ninguém tivesse
+  // respondido.
+  const doEstudo = sessoesDoEstudo(todas, filtro.aplicacao);
+  const csvPronto = doEstudo.length > 0 && (!pesquisador || estudo.dados !== null);
+  const exportarCsv = () =>
+    baixarMetricas(
+      csvDoEstudo(doEstudo, estudo.dados?.participantes ?? [], estudo.dados?.respostas ?? []),
+      `estudo-${filtro.aplicacao ?? 'todas'}.csv`,
+      'text/csv;charset=utf-8'
     );
 
   // A mesma máquina serve a vários participantes (D15). Apagar é irreversível e
@@ -433,6 +458,12 @@ export function PainelDeMetricas() {
       {pesquisador && banco.erro && (
         <p className="erro">A leitura do banco falhou ({banco.erro}).</p>
       )}
+      {pesquisador && estudo.erro && (
+        <p className="erro">
+          A leitura do estudo falhou ({estudo.erro}): o CSV do estudo fica indisponível até
+          recarregar.
+        </p>
+      )}
 
       <section className="painel">
         <div className="cabecalho-painel">
@@ -441,12 +472,25 @@ export function PainelDeMetricas() {
           </h2>
           <div className="acoes-painel">
             {pesquisador && (
-              <button onClick={banco.recarregar} disabled={banco.carregando}>
-                {banco.carregando ? 'Lendo…' : 'Recarregar do banco'}
+              <button
+                onClick={() => {
+                  banco.recarregar();
+                  estudo.recarregar();
+                }}
+                disabled={banco.carregando || estudo.carregando}
+              >
+                {banco.carregando || estudo.carregando ? 'Lendo…' : 'Recarregar do banco'}
               </button>
             )}
             <button onClick={exportar} disabled={sessoes.length === 0}>
               Exportar o que está na tela (JSON)
+            </button>
+            <button
+              onClick={exportarCsv}
+              disabled={!csvPronto}
+              title="Todas as sessões do estudo da aplicação escolhida, ou de todas; os outros filtros não valem para o CSV"
+            >
+              Exportar CSV do estudo
             </button>
             {/* Limpar é do aparelho. Na leitura do banco o botão não aparece:
                 apagaria outra coisa que não o que está na tela. */}
@@ -462,7 +506,12 @@ export function PainelDeMetricas() {
           </div>
         </div>
 
-        <Filtros sessoes={todas} filtro={filtro} mudar={setFiltro} />
+        <Filtros
+          sessoes={todas}
+          aplicacoes={estudo.dados?.aplicacoes ?? []}
+          filtro={filtro}
+          mudar={setFiltro}
+        />
 
         {sessoes.length === 0 ? (
           <p className="rodape-painel">

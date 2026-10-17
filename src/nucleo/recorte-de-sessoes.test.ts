@@ -109,6 +109,7 @@ describe('recorte das sessões', () => {
 
   it('os critérios se combinam', () => {
     const recorte = filtrarSessoes(todas, {
+      aplicacao: null,
       participanteId: 'b',
       exercicioId: 'pilha-reverter',
       andaime: null,

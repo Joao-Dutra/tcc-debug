@@ -1,7 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../src/nucleo/metricas';
+import { INTERVALO_ENTRE_LOCALIZACOES_MS, criarSessao } from '../src/nucleo/metricas';
+import { COLUNAS_DO_CSV } from '../src/estudo/exportacao';
 
 /**
  * Painel de métricas sobre as sessões do aparelho (D22).
@@ -70,6 +71,7 @@ test('a exportação leva só o recorte, e diz qual foi', async ({ page }) => {
   expect(conteudo.recorte).toEqual({
     origem: 'aparelho',
     filtro: {
+      aplicacao: null,
       participanteId: null,
       exercicioId: null,
       andaime: null,
@@ -127,4 +129,55 @@ test('a aba esquecida sai sinalizada como ociosa, com a duração ativa ao lado 
   // A total continua a do registro, intocada; a ativa deixa o silêncio de fora.
   await expect(celulas.nth(coluna('Duração'))).toHaveText(/^6 min 0\d s$/);
   await expect(celulas.nth(coluna('Ativa'))).toHaveText(/^\d+ s$/);
+});
+
+test('o CSV do estudo, sem banco: a aplicação escolhida, com o grupo do aparelho', async ({ page }) => {
+  // Duas sessões do percurso, de aplicações diferentes, e uma de fora dele,
+  // arquivadas no aparelho antes de a página abrir.
+  const doEstudo = (aplicacao: string, etapa: number) => {
+    const s = criarSessao({
+      exercicioId: etapa === 0 ? 'vetor-zerar-negativos' : 'pilha-desempilhar',
+      andaime: 'com-apoio',
+      participanteId: null,
+      linhaDoDefeito: 3,
+      estudo: { aplicacao, etapa, aquecimento: etapa === 0, grupoNoAparelho: 'A' },
+    });
+    s.registrarEncerramento('seguir');
+    return s.registro();
+  };
+  const avulsa = criarSessao({ exercicioId: 'vetor-dobrar', andaime: 'com-apoio', linhaDoDefeito: 3 }).registro();
+  const arquivo = [doEstudo('piloto-nov', 0), doEstudo('piloto-nov', 1), doEstudo('aeds1-2026', 1), avulsa];
+  await page.addInitScript((conteudo) => {
+    if (!sessionStorage.getItem('semeado')) {
+      localStorage.setItem('depurar:sessoes-arquivadas', conteudo);
+      sessionStorage.setItem('semeado', 'sim');
+    }
+  }, JSON.stringify(arquivo));
+  await page.goto('/#/metricas');
+  await expect(page.getByRole('heading', { name: 'Sessões (4 de 4 · 0 válidas)' })).toBeVisible();
+
+  // O filtro por aplicação recorta a tabela pelas sessões do percurso.
+  await page.getByLabel('Aplicação').selectOption('piloto-nov');
+  await expect(page.getByRole('heading', { name: 'Sessões (2 de 4 · 0 válidas)' })).toBeVisible();
+
+  // Os outros filtros não valem para o CSV: ele leva as duas da aplicação.
+  await page.getByLabel(/Só sessões válidas/).check();
+  const baixando = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar CSV do estudo' }).click();
+  const baixado = await baixando;
+  expect(baixado.suggestedFilename()).toBe('estudo-piloto-nov.csv');
+  const bytes = readFileSync(await baixado.path());
+  // UTF-8 sem BOM.
+  expect([...bytes.subarray(0, 3)]).not.toEqual([0xef, 0xbb, 0xbf]);
+  const linhas = bytes.toString('utf8').split('\r\n');
+  expect(linhas.at(-1)).toBe('');
+  expect(linhas[0]).toBe(COLUNAS_DO_CSV.join(','));
+  const corpo = linhas.slice(1, -1).map((l) => Object.fromEntries(l.split(',').map((v, i) => [COLUNAS_DO_CSV[i], v])));
+  expect(corpo.map((l) => [l.aplicacao, l.etapa, l.grupo, l.apoio_confere_com_plano, l.desfecho])).toEqual([
+    ['piloto-nov', '0', 'A', 'true', 'desistencia'],
+    ['piloto-nov', '1', 'A', 'true', 'desistencia'],
+  ]);
+  // Sem banco não há perfil nem questionário para juntar.
+  expect(corpo[0].perfil_aeds1).toBe('');
+  expect(corpo[0].sus_escore).toBe('');
 });

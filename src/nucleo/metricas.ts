@@ -374,6 +374,11 @@ export function origemDe(registro: RegistroDeSessao): OrigemDoExercicio {
 
 /** Nulo em um critério quer dizer "qualquer um". */
 export interface FiltroDeSessoes {
+  /**
+   * A aplicação do estudo (D37). Escolhida, só ficam as sessões do percurso
+   * daquela aplicação; as de fora do estudo não têm aplicação nenhuma.
+   */
+  aplicacao: string | null;
   participanteId: string | null;
   exercicioId: string | null;
   andaime: string | null;
@@ -383,6 +388,7 @@ export interface FiltroDeSessoes {
 }
 
 export const SEM_FILTRO: FiltroDeSessoes = {
+  aplicacao: null,
   participanteId: null,
   exercicioId: null,
   andaime: null,
@@ -397,6 +403,7 @@ export function filtrarSessoes(
 ): RegistroDeSessao[] {
   return registros.filter(
     (r) =>
+      (filtro.aplicacao === null || r.estudo?.aplicacao === filtro.aplicacao) &&
       (filtro.participanteId === null || r.participanteId === filtro.participanteId) &&
       (filtro.exercicioId === null || r.exercicioId === filtro.exercicioId) &&
       (filtro.andaime === null || r.andaime === filtro.andaime) &&

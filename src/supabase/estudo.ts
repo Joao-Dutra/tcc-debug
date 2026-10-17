@@ -4,6 +4,7 @@ import { sincronizarPendentes } from '../nucleo/metricas';
 import type { GrupoDoEstudo } from '../estudo/percurso';
 import type { PerfilDoParticipante } from '../estudo/perfil';
 import type { RespostaDoQuestionario } from '../estudo/questionario';
+import type { ParticipanteDoEstudo, RespostaLida } from '../estudo/exportacao';
 
 /**
  * A área do estudo no banco (D37, migração 0004).
@@ -105,6 +106,87 @@ export async function trocarPorAnonimaNova(): Promise<string> {
     throw new Error(falha ?? 'a identidade anônima não foi criada');
   }
   return usuarioId;
+}
+
+/** O que o painel do pesquisador lê do estudo, além das sessões. */
+export interface DadosDoEstudo {
+  /** Os códigos cadastrados, abertos ou não. */
+  aplicacoes: string[];
+  participantes: ParticipanteDoEstudo[];
+  respostas: RespostaLida[];
+}
+
+const LINHAS_POR_PAGINA = 1000;
+
+/**
+ * Todas as linhas de uma tabela, página por página, até a página vazia —
+ * pelo mesmo motivo da leitura das sessões (D22): o limite do projeto corta
+ * a resposta em silêncio.
+ */
+async function lerTodas<Linha>(tabela: string, colunas: string, ordem: string[]): Promise<Linha[]> {
+  const linhas: Linha[] = [];
+  for (;;) {
+    let consulta = cliente().from(tabela).select(colunas);
+    for (const coluna of ordem) consulta = consulta.order(coluna, { ascending: true });
+    const { data, error } = await consulta.range(linhas.length, linhas.length + LINHAS_POR_PAGINA - 1);
+    if (error) throw new Error(error.message);
+    const pagina = (data ?? []) as Linha[];
+    if (pagina.length === 0) return linhas;
+    linhas.push(...pagina);
+  }
+}
+
+/**
+ * As aplicações, os participantes e as respostas. Só o pesquisador lê estas
+ * tabelas; para qualquer outra identidade, o RLS devolve listas vazias (0004).
+ */
+export async function lerDadosDoEstudo(): Promise<DadosDoEstudo> {
+  const [aplicacoes, participantes, respostas] = await Promise.all([
+    lerTodas<{ codigo: string }>('aplicacoes_do_estudo', 'codigo', ['codigo']),
+    lerTodas<{
+      participante_id: string;
+      aplicacao: string;
+      grupo: GrupoDoEstudo;
+      ordem_de_entrada: number;
+      aeds1: PerfilDoParticipante['aeds1'];
+      depurador: PerfilDoParticipante['depurador'];
+      usou_visualizacao: PerfilDoParticipante['usouVisualizacao'];
+    }>(
+      'participantes_do_estudo',
+      'participante_id, aplicacao, grupo, ordem_de_entrada, aeds1, depurador, usou_visualizacao',
+      ['aplicacao', 'ordem_de_entrada']
+    ),
+    lerTodas<{
+      participante_id: string;
+      aplicacao: string;
+      versao_do_questionario: number;
+      escalas: Record<string, number>;
+      o_que_ajudou: string | null;
+      o_que_atrapalhou: string | null;
+    }>(
+      'respostas_do_questionario',
+      'participante_id, aplicacao, versao_do_questionario, escalas, o_que_ajudou, o_que_atrapalhou',
+      ['aplicacao', 'participante_id']
+    ),
+  ]);
+  return {
+    aplicacoes: aplicacoes.map((a) => a.codigo),
+    participantes: participantes.map((p) => ({
+      participanteId: p.participante_id,
+      aplicacao: p.aplicacao,
+      grupo: p.grupo,
+      ordemDeEntrada: p.ordem_de_entrada,
+      perfil: { aeds1: p.aeds1, depurador: p.depurador, usouVisualizacao: p.usou_visualizacao },
+    })),
+    respostas: respostas.map((r) => ({
+      participanteId: r.participante_id,
+      aplicacao: r.aplicacao,
+      versao: r.versao_do_questionario,
+      escalas: r.escalas,
+      oQueAjudou: r.o_que_ajudou,
+      oQueAtrapalhou: r.o_que_atrapalhou,
+    })),
+  };
 }
 
 /**

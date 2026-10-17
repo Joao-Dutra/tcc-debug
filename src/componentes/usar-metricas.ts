@@ -272,9 +272,12 @@ export function useMetricas(
   };
 }
 
-/** Entrega o JSON como arquivo. Vive aqui porque mexe no DOM. */
-export function baixarMetricas(json: string, nomeDoArquivo: string): void {
-  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
+/**
+ * Entrega o texto como arquivo — o JSON das sessões ou o CSV do estudo. Vive
+ * aqui porque mexe no DOM. O Blob de uma string sai em UTF-8, sem BOM.
+ */
+export function baixarMetricas(texto: string, nomeDoArquivo: string, tipo = 'application/json'): void {
+  const url = URL.createObjectURL(new Blob([texto], { type: tipo }));
   const link = document.createElement('a');
   link.href = url;
   link.download = nomeDoArquivo;
