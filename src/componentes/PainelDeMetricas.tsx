@@ -162,6 +162,10 @@ export function descreverEvento(evento: Evento): string {
         default:
           return `${evento.gesto === 'avancar' ? 'avançou' : 'voltou'} do passo ${evento.de} ao ${evento.para} de ${evento.total}`;
       }
+    case 'encerramento':
+      return evento.motivo === 'seguir'
+        ? 'encerrada pelo botão de seguir'
+        : 'encerrada pelo tempo esgotado';
   }
 }
 

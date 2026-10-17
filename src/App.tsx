@@ -1,6 +1,8 @@
 import { catalogo, proximoDoCatalogo } from './exercicios/catalogo';
 import { AberturaDoProposto } from './componentes/AberturaDoProposto';
+import { AreaDoEstudo } from './componentes/AreaDoEstudo';
 import { AreaDoProfessor } from './componentes/AreaDoProfessor';
+import { ConferenciaDoEstudo } from './componentes/ConferenciaDoEstudo';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { PreviaComoAluno } from './componentes/PreviaComoAluno';
 import { TelaExercicio } from './componentes/TelaExercicio';
@@ -28,6 +30,11 @@ export default function App() {
 
   // Área do professor (D29, D31), com entrada própria na tela inicial.
   if (rota.tela === 'autoria') return <AreaDoProfessor />;
+
+  // A área do estudo (D37), fora da navegação. A chave faz outro código
+  // começar outro percurso, em vez de herdar o estado do anterior.
+  if (rota.tela === 'estudo') return <AreaDoEstudo key={rota.aplicacao} aplicacao={rota.aplicacao} />;
+  if (rota.tela === 'conferir') return <ConferenciaDoEstudo aplicacao={rota.aplicacao} />;
 
   // O exercício de um professor como o aluno o verá, sem gravar sessão (D33).
   if (rota.tela === 'previa') {

@@ -121,6 +121,26 @@ describe('leitura do banco', () => {
     const lida = deLinha({ ...paraLinha(antiga, 'uid-a'), origem_do_exercicio: 'catalogo' });
     expect(lida).not.toHaveProperty('origemDoExercicio');
   });
+
+  it('a marca do estudo vai em duas colunas e volta inteira (D37)', () => {
+    const doEstudo: RegistroDeSessao = {
+      ...registro('sessao-e', 'uid-a'),
+      versao: 11,
+      origemDoExercicio: 'catalogo',
+      estudo: { aplicacao: 'piloto-nov', etapa: 3, aquecimento: false },
+    };
+    const linha = paraLinha(doEstudo, 'uid-a');
+    // A aplicação em coluna própria: é por ela que o RLS confere a participação.
+    expect(linha.aplicacao).toBe('piloto-nov');
+    expect(linha.estudo).toEqual({ etapa: 3, aquecimento: false });
+    expect(deLinha(linha)).toEqual(doEstudo);
+  });
+
+  it('fora do estudo, as duas colunas vão nulas, e o registro volta sem a marca', () => {
+    const linha = paraLinha(registro('sessao-f', 'uid-a'), 'uid-a');
+    expect([linha.aplicacao, linha.estudo]).toEqual([null, null]);
+    expect(deLinha(linha)).not.toHaveProperty('estudo');
+  });
 });
 
 describe('gravação no banco', () => {

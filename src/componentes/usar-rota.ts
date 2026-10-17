@@ -18,7 +18,9 @@ export type Rota =
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' }
   | { tela: 'autoria' }
-  | { tela: 'previa'; id: string; andaime: NivelDeAndaime };
+  | { tela: 'previa'; id: string; andaime: NivelDeAndaime }
+  | { tela: 'estudo'; aplicacao: string }
+  | { tela: 'conferir'; aplicacao: string };
 
 export const CAMINHO_INICIAL = '#/';
 
@@ -63,6 +65,23 @@ export function caminhoDoExercicio(id: string, andaime?: NivelDeAndaime): string
   return andaime === undefined ? caminho : `${caminho}?andaime=${andaime}`;
 }
 
+/**
+ * A área do estudo (D37), fora da navegação: nenhuma tela aponta para ela, e
+ * o pesquisador entrega o endereço na aula. O código da aplicação vai no
+ * caminho, e é ele que separa o piloto da coleta.
+ */
+export function caminhoDoEstudo(aplicacao: string): string {
+  return `#/estudo/${encodeURIComponent(aplicacao)}`;
+}
+
+/**
+ * A conferência de uma máquina antes da aula (D37), fora do percurso: testa o
+ * banco, a identidade e o Worker, sem gravar sessão nem consumir vaga.
+ */
+export function caminhoDaConferencia(aplicacao: string): string {
+  return `${caminhoDoEstudo(aplicacao)}/conferir`;
+}
+
 /** Um link colado errado não pode derrubar a aplicação. */
 function decodificar(valor: string): string {
   try {
@@ -90,6 +109,10 @@ export function interpretarHash(hash: string): Rota {
     };
   }
   if (partes[0] === 'exercicios') return { tela: 'exercicios' };
+  if (partes[0] === 'estudo' && partes[1]) {
+    const aplicacao = decodificar(partes[1]);
+    return partes[2] === 'conferir' ? { tela: 'conferir', aplicacao } : { tela: 'estudo', aplicacao };
+  }
 
   if (partes[0] === 'exercicio' && partes[1]) {
     return {

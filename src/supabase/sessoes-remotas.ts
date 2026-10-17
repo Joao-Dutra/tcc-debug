@@ -1,7 +1,7 @@
 import { supabase, supabaseConfigurado } from './cliente';
 import { iniciarIdentidade, identidadeAtual, observarIdentidade } from './identidade';
 import { ativarDestinoRemoto, origemDe, sincronizarPendentes } from '../nucleo/metricas';
-import type { DestinoRemoto, RegistroDeSessao } from '../nucleo/metricas';
+import type { DestinoRemoto, MarcaDoEstudo, RegistroDeSessao } from '../nucleo/metricas';
 import type { OrigemDoExercicio } from '../nucleo/tipos';
 
 /**
@@ -26,6 +26,13 @@ export interface LinhaDeSessao {
   duracao_total_ms: number;
   eventos: RegistroDeSessao['eventos'];
   resumo: RegistroDeSessao['resumo'];
+  /**
+   * A aplicação do estudo, em coluna própria (0004): é por ela que o RLS
+   * confere a participação e que o painel filtra. Nula fora do estudo.
+   */
+  aplicacao: string | null;
+  /** O resto da marca do estudo (D37). Nulo fora dele. */
+  estudo: Omit<MarcaDoEstudo, 'aplicacao'> | null;
 }
 
 /** Desde quando o registro traz a origem do exercício (D31). */
@@ -50,7 +57,14 @@ export function paraLinha(registro: RegistroDeSessao, participanteId: string): L
     duracao_total_ms: registro.duracaoTotalMs,
     eventos: registro.eventos,
     resumo: registro.resumo,
+    ...separarEstudo(registro.estudo),
   };
+}
+
+function separarEstudo(marca: MarcaDoEstudo | undefined): Pick<LinhaDeSessao, 'aplicacao' | 'estudo'> {
+  if (!marca) return { aplicacao: null, estudo: null };
+  const { aplicacao, ...resto } = marca;
+  return { aplicacao, estudo: resto };
 }
 
 /** O caminho de volta: uma linha do banco como o núcleo a conhece. */
@@ -72,6 +86,11 @@ export function deLinha(linha: LinhaDeSessao): RegistroDeSessao {
     duracaoTotalMs: linha.duracao_total_ms,
     eventos: linha.eventos,
     resumo: linha.resumo,
+    // Só quando existe, como no registro: a sessão de fora do estudo sai do
+    // banco com a mesma forma com que entrou.
+    ...(linha.aplicacao && linha.estudo
+      ? { estudo: { aplicacao: linha.aplicacao, ...linha.estudo } }
+      : {}),
   };
 }
 
@@ -139,7 +158,7 @@ export async function lerSessoesDoBanco(): Promise<RegistroDeSessao[]> {
     const { data, error } = await cliente
       .from('sessoes')
       .select(
-        'id, participante_id, versao, exercicio_id, origem_do_exercicio, andaime, instante_de_inicio, duracao_total_ms, eventos, resumo'
+        'id, participante_id, versao, exercicio_id, origem_do_exercicio, andaime, instante_de_inicio, duracao_total_ms, eventos, resumo, aplicacao, estudo'
       )
       // O id desempata: com a ordem só pelo instante, duas sessões com o
       // mesmo início poderiam trocar de página entre uma consulta e outra.

@@ -1080,3 +1080,44 @@ button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content:
   .tutorial-corpo { grid-template-columns: 1fr; }
 }
 
+
+/* ---------------------------------------------------------------------------
+   Área do estudo (D37)
+
+   O mesmo vocabulário das outras telas, mais quieto: o aviso e o perfil são
+   texto para ler com calma, numa coluna só, e nada aqui diz ao participante
+   como ele está indo. A posição no percurso fica onde a navegação ficaria, em
+   letra de apoio, porque é ela que substitui o caminho de volta.
+--------------------------------------------------------------------------- */
+.posicao-no-percurso { font-size: var(--fonte-apoio); color: var(--grafite-suave); }
+.corpo-do-estudo { display: block; max-width: var(--largura-texto); }
+.corpo-do-estudo > p { margin: 0 0 var(--esp-16); line-height: 1.6; }
+.aviso-do-estudo p, .perfil-do-estudo > p { margin: 0 0 var(--esp-12); line-height: 1.6; }
+.aviso-do-estudo .rodape-painel { margin: 0 0 var(--esp-12); }
+.concordo { display: flex; align-items: center; gap: var(--esp-8); margin: var(--esp-20) 0;
+  font-weight: 700; cursor: pointer; }
+.concordo input, .perfil-do-estudo input { width: 18px; height: 18px; margin: 0;
+  accent-color: var(--acao); }
+.aviso-do-estudo .erro, .perfil-do-estudo .erro { margin: 0 0 var(--esp-12); }
+.perfil-do-estudo fieldset { border: 1px solid var(--regua); border-radius: var(--raio-faixa);
+  margin: 0 0 var(--esp-16); padding: var(--esp-12) var(--esp-16); display: flex;
+  flex-wrap: wrap; gap: var(--esp-8) var(--esp-20); }
+.perfil-do-estudo legend { font-weight: 700; padding: 0 var(--esp-4); }
+.perfil-do-estudo label { display: flex; align-items: center; gap: var(--esp-6); cursor: pointer; }
+/* O seguir pesa como o botão de ajuda ao lado, e não como a ação principal:
+   a ação principal da tela continua sendo investigar. */
+button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula); background: transparent; }
+.confirmar-seguir { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8);
+  margin: 0; font-size: var(--fonte-apoio); }
+.conferencia { list-style: none; margin: 0 0 var(--esp-20); padding: 0; display: flex;
+  flex-direction: column; gap: var(--esp-10); }
+.conferencia li { display: grid; grid-template-columns: 16px minmax(0, 1fr) auto;
+  gap: var(--esp-4) var(--esp-8); align-items: center; padding: var(--esp-10) var(--esp-16);
+  background: var(--painel); border-radius: var(--raio-faixa); }
+.conferencia .nome { font-weight: 700; grid-column: 2; }
+.conferencia .veredito { font-weight: 700; }
+.conferencia .ok .veredito, .conferencia .ok .icone { color: var(--acerto); }
+.conferencia .falha .veredito, .conferencia .falha .icone { color: var(--erro); }
+.conferencia .conferindo .veredito { color: var(--grafite-suave); font-weight: 500; }
+.conferencia .detalhe { grid-column: 2 / -1; font-size: var(--fonte-apoio);
+  color: var(--grafite-suave); overflow-wrap: anywhere; }

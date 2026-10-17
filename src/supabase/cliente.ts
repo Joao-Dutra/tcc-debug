@@ -40,6 +40,24 @@ export function supabase(): SupabaseClient | null {
   return cliente;
 }
 
+/**
+ * Um cliente à parte, que não guarda sessão nenhuma no navegador. Serve à
+ * conferência das máquinas do estudo (D37), que precisa testar a criação de
+ * uma identidade anônima sem trocar a identidade do aparelho. A chave de
+ * armazenamento é outra para ele não disputar o token com o cliente principal.
+ */
+export function clienteAvulso(): SupabaseClient | null {
+  if (!url || !chave) return null;
+  return createClient(url, chave, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+      storageKey: 'depurar-conferencia',
+    },
+  });
+}
+
 /** Para a tela poder dizer que está gravando só no aparelho. */
 export function supabaseConfigurado(): boolean {
   return Boolean(url && chave);

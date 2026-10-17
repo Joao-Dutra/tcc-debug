@@ -8,6 +8,8 @@ import {
 import type {
   DesfechoDoTutorial,
   EventoDeLocalizacao,
+  MarcaDoEstudo,
+  MotivoDoEncerramento,
   MotivoDoTutorial,
   ExecucaoDisparada,
   OrigemDaExecucao,
@@ -32,12 +34,28 @@ const PAUSA_DA_RAJADA_MS = 2000;
  */
 const PAUSA_DO_ARRASTO_MS = 500;
 
+/** A sessão aberta dentro do percurso do estudo (D37). */
+export interface SessaoDoEstudo {
+  marca: MarcaDoEstudo;
+  /**
+   * A identidade criada na entrada do percurso. Fixada na sessão, e não lida
+   * no arquivamento: no fim do percurso o aparelho troca de identidade, e a
+   * última sessão não pode sair com a do próximo participante.
+   */
+  participanteId: string | null;
+}
+
 /**
  * `gravar` falso é a pré-visualização do autor (D33): a sessão existe, para a
  * tela funcionar igual, mas nunca é arquivada — nem no aparelho, nem no banco.
  * O que um professor faz vendo o próprio exercício não é dado do estudo.
  */
-export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true) {
+export function useMetricas(
+  exercicio: Exercicio,
+  andaime: string,
+  gravar = true,
+  estudo?: SessaoDoEstudo
+) {
   // Criada uma única vez: o instante de início é o instante em que o estudante
   // passou a encarar o exercício, não o de um render qualquer. Do exercício
   // saem o id, a origem (D31) e as linhas que julgam a localização (D7, D30) —
@@ -50,9 +68,15 @@ export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true
       linhaDoDefeito: exercicio.linhaDoDefeito,
       linhasAceitas: exercicio.linhasAceitas,
       andaime,
+      ...(estudo ? { estudo: estudo.marca, participanteId: estudo.participanteId } : {}),
     });
   }
 
+  // Encerrada pelo percurso do estudo (D37), a sessão já foi arquivada com o
+  // encerramento como último evento, e nenhum retrato posterior a substitui:
+  // o que acontecesse depois — a reprodução chegando ao fim por baixo da tela
+  // de tempo esgotado — ficaria depois do fim.
+  const encerrada = useRef(false);
   const temporizador = useRef<number | undefined>(undefined);
   const rascunho = useRef<string | null>(null);
   const fimDoArrasto = useRef<number | undefined>(undefined);
@@ -95,9 +119,24 @@ export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true
   // rajada em andamento é uma edição que aconteceu de verdade e precisa entrar
   // no log antes do retrato.
   const arquivarRetrato = useCallback(() => {
+    if (encerrada.current) return;
     fecharRajada();
     if (gravar && sessao.current) arquivarSessao(sessao.current.registro());
   }, [fecharRajada, gravar]);
+
+  // O fim da sessão no percurso do estudo: pelo botão de seguir ou pelo
+  // prazo. Uma execução ainda no Worker fica como interrompida (D23).
+  const encerrar = useCallback(
+    (motivo: MotivoDoEncerramento) => {
+      if (encerrada.current) return;
+      fecharRajada();
+      window.clearTimeout(fimDoArrasto.current);
+      sessao.current?.registrarEncerramento(motivo);
+      arquivarRetrato();
+      encerrada.current = true;
+    },
+    [fecharRajada, arquivarRetrato]
+  );
 
   // Sair do exercício encerra a sessão. Uma execução ainda no Worker fica
   // gravada como interrompida, com o código que foi executado (D23): ela entra
@@ -218,6 +257,7 @@ export function useMetricas(exercicio: Exercicio, andaime: string, gravar = true
   }, []);
 
   return {
+    encerrar,
     observadorDoReprodutor,
     registrarTutorialAberto,
     registrarTutorialFechado,

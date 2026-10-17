@@ -74,8 +74,15 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * campos de navegação do resumo ficam ausentes nesses registros. O sinal de
  * ociosidade (D26) muda junto: ele conta todo evento como atividade, e da
  * versão 10 em diante quem passa minutos navegando deixa de parecer ocioso.
+ *
+ * 11 — a área do estudo (D37). O registro ganhou `estudo`, a marca da sessão
+ * aberta dentro do percurso, e o log ganhou `encerramento`, o fim da sessão
+ * pelo botão de seguir ou pelo tempo esgotado. Fora da área do estudo nada
+ * muda; dentro dela, a sessão passa a ter prazo, e a duração dela deixa de ser
+ * só a vontade do estudante. Sem a versão, uma sessão de 8 minutos cortada
+ * pelo prazo seria lida como alguém que ficou 8 minutos e saiu.
  */
-export const VERSAO_DO_REGISTRO = 10;
+export const VERSAO_DO_REGISTRO = 11;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -138,6 +145,34 @@ export type GestoDeNavegacao = 'avancar' | 'voltar' | 'tocar' | 'pausar' | 'arra
  * ou o resultado de outra execução substituiu o que estava tocando.
  */
 export type MotivoDaParada = 'fim' | 'nova-execucao';
+
+/**
+ * Como uma sessão da área do estudo terminou (D37): pelo botão de seguir ou
+ * pelo prazo. O log guarda o gesto, e não o juízo — "desistiu" é derivado na
+ * análise, de seguir sem nenhuma execução que passou em todos os casos. Quem
+ * corrige e depois segue não desistiu, e um log que dissesse "desistência" no
+ * clique o contaria como desistente.
+ */
+export type MotivoDoEncerramento = 'seguir' | 'tempo-esgotado';
+
+/**
+ * A marca de uma sessão aberta dentro do percurso do estudo (D37). Ausente em
+ * toda sessão fora dele.
+ *
+ * O grupo não entra: a fonte dele é a tabela de participantes, que só o banco
+ * escreve. A exceção é a instalação sem banco, em que o grupo é escolhido no
+ * próprio aparelho — e aí ele vai aqui, para não se perder, marcado como tal.
+ */
+export interface MarcaDoEstudo {
+  /** O código da aplicação, como `piloto-nov`. */
+  aplicacao: string;
+  /** 0 é o aquecimento; de 1 em diante, os exercícios da análise. */
+  etapa: number;
+  /** O aquecimento fica fora da análise, para todos os grupos. */
+  aquecimento: boolean;
+  /** Só sem banco: o grupo escolhido no aparelho, e não pelo banco. */
+  grupoNoAparelho?: 'A' | 'B';
+}
 
 /**
  * Campos comuns a todo evento de navegação. Os passos contam a partir de 1,
@@ -212,7 +247,12 @@ export type Evento =
   | ({ tipo: 'navegacao'; t: number; gesto: 'arrastar'; tFim: number } & PosicaoNoReprodutor)
   /** A reprodução parou sozinha. Não é gesto, e não conta como navegação. */
   | ({ tipo: 'navegacao'; t: number; gesto: 'parou'; motivo: MotivoDaParada } &
-      PosicaoNoReprodutor);
+      PosicaoNoReprodutor)
+  /**
+   * Desde a versão 11, e só na área do estudo (D37). O último evento da
+   * sessão: o que vier depois dele não é arquivado.
+   */
+  | { tipo: 'encerramento'; t: number; motivo: MotivoDoEncerramento };
 
 /** Métricas agregadas. Sempre deriváveis do log; nunca a única cópia do dado. */
 export interface ResumoDaSessao {
@@ -264,6 +304,8 @@ export interface RegistroDeSessao {
    * informou e não conhece os níveis nem o que cada um revela.
    */
   andaime: string | null;
+  /** A marca do percurso do estudo (D37). Ausente fora dele, e até a versão 10. */
+  estudo?: MarcaDoEstudo;
   /** Relógio de parede, ISO 8601 — única âncora absoluta do registro. */
   instanteDeInicio: string;
   duracaoTotalMs: number;
@@ -478,6 +520,8 @@ export interface OpcoesDaSessao {
   linhasAceitas?: number[];
   /** Fixa a identidade da sessão; sem ela, vale a do módulo no arquivamento. */
   participanteId?: string | null;
+  /** Presente, a sessão é do percurso do estudo (D37). */
+  estudo?: MarcaDoEstudo;
   /** Relógio monotônico. Injetável para teste. */
   agora?: () => number;
 }
@@ -538,6 +582,8 @@ export interface Sessao {
    */
   moverBarra(de: number, para: number, total: number): void;
   encerrarArrasto(): void;
+  /** O fim da sessão no percurso do estudo (D37). */
+  registrarEncerramento(motivo: MotivoDoEncerramento): void;
   /** Retrato do registro no instante da chamada; pode ser pedido quantas vezes for. */
   registro(): RegistroDeSessao;
 }
@@ -693,6 +739,10 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
       fecharArrasto();
     },
 
+    registrarEncerramento(motivo) {
+      anotar({ tipo: 'encerramento', t: t(), motivo });
+    },
+
     registro() {
       // O arrasto aberto entra no retrato sem ser fechado: quem continua
       // arrastando depois do retrato continua o mesmo arrasto.
@@ -704,6 +754,9 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
         origemDoExercicio: opcoes.origemDoExercicio ?? 'catalogo',
         participanteId: opcoes.participanteId ?? participanteAtual,
         andaime: opcoes.andaime ?? null,
+        // Só quando existe: a sessão de fora do estudo continua com a mesma
+        // forma de antes.
+        ...(opcoes.estudo ? { estudo: opcoes.estudo } : {}),
         instanteDeInicio,
         duracaoTotalMs: t(),
         eventos: comArrasto,
@@ -914,6 +967,16 @@ export function sincronizarPendentes(): Promise<void> {
       envioEmCurso = null;
     });
   return envioEmCurso;
+}
+
+/**
+ * Se ainda há sessão desta identidade sem confirmação do banco. É o que a área
+ * do estudo consulta antes de trocar de identidade no fim do percurso (D37):
+ * depois da troca, o que ficou pendente não sobe mais pela identidade nova, e
+ * o RLS recusaria se subisse.
+ */
+export function haPendentesDe(participanteId: string): boolean {
+  return pendentes().some((s) => s.participanteId === participanteId);
 }
 
 export function estadoDoEnvio(): EstadoDoEnvio {

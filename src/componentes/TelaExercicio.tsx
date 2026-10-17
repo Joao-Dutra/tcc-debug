@@ -18,6 +18,7 @@ import { TutorialDoParticipante } from './TutorialDoParticipante';
 import { marcarTutorialVisto, tutorialJaVisto } from './tutorial-visto';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
 import { useMetricas } from './usar-metricas';
+import type { SessaoDoEstudo } from './usar-metricas';
 import { CAMINHO_EXERCICIOS, caminhoDoExercicio } from './usar-rota';
 import { linhaEmExecucao, marcarLinhaEmExecucao } from './linha-em-execucao';
 import { temaDoEditor } from './tema-do-editor';
@@ -29,7 +30,12 @@ import {
   rotuloDoAndaime,
 } from './andaime';
 import type { DetalheDosCasos, NivelDeAndaime } from './andaime';
-import type { DesfechoDoTutorial, MotivoDoTutorial, OrigemDaExecucao } from '../nucleo/metricas';
+import type {
+  DesfechoDoTutorial,
+  MotivoDoEncerramento,
+  MotivoDoTutorial,
+  OrigemDaExecucao,
+} from '../nucleo/metricas';
 import type { Exercicio, ResultadoExecucao } from '../nucleo/tipos';
 
 /**
@@ -153,6 +159,31 @@ export interface ModoDePrevia {
   enderecoDoNivel: (nivel: NivelDeAndaime) => string;
 }
 
+/**
+ * A tela dentro do percurso do estudo (D37). O miolo é o mesmo — código,
+ * visualização, casos, dicas e tutorial —; muda só o que leva para fora do
+ * exercício. Sem vitrine, sem troca de apoio e sem convite de próximo: quem
+ * decide o exercício e o apoio é o percurso, e o único caminho adiante é o
+ * botão de seguir, ou o prazo.
+ */
+export interface ModoDePercurso {
+  /** "Aquecimento" ou "Exercício 2 de 5": posição, e nunca desempenho. */
+  rotulo: string;
+  /** No último exercício, o botão diz que conclui, e não que segue. */
+  ultimo: boolean;
+  sessao: SessaoDoEstudo;
+  /** O fim da etapa, no relógio de parede. */
+  prazo: number;
+  /**
+   * No aquecimento, o tutorial abre sozinho. A marca do aparelho não é lida
+   * nem gravada: no laboratório o computador é compartilhado, e a marca de
+   * quem veio antes tiraria o tutorial do participante seguinte.
+   */
+  abrirTutorial: boolean;
+  /** Chamada depois de a sessão ser encerrada e arquivada. */
+  aoEncerrar: (motivo: MotivoDoEncerramento) => void;
+}
+
 interface Props {
   exercicio: Exercicio;
   andaime: NivelDeAndaime;
@@ -163,9 +194,46 @@ interface Props {
   proximo?: Exercicio;
   /** Presente, a tela é a pré-visualização do autor, e não a do aluno. */
   previa?: ModoDePrevia;
+  /** Presente, a tela é uma etapa do percurso do estudo. */
+  percurso?: ModoDePercurso;
 }
 
-export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
+/**
+ * O botão de seguir no percurso, com confirmação: um clique por engano
+ * perderia o exercício sem volta. A pergunta é a mesma tenha o estudante
+ * corrigido ou não — se mudasse, ela própria diria se o código está certo.
+ */
+function SeguirNoPercurso({ ultimo, aoSeguir }: { ultimo: boolean; aoSeguir: () => void }) {
+  const [confirmando, setConfirmando] = useState(false);
+  const ficar = useRef<HTMLButtonElement>(null);
+  // Quem pediu para seguir chega à pergunta pelo teclado; o foco vai para o
+  // lado que não perde nada.
+  useEffect(() => {
+    if (confirmando) ficar.current?.focus();
+  }, [confirmando]);
+
+  if (!confirmando) {
+    return (
+      <button className="seguir-no-percurso" onClick={() => setConfirmando(true)}>
+        {ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo'}
+        <ArrowRightIcon className="icone" aria-hidden="true" />
+      </button>
+    );
+  }
+  return (
+    <p className="confirmar-seguir" role="group" aria-label="Confirmar">
+      <span>Não dá para voltar a este exercício depois.</span>
+      <button ref={ficar} onClick={() => setConfirmando(false)}>
+        Ficar neste exercício
+      </button>
+      <button className="primario" onClick={aoSeguir}>
+        {ultimo ? 'Concluir' : 'Seguir'}
+      </button>
+    </p>
+  );
+}
+
+export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }: Props) {
   const [codigo, setCodigo] = useState(exercicio.codigoComDefeito);
   const [resultado, setResultado] = useState<ResultadoExecucao | null>(null);
   const [rodando, setRodando] = useState(false);
@@ -176,7 +244,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
   const [rodada, setRodada] = useState(0);
   const [tutorialAberto, setTutorialAberto] = useState(false);
 
-  const metricas = useMetricas(exercicio, andaime, previa === undefined);
+  const metricas = useMetricas(exercicio, andaime, previa === undefined, percurso?.sessao);
   // A navegação entra no log da sessão (D36); a tela não muda com isso.
   const reprodutor = useReprodutor(resultado?.instantaneos ?? [], metricas.observadorDoReprodutor);
   const jaAbriu = useRef(false);
@@ -253,13 +321,42 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
     // também viu, e o botão continua ali.
     // Na pré-visualização, não: quem olha é o autor, e marcar o aparelho como
     // visto tiraria o tutorial de um aluno que usasse este aparelho depois.
-    if (!previa && !tutorialJaVisto()) {
+    if (percurso) {
+      if (percurso.abrirTutorial) abrirTutorial('primeira-entrada');
+    } else if (!previa && !tutorialJaVisto()) {
       marcarTutorialVisto();
       abrirTutorial('primeira-entrada');
     }
     void rodar('automatica');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // O fim da etapa no percurso. A sessão é encerrada e arquivada antes de o
+  // percurso saber, para o encerramento ser o último evento dela.
+  // Uma vez só: o prazo pode vencer no instante em que o estudante confirma.
+  const encerrarEtapa = useRef<(motivo: MotivoDoEncerramento) => void>(() => {});
+  const etapaEncerrada = useRef(false);
+  useEffect(() => {
+    encerrarEtapa.current = (motivo) => {
+      if (etapaEncerrada.current) return;
+      etapaEncerrada.current = true;
+      metricas.encerrar(motivo);
+      percurso?.aoEncerrar(motivo);
+    };
+  });
+
+  // O prazo não aparece na tela (D37): nenhum relógio e nenhum aviso de que
+  // o tempo está acabando. Um contador à vista muda o comportamento que o
+  // estudo mede — e mudaria só em quem olha para ele.
+  const prazo = percurso?.prazo;
+  useEffect(() => {
+    if (prazo === undefined) return;
+    const cronometro = window.setTimeout(
+      () => encerrarEtapa.current('tempo-esgotado'),
+      Math.max(0, prazo - Date.now())
+    );
+    return () => window.clearTimeout(cronometro);
+  }, [prazo]);
 
   // Voltar a edição ao código executado apaga o sinal: o que importa é se o
   // que está no editor já rodou, e não se houve digitação no meio.
@@ -289,13 +386,30 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
         </p>
       )}
       <Cabecalho
+        semSaida={percurso !== undefined}
         navegacao={
-          <a className="voltar" href={previa?.voltar.href ?? CAMINHO_EXERCICIOS}>
-            <ArrowLeftIcon className="icone" aria-hidden="true" />
-            {previa?.voltar.rotulo ?? 'Todos os exercícios'}
-          </a>
+          percurso ? (
+            <span className="posicao-no-percurso">{percurso.rotulo}</span>
+          ) : (
+            <a className="voltar" href={previa?.voltar.href ?? CAMINHO_EXERCICIOS}>
+              <ArrowLeftIcon className="icone" aria-hidden="true" />
+              {previa?.voltar.rotulo ?? 'Todos os exercícios'}
+            </a>
+          )
         }
         acoes={
+          percurso ? (
+            <>
+              <SeguirNoPercurso
+                ultimo={percurso.ultimo}
+                aoSeguir={() => encerrarEtapa.current('seguir')}
+              />
+              <button className="ajuda" onClick={() => abrirTutorial('ajuda')}>
+                <QuestionMarkCircleIcon className="icone" aria-hidden="true" />
+                Ajuda
+              </button>
+            </>
+          ) : (
           <>
           {/* Trocar de nível troca de sessão (D8), e por isso o exercício
               recomeça: duas tentativas sob apoios diferentes não podem ser
@@ -325,6 +439,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa }: Props) {
             Ajuda
           </button>
           </>
+          )
         }
         titulo={exercicio.titulo}
       >

@@ -32,7 +32,7 @@ export function Inseto({ x, y, escala = 1 }: { x: number; y: number; escala?: nu
   );
 }
 
-function Marca({ naInicial }: { naInicial: boolean }) {
+function Marca({ comLink }: { comLink: boolean }) {
   const conteudo = (
     <>
       <svg viewBox="-16 -20 32 34" aria-hidden="true">
@@ -42,12 +42,12 @@ function Marca({ naInicial }: { naInicial: boolean }) {
     </>
   );
   // Na própria tela inicial a marca não é link: levaria para onde já se está.
-  return naInicial ? (
-    <span className="marca">{conteudo}</span>
-  ) : (
+  return comLink ? (
     <a className="marca" href={CAMINHO_INICIAL}>
       {conteudo}
     </a>
+  ) : (
+    <span className="marca">{conteudo}</span>
   );
 }
 
@@ -60,14 +60,26 @@ interface Props {
   /** Abaixo do título: o texto que explica a tela, e o que for dela. */
   children?: ReactNode;
   naInicial?: boolean;
+  /**
+   * Dentro do percurso do estudo (D37), a marca também não é link: levaria à
+   * tela inicial, e dela à vitrine, que o percurso deixa de fora.
+   */
+  semSaida?: boolean;
 }
 
-export function Cabecalho({ navegacao, acoes, titulo, children, naInicial = false }: Props) {
+export function Cabecalho({
+  navegacao,
+  acoes,
+  titulo,
+  children,
+  naInicial = false,
+  semSaida = false,
+}: Props) {
   return (
     <header className="cabecalho">
       <div className="cabecalho-barra">
         <div className="cabecalho-caminho">
-          <Marca naInicial={naInicial} />
+          <Marca comLink={!naInicial && !semSaida} />
           {navegacao && <span className="cabecalho-divisa" aria-hidden="true" />}
           {navegacao}
         </div>
