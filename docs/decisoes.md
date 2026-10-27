@@ -3567,15 +3567,20 @@ abre igual, e o erro só apareceria na análise.
 ### A entrada
 
 - **O aviso tem consentimento.** A caixa "Concordo em participar" é
-  obrigatória, e quem não marca não entra. O texto diz que a participação é
-  voluntária, que não afeta a nota, que se pode parar a qualquer momento —
-  e que o que já foi registrado até ali permanece, porque o registro é
-  anônimo e não há como achar depois os dados de uma pessoa para excluí-los
-  —, que o registro inclui o código escrito, que só os pesquisadores têm
+  obrigatória, e quem não marca não entra. O texto diz que o que já foi
+  feito fica salvo para quem fecha a página antes do fim, porque o registro
+  é anônimo e não há como achar depois os dados de uma pessoa para
+  excluí-los, que o registro inclui o código escrito, que só os pesquisadores têm
   acesso aos dados, que os resultados saem só de forma agregada, no TCC e em
   publicações, e um contato para dúvidas, por enquanto o e-mail do autor. É
   curto porque é lido em pé, na sala. A versão 2 acrescentou o acesso, a
-  apresentação agregada, o que fica de quem para e o contato. Ele vive em
+  apresentação agregada, o que fica de quem para e o contato. **A versão 3
+  encurtou o texto, a pedido da orientação:** o parágrafo da participação
+  virou uma frase só — "Se você fechar a página antes do fim, o que já foi
+  feito até ali fica salvo — e, como o registro é anônimo, depois não há como
+  identificar e excluir os dados de uma pessoa." —, e com ele saíram do aviso
+  a participação voluntária, o não afetar a nota e o parar a qualquer
+  momento. O teste deixou de cobrar essas três frases. Ele vive em
   `src/estudo/aviso.ts`, **pendente da orientadora**, que ainda vai decidir se
   o estudo passa por comitê de ética. A versão aceita vai para o banco com a
   entrada. Para a versão valer alguma coisa, cada versão precisa ter um texto
