@@ -70,8 +70,11 @@ for (const tamanho of TAMANHOS) {
       const bloco = page.locator('.aviso-do-estudo');
       const nota = bloco.locator('.rodape-painel');
       await expect(nota).toBeVisible();
-      const larguraDoBloco = (await bloco.boundingBox())!.width;
-      expect((await nota.boundingBox())!.width).toBeCloseTo(larguraDoBloco, 0);
+      // Lido de novo até assentar: com a suíte inteira rodando, a primeira
+      // medida às vezes vinha antes de a fonte carregar.
+      await expect
+        .poll(async () => (await nota.boundingBox())!.width - (await bloco.boundingBox())!.width)
+        .toBeCloseTo(0, 0);
       // E o bloco tem chão próprio, mais largo que a medida de antes.
       const corpo = page.locator('.corpo-do-estudo');
       expect(await corpo.evaluate((el) => getComputedStyle(el).backgroundColor)).not.toBe('rgba(0, 0, 0, 0)');
