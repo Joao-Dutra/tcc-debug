@@ -3,6 +3,7 @@ import { AberturaDoProposto } from './componentes/AberturaDoProposto';
 import { AreaDoEstudo } from './componentes/AreaDoEstudo';
 import { AreaDoProfessor } from './componentes/AreaDoProfessor';
 import { ConferenciaDoEstudo } from './componentes/ConferenciaDoEstudo';
+import { PainelDeControle } from './componentes/PainelDeControle';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { PreviaComoAluno } from './componentes/PreviaComoAluno';
 import { TelaExercicio } from './componentes/TelaExercicio';
@@ -27,6 +28,9 @@ export default function App() {
 
   // Rota do pesquisador (D11). Nenhuma tela do participante aponta para ela.
   if (rota.tela === 'metricas') return <PainelDeMetricas />;
+
+  // Painel de controle do pesquisador (D38), com link a partir das métricas.
+  if (rota.tela === 'controle') return <PainelDeControle />;
 
   // Área do professor (D29, D31), com entrada própria na tela inicial.
   if (rota.tela === 'autoria') return <AreaDoProfessor />;

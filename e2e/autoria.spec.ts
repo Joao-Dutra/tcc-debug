@@ -484,8 +484,14 @@ test.describe('o pesquisador', () => {
     await expect(item.getByRole('button', { name: /Publicar|Editar/ })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Novo exercício' })).toHaveCount(0);
 
-    page.once('dialog', (d) => void d.accept());
-    await item.getByRole('button', { name: 'Retirar' }).click();
+    // A retirada não volta: pede o título digitado, e não um clique (D38).
+    await item.getByRole('button', { name: 'Retirar', exact: true }).click();
+    const definitivo = item.getByRole('button', { name: 'Retirar definitivamente' });
+    await expect(definitivo).toBeDisabled();
+    await item.getByLabel('Confirmação').fill('Publicado de outra');
+    await expect(definitivo).toBeDisabled();
+    await item.getByLabel('Confirmação').fill('Publicado de outra pessoa');
+    await definitivo.click();
     // O freio vai pela função auditada (0005), e não pela tabela.
     await expect.poll(() => banco.escritas).toContainEqual({
       tabela: 'rpc/retirar_publicado',

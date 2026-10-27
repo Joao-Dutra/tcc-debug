@@ -1,16 +1,16 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ArrowLeftIcon, QuestionMarkCircleIcon } from '@heroicons/react/20/solid';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { sair } from '../supabase/identidade';
+import { lerMeusExercicios, retirar } from '../supabase/exercicios-de-professor';
 import {
-  lerEstadoDaColeta,
-  lerMeusExercicios,
-  lerTodosOsPublicados,
-  mudarInterruptor,
-  retirar,
-  retirarComoPesquisador,
-} from '../supabase/exercicios-de-professor';
+  FreioDosPublicados,
+  InterruptorDaColeta,
+  LinkDaPrevia,
+  quando,
+  useEstadoDaColeta,
+} from './ControlesDaColeta';
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
 import { estadoDaArea } from './estado-da-area';
@@ -18,9 +18,8 @@ import { armazenamentoDaAba, esquecerAberto, lerAberto } from './rascunho-na-aba
 import { TutorialDoProfessor } from './TutorialDoProfessor';
 import { marcarTutorialDoProfessorVisto, tutorialDoProfessorJaVisto } from './tutorial-visto';
 import { useIdentidade } from './usar-identidade';
-import { CAMINHO_INICIAL, caminhoDaPrevia } from './usar-rota';
+import { CAMINHO_CONTROLE, CAMINHO_INICIAL } from './usar-rota';
 import type {
-  EstadoDaColeta,
   ExercicioDeProfessor,
   SituacaoDoExercicio,
 } from '../supabase/exercicios-de-professor';
@@ -80,33 +79,6 @@ const ROTULOS_DA_SITUACAO: Record<SituacaoDoExercicio, string> = {
   retirado: 'Retirado',
 };
 
-const quando = (iso: string | null) =>
-  iso === null
-    ? '—'
-    : new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
-
-/**
- * O estado do interruptor da coleta (D33). Na dúvida — leitura em curso, ou
- * falhando —, oculto: a visão dos publicados também esconde quando não sabe,
- * e o aviso precisa dizer o que o aluno de fato vê.
- */
-function useEstadoDaColeta() {
-  const [estado, setEstado] = useState<EstadoDaColeta | null | 'lendo'>('lendo');
-  const [leitura, setLeitura] = useState(0);
-  useEffect(() => {
-    let valida = true;
-    lerEstadoDaColeta()
-      .then((lido) => valida && setEstado(lido))
-      .catch(() => valida && setEstado(null));
-    return () => {
-      valida = false;
-    };
-  }, [leitura]);
-  const recarregar = useCallback(() => setLeitura((n) => n + 1), []);
-  const ocultos = estado === 'lendo' || estado === null || estado.propostosOcultos;
-  return { estado, ocultos, recarregar };
-}
-
 /**
  * Com a seção oculta, o professor publica e o exercício não aparece na vitrine.
  * Sem este aviso, ele suporia que a publicação falhou.
@@ -123,15 +95,6 @@ function AvisoDaSecaoOculta() {
         <strong>Ver como o aluno veria</strong>.
       </p>
     </section>
-  );
-}
-
-/** Abre a pré-visualização em outra aba: a lista fica onde estava. */
-function LinkDaPrevia({ id }: { id: string }) {
-  return (
-    <a className="discreto" href={caminhoDaPrevia(id)} target="_blank" rel="noopener">
-      Ver como o aluno veria
-    </a>
   );
 }
 
@@ -326,122 +289,18 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
 /**
  * O que o pesquisador faz aqui (D33): o interruptor da coleta e o freio de
  * emergência. Não escreve, não publica e não edita exercício de ninguém — o
- * RLS e o gatilho da 0003 recusariam de qualquer jeito.
+ * RLS e o gatilho da 0003 recusariam de qualquer jeito. Os dois controles são
+ * os mesmos do painel de controle (D38), e o resto do painel fica lá.
  */
 function PainelDoPesquisador() {
-  const coleta = useEstadoDaColeta();
-  const [publicados, setPublicados] = useState<ExercicioDeProfessor[] | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
-  const [leitura, setLeitura] = useState(0);
-  const [mudando, setMudando] = useState(false);
-
-  useEffect(() => {
-    let valida = true;
-    lerTodosOsPublicados()
-      .then((lidos) => valida && setPublicados(lidos))
-      .catch((e: unknown) => valida && setErro(e instanceof Error ? e.message : String(e)));
-    return () => {
-      valida = false;
-    };
-  }, [leitura]);
-
-  const alternar = async (ocultar: boolean) => {
-    const confirmado = window.confirm(
-      ocultar
-        ? 'Ocultar a seção dos propostos? Nenhum exercício de professor chega mais aos alunos, ' +
-            'nem pelo link direto, até ela voltar.'
-        : 'Mostrar a seção dos propostos aos alunos? Durante uma coleta, isto muda a vitrine ' +
-            'dos participantes no meio do estudo.'
-    );
-    if (!confirmado) return;
-    setMudando(true);
-    try {
-      await mudarInterruptor(ocultar);
-      coleta.recarregar();
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : String(e));
-    } finally {
-      setMudando(false);
-    }
-  };
-
-  const retirarPublicado = async (e: ExercicioDeProfessor) => {
-    const confirmado = window.confirm(
-      `Retirar "${e.conteudo.titulo}" da vitrine? É o freio de emergência: o exercício não ` +
-        'volta, e o autor vê que foi retirado pela equipe da pesquisa.'
-    );
-    if (!confirmado) return;
-    try {
-      await retirarComoPesquisador(e.id);
-      setLeitura((n) => n + 1);
-    } catch (falha) {
-      setErro(falha instanceof Error ? falha.message : String(falha));
-    }
-  };
-
-  const { estado } = coleta;
   return (
     <>
-      <section className="painel interruptor-da-coleta" aria-labelledby="titulo-do-interruptor">
-        <h2 id="titulo-do-interruptor">Interruptor da coleta</h2>
-        {estado === 'lendo' ? (
-          <p className="rodape-painel">Lendo o estado…</p>
-        ) : estado === null ? (
-          <p className="erro">
-            O estado do interruptor não pôde ser lido — a migração 0003 rodou? Enquanto isso, a
-            seção dos propostos fica oculta aos alunos.
-          </p>
-        ) : (
-          <>
-            <p className="estado-do-interruptor">
-              {estado.propostosOcultos
-                ? 'A seção “Propostos por professores” está oculta aos alunos.'
-                : 'A seção “Propostos por professores” está visível aos alunos.'}{' '}
-              <span className="rodape-painel">Desde {quando(estado.alteradoEm)}.</span>
-            </p>
-            <p className="rodape-painel">
-              Oculta, ela não chega a aluno nenhum — o banco não a entrega. Os professores
-              continuam publicando, e veem um aviso de que a seção está oculta.
-            </p>
-            <button
-              className={estado.propostosOcultos ? undefined : 'primario'}
-              disabled={mudando}
-              onClick={() => void alternar(!estado.propostosOcultos)}
-            >
-              {estado.propostosOcultos ? 'Mostrar a seção aos alunos' : 'Ocultar a seção dos alunos'}
-            </button>
-          </>
-        )}
-      </section>
-
-      <section className="painel" aria-labelledby="titulo-dos-publicados">
-        <h2 id="titulo-dos-publicados">Publicados pelos professores</h2>
-        <p className="rodape-painel">
-          A publicação é do próprio autor, depois da verificação automática. Aqui você só retira:
-          é o freio de emergência, para um exercício com erro ou conteúdo inadequado.
-        </p>
-        {erro && <p className="erro">{erro}</p>}
-        {publicados === null ? (
-          !erro && <p className="rodape-painel">Lendo os publicados…</p>
-        ) : publicados.length === 0 ? (
-          <p className="rodape-painel">Nenhum exercício publicado.</p>
-        ) : (
-          <ul className="lista-de-exercicios">
-            {publicados.map((e) => (
-              <li key={e.id}>
-                <span className="titulo-do-exercicio">{e.conteudo.titulo || 'Sem título'}</span>
-                <LinkDaPrevia id={e.id} />
-                <button className="discreto perigo" onClick={() => void retirarPublicado(e)}>
-                  Retirar
-                </button>
-                <span className="comentario-da-revisao">
-                  Publicado em {quando(e.publicadoEm)} pela conta {e.autorId.slice(0, 8)}.
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      <p className="rodape-painel">
+        As aplicações do estudo, o mapa de rotas e a auditoria ficam no{' '}
+        <a href={CAMINHO_CONTROLE}>painel de controle</a>.
+      </p>
+      <InterruptorDaColeta />
+      <FreioDosPublicados />
     </>
   );
 }

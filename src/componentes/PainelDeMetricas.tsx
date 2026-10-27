@@ -24,6 +24,7 @@ import { baixarMetricas } from './usar-metricas';
 import { useDadosDoEstudo } from './usar-dados-do-estudo';
 import { useIdentidade } from './usar-identidade';
 import { useSessoesDoBanco } from './usar-sessoes-do-banco';
+import { CAMINHO_CONTROLE } from './usar-rota';
 import type { Identidade } from '../supabase/identidade';
 import type {
   Evento,
@@ -447,7 +448,16 @@ export function PainelDeMetricas() {
                   ? 'Enquanto esta conta estiver aberta, as sessões feitas neste navegador são gravadas sob ela. Saia antes de entregar o aparelho a um participante.'
                   : 'Esta conta não tem o papel de pesquisador: o painel mostra só o que está neste aparelho.'}
               </p>
-              <button onClick={() => void sair()}>Sair</button>
+              <div className="acoes-painel">
+                {/* O painel de controle (D38) é do pesquisador, e só a conta
+                    dele vê o caminho; quem protege as ações é o banco. */}
+                {pesquisador && (
+                  <a className="discreto" href={CAMINHO_CONTROLE}>
+                    Painel de controle
+                  </a>
+                )}
+                <button onClick={() => void sair()}>Sair</button>
+              </div>
             </div>
           ) : (
             <EntradaDoPesquisador />

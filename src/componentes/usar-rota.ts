@@ -17,6 +17,7 @@ export type Rota =
   | { tela: 'exercicios' }
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' }
+  | { tela: 'controle' }
   | { tela: 'autoria' }
   | { tela: 'previa'; id: string; andaime: NivelDeAndaime }
   | { tela: 'estudo'; aplicacao: string }
@@ -38,6 +39,14 @@ export const CAMINHO_EXERCICIOS = '#/exercicios';
  * navegação: quem chega aqui digita a rota.
  */
 export const CAMINHO_METRICAS = '#/metricas';
+
+/**
+ * Painel de controle do pesquisador (D38): aplicações do estudo, limpeza das
+ * de teste, interruptor da coleta, mapa de rotas e auditoria. Fora da
+ * navegação do participante, como as métricas, de onde há um link para cá.
+ * Quem protege as ações são as funções do banco (0005), e não esta rota.
+ */
+export const CAMINHO_CONTROLE = '#/controle';
 
 /**
  * Área do professor (D29, D31). A tela inicial aponta para cá; quem não tem o
@@ -100,6 +109,7 @@ export function interpretarHash(hash: string): Rota {
 
   if (partes[0] === 'entrar') return { tela: 'entrar' };
   if (partes[0] === 'metricas') return { tela: 'metricas' };
+  if (partes[0] === 'controle') return { tela: 'controle' };
   if (partes[0] === 'autoria') return { tela: 'autoria' };
   if (partes[0] === 'previa' && partes[1]) {
     return {
