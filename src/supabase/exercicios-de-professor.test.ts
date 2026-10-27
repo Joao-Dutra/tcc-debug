@@ -12,8 +12,9 @@ import type { RascunhoDeExercicio, RelatorioDaVerificacao } from '../nucleo/veri
  */
 
 interface Chamada {
+  /** A tabela, ou o nome da função numa chamada `rpc`. */
   tabela: string;
-  operacao: 'select' | 'insert' | 'update' | 'delete';
+  operacao: 'select' | 'insert' | 'update' | 'delete' | 'rpc';
   dados?: unknown;
   filtros: [string, unknown][];
   faixa?: [number, number];
@@ -80,8 +81,14 @@ function consulta(tabela: string): Consulta {
   return c;
 }
 
+async function rpc(funcao: string, argumentos: unknown): Promise<Resposta> {
+  const chamada: Chamada = { tabela: funcao, operacao: 'rpc', dados: argumentos, filtros: [] };
+  chamadas.push(chamada);
+  return responder(chamada);
+}
+
 vi.mock('./cliente', () => ({
-  supabase: () => ({ from: consulta }),
+  supabase: () => ({ from: consulta, rpc }),
   supabaseConfigurado: () => true,
 }));
 
@@ -223,13 +230,42 @@ describe('escrita', () => {
     });
   });
 
-  it('o interruptor que não mudou — conta sem o papel — não passa por mudado', async () => {
-    responder = () => ({ data: [], error: null });
+  it('o interruptor vai pela função auditada, e a recusa dela não passa por mudado (0005)', async () => {
+    // A função recusa sem erro: grava a recusa na auditoria e responde ok falso.
+    responder = () => ({ data: { ok: false, motivo: 'so-pesquisador' }, error: null });
     await expect(modulo.mudarInterruptor(false)).rejects.toThrow(/pesquisador/);
+    expect(chamadas[0]).toEqual({
+      tabela: 'definir_propostos_ocultos',
+      operacao: 'rpc',
+      dados: { p_ocultos: false },
+      filtros: [],
+    });
+
+    responder = () => ({ data: { ok: true, propostos_ocultos: false }, error: null });
+    await expect(modulo.mudarInterruptor(false)).resolves.toBeUndefined();
+  });
+
+  it('o freio do pesquisador vai pela função auditada, e não pela tabela (0005)', async () => {
+    responder = () => ({ data: { ok: true }, error: null });
+    await modulo.retirarComoPesquisador('uuid-1');
+    expect(chamadas).toEqual([
+      { tabela: 'retirar_publicado', operacao: 'rpc', dados: { p_id: 'uuid-1' }, filtros: [] },
+    ]);
+
+    responder = () => ({ data: { ok: false, motivo: 'nao-publicado' }, error: null });
+    await expect(modulo.retirarComoPesquisador('uuid-1')).rejects.toThrow(/não está mais publicado/);
+    // Sem resposta nenhuma também não é sucesso.
+    responder = () => ({ data: null, error: null });
+    await expect(modulo.retirarComoPesquisador('uuid-1')).rejects.toThrow(/não pôde ser retirado/);
+  });
+
+  it('a retirada pelo autor continua pela tabela', async () => {
+    responder = () => ({ data: [{ id: 'uuid-1' }], error: null });
+    await modulo.retirar('uuid-1');
     expect(chamadas[0]).toMatchObject({
-      tabela: 'coleta',
+      tabela: 'exercicios_de_professor',
       operacao: 'update',
-      dados: { propostos_ocultos: false },
+      dados: { situacao: 'retirado' },
     });
   });
 

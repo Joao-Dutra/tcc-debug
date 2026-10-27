@@ -102,7 +102,8 @@ async function bancoFalso(page: Page, banco: Banco) {
     }
     if (metodo !== 'GET' && metodo !== 'HEAD') {
       banco.escritas.push({ tabela, metodo, corpo: pedido.postDataJSON() });
-      if (tabela === 'coleta') return rota.fulfill({ status: 200, json: [{ unica: true }] });
+      // As funções do painel do pesquisador respondem com o resultado (0005).
+      if (tabela.startsWith('rpc/')) return rota.fulfill({ status: 200, json: { ok: true } });
       return rota.fulfill({ status: 200, json: [{ id: url.searchParams.get('id')?.slice(3) }] });
     }
     // Paginado até a página vazia (D22).
@@ -361,9 +362,9 @@ test.describe('o pesquisador', () => {
     page.once('dialog', (d) => void d.accept());
     await page.getByRole('button', { name: 'Mostrar a seção aos alunos' }).click();
     await expect.poll(() => banco.escritas).toContainEqual({
-      tabela: 'coleta',
-      metodo: 'PATCH',
-      corpo: { propostos_ocultos: false },
+      tabela: 'rpc/definir_propostos_ocultos',
+      metodo: 'POST',
+      corpo: { p_ocultos: false },
     });
   });
 
@@ -379,10 +380,11 @@ test.describe('o pesquisador', () => {
 
     page.once('dialog', (d) => void d.accept());
     await item.getByRole('button', { name: 'Retirar' }).click();
+    // O freio vai pela função auditada (0005), e não pela tabela.
     await expect.poll(() => banco.escritas).toContainEqual({
-      tabela: 'exercicios_de_professor',
-      metodo: 'PATCH',
-      corpo: { situacao: 'retirado' },
+      tabela: 'rpc/retirar_publicado',
+      metodo: 'POST',
+      corpo: { p_id: ID_PUBLICADO },
     });
   });
 });

@@ -9,6 +9,7 @@ import {
   lerTodosOsPublicados,
   mudarInterruptor,
   retirar,
+  retirarComoPesquisador,
 } from '../supabase/exercicios-de-professor';
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
@@ -348,7 +349,7 @@ function PainelDoPesquisador() {
     );
     if (!confirmado) return;
     try {
-      await retirar(e.id);
+      await retirarComoPesquisador(e.id);
       setLeitura((n) => n + 1);
     } catch (falha) {
       setErro(falha instanceof Error ? falha.message : String(falha));

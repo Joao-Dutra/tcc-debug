@@ -380,12 +380,54 @@ export async function publicar(
   );
 }
 
-/** O autor retira o próprio; o pesquisador, qualquer um (D33). */
+/** O autor retira o próprio, pela tabela (D33). */
 export function retirar(id: string): Promise<void> {
   return alterar(
     id,
     { situacao: 'retirado' },
     'O exercício não pôde ser retirado: ele não está publicado, ou esta conta não pode retirá-lo.'
+  );
+}
+
+/** O que as funções do painel do pesquisador devolvem (0005). */
+interface ResultadoDaAcao {
+  ok: boolean;
+  motivo?: string;
+}
+
+/**
+ * Chama uma função do painel do pesquisador. A recusa não vem como erro: a
+ * função a grava na auditoria e responde `ok: false`, porque uma exceção
+ * desfaria a linha de auditoria junto (0005). Por isso o `ok` é conferido
+ * aqui, e não só o erro.
+ */
+async function acaoDoPesquisador(
+  funcao: string,
+  argumentos: Record<string, unknown>,
+  recusa: string
+): Promise<void> {
+  const { data, error } = await cliente().rpc(funcao, argumentos);
+  if (error) throw new Error(error.message);
+  const resultado = data as ResultadoDaAcao | null;
+  if (!resultado?.ok) {
+    throw new Error(
+      resultado?.motivo === 'so-pesquisador'
+        ? `${recusa}: só a conta de pesquisador pode fazer isto.`
+        : `${recusa}.`
+    );
+  }
+}
+
+/**
+ * O freio de emergência do pesquisador, em qualquer publicado (D33). Pela
+ * função auditada da 0005, e não pela tabela: a política de update que o
+ * permitia saiu.
+ */
+export function retirarComoPesquisador(id: string): Promise<void> {
+  return acaoDoPesquisador(
+    'retirar_publicado',
+    { p_id: id },
+    'O exercício não pôde ser retirado: ele não está mais publicado'
   );
 }
 
@@ -412,15 +454,11 @@ export async function lerEstadoDaColeta(): Promise<EstadoDaColeta | null> {
   return linha ? { propostosOcultos: linha.propostos_ocultos, alteradoEm: linha.alterado_em } : null;
 }
 
-/** Só o pesquisador mexe (0003); para outra conta, a escrita não alcança a linha. */
-export async function mudarInterruptor(propostosOcultos: boolean): Promise<void> {
-  const { data, error } = await cliente()
-    .from('coleta')
-    .update({ propostos_ocultos: propostosOcultos })
-    .eq('unica', true)
-    .select('unica');
-  if (error) throw new Error(error.message);
-  if ((data ?? []).length !== 1) {
-    throw new Error('O interruptor não mudou: só a conta de pesquisador pode mexer nele.');
-  }
+/** Só o pesquisador mexe, e só pela função auditada (0005). */
+export function mudarInterruptor(propostosOcultos: boolean): Promise<void> {
+  return acaoDoPesquisador(
+    'definir_propostos_ocultos',
+    { p_ocultos: propostosOcultos },
+    'O interruptor não mudou'
+  );
 }

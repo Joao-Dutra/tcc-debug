@@ -246,6 +246,57 @@ function recusadaPeloBanco(error: PostgrestError | null) {
   expect(['42501', 'P0001'], `recusada por outro motivo: ${error?.message}`).toContain(error?.code);
 }
 
+/** O que as funções do painel do pesquisador devolvem (0005). */
+interface ResultadoDaAcao {
+  ok: boolean;
+  motivo?: string;
+  [campo: string]: unknown;
+}
+
+/**
+ * Chama uma função do painel como a conta. A recusa não é erro — a função a
+ * grava na auditoria e responde `ok: false` —, então um erro aqui é defeito, e
+ * não recusa: a verificação para em vez de passar por cima dele.
+ */
+async function acao(conta: Conta, funcao: string, argumentos: Record<string, unknown>) {
+  const { data, error } = await conta.cliente.rpc(funcao, argumentos);
+  if (error) throw new Error(`${funcao} deu erro em vez de responder: ${error.message}`);
+  return data as ResultadoDaAcao;
+}
+
+/** A última linha de auditoria da conta naquela ação, lida por cima do RLS. */
+async function ultimaAuditoria(conta: Conta, nomeDaAcao: string) {
+  const { data, error } = await admin
+    .from('auditoria_do_pesquisador')
+    .select('quem, acao, alvo, parametros, resultado, detalhe')
+    .eq('quem', conta.id)
+    .eq('acao', nomeDaAcao)
+    .order('id', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+/**
+ * A recusa com o motivo esperado, e a linha dela na auditoria. Sem conferir o
+ * motivo, uma recusa por parâmetro malformado também "passaria", e a
+ * verificação não teria testado o papel. A ação na auditoria é o nome da
+ * função com hífen, que é como a 0005 a grava.
+ */
+async function esperarRecusa(
+  conta: Conta,
+  funcao: string,
+  argumentos: Record<string, unknown>,
+  motivo: string
+) {
+  expect(await acao(conta, funcao, argumentos), funcao).toMatchObject({ ok: false, motivo });
+  expect(await ultimaAuditoria(conta, funcao.replace(/_/g, '-')), `auditoria de ${funcao}`).toMatchObject({
+    resultado: 'recusada',
+    detalhe: { motivo },
+  });
+}
+
 let a: Conta;
 let b: Conta;
 let professorA: Conta;
@@ -663,24 +714,44 @@ describe('interruptor da coleta (D33)', () => {
     expect(await interruptorNoBanco()).toBe(valor);
   });
 
+  it('nem o pesquisador mexe nele pela tabela: só pela função auditada (0005)', async () => {
+    const valor = await interruptorNoBanco();
+    const { data, error } = await pesquisador.cliente
+      .from('coleta')
+      .update({ propostos_ocultos: !valor })
+      .eq('unica', true)
+      .select('unica');
+    if (error) recusadaPeloRls(error);
+    else expect(data ?? []).toEqual([]);
+    expect(await interruptorNoBanco()).toBe(valor);
+  });
+
+  it('participante e professor são recusados pela função, e a recusa fica na auditoria', async () => {
+    const valor = await interruptorNoBanco();
+    for (const conta of [a, professorA]) {
+      await esperarRecusa(conta, 'definir_propostos_ocultos', { p_ocultos: !valor }, 'so-pesquisador');
+    }
+    expect(await interruptorNoBanco()).toBe(valor);
+  });
+
   it('o pesquisador mexe, e ligado ele esconde os propostos pelo banco', async () => {
     const visitante = createClient(url, chavePublica, semPersistencia);
 
-    const desligar = await pesquisador.cliente
-      .from('coleta')
-      .update({ propostos_ocultos: false })
-      .eq('unica', true)
-      .select('alterado_por');
-    expect(desligar.error).toBeNull();
-    expect(desligar.data?.[0]?.alterado_por).toBe(pesquisador.id);
+    expect(await acao(pesquisador, 'definir_propostos_ocultos', { p_ocultos: false })).toMatchObject({
+      ok: true,
+    });
+    const coleta = await admin.from('coleta').select('alterado_por').single();
+    expect(coleta.data?.alterado_por, 'o gatilho ainda carimba quem mexeu').toBe(pesquisador.id);
+    expect(await ultimaAuditoria(pesquisador, 'definir-propostos-ocultos')).toMatchObject({
+      alvo: 'coleta',
+      resultado: 'ok',
+      parametros: { propostos_ocultos: false },
+    });
     expect(await verPelaVisao(visitante, exercicioDeA)).toHaveLength(1);
 
-    const ligar = await pesquisador.cliente
-      .from('coleta')
-      .update({ propostos_ocultos: true })
-      .eq('unica', true)
-      .select('unica');
-    expect(ligar.error).toBeNull();
+    expect(await acao(pesquisador, 'definir_propostos_ocultos', { p_ocultos: true })).toMatchObject({
+      ok: true,
+    });
     // Nem pela lista, nem pelo id do link direto.
     expect(await verPelaVisao(visitante, exercicioDeA)).toEqual([]);
     expect(await verPelaVisao(a.cliente, exercicioDeA)).toEqual([]);
@@ -696,11 +767,9 @@ describe('interruptor da coleta (D33)', () => {
     expect(peloAutor.data ?? []).toHaveLength(1);
 
     // Desligado de novo, para os blocos seguintes verem a visão.
-    const religar = await pesquisador.cliente
-      .from('coleta')
-      .update({ propostos_ocultos: false })
-      .eq('unica', true);
-    expect(religar.error).toBeNull();
+    expect(await acao(pesquisador, 'definir_propostos_ocultos', { p_ocultos: false })).toMatchObject({
+      ok: true,
+    });
   });
 });
 
@@ -761,15 +830,32 @@ describe('exercícios de professor: retirada (D33)', () => {
     expect((await exercicioNoBanco(exercicioDeA))?.situacao).toBe('publicado');
   });
 
-  it('o pesquisador retira qualquer publicado, e o banco carimba quem retirou', async () => {
-    // O freio de emergência, no exercício de B, que não é dele.
-    const { data, error } = await pesquisador.cliente
+  it('o pesquisador não retira mais pela tabela: o freio é a função auditada (0005)', async () => {
+    const { data } = await pesquisador.cliente
       .from('exercicios_de_professor')
       .update({ situacao: 'retirado' })
       .eq('id', exercicioDeB)
       .select('id');
-    expect(error).toBeNull();
-    expect(data ?? []).toHaveLength(1);
+    expect(data ?? []).toEqual([]);
+    expect((await exercicioNoBanco(exercicioDeB))?.situacao).toBe('publicado');
+  });
+
+  it('participante e professor são recusados pelo freio, e a recusa fica na auditoria', async () => {
+    for (const conta of [a, professorB]) {
+      await esperarRecusa(conta, 'retirar_publicado', { p_id: exercicioDeB }, 'so-pesquisador');
+    }
+    expect((await exercicioNoBanco(exercicioDeB))?.situacao).toBe('publicado');
+  });
+
+  it('o pesquisador retira qualquer publicado, e o banco carimba quem retirou', async () => {
+    // O freio de emergência, no exercício de B, que não é dele.
+    expect(await acao(pesquisador, 'retirar_publicado', { p_id: exercicioDeB })).toEqual({ ok: true });
+    expect(await ultimaAuditoria(pesquisador, 'retirar-publicado')).toMatchObject({
+      alvo: exercicioDeB,
+      resultado: 'ok',
+    });
+    // Retirar de novo é recusa com motivo, e não sucesso: já não está publicado.
+    await esperarRecusa(pesquisador, 'retirar_publicado', { p_id: exercicioDeB }, 'nao-publicado');
     expect(await exercicioNoBanco(exercicioDeB)).toMatchObject({
       situacao: 'retirado',
       retirado_por: pesquisador.id,
@@ -904,11 +990,13 @@ describe('área do estudo: entrada e grupo (D37)', () => {
 
   beforeAll(async () => {
     // `aberta` em todas as linhas: num insert em lote, o PostgREST manda null,
-    // e não o default, na coluna que falta em alguma delas.
+    // e não o default, na coluna que falta em alguma delas. Desprotegidas,
+    // porque a aplicação nasce protegida (0005), e o gatilho dela recusaria a
+    // remoção das contas de teste, que leva o dado junto.
     const { error } = await admin.from('aplicacoes_do_estudo').insert([
-      { codigo: sequencial, aberta: true },
-      { codigo: simultanea, aberta: true },
-      { codigo: fechada, aberta: false },
+      { codigo: sequencial, aberta: true, protegida: false },
+      { codigo: simultanea, aberta: true, protegida: false },
+      { codigo: fechada, aberta: false, protegida: false },
     ]);
     if (error) throw new Error(`não foi possível criar as aplicações de teste: ${error.message}`);
     for (let i = 0; i < 10; i++) turma.push(await criarConta(`turma-${i}`));
@@ -1184,6 +1272,257 @@ describe('área do estudo: entrada e grupo (D37)', () => {
       expect(error).toBeNull();
       expect((data ?? []).map((l) => l.participante_id)).toEqual([turma[0].id]);
     });
+  });
+});
+
+// ------------------------------------------ painel do pesquisador (D38) ---
+
+/** Lida por cima do RLS: o que de fato está na linha da aplicação. */
+async function aplicacaoNoBanco(codigo: string) {
+  const { data, error } = await admin
+    .from('aplicacoes_do_estudo')
+    .select('codigo, aberta, protegida, entradas')
+    .eq('codigo', codigo)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function contarNaAplicacao(tabela: string, aplicacao: string): Promise<number> {
+  const { count, error } = await admin
+    .from(tabela)
+    .select('*', { count: 'exact', head: true })
+    .eq('aplicacao', aplicacao);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+interface LinhaDaLista {
+  codigo: string;
+  protegida: boolean;
+  entradas: number;
+  participantes_a: number;
+  participantes_b: number;
+}
+
+describe('painel do pesquisador: aplicações (0005)', () => {
+  // Todas com o prefixo da verificação, que a limpeza do fim remove. A
+  // protegida fica sem dado nenhum: a linha de uma protegida vazia sai, e é o
+  // único jeito de a verificação não deixar resíduo sem uma porta de
+  // desproteger, que não existe. O gatilho com dado é testado fora do projeto.
+  const deTeste = aplicacaoDeTeste('painel-teste');
+  const protegidaVazia = aplicacaoDeTeste('painel-protegida');
+  const aProteger = aplicacaoDeTeste('painel-a-proteger');
+  let entrante: Conta;
+  const sessaoNoEstudo = `${EXERCICIO_DE_TESTE}-painel-${carimbo}`;
+  const sessaoForaDoEstudo = `${EXERCICIO_DE_TESTE}-painel-fora-${carimbo}`;
+
+  beforeAll(async () => {
+    entrante = await criarConta('painel-entrante');
+  });
+
+  it('listar é recusado ao participante e ao professor; o pesquisador lista com os grupos', async () => {
+    for (const conta of [a, professorA]) {
+      const { error } = await conta.cliente.rpc('listar_aplicacoes');
+      recusadaPeloRls(error);
+    }
+    const { data, error } = await pesquisador.cliente.rpc('listar_aplicacoes');
+    expect(error).toBeNull();
+    const linha = ((data ?? []) as LinhaDaLista[]).find((l) => l.codigo === simultanea);
+    expect(linha).toMatchObject({ entradas: 10, participantes_a: 5, participantes_b: 5, protegida: false });
+  });
+
+  it('criar é recusado ao participante e ao professor, e nada é criado', async () => {
+    for (const conta of [a, professorA]) {
+      await esperarRecusa(conta, 'criar_aplicacao', { p_codigo: deTeste, p_teste: true }, 'so-pesquisador');
+    }
+    expect(await aplicacaoNoBanco(deTeste)).toBeNull();
+  });
+
+  it('o pesquisador cria: o código é validado, e sem dizer que é teste ela nasce protegida', async () => {
+    for (const codigo of ['Maiuscula', 'com espaco', '-na-ponta', 'dois--hifens', 'a'.repeat(61), '']) {
+      await esperarRecusa(pesquisador, 'criar_aplicacao', { p_codigo: codigo }, 'codigo-invalido');
+    }
+    expect(await acao(pesquisador, 'criar_aplicacao', { p_codigo: protegidaVazia })).toEqual({
+      ok: true,
+      protegida: true,
+    });
+    for (const codigo of [deTeste, aProteger]) {
+      expect(await acao(pesquisador, 'criar_aplicacao', { p_codigo: codigo, p_teste: true })).toEqual({
+        ok: true,
+        protegida: false,
+      });
+    }
+    await esperarRecusa(pesquisador, 'criar_aplicacao', { p_codigo: deTeste, p_teste: true }, 'codigo-existente');
+    expect(await aplicacaoNoBanco(protegidaVazia)).toMatchObject({ protegida: true, aberta: true, entradas: 0 });
+    expect(await aplicacaoNoBanco(deTeste)).toMatchObject({ protegida: false, aberta: true });
+    expect(await ultimaAuditoria(pesquisador, 'criar-aplicacao')).toMatchObject({
+      alvo: deTeste,
+      resultado: 'recusada',
+    });
+  });
+
+  it('abrir e fechar: recusado ao participante e ao professor; o pesquisador fecha e abre', async () => {
+    for (const conta of [a, professorA]) {
+      await esperarRecusa(
+        conta,
+        'definir_aplicacao_aberta',
+        { p_codigo: deTeste, p_aberta: false },
+        'so-pesquisador'
+      );
+    }
+    expect((await aplicacaoNoBanco(deTeste))?.aberta).toBe(true);
+
+    expect(await acao(pesquisador, 'definir_aplicacao_aberta', { p_codigo: deTeste, p_aberta: false })).toEqual(
+      { ok: true, aberta: false }
+    );
+    expect((await aplicacaoNoBanco(deTeste))?.aberta).toBe(false);
+    expect(await acao(pesquisador, 'definir_aplicacao_aberta', { p_codigo: deTeste, p_aberta: true })).toEqual(
+      { ok: true, aberta: true }
+    );
+    expect((await aplicacaoNoBanco(deTeste))?.aberta).toBe(true);
+    await esperarRecusa(
+      pesquisador,
+      'definir_aplicacao_aberta',
+      { p_codigo: aplicacaoDeTeste('nao-cadastrada'), p_aberta: false },
+      'aplicacao-inexistente'
+    );
+  });
+
+  it('proteger: recusado ao participante e ao professor; o pesquisador protege, e não se desfaz', async () => {
+    for (const conta of [a, professorA]) {
+      await esperarRecusa(conta, 'proteger_aplicacao', { p_codigo: aProteger }, 'so-pesquisador');
+    }
+    expect((await aplicacaoNoBanco(aProteger))?.protegida).toBe(false);
+
+    expect(await acao(pesquisador, 'proteger_aplicacao', { p_codigo: aProteger })).toEqual({
+      ok: true,
+      ja_estava: false,
+    });
+    expect(await acao(pesquisador, 'proteger_aplicacao', { p_codigo: aProteger })).toEqual({
+      ok: true,
+      ja_estava: true,
+    });
+
+    // Não existe função de desproteger, e nem a chave secreta tira a proteção.
+    const desproteger = await admin
+      .from('aplicacoes_do_estudo')
+      .update({ protegida: false })
+      .eq('codigo', aProteger);
+    recusadaPeloBanco(desproteger.error);
+    expect((await aplicacaoNoBanco(aProteger))?.protegida).toBe(true);
+  });
+
+  it('limpar é recusado ao participante e ao professor, com a confirmação errada, aberta ou protegida', async () => {
+    // Dado de verdade na aplicação de teste: uma entrada, uma sessão e uma
+    // resposta. E uma sessão do mesmo participante fora do estudo, que a
+    // limpeza não pode levar.
+    const entrou = await entrar(entrante, deTeste);
+    expect(entrou.error).toBeNull();
+    const sessao = await entrante.cliente
+      .from('sessoes')
+      .insert({ ...linhaDeSessao(sessaoNoEstudo, entrante.id), aplicacao: deTeste, estudo: { etapa: 0 } });
+    expect(sessao.error).toBeNull();
+    const fora = await entrante.cliente.from('sessoes').insert(linhaDeSessao(sessaoForaDoEstudo, entrante.id));
+    expect(fora.error).toBeNull();
+    const resposta = await entrante.cliente.from('respostas_do_questionario').insert(respostaDeTeste(deTeste));
+    expect(resposta.error).toBeNull();
+
+    const limpar = (p_confirmacao: string) => ({ p_codigo: deTeste, p_confirmacao });
+    for (const conta of [a, professorA, entrante]) {
+      await esperarRecusa(conta, 'limpar_aplicacao', limpar(deTeste), 'so-pesquisador');
+    }
+    await esperarRecusa(pesquisador, 'limpar_aplicacao', limpar('outro-codigo'), 'confirmacao-nao-confere');
+    await esperarRecusa(pesquisador, 'limpar_aplicacao', limpar(`${deTeste} `), 'confirmacao-nao-confere');
+    await esperarRecusa(pesquisador, 'limpar_aplicacao', limpar(deTeste), 'aplicacao-aberta');
+
+    // A protegida recusa mesmo fechada, e mesmo vazia.
+    expect(
+      await acao(pesquisador, 'definir_aplicacao_aberta', { p_codigo: protegidaVazia, p_aberta: false })
+    ).toMatchObject({ ok: true });
+    await esperarRecusa(
+      pesquisador,
+      'limpar_aplicacao',
+      { p_codigo: protegidaVazia, p_confirmacao: protegidaVazia },
+      'aplicacao-protegida'
+    );
+
+    for (const tabela of ['participantes_do_estudo', 'sessoes', 'respostas_do_questionario']) {
+      expect(await contarNaAplicacao(tabela, deTeste), tabela).toBe(1);
+    }
+    expect((await aplicacaoNoBanco(deTeste))?.entradas).toBe(1);
+  });
+
+  it('o pesquisador limpa a de teste fechada, numa vez só, e conta, perfil e o resto ficam', async () => {
+    expect(
+      await acao(pesquisador, 'definir_aplicacao_aberta', { p_codigo: deTeste, p_aberta: false })
+    ).toMatchObject({ ok: true });
+    expect(await acao(pesquisador, 'limpar_aplicacao', { p_codigo: deTeste, p_confirmacao: deTeste })).toEqual({
+      ok: true,
+      respostas: 1,
+      sessoes: 1,
+      participantes: 1,
+      entradas_antes: 1,
+    });
+
+    for (const tabela of ['participantes_do_estudo', 'sessoes', 'respostas_do_questionario']) {
+      expect(await contarNaAplicacao(tabela, deTeste), tabela).toBe(0);
+    }
+    // O contador zerado, e a linha da aplicação no lugar.
+    expect(await aplicacaoNoBanco(deTeste)).toMatchObject({ entradas: 0, aberta: false, protegida: false });
+    // Nenhum usuário, nenhum perfil, nenhuma sessão fora da aplicação.
+    const usuario = await admin.auth.admin.getUserById(entrante.id);
+    expect(usuario.error).toBeNull();
+    expect(usuario.data.user?.id).toBe(entrante.id);
+    expect(await papelNoBanco(entrante.id)).toBe('participante');
+    expect(await sessaoNoBanco(sessaoForaDoEstudo)).not.toBeNull();
+    // A outra aplicação de teste, com dado, não foi tocada.
+    expect(await contarNaAplicacao('participantes_do_estudo', simultanea)).toBe(10);
+
+    expect(await ultimaAuditoria(pesquisador, 'limpar-aplicacao')).toMatchObject({
+      alvo: deTeste,
+      resultado: 'ok',
+      detalhe: { respostas: 1, sessoes: 1, participantes: 1, entradas_antes: 1 },
+    });
+  });
+
+  it('a auditoria só o pesquisador lê, e nem a chave secreta altera ou apaga', async () => {
+    for (const conta of [a, professorA]) {
+      const { data, error } = await conta.cliente.from('auditoria_do_pesquisador').select('id');
+      expect(error).toBeNull();
+      expect(data ?? []).toEqual([]);
+      const escrever = await conta.cliente
+        .from('auditoria_do_pesquisador')
+        .insert({ acao: 'forjada', resultado: 'ok' });
+      recusadaPeloRls(escrever.error);
+      // Nem a função que grava a auditoria se chama de fora.
+      const auditar = await conta.cliente.rpc('auditar', {
+        p_acao: 'forjada',
+        p_alvo: null,
+        p_parametros: {},
+        p_resultado: 'ok',
+        p_detalhe: {},
+      });
+      expect(auditar.error, 'auditar chamada de fora').not.toBeNull();
+    }
+    const lidas = await pesquisador.cliente
+      .from('auditoria_do_pesquisador')
+      .select('id')
+      .eq('quem', pesquisador.id);
+    expect(lidas.error).toBeNull();
+    expect((lidas.data ?? []).length).toBeGreaterThan(0);
+
+    const alterar = await admin
+      .from('auditoria_do_pesquisador')
+      .update({ resultado: 'ok' })
+      .eq('quem', pesquisador.id);
+    recusadaPeloBanco(alterar.error);
+    const apagar = await admin.from('auditoria_do_pesquisador').delete().eq('quem', pesquisador.id);
+    recusadaPeloBanco(apagar.error);
+    const forjadas = await linhasNoBanco(
+      admin.from('auditoria_do_pesquisador').select('id').eq('acao', 'forjada')
+    );
+    expect(forjadas).toEqual([]);
   });
 });
 
