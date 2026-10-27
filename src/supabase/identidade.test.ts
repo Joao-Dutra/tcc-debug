@@ -202,6 +202,78 @@ describe('sair da conta', () => {
   });
 });
 
+// O supabase-js reemite SIGNED_IN quando a aba volta ao primeiro plano
+// (`_onVisibilityChanged` → `_recoverAndRefresh`), e TOKEN_REFRESHED a cada
+// renovação, para o mesmo usuário. Tratar isso como troca de identidade
+// anunciava o papel nulo e remontava a área do professor, que perdia o
+// formulário. A troca de verdade — a da área do estudo (D37), a do sair —
+// continua precisando ser vista.
+describe('eventos repetidos da autenticação', () => {
+  type Ouvinte = (evento: string, sessao: unknown) => void;
+
+  async function comProfessorEntrado() {
+    vi.resetModules();
+    const professor = {
+      id: 'uid-do-professor',
+      is_anonymous: false,
+      app_metadata: { providers: ['email'] },
+      email: 'prof@exemplo.br',
+    };
+    perfilDoUsuario.papel = 'professor';
+    auth.getSession.mockResolvedValue({ data: { session: { user: professor } } });
+    const modulo = await import('./identidade');
+    await modulo.iniciarIdentidade();
+    const disparar = auth.onAuthStateChange.mock.calls[0][0] as Ouvinte;
+    const anuncios: Array<ReturnType<typeof modulo.identidadeAtual>> = [];
+    modulo.observarIdentidade((i) => anuncios.push(i));
+    anuncios.length = 0; // o observador recebe o estado atual na inscrição
+    return { modulo, professor, disparar, anuncios };
+  }
+
+  const esperarPromessas = () => new Promise((r) => setTimeout(r, 0));
+
+  it('SIGNED_IN e TOKEN_REFRESHED do mesmo usuário não anunciam nada', async () => {
+    const { modulo, professor, disparar, anuncios } = await comProfessorEntrado();
+    expect(modulo.identidadeAtual().papel).toBe('professor');
+
+    disparar('SIGNED_IN', { user: professor });
+    disparar('TOKEN_REFRESHED', { user: { ...professor } });
+    await esperarPromessas();
+
+    expect(anuncios).toEqual([]);
+    expect(modulo.identidadeAtual().papel).toBe('professor');
+    perfilDoUsuario.papel = 'participante';
+  });
+
+  it('uma troca de verdade continua sendo anunciada, com o papel lido de novo', async () => {
+    const { modulo, disparar, anuncios } = await comProfessorEntrado();
+    perfilDoUsuario.papel = 'participante';
+
+    disparar('SIGNED_IN', { user: { ...usuarioAnonimo, id: 'uid-de-outra-pessoa' } });
+    await esperarPromessas();
+
+    expect(anuncios[0]).toMatchObject({ usuarioId: 'uid-de-outra-pessoa', papel: null });
+    expect(modulo.identidadeAtual()).toMatchObject({
+      usuarioId: 'uid-de-outra-pessoa',
+      forma: 'anonima',
+      papel: 'participante',
+    });
+    const { participante } = await import('../nucleo/metricas');
+    expect(participante()).toBe('uid-de-outra-pessoa');
+  });
+
+  it('a saída da conta continua sendo anunciada', async () => {
+    const { modulo, disparar, anuncios } = await comProfessorEntrado();
+
+    disparar('SIGNED_OUT', null);
+    await esperarPromessas();
+
+    expect(anuncios).toHaveLength(1);
+    expect(modulo.identidadeAtual().usuarioId).toBeNull();
+    perfilDoUsuario.papel = 'participante';
+  });
+});
+
 describe('forma da identidade', () => {
   it('sai do que o provedor diz, e não de marca nossa', async () => {
     const { formaDoUsuario } = await import('./identidade');

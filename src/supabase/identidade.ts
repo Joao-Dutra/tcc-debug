@@ -94,6 +94,21 @@ async function aplicarSessao(cliente: SupabaseClient, sessao: Session | null): P
     anunciar({ ...SEM_IDENTIDADE });
     return;
   }
+  if (usuario.id === atual.usuarioId) {
+    // O mesmo usuário de novo não é troca de identidade. O supabase-js reemite
+    // SIGNED_IN a cada volta da aba ao primeiro plano, e TOKEN_REFRESHED a
+    // cada renovação, sempre com a mesma pessoa. Anunciar de novo com o papel
+    // nulo derrubava a área do professor para "conferindo" e a remontava
+    // vazia, com o formulário perdido. Sem anúncio, nenhuma tela se mexe.
+    // Se o papel ainda não chegou — a primeira leitura falhou —, esta é a
+    // chance de tentar de novo, sem apagar nada do que já foi anunciado.
+    if (atual.papel !== null) return;
+    const papel = await lerPapel(cliente, usuario.id);
+    if (papel !== null && atual.usuarioId === usuario.id && atual.papel === null) {
+      anunciar({ ...atual, papel });
+    }
+    return;
+  }
   // Anuncia antes de ir buscar o papel: o identificador é o que a coleta
   // precisa, e ele já está aqui. Esperar a segunda ida à rede atrasaria o
   // carimbo das sessões à toa.
