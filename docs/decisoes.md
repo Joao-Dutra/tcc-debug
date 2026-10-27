@@ -2948,6 +2948,64 @@ nesta ordem nos botões do editor, numerados.
 - **O autor retira o próprio**, inclusive depois de perder o papel de
   professor: retirar só reduz exposição.
 
+### O formulário que não se perde (27/10/2026)
+
+**O defeito.** Ao sair da aba e voltar, o editor se desfazia, e o que o
+professor tinha escrito sumia. A causa estava na identidade, e não no
+editor: ao voltar ao primeiro plano, o supabase-js relê a sessão e reemite
+`SIGNED_IN`, e a cada renovação do token emite `TOKEN_REFRESHED` — os dois
+para o mesmo usuário. `identidade.ts` tratava todo evento como troca de
+identidade e anunciava a conta de novo com o papel ainda não lido; sem
+papel, a área caía em "Conferindo o papel desta conta…", desmontava o editor
+e o remontava vazio quando o papel chegava. O painel de métricas piscava pelo
+mesmo motivo.
+
+**A regra: só a troca de id é troca de identidade.** O mesmo usuário de novo
+não anuncia nada; o papel só é relido se a primeira leitura falhou, e sem
+apagar o que já foi anunciado. A troca de verdade continua anunciada — a
+área do estudo depende dela, na entrada e no fim (D37), e os testes da troca
+na entrada, da troca no fim e das pendentes enviadas antes dela passam.
+
+**O texto guardado na aba.** Além disso, o formulário vai para o
+`sessionStorage` enquanto o professor digita, para que nem um
+recarregamento de verdade perca o texto. `sessionStorage`, e não
+`localStorage`: sobrevive ao recarregamento, mas não passa para outra aba
+nem fica num computador compartilhado depois de fechado. O que é para durar
+vai para o banco, pelo "Salvar".
+
+- **Uma chave por exercício e por conta.** O rascunho do banco usa o id; o
+  exercício ainda sem id, a chave "novo". A conta entra na chave para que
+  outra pessoa que entre na mesma aba não abra o texto de quem saiu. A aba
+  guarda também qual editor estava aberto, e o recarregamento volta a ele.
+- **Some quando o banco passa a tê-lo:** ao salvar, ao publicar e ao apagar
+  ou descartar.
+- **"Voltar à lista" mantém o texto**, de propósito: é o caminho de quem sai
+  sem salvar, e é esse texto que a guarda existe para não perder. Ao abrir
+  o exercício de novo, ele volta com um aviso e um botão para descartá-lo.
+- **O banco mais novo faz a tela perguntar.** O texto guardado leva o
+  conteúdo do banco de que partiu. Se o banco mudou depois — outra aba, outro
+  aparelho —, o editor abre com a versão do banco e pergunta se o professor
+  quer usar o texto da aba; nunca a cobre em silêncio. A comparação é pelo
+  conteúdo, e não pela data, porque o próprio "Salvar" desta aba muda a data
+  sem que nada novo tenha chegado; e o conteúdo é comparado com as chaves em
+  ordem, porque o `jsonb` não guarda a ordem delas. Vale também para o
+  exercício novo criado a partir de um publicado, que não recebe por cima o
+  texto de outro novo.
+- **A verificação não é guardada.** Restaurado o texto, publicar e ver como o
+  aluno veria ficam travados até verificar de novo — a mesma regra de editar
+  depois de verificar. Guardar o relatório deixaria o navegador dizer que
+  verificou um texto que pode ter mudado no armazenamento.
+- **Sem armazenamento**, o editor funciona como antes, só sem a guarda.
+
+A lógica mora em `src/componentes/rascunho-na-aba.ts`, sem React. Não muda
+nada do que o participante vê.
+
+| Regra | Onde |
+|---|---|
+| O evento repetido para o mesmo usuário não anuncia nada; a troca real e a saída da conta, sim | `src/supabase/identidade.test.ts` |
+| Chave por exercício e por conta; forma inválida descartada; restaurar, nada ou perguntar, inclusive com as chaves do `jsonb` em outra ordem e depois de salvar; sem armazenamento, nada quebra | `src/componentes/rascunho-na-aba.test.ts` |
+| Sair e voltar à aba não relê o papel nem desfaz o formulário; recarregar volta ao editor com o texto e publicar travado; o novo também volta; o banco mais novo faz a tela perguntar | `e2e/autoria.spec.ts` |
+
 ### A revisão virou pré-visualização
 
 A tela de revisão (`#/revisao`) saiu, e no lugar dela há `#/previa/<id>`: **a
