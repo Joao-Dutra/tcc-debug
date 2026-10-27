@@ -3886,3 +3886,166 @@ etapa e, numa etapa com mais de uma sessão, o instante —, com estas colunas:
 | Sem banco: o filtro por aplicação recorta a tabela, e o CSV leva só as sessões do estudo daquela aplicação, ignorando os outros filtros, em UTF-8 sem BOM | `e2e/painel.spec.ts` |
 | Com o pesquisador: a lista de aplicações vem do banco, e o CSV junta grupo, perfil e questionário; sem as respostas, o CSV fica desligado e o resto do painel segue | `e2e/painel-do-estudo.spec.ts` |
 | O que o banco aceita e recusa na área do estudo | `npm run verificar-rls` (D24) |
+
+## D38 — O painel de controle do pesquisador
+
+**Decisão.** O que o pesquisador fazia à mão no editor SQL do Supabase passa a
+ser feito numa tela própria, `#/controle`, fora da navegação do participante,
+com um link no painel de métricas. **Fase 1**, pronta antes do piloto: as
+aplicações do estudo — listar com as entradas e os participantes por grupo,
+criar, abrir, fechar e proteger —, a limpeza de uma aplicação de teste, o
+interruptor da coleta, o freio de emergência, o mapa de rotas e a auditoria.
+O banco é a migração 0005. **Fase 2**, depois: os papéis (abaixo). Nada aqui é
+visto pelo participante, e o congelamento de D32 e D34 não é afetado.
+
+### As regras de segurança
+
+- **Toda ação é uma função do banco que confere `e_pesquisador()` por
+  dentro.** A tela esconder o botão não é proteção: a chave pública está no
+  pacote, e qualquer um chama a API sem tela nenhuma. As funções são
+  `security definer`, porque escrevem em tabelas onde o navegador não tem
+  escrita (0004), e ficam abertas a todo autenticado, e não só ao
+  pesquisador: o papel não é grant, é linha em `perfis`, e quem confere é a
+  função. Assim a recusa do participante e a do professor também ficam
+  registradas. A chave secreta nunca entra no navegador.
+- **Toda ação que altera fica na auditoria** (`auditoria_do_pesquisador`):
+  quem, quando, a ação, o alvo, os parâmetros, o resultado (`ok`, `recusada`
+  ou `falhou`) e o detalhe — o motivo da recusa, o erro da falha, as
+  contagens da limpeza. **A recusa é linha gravada e resposta `ok: false`, e
+  não exceção**: uma exceção desfaria a transação, e a linha da auditoria
+  junto. **A falha no meio do trabalho** é pega por um bloco com
+  `exception`, que no plpgsql é uma subtransação: desfaz só o trabalho, e o
+  tratador ainda grava a falha. A tabela só cresce: um gatilho recusa
+  `update`, `delete` e `truncate`, inclusive pela chave secreta. `quem` não
+  tem chave estrangeira, para o registro sobreviver à conta. A função que
+  grava (`auditar`) não é chamável de fora.
+- **Ação destrutiva pede o nome do alvo digitado**: o código da aplicação na
+  limpeza, conferido também pelo banco, e o título do exercício no freio.
+- **Não existe "reiniciar banco"** nem nada que apague usuário anônimo: as
+  sessões estão ligadas a eles por `on delete cascade`.
+
+### Aplicação protegida
+
+`aplicacoes_do_estudo` ganha `protegida`, que **nasce verdadeira**: a
+aplicação da coleta real é a que não pode ser esquecida desprotegida, e a de
+teste se declara como tal ao ser criada, pela caixa "Aplicação de teste". É o
+lado seguro como padrão, como o interruptor (D33). O `piloto-nov` ficou de
+teste na 0005, até o piloto acontecer; o pesquisador o protege pelo painel
+depois.
+
+- **Proteger não se desfaz.** Não há função de desproteger, e um gatilho
+  recusa a volta por qualquer caminho, inclusive a chave secreta. Foi pedido
+  assim: um caminho de serviço para desproteger seria uma porta dos fundos
+  que hoje não existe. Um engano se desfaz só desligando o gatilho no editor
+  SQL, que é ato deliberado de quem é dono do banco.
+- **O dado de uma aplicação protegida não se apaga nem muda de aplicação, por
+  caminho nenhum.** Gatilhos em `sessoes`, `participantes_do_estudo` e
+  `respostas_do_questionario` recusam — venha a tentativa de uma função com
+  defeito, da chave secreta ou da cascata de um anônimo apagado no painel do
+  Supabase. A limpeza já recusa a protegida por conta própria; os gatilhos
+  são a segunda tranca. Mudar de aplicação também é barrado, porque levar a
+  sessão para fora e apagá-la depois seria o mesmo apagar, em dois passos.
+- **A linha de uma protegida vazia continua podendo sair**: sem dado não há o
+  que proteger, e é assim que a verificação do RLS remove a dela.
+
+### A limpeza
+
+Só a aplicação de teste, **fechada** — com ela aberta, alguém entrando
+durante a limpeza ganharia uma vaga que some —, e com o código digitado
+conferido pela função. Numa transação, apaga as respostas, as sessões e os
+participantes daquela aplicação e zera o contador da alternância. A linha
+da aplicação é travada antes, como em `entrar_no_estudo`, e uma entrada
+simultânea espera. **Não toca** `auth.users`, `perfis`, a linha da aplicação
+nem as sessões sem aplicação: as identidades anônimas do teste ficam sem
+dado, o que é inofensivo.
+
+Na tela, o primeiro passo é **"Exportar CSV desta aplicação"** — o mesmo CSV
+do painel de métricas (D37), recortado nela —, porque é o dado que vai
+sumir. É oferecido, e não exigido: uma aplicação de teste vazia não tem o que
+exportar.
+
+### O interruptor e o freio
+
+O interruptor da coleta e o freio de emergência (D33) eram `update` direto
+na tabela. **Passaram a ser funções auditadas** (`definir_propostos_ocultos`
+e `retirar_publicado`), e a 0005 fechou os caminhos antigos: revogou o
+`update` da `coleta` e tirou a política "pesquisador retira qualquer
+publicado". O autor continua retirando o próprio pela tabela, como antes:
+não é ação do pesquisador.
+
+Na tela, os dois saíram da área do professor para um componente só
+(`ControlesDaColeta.tsx`), usado nas duas telas: o pesquisador não pode
+encontrar o interruptor dizendo uma coisa num lugar e outra no outro.
+
+- **O freio pede o título digitado**, porque a retirada não volta. A função
+  não recebe o título: a 0005 já tinha rodado com `retirar_publicado(p_id)`,
+  e mudar a assinatura pediria outra migração. A confirmação digitada do
+  freio é, por isso, contra o clique por engano; quem protege é o papel
+  conferido na função.
+- **O interruptor continua com a confirmação do navegador**, e não
+  digitada: nada se perde, e ligar de volta desfaz.
+
+### A tela
+
+- **Para o pesquisador, as seções; para os outros, nada.** Sem conta, a
+  entrada do pesquisador; com conta sem o papel, o aviso de que o painel é
+  dele. Sem banco configurado, a tela diz que age sobre o banco.
+- **As regras moram fora do React**: o código da aplicação e a confirmação
+  em `controle.ts`, o mapa de rotas em `mapa-de-rotas.ts`. A regra do código
+  é a do `check` da 0004, e o teste a compara com a migração lida como
+  texto, como no perfil (D37). Todo motivo de recusa que a 0005 devolve tem
+  texto na tela, e o teste também confere isso.
+- **O mapa de rotas sai das funções de `usar-rota.ts`**, e nunca de texto
+  escrito à mão: as telas fixas, cada exercício do catálogo com e sem apoio,
+  e, para cada aplicação, o percurso e a conferência, com botão de copiar o
+  endereço inteiro. O teste devolve cada caminho ao interpretador de rotas.
+  A rota do painel (`CAMINHO_CONTROLE`) mora lá também, para o menu por
+  papel que vem depois a reaproveitar.
+- **Sem cor nova**: só os papéis de cor que já existem, o vermelho de erro
+  no que é perigo.
+
+### Verificado contra o projeto em 27/10/2026
+
+A 0005 rodou no editor SQL, e em seguida `npm run verificar-rls`: **71
+verificações, todas passando**. As novas cobrem, para cada função, a recusa
+do participante e do professor com o motivo e a linha na auditoria, e o
+pesquisador conseguindo; o interruptor e o freio recusados pela tabela, até
+ao pesquisador; o código inválido e o repetido; a aplicação nascendo
+protegida sem a marca de teste; a proteção que não se desfaz, nem pela chave
+secreta; a limpeza recusada com a confirmação errada, aberta ou protegida, e
+bem-sucedida com as contagens, sem levar conta, perfil, a sessão de fora do
+estudo nem a outra aplicação; e a auditoria que só o pesquisador lê e que
+nem a chave secreta altera ou apaga.
+
+### Limitação que fica
+
+**O gatilho da aplicação protegida com dado não tem teste.** Contra o projeto
+real, a verificação só cria a protegida vazia: uma protegida com dado não
+sairia mais, e a verificação deixaria resíduo no banco do estudo para
+sempre. O lugar desse teste é um Postgres local, e o repositório não tem
+arnês PGlite — as regras da 0003 foram exercitadas num, provisório e fora do
+repositório (D33). O que está coberto é o caminho da função (a limpeza
+recusa a protegida) e o gatilho da proteção que não se desfaz; montar o
+arnês fica para uma fatia própria.
+
+### Fase 2: os papéis (0006)
+
+Registrada aqui, a fazer depois da Fase 1 verificada: listar as contas que
+têm e-mail, com o papel de cada uma, por uma função que lê `auth.users` sem
+expô-la ao navegador, e sem as anônimas; conceder e retirar professor;
+conceder pesquisador e retirar o de outra conta, os dois com o e-mail da
+conta digitado e conferido pelo banco. **Retirar o próprio papel de
+pesquisador é sempre recusado**, para ninguém ficar sem acesso. Nenhuma
+dessas funções concede papel a conta anônima.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Cada função recusa participante e professor, com o motivo e a auditoria, e o pesquisador consegue; o interruptor e o freio não passam mais pela tabela; a protegida não se limpa nem se desprotege; a limpeza leva só o dado da aplicação; a auditoria só cresce | `supabase/verificacao/rls.verificacao.ts` (`npm run verificar-rls`) |
+| A regra do código é a da migração; a confirmação é exata; todo motivo da 0005 tem texto | `src/componentes/controle.test.ts` |
+| Cada caminho do mapa abre a tela certa, os exercícios nos dois apoios, as aplicações com percurso e conferência | `src/componentes/mapa-de-rotas.test.ts` |
+| Cada ação chama a sua função com os parâmetros da 0005; resposta sem `ok` não passa por feita | `src/supabase/controle-do-pesquisador.test.ts` |
+| O interruptor e o freio do cliente vão pelas funções; a retirada do autor continua pela tabela | `src/supabase/exercicios-de-professor.test.ts` |
+| Sem o papel, nenhuma seção; o link a partir das métricas; os grupos na lista e a protegida sem limpar; criar confere o código e manda protegida ou de teste; a recusa aparece com o motivo; proteger pede confirmação; limpar exporta o CSV só da aplicação, recusa a aberta e só libera com o código exato; o freio com o título digitado; o mapa com cada exercício nos dois apoios e o copiar; a auditoria com o motivo em texto | `e2e/controle.spec.ts` |
+| O freio da área do professor também pede o título digitado | `e2e/autoria.spec.ts` |
