@@ -65,7 +65,7 @@ async function seguir(page: Page, ultimo = false) {
 test('sem marcar "Concordo em participar", não se entra', async ({ page }) => {
   await page.goto(ESTUDO);
   await expect(page.getByRole('heading', { name: 'Antes de começar' })).toBeVisible();
-  await expect(page.getByText('A participação é voluntária e não afeta a sua nota')).toBeVisible();
+  await expect(page.getByText('Se você fechar a página antes do fim')).toBeVisible();
   const comecar = page.getByRole('button', { name: 'Começar' });
   await expect(comecar).toBeDisabled();
   await page.getByLabel('Concordo em participar').check();

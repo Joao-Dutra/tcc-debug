@@ -13,17 +13,21 @@ import { LIMITE_DO_AQUECIMENTO_MS, LIMITE_POR_EXERCICIO_MS, EXERCICIOS_DA_ANALIS
  * tempos entram no texto a partir do percurso, e por isso recalibrá-los
  * também sobe a versão.
  *
- * O que o texto precisa dizer, a pedido do pesquisador: que a participação é
- * voluntária, que não afeta a nota, que se pode parar a qualquer momento — e
- * que o que já foi registrado fica, sem como ser excluído depois, porque o
- * registro é anônimo —, que o registro inclui o código escrito, que só os
+ * O que o texto precisa dizer: que o que já foi feito fica salvo para quem
+ * fecha a página antes do fim, sem como ser excluído depois, porque o
+ * registro é anônimo, que o registro inclui o código escrito, que só os
  * pesquisadores têm acesso aos dados, que os resultados saem só de forma
  * agregada, e um contato para dúvidas. É lido em pé, na sala: curto.
  *
  * Versão 2: o acesso aos dados, a apresentação agregada, o que fica de quem
  * para no meio e o contato.
+ *
+ * Versão 3: texto mais curto, a pedido da orientação. O parágrafo da
+ * participação foi trocado por uma frase só, sobre o que fica de quem fecha a
+ * página, e com ele saíram a participação voluntária, a nota e o parar a
+ * qualquer momento.
  */
-export const VERSAO_DO_AVISO = 2;
+export const VERSAO_DO_AVISO = 3;
 
 /**
  * O contato para dúvidas. Provisório, o do autor, até a orientadora confirmar
@@ -47,10 +51,8 @@ export const AVISO = {
       `${minutos(LIMITE_POR_EXERCICIO_MS)} nos demais. Quando o tempo acaba, você segue para o ` +
       'próximo. Você também pode seguir antes, quando quiser, mas não dá para voltar a um ' +
       'exercício que ficou para trás.',
-    'A participação é voluntária e não afeta a sua nota em nenhuma disciplina. Você pode parar a ' +
-      'qualquer momento, sem precisar explicar o motivo: basta fechar a página. O que já tiver ' +
-      'sido registrado até ali permanece: como o registro é anônimo, não há como identificar ' +
-      'depois os dados de uma pessoa para excluí-los.',
+    'Se você fechar a página antes do fim, o que já foi feito até ali fica salvo — e, como o ' +
+      'registro é anônimo, depois não há como identificar e excluir os dados de uma pessoa.',
     'O registro é anônimo: não pedimos nome, e-mail, matrícula nem nenhum outro dado que ' +
       'identifique você. Fica registrado o que você faz na ferramenta — inclusive o código que ' +
       'você escrever — e as respostas do questionário. Só os pesquisadores têm acesso aos dados, ' +
