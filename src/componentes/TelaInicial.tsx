@@ -14,9 +14,9 @@ import { CAMINHO_ENTRAR } from './usar-rota';
  * Uma folha de exercício mimeografada sobre a sala, com as estruturas
  * desenhadas na tinta roxa da anilina e uma lupa de investigação por cima.
  *
- * A tinta é anilina clara, e não a anilina da ação: a folha é o laboratório
- * escolar de D19, e o botão de ação precisa continuar sendo o roxo mais forte
- * da tela. Nenhuma cor de significado da bancada aparece aqui — azul, âmbar e
+ * A tinta é anilina clara, e não a cor da ação: a folha é o laboratório
+ * escolar de D19, e o botão de ação, na ardósia (D39), continua sendo a cor
+ * mais forte da tela. Nenhuma cor de significado da bancada aparece aqui — azul, âmbar e
  * vermelho dizem estado de estrutura, e a decoração não pode ensinar outro
  * sentido para eles.
  *

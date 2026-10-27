@@ -1,7 +1,7 @@
 /**
  * Ilustrações do tutorial do professor (D33), no mesmo traço das da tela
  * inicial e do tutorial do participante: primitivas no próprio código, sem
- * arquivo de imagem (D13), grafite no traço e anilina no que é ação. Nenhuma
+ * arquivo de imagem (D13), grafite no traço e a cor de ação no que é ação. Nenhuma
  * cor de significado da bancada.
  */
 

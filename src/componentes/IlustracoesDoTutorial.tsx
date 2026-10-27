@@ -4,7 +4,7 @@
  * destacado.
  *
  * Mesmas regras das da tela inicial (D20): primitivas no próprio código, sem
- * arquivo de imagem (D13), grafite no traço e anilina no que é ação. Nenhuma
+ * arquivo de imagem (D13), grafite no traço e a cor de ação no que é ação. Nenhuma
  * cor de significado da bancada, e nenhum desenho de estrutura com estado —
  * o tutorial ensina onde as coisas ficam, e não o que um quadro quer dizer.
  */
