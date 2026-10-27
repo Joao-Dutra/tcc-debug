@@ -203,25 +203,39 @@ interface Props {
  * perderia o exercício sem volta. A pergunta é a mesma tenha o estudante
  * corrigido ou não — se mudasse, ela própria diria se o código está certo.
  */
-function SeguirNoPercurso({ ultimo, aoSeguir }: { ultimo: boolean; aoSeguir: () => void }) {
+function useSeguirNoPercurso(ultimo: boolean, aoSeguir: () => void) {
   const [confirmando, setConfirmando] = useState(false);
+  const botao = useRef<HTMLButtonElement>(null);
   const ficar = useRef<HTMLButtonElement>(null);
+  const abriu = useRef(false);
   // Quem pediu para seguir chega à pergunta pelo teclado; o foco vai para o
-  // lado que não perde nada.
+  // lado que não perde nada. Ao ficar, volta para o botão de onde saiu.
   useEffect(() => {
-    if (confirmando) ficar.current?.focus();
+    if (confirmando) {
+      abriu.current = true;
+      ficar.current?.focus();
+    } else if (abriu.current) {
+      botao.current?.focus();
+    }
   }, [confirmando]);
 
-  if (!confirmando) {
-    return (
-      <button className="seguir-no-percurso" onClick={() => setConfirmando(true)}>
-        {ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo'}
-        <ArrowRightIcon className="icone" aria-hidden="true" />
-      </button>
-    );
-  }
-  return (
-    <p className="confirmar-seguir" role="group" aria-label="Confirmar">
+  // O botão fica no lugar enquanto a pergunta está aberta, e a pergunta vai
+  // numa linha própria abaixo da barra: dentro da barra, ela disputava a
+  // largura com o botão e quebrava os rótulos em duas linhas (D39).
+  const botaoDeSeguir = (
+    <button
+      ref={botao}
+      className="seguir-no-percurso"
+      aria-expanded={confirmando}
+      aria-controls="confirmar-seguir"
+      onClick={() => setConfirmando(true)}
+    >
+      {ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo'}
+      <ArrowRightIcon className="icone" aria-hidden="true" />
+    </button>
+  );
+  const confirmacao = confirmando && (
+    <p className="confirmar-seguir" id="confirmar-seguir" role="group" aria-label="Confirmar">
       <span>Não dá para voltar a este exercício depois.</span>
       <button ref={ficar} onClick={() => setConfirmando(false)}>
         Ficar neste exercício
@@ -231,6 +245,7 @@ function SeguirNoPercurso({ ultimo, aoSeguir }: { ultimo: boolean; aoSeguir: () 
       </button>
     </p>
   );
+  return { botaoDeSeguir, confirmacao };
 }
 
 export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }: Props) {
@@ -335,6 +350,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
   // percurso saber, para o encerramento ser o último evento dela.
   // Uma vez só: o prazo pode vencer no instante em que o estudante confirma.
   const encerrarEtapa = useRef<(motivo: MotivoDoEncerramento) => void>(() => {});
+  const seguir = useSeguirNoPercurso(percurso?.ultimo ?? false, () => encerrarEtapa.current('seguir'));
   const etapaEncerrada = useRef(false);
   useEffect(() => {
     encerrarEtapa.current = (motivo) => {
@@ -387,6 +403,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
       )}
       <Cabecalho
         semSaida={percurso !== undefined}
+        abaixoDaBarra={percurso && seguir.confirmacao}
         navegacao={
           percurso ? (
             <span className="posicao-no-percurso">{percurso.rotulo}</span>
@@ -400,10 +417,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
         acoes={
           percurso ? (
             <>
-              <SeguirNoPercurso
-                ultimo={percurso.ultimo}
-                aoSeguir={() => encerrarEtapa.current('seguir')}
-              />
+              {seguir.botaoDeSeguir}
               <button className="ajuda" onClick={() => abrirTutorial('ajuda')}>
                 <QuestionMarkCircleIcon className="icone" aria-hidden="true" />
                 Ajuda

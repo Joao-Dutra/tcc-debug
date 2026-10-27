@@ -65,6 +65,11 @@ interface Props {
    * tela inicial, e dela à vitrine, que o percurso deixa de fora.
    */
   semSaida?: boolean;
+  /**
+   * Uma linha logo abaixo da barra, à direita, para o que responde a uma ação
+   * da barra sem mudar a largura dela — a confirmação de seguir no percurso.
+   */
+  abaixoDaBarra?: ReactNode;
 }
 
 export function Cabecalho({
@@ -74,6 +79,7 @@ export function Cabecalho({
   children,
   naInicial = false,
   semSaida = false,
+  abaixoDaBarra,
 }: Props) {
   return (
     <header className="cabecalho">
@@ -85,6 +91,7 @@ export function Cabecalho({
         </div>
         {acoes && <div className="cabecalho-acoes">{acoes}</div>}
       </div>
+      {abaixoDaBarra && <div className="cabecalho-abaixo-da-barra">{abaixoDaBarra}</div>}
       {titulo && <h1>{titulo}</h1>}
       {children}
     </header>

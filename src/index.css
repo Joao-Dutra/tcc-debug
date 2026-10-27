@@ -324,6 +324,11 @@ main { display: grid; grid-template-columns: 1fr 1fr; gap: var(--esp-20);
 .cabecalho-painel h2 { margin: 0; }
 .rodape-painel { font-size: var(--fonte-apoio); color: var(--grafite-suave);
   margin: var(--esp-10) 0 0; max-width: var(--largura-texto); }
+/* Dentro de um bloco, a nota e a mensagem de validação ocupam a largura dele:
+   quem limita a medida é o bloco, e não a nota, que ficava espremida à
+   esquerda de um formulário mais largo (D39). */
+:is(form, fieldset, .painel, .corpo-do-estudo, .saida-professor) :is(.rodape-painel, .erro) {
+  max-width: none; }
 
 button {
   font: inherit; font-size: var(--fonte-apoio); line-height: 1.2;
@@ -649,7 +654,8 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
   margin-top: var(--esp-12); }
 .conta-aberta .rodape-painel { margin: 0; }
 .entrada-conta .aviso-conta { flex-basis: 100%; margin: 0; font-size: var(--fonte-apoio); }
-.aguardando-liberacao p { margin: 0 0 var(--esp-8); max-width: var(--largura-texto); }
+.aguardando-liberacao { max-width: calc(var(--largura-texto) + 2 * var(--esp-20)); }
+.aguardando-liberacao p { margin: 0 0 var(--esp-8); }
 .lista-de-exercicios { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column;
   gap: var(--esp-8); }
 .lista-de-exercicios li { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--esp-4) var(--esp-12); }
@@ -1093,7 +1099,14 @@ button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content:
    letra de apoio, porque é ela que substitui o caminho de volta.
 --------------------------------------------------------------------------- */
 .posicao-no-percurso { font-size: var(--fonte-apoio); color: var(--grafite-suave); }
-.corpo-do-estudo { display: block; max-width: var(--largura-texto); }
+/* O bloco tem chão e largura próprios, e o texto ocupa o bloco (D39). Antes a
+   medida estava no texto: numa janela de 1920 px o aviso e o perfil viravam
+   uma coluna estreita na beira esquerda, e as notas, mais estreitas ainda. */
+.corpo-do-estudo { display: block; max-width: calc(var(--largura-texto) + 2 * var(--esp-32));
+  background: var(--painel); border-radius: var(--raio-faixa);
+  padding: var(--esp-24) var(--esp-32); }
+.corpo-do-estudo .conferencia li { background: var(--sala); }
+@media (max-width: 700px) { .corpo-do-estudo { padding: var(--esp-16); } }
 .corpo-do-estudo > p { margin: 0 0 var(--esp-16); line-height: 1.6; }
 .aviso-do-estudo p, .perfil-do-estudo > p { margin: 0 0 var(--esp-12); line-height: 1.6; }
 .aviso-do-estudo .rodape-painel { margin: 0 0 var(--esp-12); }
@@ -1110,8 +1123,14 @@ button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content:
 /* O seguir pesa como o botão de ajuda ao lado, e não como a ação principal:
    a ação principal da tela continua sendo investigar. */
 button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula); background: transparent; }
-.confirmar-seguir { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8);
-  margin: 0; font-size: var(--fonte-apoio); }
+/* A confirmação mora numa linha própria, abaixo da barra, e nenhum botão
+   quebra o rótulo: a barra não muda de largura quando a pergunta abre (D39). */
+.cabecalho-acoes button, .cabecalho-abaixo-da-barra button { white-space: nowrap; }
+.cabecalho-abaixo-da-barra { display: flex; justify-content: flex-end; margin-top: var(--esp-8); }
+/* Sem o limite de medida que todo `header p` recebe: era ele, e não a falta
+   de espaço, que quebrava a pergunta em duas linhas. */
+.confirmar-seguir { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+  gap: var(--esp-8); margin: 0; max-width: none; font-size: var(--fonte-apoio); }
 /* O questionário: uma afirmação por faixa, e a escala de 1 a 5 em cinco
    colunas iguais, para os números ficarem alinhados de uma afirmação para a
    outra. As âncoras ficam sob os extremos, como no papel. */
