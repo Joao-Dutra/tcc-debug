@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import { javascript } from '@codemirror/lang-javascript';
 import { executar } from '../nucleo/executor';
@@ -23,6 +23,16 @@ import {
   rascunhoDoFormulario,
 } from './formulario-do-exercicio';
 import { publicacaoLiberada, verificacaoValeParaOAtual } from './liberacoes-da-autoria';
+import {
+  armazenamentoDaAba,
+  baseDe,
+  decidirRestauracao,
+  esquecerDaAba,
+  guardarAberto,
+  guardarNaAba,
+  lerDaAba,
+} from './rascunho-na-aba';
+import type { GuardadoNaAba } from './rascunho-na-aba';
 import { PreviaDoExercicio } from './PreviaDoExercicio';
 import { RelatorioDeVerificacao } from './RelatorioDeVerificacao';
 import { temaDoEditor } from './tema-do-editor';
@@ -95,6 +105,8 @@ function NomesEsperados({ estrutura }: { estrutura: TipoEstrutura }) {
 interface Props {
   /** Nulo para um exercício novo. */
   id: string | null;
+  /** A conta: entra na chave do texto guardado na aba. */
+  autorId: string;
   inicial: RascunhoDeExercicio | null;
   aoFechar: (mudou: boolean) => void;
   /**
@@ -105,11 +117,79 @@ interface Props {
   propostosOcultos: boolean;
 }
 
-export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosOcultos }: Props) {
+export function EditorDeExercicio({
+  id: idInicial,
+  autorId,
+  inicial,
+  aoFechar,
+  propostosOcultos,
+}: Props) {
+  const [aba] = useState(armazenamentoDaAba);
+  // O texto guardado na aba entra só se partiu do que se está abrindo; se
+  // partiu de outra versão, fica à parte até o professor escolher.
+  const [abertura] = useState(() => {
+    const guardado = lerDaAba(aba, autorId, idInicial);
+    return { guardado, decisao: decidirRestauracao(guardado, inicial, idInicial === null) };
+  });
   const [formulario, setFormulario] = useState<FormularioDoExercicio>(() =>
-    inicial ? formularioDe(inicial) : formularioVazio()
+    abertura.decisao === 'restaurar' && abertura.guardado
+      ? abertura.guardado.formulario
+      : inicial
+        ? formularioDe(inicial)
+        : formularioVazio()
   );
+  const [restaurado, setRestaurado] = useState(abertura.decisao === 'restaurar');
+  const [emConflito, setEmConflito] = useState<GuardadoNaAba | null>(
+    abertura.decisao === 'conflito' ? abertura.guardado : null
+  );
+  // De que conteúdo do banco o texto do formulário partiu (ver rascunho-na-aba).
+  const [base, setBase] = useState<string | null>(() => (inicial ? baseDe(inicial) : null));
   const [id, setId] = useState<string | null>(idInicial);
+
+  useEffect(() => {
+    guardarAberto(aba, autorId, id);
+  }, [aba, autorId, id]);
+
+  // Guarda a cada mudança, mas não por cima de um texto em conflito ainda não
+  // decidido: ele é a outra metade da escolha.
+  const primeira = useRef(true);
+  useEffect(() => {
+    if (primeira.current) {
+      primeira.current = false;
+      return;
+    }
+    if (!emConflito) guardarNaAba(aba, autorId, id, { formulario, base });
+    // Só o formulário dispara: mudar o id ou a base não é texto novo.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formulario]);
+
+  const doAberto = () => (inicial ? formularioDe(inicial) : formularioVazio());
+
+  const usarTextoDaAba = () => {
+    if (!emConflito) return;
+    setEmConflito(null);
+    setFormulario(emConflito.formulario);
+    setRestaurado(true);
+  };
+
+  const descartarTextoDaAba = () => {
+    esquecerDaAba(aba, autorId, id);
+    if (restaurado) setFormulario(doAberto());
+    setEmConflito(null);
+    setRestaurado(false);
+  };
+
+  /**
+   * O banco passou a ter o formulário: o texto da aba não é mais preciso. O
+   * do exercício novo só sai quando era ele o que estava aberto — o de um
+   * novo abandonado em outra hora não tem nada a ver com este rascunho.
+   */
+  const gravadoNoBanco = (rascunho: RascunhoDeExercicio, anterior: string | null, alvo: string) => {
+    if (anterior === null) esquecerDaAba(aba, autorId, null);
+    esquecerDaAba(aba, autorId, alvo);
+    setBase(baseDe(rascunho));
+    setRestaurado(false);
+  };
   const [relatorio, setRelatorio] = useState<RelatorioDaVerificacao | null>(null);
   // O rascunho exatamente como estava quando foi verificado.
   const [verificado, setVerificado] = useState<string | null>(null);
@@ -153,10 +233,12 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
   const gravar = async (rascunho: RascunhoDeExercicio): Promise<string> => {
     if (id) {
       await salvarRascunho(id, rascunho);
+      gravadoNoBanco(rascunho, id, id);
       return id;
     }
     const novo = await criarRascunho(rascunho);
     setId(novo);
+    gravadoNoBanco(rascunho, null, novo);
     return novo;
   };
 
@@ -224,6 +306,7 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
     try {
       const alvo = await gravar(atual);
       await publicar(alvo, atual, relatorio);
+      esquecerDaAba(aba, autorId, alvo);
       aoFechar(true);
     } catch (e) {
       falhou(e);
@@ -233,12 +316,15 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
 
   const apagar = async () => {
     if (!id) {
+      // "Descartar" no exercício novo: o texto da aba vai junto.
+      esquecerDaAba(aba, autorId, null);
       aoFechar(mudou);
       return;
     }
     if (!window.confirm('Apagar este rascunho? Isto não pode ser desfeito.')) return;
     try {
       await apagarRascunho(id);
+      esquecerDaAba(aba, autorId, id);
       aoFechar(true);
     } catch (e) {
       falhou(e);
@@ -262,6 +348,28 @@ export function EditorDeExercicio({ id: idInicial, inicial, aoFechar, propostosO
           Voltar à lista
         </button>
       </div>
+      {restaurado && (
+        <p className="aviso-da-aba" role="status">
+          O texto não salvo desta aba foi recuperado. Salve o rascunho para guardá-lo no banco.{' '}
+          <button className="discreto" onClick={descartarTextoDaAba}>
+            Descartar o texto recuperado
+          </button>
+        </p>
+      )}
+      {emConflito && (
+        <div className="aviso-da-aba" role="alert">
+          <p>
+            Há um texto não salvo nesta aba escrito sobre outra versão deste exercício. O formulário
+            mostra a versão aberta agora.
+          </p>
+          <span className="acoes-painel">
+            <button onClick={usarTextoDaAba}>Usar o texto desta aba</button>
+            <button className="discreto" onClick={descartarTextoDaAba}>
+              Descartar o texto desta aba
+            </button>
+          </span>
+        </div>
+      )}
 
       <div className="campos">
         <label>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { ArrowLeftIcon, QuestionMarkCircleIcon } from '@heroicons/react/20/solid';
 import { supabaseConfigurado } from '../supabase/cliente';
@@ -14,6 +14,7 @@ import {
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
 import { estadoDaArea } from './estado-da-area';
+import { armazenamentoDaAba, esquecerAberto, lerAberto } from './rascunho-na-aba';
 import { TutorialDoProfessor } from './TutorialDoProfessor';
 import { marcarTutorialDoProfessorVisto, tutorialDoProfessorJaVisto } from './tutorial-visto';
 import { useIdentidade } from './usar-identidade';
@@ -186,6 +187,26 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
     };
   }, [autorId, leitura]);
 
+  // Um recarregamento com o editor aberto volta a ele, e o editor recupera o
+  // texto da aba (rascunho-na-aba). Só uma vez, na primeira leitura: depois,
+  // quem decide o que está aberto é o professor. O rascunho que já não está na
+  // lista como rascunho — publicado, apagado em outra aba — não reabre.
+  const reabriu = useRef(false);
+  useEffect(() => {
+    if (reabriu.current || exercicios === null) return;
+    reabriu.current = true;
+    const aba = armazenamentoDaAba();
+    const estava = lerAberto(aba, autorId);
+    if (estava === undefined) return;
+    if (estava === null) {
+      setAberto({ tipo: 'novo', inicial: null });
+      return;
+    }
+    const exercicio = exercicios.find((e) => e.id === estava && e.situacao === 'rascunho');
+    if (exercicio) setAberto({ tipo: 'rascunho', exercicio });
+    else esquecerAberto(aba, autorId);
+  }, [exercicios, autorId]);
+
   const tutorial = (
     <TutorialDoProfessor
       aberto={tutorialAberto}
@@ -206,9 +227,11 @@ function ExerciciosDoProfessor({ autorId }: { autorId: string }) {
         // não do que ficou de outro exercício.
         key={aberto.tipo === 'rascunho' ? aberto.exercicio.id : 'novo'}
         id={aberto.tipo === 'rascunho' ? aberto.exercicio.id : null}
+        autorId={autorId}
         inicial={aberto.tipo === 'rascunho' ? aberto.exercicio.conteudo : aberto.inicial}
         propostosOcultos={coleta.ocultos}
         aoFechar={(mudou) => {
+          esquecerAberto(armazenamentoDaAba(), autorId);
           setAberto(null);
           if (mudou) setLeitura((n) => n + 1);
         }}

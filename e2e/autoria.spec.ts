@@ -204,6 +204,112 @@ test.describe('o professor', () => {
   });
 });
 
+/**
+ * O formulário não se perde. Ao voltar à aba, o supabase-js reemite SIGNED_IN
+ * para a mesma conta, e a área tratava isso como troca de identidade: caía em
+ * "conferindo o papel" e remontava o editor vazio. E o texto fica na aba
+ * (sessionStorage) até o banco tê-lo, para nem um recarregamento perdê-lo.
+ */
+test.describe('o formulário guardado na aba', () => {
+  async function abrirRascunho(page: Page) {
+    await page.goto('/#/autoria');
+    await page
+      .locator('.lista-de-exercicios li', { hasText: 'Meu rascunho' })
+      .getByRole('button', { name: 'Editar' })
+      .click();
+    await expect(page.getByRole('heading', { name: 'Rascunho' })).toBeVisible();
+  }
+
+  /** Sai da aba e volta, como o navegador avisa: `visibilitychange`, que sobe até a janela. */
+  async function sairEVoltarDaAba(page: Page) {
+    for (const estado of ['hidden', 'visible']) {
+      await page.evaluate((e) => {
+        Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => e });
+        document.dispatchEvent(new Event('visibilitychange', { bubbles: true }));
+      }, estado);
+    }
+  }
+
+  test('sair da aba e voltar não desfaz o formulário', async ({ page }) => {
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, bancoDoProfessor(false));
+    // O pedido do papel conta as vezes que a área foi conferir quem entrou.
+    let leiturasDoPapel = 0;
+    page.on('request', (r) => {
+      if (r.url().includes('/rest/v1/perfis')) leiturasDoPapel++;
+    });
+    await abrirRascunho(page);
+    const titulo = page.getByLabel('Título', { exact: true });
+    await titulo.fill('Escrito antes de sair da aba');
+    const antes = leiturasDoPapel;
+
+    await sairEVoltarDaAba(page);
+    // A volta passa pela biblioteca, que lê a sessão e reemite o evento.
+    await page.waitForTimeout(500);
+
+    await expect(page.getByText('Conferindo o papel desta conta…')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Rascunho' })).toBeVisible();
+    await expect(titulo).toHaveValue('Escrito antes de sair da aba');
+    expect(leiturasDoPapel).toBe(antes);
+  });
+
+  test('recarregar a página volta ao editor com o texto, e publicar continua travado', async ({ page }) => {
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, bancoDoProfessor(false));
+    await abrirRascunho(page);
+    await page.getByLabel('Título', { exact: true }).fill('Escrito antes de recarregar');
+
+    await page.reload();
+
+    await expect(page.getByRole('heading', { name: 'Rascunho' })).toBeVisible();
+    await expect(page.getByLabel('Título', { exact: true })).toHaveValue('Escrito antes de recarregar');
+    await expect(page.getByRole('status').filter({ hasText: 'foi recuperado' })).toBeVisible();
+    // A verificação não é guardada: restaurado, verifica-se de novo (D31, D33).
+    const etapas = page.getByRole('list', { name: 'Caminho até a publicação' });
+    await expect(etapas.getByRole('button', { name: 'Publicar' })).toBeDisabled();
+
+    // Descartar volta ao que o banco tem, e o recarregamento seguinte não traz nada.
+    await page.getByRole('button', { name: 'Descartar o texto recuperado' }).click();
+    await expect(page.getByLabel('Título', { exact: true })).toHaveValue('Meu rascunho');
+    await page.reload();
+    await expect(page.getByLabel('Título', { exact: true })).toHaveValue('Meu rascunho');
+    await expect(page.getByText('foi recuperado')).toHaveCount(0);
+  });
+
+  test('o exercício novo também volta depois de recarregar', async ({ page }) => {
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, bancoDoProfessor(false));
+    await page.goto('/#/autoria');
+    await page.getByRole('button', { name: 'Novo exercício' }).click();
+    await page.getByLabel('Título', { exact: true }).fill('Um exercício que ainda não existe');
+
+    await page.reload();
+
+    await expect(page.getByRole('heading', { name: 'Novo exercício' })).toBeVisible();
+    await expect(page.getByLabel('Título', { exact: true })).toHaveValue('Um exercício que ainda não existe');
+  });
+
+  test('se o banco mudou depois, o texto da aba não cobre o mais novo sem perguntar', async ({ page }) => {
+    const banco = bancoDoProfessor(false);
+    await entrarComo(page, PROFESSOR);
+    await bancoFalso(page, banco);
+    await abrirRascunho(page);
+    await page.getByLabel('Título', { exact: true }).fill('Escrito nesta aba');
+
+    // Outra aba salvou o mesmo rascunho enquanto isso.
+    const rascunho = banco.linhas.find((l) => l.id === ID_RASCUNHO)!;
+    rascunho.conteudo = { ...rascunho.conteudo, titulo: 'Salvo em outra aba' };
+    await page.reload();
+
+    const titulo = page.getByLabel('Título', { exact: true });
+    await expect(titulo).toHaveValue('Salvo em outra aba');
+    const aviso = page.getByRole('alert').filter({ hasText: 'outra versão deste exercício' });
+    await expect(aviso).toBeVisible();
+    await aviso.getByRole('button', { name: 'Usar o texto desta aba' }).click();
+    await expect(titulo).toHaveValue('Escrito nesta aba');
+  });
+});
+
 test.describe('os exemplos do formulário (D35)', () => {
   test('o exemplo entra no campo vazio, e com conteúdo só é mostrado', async ({ page }) => {
     await entrarComo(page, PROFESSOR);

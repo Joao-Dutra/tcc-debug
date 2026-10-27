@@ -695,6 +695,9 @@ button.perigo:hover:not(:disabled) { background: var(--erro); border-color: var(
 .erros-do-formulario { list-style: none; margin: 0 0 var(--esp-12); padding: 0; }
 .erros-do-formulario .erro { margin: 0 0 var(--esp-4); font-size: var(--fonte-apoio); }
 .mensagem-do-editor { margin: 0 0 var(--esp-12); font-size: var(--fonte-apoio); }
+.aviso-da-aba { background: var(--mesa-de-luz); border-left: 3px solid var(--acao);
+  padding: var(--esp-8) var(--esp-12); margin: 0 0 var(--esp-12); font-size: var(--fonte-apoio); }
+.aviso-da-aba p { margin: 0 0 var(--esp-8); }
 .bloco-do-editor { margin-top: var(--esp-24); }
 .bloco-do-editor > h3 { font-size: var(--fonte-secao); margin: 0 0 var(--esp-10); }
 /* No editor do professor, o número da linha não é alvo de nada: sem o convite
