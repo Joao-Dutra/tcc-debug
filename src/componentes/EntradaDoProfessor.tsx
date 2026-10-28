@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { criarContaDeProfessor, entrarComGoogle, entrarComSenha } from '../supabase/identidade';
+import type { CampoDaEntrada } from '../supabase/mensagens-de-entrada';
 import { CAMINHO_AUTORIA } from './usar-rota';
 
 /**
@@ -47,26 +48,33 @@ interface Props {
   aoEntrar?: () => void;
 }
 
+type Envio = 'email' | 'google' | null;
+
 export function EntradaDoProfessor({ aoEntrar }: Props) {
   const [modo, setModo] = useState<'entrar' | 'criar'>('entrar');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
-  const [erro, setErro] = useState<string | null>(null);
+  const [erro, setErro] = useState<{ texto: string; campo?: CampoDaEntrada } | null>(null);
   const [aviso, setAviso] = useState<string | null>(null);
-  const [enviando, setEnviando] = useState(false);
+  // Qual dos dois caminhos está esperando o servidor: o botão dele diz que
+  // está entrando, e os dois ficam travados para não sair um segundo pedido.
+  const [enviando, setEnviando] = useState<Envio>(null);
   const comBanco = supabaseConfigurado();
+
+  const falhou = (resultado: { erro: string | null; campo?: CampoDaEntrada }) =>
+    setErro(resultado.erro ? { texto: resultado.erro, campo: resultado.campo } : null);
 
   const enviar = async (evento: FormEvent) => {
     evento.preventDefault();
-    setEnviando(true);
+    setEnviando('email');
     setErro(null);
     setAviso(null);
     const resultado =
       modo === 'entrar'
         ? await entrarComSenha(email, senha)
         : await criarContaDeProfessor(email, senha);
-    setErro(resultado.erro);
-    setEnviando(false);
+    falhou(resultado);
+    setEnviando(null);
     if (resultado.erro) return;
     setSenha('');
     if ('confirmarPorEmail' in resultado && resultado.confirmarPorEmail) {
@@ -82,11 +90,20 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
 
   const comGoogle = async () => {
     setErro(null);
+    setAviso(null);
+    setEnviando('google');
     // Volta para a área depois do Google: o código de retorno chega na
-    // consulta, e a rota fica no hash.
+    // consulta, e a rota fica no hash. Dando certo, a página sai daqui para
+    // o Google, e o estado de carregamento fica até ela sair.
     const resultado = await entrarComGoogle(CAMINHO_AUTORIA);
-    setErro(resultado.erro);
+    falhou(resultado);
+    if (resultado.erro) setEnviando(null);
   };
+
+  // A falha que não é de um campo só — credenciais erradas, sem rede — marca
+  // os dois: a pessoa precisa conferir os dois.
+  const invalido = (campo: CampoDaEntrada) => erro !== null && (erro.campo === undefined || erro.campo === campo);
+  const descrito = (campo: CampoDaEntrada) => (invalido(campo) ? 'erro-da-entrada' : undefined);
 
   return (
     <div className="entrada-do-professor">
@@ -99,9 +116,18 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
       {/* Sem banco, os campos ficam à vista e desligados: a tela continua
           dizendo como se entra, sem prometer uma entrada que não funciona. */}
       <fieldset className="campos-da-entrada" disabled={!comBanco}>
-        <button type="button" className="botao-google" onClick={() => void comGoogle()}>
+        {/* O Google vem primeiro e maior: é o caminho de menos passos. Fica
+            no fundo claro com o "G" colorido, como a marca pede, e o destaque
+            é de tamanho e de lugar, e não da cor de ação. */}
+        <button
+          type="button"
+          className="botao-google"
+          disabled={enviando !== null}
+          aria-busy={enviando === 'google'}
+          onClick={() => void comGoogle()}
+        >
           <IconeDoGoogle />
-          Entrar com Google
+          {enviando === 'google' ? 'Abrindo o Google…' : 'Entrar com Google'}
         </button>
         <p className="separador-da-entrada" aria-hidden="true">
           <span>ou</span>
@@ -114,6 +140,8 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
               autoComplete="username"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              aria-invalid={invalido('email') || undefined}
+              aria-describedby={descrito('email')}
               required
             />
           </label>
@@ -124,16 +152,40 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
               autoComplete={modo === 'entrar' ? 'current-password' : 'new-password'}
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
+              aria-invalid={invalido('senha') || undefined}
+              aria-describedby={descrito('senha') ?? (modo === 'criar' ? 'regra-da-senha' : undefined)}
               minLength={8}
               required
             />
+            {modo === 'criar' && (
+              <span className="ajuda-do-campo" id="regra-da-senha">
+                Ao menos 8 caracteres.
+              </span>
+            )}
           </label>
-          <button type="submit" disabled={enviando}>
-            {modo === 'entrar' ? 'Entrar com e-mail' : 'Criar conta'}
+          {erro && (
+            <p className="erro" id="erro-da-entrada" role="alert">
+              {erro.texto}
+            </p>
+          )}
+          {aviso && (
+            <p className="aviso-conta" role="status">
+              {aviso}
+            </p>
+          )}
+          <button type="submit" disabled={enviando !== null} aria-busy={enviando === 'email'}>
+            {enviando === 'email'
+              ? modo === 'entrar'
+                ? 'Entrando…'
+                : 'Criando a conta…'
+              : modo === 'entrar'
+                ? 'Entrar com e-mail'
+                : 'Criar conta'}
           </button>
           <button
             type="button"
             className="discreto"
+            disabled={enviando !== null}
             onClick={() => {
               setModo(modo === 'entrar' ? 'criar' : 'entrar');
               setErro(null);
@@ -141,8 +193,6 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
           >
             {modo === 'entrar' ? 'Não tenho conta' : 'Já tenho conta'}
           </button>
-          {erro && <p className="erro">{erro}</p>}
-          {aviso && <p className="aviso-conta">{aviso}</p>}
         </form>
       </fieldset>
     </div>

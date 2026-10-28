@@ -1,5 +1,7 @@
 import { supabase } from './cliente';
 import { definirParticipante } from '../nucleo/metricas';
+import { mensagemDeEntrada } from './mensagens-de-entrada';
+import type { CampoDaEntrada } from './mensagens-de-entrada';
 import type { AuthError, Session, SupabaseClient, User } from '@supabase/supabase-js';
 
 /**
@@ -165,15 +167,22 @@ export async function iniciarIdentidade(): Promise<Identidade> {
 
 export interface ResultadoDeEntrada {
   erro: string | null;
+  /** O campo a que o erro se refere, para a tela ligar a mensagem a ele. */
+  campo?: CampoDaEntrada;
 }
 
 const SEM_BANCO: ResultadoDeEntrada = {
   erro: 'O banco não está configurado nesta instalação.',
 };
 
+/**
+ * A identidade guarda a frase do Supabase, que é o que o pesquisador precisa
+ * para diagnosticar; a tela recebe a frase em português (D39).
+ */
 function registrarFalha(erro: AuthError): ResultadoDeEntrada {
   anunciar({ ...atual, falha: descrever(erro) });
-  return { erro: descrever(erro) };
+  const { texto, campo } = mensagemDeEntrada(erro);
+  return { erro: texto, campo };
 }
 
 /**
