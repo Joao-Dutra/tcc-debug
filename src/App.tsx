@@ -11,6 +11,7 @@ import { TelaDeEntrada } from './componentes/TelaDeEntrada';
 import { TelaInicial } from './componentes/TelaInicial';
 import { VitrineDeExercicios } from './componentes/VitrineDeExercicios';
 import { useRota } from './componentes/usar-rota';
+import { useTemaDaTela } from './componentes/usar-tema';
 
 /**
  * Só roteamento.
@@ -21,6 +22,7 @@ import { useRota } from './componentes/usar-rota';
  */
 export default function App() {
   const rota = useRota();
+  useTemaDaTela(rota.tela);
 
   if (rota.tela === 'inicial') return <TelaInicial />;
   if (rota.tela === 'entrar') return <TelaDeEntrada />;

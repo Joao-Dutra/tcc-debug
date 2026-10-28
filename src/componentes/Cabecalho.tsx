@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 import { CAMINHO_INICIAL } from './usar-rota';
+import { ROTULOS_DO_TEMA, TEMAS, armazenamentoDoNavegador, escolherTema, interpretarTema } from './tema';
+import { useTemaEscolhido } from './usar-tema';
 
 /**
  * Cabeçalho das telas do participante (D32).
@@ -29,6 +31,30 @@ export function Inseto({ x, y, escala = 1 }: { x: number; y: number; escala?: nu
       <ellipse cx={0} cy={2} rx={8} ry={10} className="inseto-corpo" />
       <path d="M 0 -7 L 0 12" className="inseto-risca" />
     </g>
+  );
+}
+
+/**
+ * A escolha do tema (D39), discreta, no canto das ações: é conveniência de
+ * quem usa a ferramenta, e não parte da tarefa. Não aparece na área do
+ * estudo, onde o tema é fixo.
+ */
+function SeletorDeTema() {
+  const tema = useTemaEscolhido();
+  return (
+    <label className="seletor-de-tema">
+      Tema
+      <select
+        value={tema}
+        onChange={(e) => escolherTema(armazenamentoDoNavegador(), interpretarTema(e.target.value))}
+      >
+        {TEMAS.map((t) => (
+          <option key={t} value={t}>
+            {ROTULOS_DO_TEMA[t]}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
@@ -89,7 +115,12 @@ export function Cabecalho({
           {navegacao && <span className="cabecalho-divisa" aria-hidden="true" />}
           {navegacao}
         </div>
-        {acoes && <div className="cabecalho-acoes">{acoes}</div>}
+        {(acoes || !semSaida) && (
+          <div className="cabecalho-acoes">
+            {acoes}
+            {!semSaida && <SeletorDeTema />}
+          </div>
+        )}
       </div>
       {abaixoDaBarra && <div className="cabecalho-abaixo-da-barra">{abaixoDaBarra}</div>}
       {titulo && <h1>{titulo}</h1>}
