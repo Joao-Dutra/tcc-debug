@@ -11,6 +11,7 @@ import {
   quando,
   useEstadoDaColeta,
 } from './ControlesDaColeta';
+import { AguardandoLiberacao } from './AguardandoLiberacao';
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
 import { estadoDaArea } from './estado-da-area';
@@ -363,17 +364,7 @@ export function AreaDoProfessor() {
 
   return (
     <Moldura identidade={identidade}>
-      <section className="painel aguardando-liberacao" role="status">
-        <h2>Aguardando liberação</h2>
-        <p>
-          A sua conta foi criada, mas ainda não pode escrever exercícios. A liberação é feita
-          pela equipe da pesquisa, uma conta de cada vez, para que só professores convidados
-          criem exercícios para os alunos.
-        </p>
-        <p className="rodape-painel">
-          Quando a sua conta for liberada, recarregue esta página.
-        </p>
-      </section>
+      <AguardandoLiberacao papel="professor" />
     </Moldura>
   );
 }

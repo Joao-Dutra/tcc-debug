@@ -3,6 +3,7 @@ import {
   CAMINHO_AUTORIA,
   CAMINHO_CONTROLE,
   CAMINHO_ENTRAR,
+  CAMINHO_ENTRAR_PESQUISA,
   CAMINHO_EXERCICIOS,
   CAMINHO_INICIAL,
   CAMINHO_METRICAS,
@@ -40,6 +41,7 @@ export function mapaDeRotas(
       rotas: [
         { rotulo: 'Início', caminho: CAMINHO_INICIAL },
         { rotulo: 'Entrar', caminho: CAMINHO_ENTRAR },
+        { rotulo: 'Acesso da pesquisa', caminho: CAMINHO_ENTRAR_PESQUISA },
         { rotulo: 'Vitrine', caminho: CAMINHO_EXERCICIOS },
         { rotulo: 'Área do professor', caminho: CAMINHO_AUTORIA },
         { rotulo: 'Métricas', caminho: CAMINHO_METRICAS },

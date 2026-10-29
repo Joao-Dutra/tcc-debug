@@ -3,8 +3,9 @@ import type { FormEvent } from 'react';
 import { entrarComSenha } from '../supabase/identidade';
 
 /**
- * Entrada do pesquisador, no painel de métricas e na revisão — as duas telas
- * ficam fora da navegação do participante (D11, D31).
+ * Entrada do pesquisador, no painel de métricas, no painel de controle e no
+ * acesso da pesquisa — as três telas ficam fora da navegação do participante
+ * (D11, D38, D39).
  *
  * Só e-mail e senha, e sem vínculo: a conta de pesquisador é criada à mão no
  * Supabase, com o papel concedido lá. Vincular o anônimo deste aparelho a ela
@@ -19,6 +20,7 @@ export function EntradaDoPesquisador() {
   const entrar = async (evento: FormEvent) => {
     evento.preventDefault();
     setEnviando(true);
+    setErro(null);
     const resultado = await entrarComSenha(email, senha);
     setEnviando(false);
     setErro(resultado.erro);
@@ -34,6 +36,8 @@ export function EntradaDoPesquisador() {
           autoComplete="username"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          aria-invalid={erro !== null || undefined}
+          aria-describedby={erro ? 'erro-do-pesquisador' : undefined}
           required
         />
       </label>
@@ -44,13 +48,19 @@ export function EntradaDoPesquisador() {
           autoComplete="current-password"
           value={senha}
           onChange={(e) => setSenha(e.target.value)}
+          aria-invalid={erro !== null || undefined}
+          aria-describedby={erro ? 'erro-do-pesquisador' : undefined}
           required
         />
       </label>
-      <button type="submit" disabled={enviando}>
-        Entrar como pesquisador
+      <button type="submit" disabled={enviando} aria-busy={enviando}>
+        {enviando ? 'Entrando…' : 'Entrar como pesquisador'}
       </button>
-      {erro && <p className="erro">{erro}</p>}
+      {erro && (
+        <p className="erro" id="erro-do-pesquisador" role="alert">
+          {erro}
+        </p>
+      )}
     </form>
   );
 }

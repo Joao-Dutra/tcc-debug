@@ -65,6 +65,23 @@ test('o professor entra com Google, com o ícone, ou com e-mail e senha', async 
   await expect(google).toBeDisabled();
 });
 
+test('o acesso da pesquisa é um link discreto no rodapé, e não um terceiro bloco (D39)', async ({ page }) => {
+  await page.goto('/#/entrar');
+  // Duas saídas, como antes: o pesquisador não ganha bloco nem botão.
+  await expect(page.locator('main.saidas-da-entrada > section')).toHaveCount(2);
+  const acesso = page.locator('footer').getByRole('link', { name: 'Acesso da pesquisa' });
+  await expect(acesso).toBeVisible();
+  // Em letra menor que o botão do estudante.
+  const tamanho = (l: typeof acesso) => l.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  expect(await tamanho(acesso)).toBeLessThan(
+    await tamanho(page.getByRole('link', { name: 'Entrar como estudante' }))
+  );
+  await acesso.click();
+  await expect(page).toHaveURL(/#\/entrar\/pesquisa$/);
+  await expect(page.getByRole('heading', { name: 'Acesso da pesquisa', level: 1 })).toBeVisible();
+  await expect(page.getByText(/o banco não está configurado/)).toBeVisible();
+});
+
 test('o estudante não vê pedido de conta fora da tela de entrada', async ({ page }) => {
   for (const rota of ['/#/', '/#/exercicios', '/#/exercicio/vetor-dobrar?andaime=com-apoio']) {
     await page.goto(rota);

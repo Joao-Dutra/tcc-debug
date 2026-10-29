@@ -1,7 +1,7 @@
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import { Cabecalho } from './Cabecalho';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
-import { CAMINHO_AUTORIA, CAMINHO_EXERCICIOS } from './usar-rota';
+import { CAMINHO_AUTORIA, CAMINHO_ENTRAR_PESQUISA, CAMINHO_EXERCICIOS } from './usar-rota';
 
 /**
  * A entrada, no padrão das telas de login, com duas saídas (D32).
@@ -60,6 +60,13 @@ export function TelaDeEntrada() {
           />
         </section>
       </main>
+
+      {/* A entrada do pesquisador fica num link discreto, e não num terceiro
+          bloco: esta é a tela que os estudantes veem, e o caminho deles
+          precisa continuar o mais leve (D32, D39). */}
+      <footer className="rodape-da-entrada">
+        <a href={CAMINHO_ENTRAR_PESQUISA}>Acesso da pesquisa</a>
+      </footer>
     </div>
   );
 }

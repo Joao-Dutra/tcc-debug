@@ -17,6 +17,7 @@ describe('o mapa de rotas', () => {
     expect(grupo('Telas').map((r) => interpretarHash(r.caminho).tela)).toEqual([
       'inicial',
       'entrar',
+      'entrar-pesquisa',
       'exercicios',
       'autoria',
       'metricas',

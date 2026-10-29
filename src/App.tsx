@@ -3,6 +3,7 @@ import { AberturaDoProposto } from './componentes/AberturaDoProposto';
 import { AreaDoEstudo } from './componentes/AreaDoEstudo';
 import { AreaDoProfessor } from './componentes/AreaDoProfessor';
 import { ConferenciaDoEstudo } from './componentes/ConferenciaDoEstudo';
+import { EntradaDaPesquisa } from './componentes/EntradaDaPesquisa';
 import { PainelDeControle } from './componentes/PainelDeControle';
 import { PainelDeMetricas } from './componentes/PainelDeMetricas';
 import { PreviaComoAluno } from './componentes/PreviaComoAluno';
@@ -26,6 +27,7 @@ export default function App() {
 
   if (rota.tela === 'inicial') return <TelaInicial />;
   if (rota.tela === 'entrar') return <TelaDeEntrada />;
+  if (rota.tela === 'entrar-pesquisa') return <EntradaDaPesquisa />;
   if (rota.tela === 'exercicios') return <VitrineDeExercicios />;
 
   // Rota do pesquisador (D11). Nenhuma tela do participante aponta para ela.

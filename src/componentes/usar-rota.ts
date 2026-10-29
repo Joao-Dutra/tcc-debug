@@ -14,6 +14,7 @@ import type { NivelDeAndaime } from './andaime';
 export type Rota =
   | { tela: 'inicial' }
   | { tela: 'entrar' }
+  | { tela: 'entrar-pesquisa' }
   | { tela: 'exercicios' }
   | { tela: 'exercicio'; id: string; andaime: NivelDeAndaime }
   | { tela: 'metricas' }
@@ -30,6 +31,13 @@ export const CAMINHO_INICIAL = '#/';
  * professor entra com Google ou e-mail e senha.
  */
 export const CAMINHO_ENTRAR = '#/entrar';
+
+/**
+ * O acesso da pesquisa (D39): a entrada do pesquisador, separada da do
+ * professor, por um link discreto no rodapé da tela de entrada. Entrar não
+ * concede papel nenhum; quem protege os dados é o banco.
+ */
+export const CAMINHO_ENTRAR_PESQUISA = '#/entrar/pesquisa';
 
 /** A vitrine: todos os exercícios, em fileiras por estrutura de dados. */
 export const CAMINHO_EXERCICIOS = '#/exercicios';
@@ -107,7 +115,7 @@ export function interpretarHash(hash: string): Rota {
   const [caminho, consulta = ''] = hash.replace(/^#\/?/, '').split('?');
   const partes = caminho.split('/').filter((parte) => parte !== '');
 
-  if (partes[0] === 'entrar') return { tela: 'entrar' };
+  if (partes[0] === 'entrar') return partes[1] === 'pesquisa' ? { tela: 'entrar-pesquisa' } : { tela: 'entrar' };
   if (partes[0] === 'metricas') return { tela: 'metricas' };
   if (partes[0] === 'controle') return { tela: 'controle' };
   if (partes[0] === 'autoria') return { tela: 'autoria' };

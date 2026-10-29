@@ -1313,3 +1313,11 @@ button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula)
 .seletor-de-tema select { font: inherit; color: var(--grafite); background: transparent;
   border: 1px solid var(--borda-controle); border-radius: var(--raio-pilula);
   padding: 3px var(--esp-8); cursor: pointer; }
+
+/* O acesso da pesquisa (D39): um link no rodapé da entrada, em letra miúda,
+   que não disputa com as duas saídas; e a tela dele, com um bloco só. */
+.rodape-da-entrada { margin-top: var(--esp-32); font-size: var(--fonte-miuda); }
+.rodape-da-entrada a { color: var(--grafite-suave); }
+.rodape-da-entrada a:hover { color: var(--acao); }
+.bloco-da-pesquisa { max-width: calc(var(--largura-texto) + 2 * var(--esp-20)); }
+.entrada-da-pesquisa .aguardando-liberacao { margin-bottom: var(--esp-12); }
