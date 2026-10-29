@@ -225,7 +225,11 @@ test('o painel de métricas leva ao de controle', async ({ page }) => {
   await entrarComo(page, PESQUISADOR);
   await bancoFalso(page, novoBanco());
   await page.goto('/#/metricas');
-  await page.getByRole('link', { name: 'Painel de controle' }).click();
+  // O link do próprio painel, e não o do menu do papel (D39), que também leva lá.
+  await page
+    .getByRole('link', { name: 'Painel de controle' })
+    .and(page.locator(':not(.menu-da-conta a)'))
+    .click();
   await expect(page).toHaveURL(/#\/controle$/);
   await expect(page.getByRole('heading', { name: 'Painel de controle' })).toBeVisible();
 });

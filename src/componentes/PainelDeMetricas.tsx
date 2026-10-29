@@ -19,7 +19,9 @@ import {
 import { csvDoEstudo, sessoesDoEstudo } from '../estudo/exportacao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { sair } from '../supabase/identidade';
+import { SeletorDeTema } from './Cabecalho';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
+import { MenuDaConta } from './MenuDaConta';
 import { baixarMetricas } from './usar-metricas';
 import { useDadosDoEstudo } from './usar-dados-do-estudo';
 import { useIdentidade } from './usar-identidade';
@@ -392,6 +394,10 @@ export function PainelDeMetricas() {
   return (
     <div className="pagina">
       <header>
+        <div className="barra-da-conta">
+          <MenuDaConta />
+          <SeletorDeTema />
+        </div>
         <h1>Métricas das sessões</h1>
         {pesquisador ? (
           <p>

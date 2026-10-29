@@ -34,7 +34,7 @@ export default function App() {
   if (rota.tela === 'metricas') return <PainelDeMetricas />;
 
   // Painel de controle do pesquisador (D38), com link a partir das métricas.
-  if (rota.tela === 'controle') return <PainelDeControle />;
+  if (rota.tela === 'controle') return <PainelDeControle secao={rota.secao} />;
 
   // Área do professor (D29, D31), com entrada própria na tela inicial.
   if (rota.tela === 'autoria') return <AreaDoProfessor />;

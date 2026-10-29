@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { catalogo } from '../exercicios/catalogo';
 import { csvDoEstudo, sessoesDoEstudo } from '../estudo/exportacao';
@@ -22,6 +22,8 @@ import { lerSessoesDoBanco } from '../supabase/sessoes-remotas';
 import { confirmacaoConfere, mensagemDaFalha, problemaDoCodigo, textoDoMotivo } from './controle';
 import { FreioDosPublicados, InterruptorDaColeta, quando } from './ControlesDaColeta';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
+import { SeletorDeTema } from './Cabecalho';
+import { MenuDaConta } from './MenuDaConta';
 import { enderecoCompleto, mapaDeRotas } from './mapa-de-rotas';
 import { useIdentidade } from './usar-identidade';
 import { baixarMetricas } from './usar-metricas';
@@ -45,9 +47,13 @@ function Moldura({ children }: { children: ReactNode }) {
   return (
     <div className="pagina controle">
       <header>
-        <a className="discreto" href={CAMINHO_METRICAS}>
-          Métricas das sessões
-        </a>
+        <div className="barra-da-conta">
+          <a className="discreto" href={CAMINHO_METRICAS}>
+            Métricas das sessões
+          </a>
+          <MenuDaConta />
+          <SeletorDeTema />
+        </div>
         <h1>Painel de controle</h1>
         <p>
           Aplicações do estudo, interruptor da coleta, mapa de rotas e auditoria. Toda ação
@@ -59,7 +65,7 @@ function Moldura({ children }: { children: ReactNode }) {
   );
 }
 
-export function PainelDeControle() {
+export function PainelDeControle({ secao }: { secao?: 'rotas' }) {
   const identidade = useIdentidade();
   const comConta = identidade.forma === 'email' || identidade.forma === 'google';
 
@@ -114,7 +120,7 @@ export function PainelDeControle() {
           <button onClick={() => void sair()}>Sair</button>
         </div>
       </section>
-      <PainelDoPesquisador />
+      <PainelDoPesquisador secao={secao} />
     </Moldura>
   );
 }
@@ -123,14 +129,17 @@ export function PainelDeControle() {
  * As ações primeiro, e o mapa de rotas, que é longo e só se consulta, perto
  * do fim. A lista das aplicações é lida uma vez e serve às duas seções.
  */
-function PainelDoPesquisador() {
+function PainelDoPesquisador({ secao }: { secao?: 'rotas' }) {
   const leitura = useAplicacoes();
   return (
     <>
       <SecaoDasAplicacoes leitura={leitura} />
       <InterruptorDaColeta />
       <FreioDosPublicados />
-      <SecaoDoMapaDeRotas aplicacoes={leitura.aplicacoes?.map((a) => a.codigo) ?? []} />
+      <SecaoDoMapaDeRotas
+        aplicacoes={leitura.aplicacoes?.map((a) => a.codigo) ?? []}
+        emFoco={secao === 'rotas'}
+      />
       <SecaoDaAuditoria />
     </>
   );
@@ -479,10 +488,15 @@ function BotaoDeCopiar({ texto }: { texto: string }) {
   );
 }
 
-function SecaoDoMapaDeRotas({ aplicacoes }: { aplicacoes: string[] }) {
+function SecaoDoMapaDeRotas({ aplicacoes, emFoco }: { aplicacoes: string[]; emFoco: boolean }) {
   const grupos = mapaDeRotas(catalogo, aplicacoes);
+  // Pelo menu, "Mapa de rotas" abre o painel já nesta seção (D39).
+  const secao = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (emFoco) secao.current?.scrollIntoView({ block: 'start' });
+  }, [emFoco]);
   return (
-    <section className="painel" aria-labelledby="titulo-do-mapa">
+    <section ref={secao} id="mapa-de-rotas" className="painel" aria-labelledby="titulo-do-mapa">
       <h2 id="titulo-do-mapa">Mapa de rotas</h2>
       <p className="rodape-painel">
         Todos os endereços da aplicação, prontos para abrir ou copiar. Os de cada aplicação do

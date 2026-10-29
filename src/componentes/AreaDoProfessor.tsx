@@ -12,6 +12,8 @@ import {
   useEstadoDaColeta,
 } from './ControlesDaColeta';
 import { AguardandoLiberacao } from './AguardandoLiberacao';
+import { SeletorDeTema } from './Cabecalho';
+import { MenuDaConta } from './MenuDaConta';
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
 import { estadoDaArea } from './estado-da-area';
@@ -51,10 +53,14 @@ function Moldura({ children, identidade }: { children: ReactNode; identidade?: I
   return (
     <div className="pagina autoria">
       <header>
-        <a className="voltar" href={CAMINHO_INICIAL}>
-          <ArrowLeftIcon className="icone" aria-hidden="true" />
-          Início
-        </a>
+        <div className="barra-da-conta">
+          <a className="voltar" href={CAMINHO_INICIAL}>
+            <ArrowLeftIcon className="icone" aria-hidden="true" />
+            Início
+          </a>
+          <MenuDaConta />
+          <SeletorDeTema />
+        </div>
         <h1>Área do professor</h1>
         {comConta && (
           <div className="conta-aberta">

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { CAMINHO_INICIAL } from './usar-rota';
 import { ROTULOS_DO_TEMA, TEMAS, armazenamentoDoNavegador, escolherTema, interpretarTema } from './tema';
+import { MenuDaConta } from './MenuDaConta';
 import { useTemaEscolhido } from './usar-tema';
 
 /**
@@ -39,7 +40,7 @@ export function Inseto({ x, y, escala = 1 }: { x: number; y: number; escala?: nu
  * quem usa a ferramenta, e não parte da tarefa. Não aparece na área do
  * estudo, onde o tema é fixo.
  */
-function SeletorDeTema() {
+export function SeletorDeTema() {
   const tema = useTemaEscolhido();
   return (
     <label className="seletor-de-tema">
@@ -118,6 +119,8 @@ export function Cabecalho({
         {(acoes || !semSaida) && (
           <div className="cabecalho-acoes">
             {acoes}
+            {/* O menu do papel e o tema não entram na área do estudo (D39). */}
+            {!semSaida && <MenuDaConta />}
             {!semSaida && <SeletorDeTema />}
           </div>
         )}
