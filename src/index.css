@@ -164,8 +164,8 @@
   --foco-halo: var(--anilina-300);
   /* O halo do "Executar" quando o código mudou desde a última execução
      (D20). Mais visível desde D39, nos dois temas: sobre a sala, de 1,11:1
-     para 1,41:1 aqui, e 1,77:1 no azul. */
-  --halo-da-execucao: var(--anilina-400);
+     para 2,18:1 aqui, e 1,77:1 no azul. */
+  --halo-da-execucao: var(--anilina-500);
   --rolagem-trilho: var(--areia-300);
   --rolagem-polegar: var(--areia-500);
   --rolagem-polegar-ativo: var(--areia-600);
