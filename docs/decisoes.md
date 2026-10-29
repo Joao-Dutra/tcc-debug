@@ -4030,6 +4030,9 @@ arnês fica para uma fatia própria.
 
 ### Fase 2: os papéis (0006)
 
+**Adiada para depois da coleta (29/10/2026), por decisão do autor.** Até lá,
+os papéis continuam sendo concedidos à mão no banco, como em D29.
+
 Registrada aqui, a fazer depois da Fase 1 verificada: listar as contas que
 têm e-mail, com o papel de cada uma, por uma função que lê `auth.users` sem
 expô-la ao navegador, e sem as anônimas; conceder e retirar professor;
