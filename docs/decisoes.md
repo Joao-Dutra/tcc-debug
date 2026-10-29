@@ -4052,3 +4052,186 @@ dessas funções concede papel a conta anônima.
 | O interruptor e o freio do cliente vão pelas funções; a retirada do autor continua pela tabela | `src/supabase/exercicios-de-professor.test.ts` |
 | Sem o papel, nenhuma seção; o link a partir das métricas; os grupos na lista e a protegida sem limpar; criar confere o código e manda protegida ou de teste; a recusa aparece com o motivo; proteger pede confirmação; limpar exporta o CSV só da aplicação, recusa a aberta e só libera com o código exato; o freio com o título digitado; o mapa com cada exercício nos dois apoios e o copiar; a auditoria com o motivo em texto | `e2e/controle.spec.ts` |
 | O freio da área do professor também pede o título digitado | `e2e/autoria.spec.ts` |
+
+## D39 — Layout, tema azul opcional, entradas, menu por papel e o novo congelamento
+
+**Decisão.** Cinco ajustes antes do piloto final, todos no que o participante
+pode ver: dois defeitos de layout, a paleta azul como **tema opcional**, a
+entrada do professor, uma entrada própria do pesquisador e um menu com as rotas
+de cada papel. **Eles descongelam D32 e D34**, e a interface é congelada de
+novo ao final desta decisão, com data.
+
+**A regra que vale daqui em diante:** a ferramenta precisa ser idêntica entre o
+piloto final e a coleta. Tudo o que está aqui entra antes do piloto final;
+depois dele, só correção que restaure o comportamento descrito (D20).
+
+### 1. Os dois defeitos de layout
+
+- **O seguir do percurso quebrava em duas linhas.** A confirmação aparecia
+  dentro da barra do cabeçalho, disputando a largura com o próprio botão, e
+  herdava o limite de medida que todo `header p` recebe — era ele, e não a
+  falta de espaço, que quebrava a pergunta. Agora a confirmação mora numa
+  linha própria, logo abaixo da barra (`abaixoDaBarra` no `Cabecalho`); o
+  botão fica no lugar, com `aria-expanded`; nenhum botão do cabeçalho quebra o
+  rótulo; e a barra não muda de altura quando a pergunta abre. Ao ficar, o
+  foco volta ao botão.
+- **As notas e mensagens ficavam espremidas à esquerda.** A medida de 72ch
+  estava no texto, e não no bloco: em 1920 px, o aviso e o perfil do estudo
+  viravam uma coluna estreita na beira da página, e as notas, mais estreitas
+  ainda. Agora o corpo da área do estudo tem chão e largura próprios, e notas
+  e erros dentro de formulários e painéis ocupam a largura do bloco a que
+  pertencem.
+
+Conferidos em 1366 × 657 e 1920 × 960, por captura e por teste.
+
+### 2. A paleta azul, como tema opcional
+
+A paleta pedida — `#D2E0FB`, `#FEF9D9`, `#DEE5D4` e `#8EACCD` — é clara demais
+para texto: o azul médio dá 2,35:1 sobre branco. As quatro ficam em fundos,
+superfícies e fios, e o que precisa ser lido ou visto como limite sai da
+**ardósia**, tons escuros derivados do azul médio no mesmo matiz (OKLCH h 251).
+
+| Papel | Valor | Uso |
+|---|---|---|
+| `--sala` | `#D2E0FB` | fundo da página |
+| `--painel` | `#FEF9D9` | faixa do cabeçalho, painéis, dicas |
+| `--caixa-de-nota`, `--faixa-de-apoio`, `--faixa-da-previa` | `#DEE5D4` | notas, barra do filtro, linhas de conferência, faixa da prévia |
+| `--regua`, `--foco-halo`, `--acao-rala`, `--halo-da-execucao` | `#8EACCD` | fios e halos; nunca texto nem limite de controle |
+| `--campo` | `#FEFCEF` | campos e botões (o creme a L 0,99) |
+| `--grafite` | `#14202D` | texto |
+| `--grafite-suave` | `#4C5A69` | texto secundário |
+| `--acao`, `--foco` | `#2E445C` | botão primário, links, anel de foco |
+| `--acao-forte` | `#192A3C` | hover do primário |
+| `--borda-controle` | `#687686` | borda de campos e botões |
+
+Contraste medido (WCAG 2.x), por script, sobre cada fundo em que o par aparece:
+
+| Par | sala | painel | caixa de nota | campo | Critério |
+|---|---|---|---|---|---|
+| texto `#14202D` | 12,40 | 15,51 | 12,76 | 16,00 | 4,5 |
+| texto suave `#4C5A69` | 5,31 | 6,65 | 5,47 | 6,85 | 4,5 |
+| ação e foco `#2E445C` | 7,53 | 9,42 | 7,75 | 9,72 | 4,5 |
+| erro `#9F2B24` | 5,55 | 6,95 | 5,72 | 7,16 | 4,5 |
+| borda de controle `#687686` | 3,49 | 4,37 | 3,59 | 4,51 | 3 |
+
+Texto sobre a ação: 9,72:1; sobre a ação forte: 14,18:1. Anel de foco contra o
+seu halo: 4,26:1.
+
+**A paleta virou tema, e não troca da interface.** Ela entrou primeiro fixa
+(34ac6f2) e, por decisão do autor, passou a tema opcional (60dfa10): cada tema é
+um conjunto de papéis de cor trocado pelo atributo `data-tema` da raiz, e
+acrescentar outro tema é acrescentar um conjunto, sem tocar em regra nenhuma. O
+**padrão** é a areia de antes, exatamente igual — conferido por captura de onze
+telas contra um build de antes da paleta, com zero pixel diferente fora do que
+mudou de propósito. O **azul** é a paleta acima. Um seletor discreto no
+cabeçalho escolhe; a escolha fica no `localStorage`, dentro de `try/catch`, e
+sem armazenamento vale o padrão. A lógica está em `src/componentes/tema.ts`,
+sem React.
+
+### 3. O que não muda com o tema
+
+- **O desenho.** A bancada tem papéis próprios (`--mesa-de-luz`,
+  `--tinta-do-desenho`, `--tinta-suave-do-desenho`), presos à areia de D19, e
+  nenhum tema os toca. Conferido pixel a pixel em 22 quadros — vetor, lista,
+  pilha e busca binária, nos dois apoios, e quatro miniaturas da vitrine —
+  entre o build de antes, o padrão e o azul: as diferenças no interior do
+  desenho são do tamanho do ruído de duas capturas do mesmo build (até 1/255
+  por canal). A célula ativa fica a ΔE76 32,9 da ação azul; a anilina, no
+  padrão, a 32,6.
+- **O sinal de acerto e a animação que o acende** ficam nos valores de antes
+  (`--sobre-acerto`, `--acerto-acende-de`): retorno de acerto não muda de
+  intensidade entre pilotos.
+- **O convite do número da linha** ganhou variável própria
+  (`--convite-da-linha`), na anilina-700 de sempre: foi ele que tirou a
+  declaração de localização do zero no segundo piloto, e na ação azul a
+  pastilha cairia de 2,2:1 para 1,6:1 sobre o editor.
+- **Uma exceção aceita: o halo do "Executar"** quando o código mudou desde a
+  última execução fica mais visível nos dois temas — sobre a sala, de 1,11:1
+  para 2,18:1 no padrão (anilina-500) e 1,77:1 no azul. É retorno sobre a ação
+  em curso, e não sobre acerto.
+
+### 4. Na área do estudo, o tema é fixo
+
+O percurso e a conferência usam sempre o padrão: o seletor não aparece, e o tema
+guardado no navegador é ignorado — não apagado: fora do estudo, ele volta.
+
+- **Por quê.** Um tema escolhido pelo participante seria uma variável não
+  controlada entre participantes. E os computadores do laboratório são
+  compartilhados: o tema escolhido por quem usou a máquina antes passaria ao
+  participante seguinte.
+- **Mesmo assim, o tema vai no registro**, para a análise confirmar que todos
+  usaram o mesmo. Ele vai na marca do estudo (`estudo.tema`), lido da página, e
+  não da regra: é o que o participante viu. Mora dentro da coluna `estudo`, que
+  já é jsonb, e por isso **não houve migração**; fora do estudo, o tema não é
+  gravado. **`VERSAO_DO_REGISTRO` passa a 12**, e nos registros anteriores o
+  campo fica ausente, e não `padrao` (D6). O CSV do estudo (D37) ganha a coluna
+  `tema`, vazia quando a marca não o tem.
+
+### 5. A entrada do professor
+
+As falhas viram frases em português que dizem o que fazer, decididas pelo
+código do erro do Supabase, e não pela mensagem, que muda entre versões da
+biblioteca (`src/supabase/mensagens-de-entrada.ts`). Credenciais erradas não
+dizem qual dos dois campos está errado, para não ajudar quem tenta adivinhar
+contas. O campo com erro fica marcado e ligado à mensagem pelo leitor de tela; a
+frase original continua na identidade, para o pesquisador diagnosticar. O
+Google vem primeiro e maior, no fundo claro que a marca pede, e o destaque é de
+tamanho e de lugar, e não da cor de ação. Os dois caminhos dizem que estão
+esperando o servidor, e travam para não sair um segundo pedido. Os rótulos já
+estavam à vista e continuam.
+
+### 6. A entrada do pesquisador
+
+Rota própria, `#/entrar/pesquisa`, por um link discreto — "Acesso da pesquisa"
+— no rodapé da tela de entrada. Não é um terceiro bloco: essa é a tela que os
+estudantes veem, e o caminho deles precisa continuar o mais leve (D32). Só
+e-mail e senha, o mesmo formulário do painel de métricas e do de controle: a
+conta de pesquisador é criada à mão. **Entrar não concede papel**: com o papel,
+vai para o painel de controle; sem ele — participante ou professor —, vê o
+mesmo aviso de liberação da área do professor, agora um componente só, com a
+frase do que falta conforme a porta por onde a conta entrou.
+
+### 7. O menu por papel
+
+Depois do login, o cabeçalho mostra as rotas do papel: a autoria ao professor;
+o painel de controle, as métricas e o mapa de rotas ao pesquisador — este abre
+o painel já na seção do mapa (`#/controle?secao=rotas`). O participante,
+anônimo ou com conta sem papel, não vê menu; anônimo nunca vê, qualquer que
+seja o papel lido. A área do estudo não o mostra a ninguém. Nas telas de conta,
+que têm cabeçalho próprio, o menu e o seletor de tema ficam juntos. **O menu é
+só conveniência**: quem barra o acesso continua sendo o banco, por papel.
+
+### Congelamento de novo (29/10/2026)
+
+**Congelado de novo em 29/10/2026; o piloto de novembro roda sobre esta
+versão**, e a coleta sobre a mesma, sem mudança no que o participante vê entre
+os dois. Dentro do congelamento: a confirmação de seguir abaixo da barra, o
+corpo da área do estudo com chão próprio, o tema fixo no padrão na área do
+estudo, o seletor de tema e o menu nas demais telas, as entradas do professor e
+do pesquisador, e o halo do "Executar" mais visível. Vale o que D20 diz:
+corrigir defeito que quebre o comportamento descrito é permitido, desde que
+restaure o que está descrito.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| O seguir e a confirmação em uma linha, a barra da mesma altura; a nota do aviso na largura do bloco — em 1366 e 1920 px | `e2e/layout.spec.ts` |
+| Sem armazenamento, vale o padrão; o escolhido é guardado e lido; na área do estudo, sempre o padrão | `src/componentes/tema.test.ts` |
+| O seletor troca o tema e ele sobrevive à recarga; no estudo, com o azul guardado, a tela sai no padrão, sem seletor, e a marca da sessão grava `padrao` na versão 12 | `e2e/tema.spec.ts` |
+| A marca leva o tema que recebe | `src/estudo/percurso.test.ts` |
+| O tema vai e volta do banco dentro da coluna `estudo`, sem coluna própria | `src/supabase/sessoes-remotas.test.ts` |
+| O CSV tem a coluna `tema`, vazia quando a marca não o tem | `src/estudo/exportacao.test.ts` |
+| Cada falha conhecida vira frase em português e aponta o campo; o desconhecido nunca sai em inglês | `src/supabase/mensagens-de-entrada.test.ts` |
+| Credenciais erradas: a frase, os dois campos marcados e descritos por ela, e o carregamento; senha fraca marca só a senha | `e2e/entrada-do-professor.spec.ts` |
+| O acesso da pesquisa é link no rodapé, e não terceiro bloco | `e2e/entradas.spec.ts` |
+| Sem conta, só e-mail e senha; participante e professor veem o aviso com a frase da pesquisa; o pesquisador vai ao painel | `e2e/entrada-da-pesquisa.spec.ts` |
+| As rotas de cada papel, e nenhuma ao participante nem ao anônimo | `src/componentes/rotas-do-papel.test.ts` |
+| O menu de cada papel no cabeçalho e nas telas de conta; o mapa abre na seção; nenhum menu na área do estudo | `e2e/menu.spec.ts` |
+
+**Como o desenho foi comparado.** Capturas só do SVG da bancada, pelo Edge, em
+builds de produção sem banco, com movimento reduzido; os PNG decodificados no
+próprio navegador e comparados pixel a pixel, por canal, com e sem os 6 px de
+borda do recorte — na borda, o que muda é o fundo da página aparecendo pelos
+cantos arredondados. Os scripts ficaram fora do repositório; o que precisa
+continuar valendo está nos papéis fixos do CSS e nos testes acima.
