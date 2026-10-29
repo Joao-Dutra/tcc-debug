@@ -257,6 +257,17 @@ describe('as colunas da sessão', () => {
     expect(linha).toMatchObject({ grupo: 'B', participante_id: '', apoio_confere_com_plano: 'true' });
   });
 
+  it('o tema sai da marca, e vazio quando ela não o tem (D39)', () => {
+    expect(COLUNAS_DO_CSV).toContain('tema');
+    const comTema = sessao({ estudo: { aplicacao: 'piloto-nov', etapa: 1, aquecimento: false, tema: 'padrao' } });
+    const semTema = sessao({ estudo: { aplicacao: 'piloto-nov', etapa: 2, aquecimento: false } });
+    const linhas = lerCsv(csvDoEstudo([comTema, semTema], [participanteA], []));
+    expect(linhas.map((l) => [l.etapa, l.tema])).toEqual([
+      ['1', 'padrao'],
+      ['2', ''],
+    ]);
+  });
+
   it('as linhas saem por aplicação, ordem de entrada e etapa', () => {
     const b: ParticipanteDoEstudo = { ...participanteA, participanteId: 'uid-b', grupo: 'B', ordemDeEntrada: 2 };
     const linhas = lerCsv(

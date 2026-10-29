@@ -109,14 +109,24 @@ describe('as passagens', () => {
   });
 
   it('a marca da sessão leva o grupo só quando ele foi escolhido no aparelho', () => {
-    expect(marcaDaEtapa(inicio(), 0)).toEqual({ aplicacao: 'piloto-nov', etapa: 0, aquecimento: true });
+    expect(marcaDaEtapa(inicio(), 0, 'padrao')).toEqual({
+      aplicacao: 'piloto-nov',
+      etapa: 0,
+      aquecimento: true,
+      tema: 'padrao',
+    });
     const semBanco = entrarComGrupo(comecarPercurso('piloto-nov', 1, null), 'A', true);
-    expect(marcaDaEtapa(semBanco, 2)).toEqual({
+    expect(marcaDaEtapa(semBanco, 2, 'padrao')).toEqual({
       aplicacao: 'piloto-nov',
       etapa: 2,
       aquecimento: false,
+      tema: 'padrao',
       grupoNoAparelho: 'A',
     });
+  });
+
+  it('a marca leva o tema que recebe, lido da página (D39)', () => {
+    expect(marcaDaEtapa(inicio(), 1, 'azul').tema).toBe('azul');
   });
 });
 

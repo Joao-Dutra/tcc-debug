@@ -56,6 +56,20 @@ test('na área do estudo, o tema é o padrão, sem seletor, mesmo com o azul gua
   expect(await temaDaRaiz(page)).toBe('padrao');
   await expect(page.getByLabel('Tema')).toHaveCount(0);
 
+  // A sessão do percurso grava o tema na marca: o padrão, e não o guardado.
+  await page.getByRole('button', { name: 'Pular tutorial' }).click();
+  await page.getByRole('button', { name: 'Seguir para o próximo' }).click();
+  await page.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await expect(page.locator('.posicao-no-percurso')).toHaveText(/Exercício 1 de/);
+  const marcas = await page.evaluate(() =>
+    (JSON.parse(localStorage.getItem('depurar:sessoes-arquivadas') ?? '[]') as { versao: number; estudo?: { tema?: string } }[])
+      .filter((s) => s.estudo)
+      .map((s) => [s.versao, s.estudo!.tema])
+  );
+  // O aquecimento já arquivado, e o que mais tiver sido arquivado: todas no padrão.
+  expect(marcas.length).toBeGreaterThan(0);
+  for (const marca of marcas) expect(marca).toEqual([12, 'padrao']);
+
   // A escolha guardada não foi apagada: fora do estudo, ela volta.
   await page.goto('/#/entrar');
   expect(await temaDaRaiz(page)).toBe('azul');

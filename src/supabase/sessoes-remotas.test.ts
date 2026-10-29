@@ -136,6 +136,20 @@ describe('leitura do banco', () => {
     expect(deLinha(linha)).toEqual(doEstudo);
   });
 
+  it('o tema vai dentro da coluna estudo e volta inteiro, sem coluna própria (D39)', () => {
+    const doEstudo: RegistroDeSessao = {
+      ...registro('sessao-t', 'uid-a'),
+      versao: 12,
+      origemDoExercicio: 'catalogo',
+      estudo: { aplicacao: 'piloto-nov', etapa: 2, aquecimento: false, tema: 'padrao' },
+    };
+    const linha = paraLinha(doEstudo, 'uid-a');
+    expect(linha.estudo).toEqual({ etapa: 2, aquecimento: false, tema: 'padrao' });
+    expect(linha).not.toHaveProperty('tema');
+    // Pelo JSON, como o banco devolve o jsonb.
+    expect(deLinha(JSON.parse(JSON.stringify(linha)))).toEqual(doEstudo);
+  });
+
   it('fora do estudo, as duas colunas vão nulas, e o registro volta sem a marca', () => {
     const linha = paraLinha(registro('sessao-f', 'uid-a'), 'uid-a');
     expect([linha.aplicacao, linha.estudo]).toEqual([null, null]);

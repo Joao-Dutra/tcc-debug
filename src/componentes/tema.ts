@@ -15,10 +15,17 @@
  * regra inteira.
  */
 
-export const TEMAS = ['padrao', 'azul'] as const;
+import type { TemaDaInterface } from '../nucleo/metricas';
+
+export const TEMAS = ['padrao', 'azul'] as const satisfies readonly TemaDaInterface[];
 export type Tema = (typeof TEMAS)[number];
 
 export const TEMA_PADRAO: Tema = 'padrao';
+
+/** O tema que está na página agora, como a raiz o diz. */
+export function temaNaPagina(raiz: { getAttribute(nome: string): string | null }): Tema {
+  return interpretarTema(raiz.getAttribute('data-tema'));
+}
 
 export const ROTULOS_DO_TEMA: Record<Tema, string> = {
   padrao: 'Padrão',

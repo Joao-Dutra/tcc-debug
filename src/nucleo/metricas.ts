@@ -81,8 +81,14 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * muda; dentro dela, a sessão passa a ter prazo, e a duração dela deixa de ser
  * só a vontade do estudante. Sem a versão, uma sessão de 8 minutos cortada
  * pelo prazo seria lida como alguém que ficou 8 minutos e saiu.
+ *
+ * 12 — a marca do estudo ganhou `tema`, o tema da interface em que a sessão
+ * foi feita (D39). Na área do estudo ele é sempre o padrão, e o campo existe
+ * para a análise confirmar isso. Até a versão 11 não havia tema escolhível, e
+ * o campo fica ausente: toda sessão anterior foi feita no padrão, mas isso é
+ * da história do código, e não do registro.
  */
-export const VERSAO_DO_REGISTRO = 11;
+export const VERSAO_DO_REGISTRO = 12;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -172,7 +178,15 @@ export interface MarcaDoEstudo {
   aquecimento: boolean;
   /** Só sem banco: o grupo escolhido no aparelho, e não pelo banco. */
   grupoNoAparelho?: 'A' | 'B';
+  /**
+   * O tema da interface na tela da sessão (D39), lido da página, e não da
+   * regra: é o que o participante viu. Ausente até a versão 11.
+   */
+  tema?: TemaDaInterface;
 }
+
+/** Os temas da interface (D39); a escolha mora em src/componentes/tema.ts. */
+export type TemaDaInterface = 'padrao' | 'azul';
 
 /**
  * Campos comuns a todo evento de navegação. Os passos contam a partir de 1,
