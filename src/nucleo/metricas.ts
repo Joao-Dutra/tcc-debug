@@ -87,8 +87,12 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * para a análise confirmar isso. Até a versão 11 não havia tema escolhível, e
  * o campo fica ausente: toda sessão anterior foi feita no padrão, mas isso é
  * da história do código, e não do registro.
+ *
+ * 13 — a marca do estudo perdeu `tema` (D39, retirada do tema azul). Com um
+ * tema só, o campo não distingue nada. Ele continua só nos registros da
+ * versão 12, onde é sempre o padrão na área do estudo.
  */
-export const VERSAO_DO_REGISTRO = 12;
+export const VERSAO_DO_REGISTRO = 13;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -179,14 +183,12 @@ export interface MarcaDoEstudo {
   /** Só sem banco: o grupo escolhido no aparelho, e não pelo banco. */
   grupoNoAparelho?: 'A' | 'B';
   /**
-   * O tema da interface na tela da sessão (D39), lido da página, e não da
-   * regra: é o que o participante viu. Ausente até a versão 11.
+   * O tema da interface na tela da sessão (D39). Só nos registros da versão
+   * 12: antes não havia tema escolhível, e da 13 em diante só há o padrão.
+   * Continua no tipo para a exportação ler o que já foi gravado.
    */
-  tema?: TemaDaInterface;
+  tema?: 'padrao' | 'azul';
 }
-
-/** Os temas da interface (D39); a escolha mora em src/componentes/tema.ts. */
-export type TemaDaInterface = 'padrao' | 'azul';
 
 /**
  * Campos comuns a todo evento de navegação. Os passos contam a partir de 1,

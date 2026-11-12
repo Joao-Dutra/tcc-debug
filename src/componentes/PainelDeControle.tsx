@@ -22,7 +22,6 @@ import { lerSessoesDoBanco } from '../supabase/sessoes-remotas';
 import { confirmacaoConfere, mensagemDaFalha, problemaDoCodigo, textoDoMotivo } from './controle';
 import { FreioDosPublicados, InterruptorDaColeta, quando } from './ControlesDaColeta';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
-import { SeletorDeTema } from './Cabecalho';
 import { MenuDaConta } from './MenuDaConta';
 import { enderecoCompleto, mapaDeRotas } from './mapa-de-rotas';
 import { useIdentidade } from './usar-identidade';
@@ -52,7 +51,6 @@ function Moldura({ children }: { children: ReactNode }) {
             Métricas das sessões
           </a>
           <MenuDaConta />
-          <SeletorDeTema />
         </div>
         <h1>Painel de controle</h1>
         <p>

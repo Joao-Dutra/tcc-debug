@@ -12,7 +12,6 @@ import {
   useEstadoDaColeta,
 } from './ControlesDaColeta';
 import { AguardandoLiberacao } from './AguardandoLiberacao';
-import { SeletorDeTema } from './Cabecalho';
 import { MenuDaConta } from './MenuDaConta';
 import { EditorDeExercicio } from './EditorDeExercicio';
 import { EntradaDoProfessor } from './EntradaDoProfessor';
@@ -59,7 +58,6 @@ function Moldura({ children, identidade }: { children: ReactNode; identidade?: I
             Início
           </a>
           <MenuDaConta />
-          <SeletorDeTema />
         </div>
         <h1>Área do professor</h1>
         {comConta && (

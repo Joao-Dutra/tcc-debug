@@ -19,7 +19,6 @@ import {
 import { csvDoEstudo, sessoesDoEstudo } from '../estudo/exportacao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { sair } from '../supabase/identidade';
-import { SeletorDeTema } from './Cabecalho';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
 import { MenuDaConta } from './MenuDaConta';
 import { baixarMetricas } from './usar-metricas';
@@ -396,7 +395,6 @@ export function PainelDeMetricas() {
       <header>
         <div className="barra-da-conta">
           <MenuDaConta />
-          <SeletorDeTema />
         </div>
         <h1>Métricas das sessões</h1>
         {pesquisador ? (

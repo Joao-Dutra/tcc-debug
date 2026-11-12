@@ -123,23 +123,8 @@
   --palha-700: #6b5a10; --palha-800: #473900; --palha-900: #292000;
 
   /* -------------------------------------------------------------------------
-     Paleta azul (D39), primitivas do tema "azul". Quatro cores de base, todas
-     claras demais para texto — o azul médio dá 2,35:1 sobre branco —, e por
-     isso só em fundos, superfícies e fios. O que precisa ser lido ou visto
-     como limite sai da ardósia: tons escuros derivados do azul médio, no
-     mesmo matiz (OKLCH h 251), baixando a luminosidade.
-  ------------------------------------------------------------------------- */
-  --azul-claro: #d2e0fb; --creme: #fef9d9; --verde-cinza: #dee5d4; --azul-medio: #8eaccd;
-  --creme-campo: #fefcef;            /* o creme a L 0,99: campos e botões */
-  /* ardósia — h 251, L 0,24 / 0,28 / 0,38 / 0,46 / 0,56 */
-  --ardosia-900: #14202d; --ardosia-800: #192a3c; --ardosia-700: #2e445c;
-  --ardosia-600: #4c5a69; --ardosia-500: #687686;
-
-  /* -------------------------------------------------------------------------
-     Papéis de base, no tema padrão. Cada tema é um conjunto destes papéis,
-     trocado pelo atributo `data-tema` da raiz (D39): o padrão mora aqui, e os
-     outros, logo depois deste bloco. Acrescentar um tema é acrescentar um
-     conjunto, sem tocar em regra nenhuma.
+     Papéis de base da interface. Um tema azul opcional chegou a existir como
+     outro conjunto destes papéis e foi retirado (D39): há uma interface só.
 
      Trocáveis por escolha estética, desde que a cor de ação continue fora da
      bancada e nenhum encoste nas cores de significado. Contraste sobre a
@@ -163,23 +148,22 @@
   --foco: var(--anilina-600);
   --foco-halo: var(--anilina-300);
   /* O halo do "Executar" quando o código mudou desde a última execução
-     (D20). Mais visível desde D39, nos dois temas: sobre a sala, de 1,11:1
-     para 2,18:1 aqui, e 1,77:1 no azul. */
+     (D20). Mais visível desde D39: sobre a sala, de 1,11:1 para 2,18:1. */
   --halo-da-execucao: var(--anilina-500);
   --rolagem-trilho: var(--areia-300);
   --rolagem-polegar: var(--areia-500);
   --rolagem-polegar-ativo: var(--areia-600);
 
-  /* Fixos em todos os temas (D39). */
+  /* Fixos, fora dos papéis trocáveis acima (D39). */
   --acerto: var(--musgo-700);        /* só o sinal de todos os casos passando */
-  /* O sinal de acerto não muda com o tema: retorno de acerto não muda de
-     intensidade entre pilotos. Ele e a animação que o acende ficam nos
-     valores de antes de haver tema. */
+  /* O sinal de acerto tem papéis próprios: retorno de acerto não muda de
+     intensidade entre pilotos, e uma troca de aparência acima não pode
+     alcançá-lo. */
   --sobre-acerto: var(--areia-100);
   --acerto-acende-de: var(--areia-200);
-  /* O convite do número da linha (D7, D25) também não muda: foi ele que
-     tirou a declaração de localização do zero no segundo piloto, e na cor de
-     ação do tema azul a pastilha cairia de 2,2:1 para 1,6:1 sobre o editor. */
+  /* O convite do número da linha (D7, D25) também tem papel próprio: foi ele
+     que tirou a declaração de localização do zero no segundo piloto, e não
+     pode mudar junto com a cor de ação. */
   --convite-da-linha: var(--anilina-700);
   --sobre-convite: var(--areia-100);
   /* Etiquetas de complexidade (D20). Ficam fora da bancada, onde matiz é
@@ -283,42 +267,6 @@
   background: var(--sala);
   /* Barra de rolagem da página no tom da sala. */
   scrollbar-color: var(--rolagem-polegar) var(--rolagem-trilho);
-}
-
-/* ---------------------------------------------------------------------------
-   Tema azul (D39): o mesmo conjunto de papéis, com a paleta azul. Só papéis
-   da interface: os da bancada e os fixos não aparecem aqui, e por isso o
-   desenho, o sinal de acerto e o convite da linha são os mesmos nos dois.
-
-   Contraste medido (WCAG 2.x) sobre sala, painel, caixa de nota e campo:
-   texto 12,4 a 16,0:1; texto suave 5,3 a 6,9:1; ação e foco 7,5 a 9,7:1;
-   erro 5,6 a 7,2:1; borda de controle 3,5 a 4,5:1; texto sobre a ação
-   9,7:1. O azul médio é fio e halo, nunca texto nem limite de controle.
-
-   A ação fica a ΔE76 32,9 do traço da célula ativa — a anilina do padrão
-   fica a 32,6 —, e muito menos saturada que ele (croma 0,05 contra 0,14):
-   na bancada, o azul continua sendo só o da peça ativa.
---------------------------------------------------------------------------- */
-:root[data-tema="azul"] {
-  --sala: var(--azul-claro);
-  --painel: var(--creme);
-  --campo: var(--creme-campo);
-  --caixa-de-nota: var(--verde-cinza);
-  --faixa-de-apoio: var(--verde-cinza);
-  --faixa-da-previa: var(--verde-cinza);
-  --grafite: var(--ardosia-900);
-  --grafite-suave: var(--ardosia-600);
-  --regua: var(--azul-medio);
-  --borda-controle: var(--ardosia-500);
-  --acao: var(--ardosia-700);
-  --acao-forte: var(--ardosia-800);
-  --acao-rala: var(--azul-medio);
-  --foco: var(--ardosia-700);
-  --foco-halo: var(--azul-medio);
-  --halo-da-execucao: var(--azul-medio);
-  --rolagem-trilho: var(--azul-claro);
-  --rolagem-polegar: var(--azul-medio);
-  --rolagem-polegar-ativo: var(--ardosia-500);
 }
 
 * { box-sizing: border-box; }
@@ -1306,14 +1254,6 @@ button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula)
 .rotulo-da-rota { min-width: 18ch; color: var(--grafite); }
 .detalhe-da-auditoria { white-space: normal; color: var(--grafite-suave); }
 
-/* O seletor de tema (D39): no tom de apoio, sem chão próprio, depois das
-   ações da tela. É conveniência, e não pode disputar com elas. */
-.seletor-de-tema { display: inline-flex; align-items: center; gap: var(--esp-6);
-  font-size: var(--fonte-miuda); color: var(--grafite-suave); }
-.seletor-de-tema select { font: inherit; color: var(--grafite); background: transparent;
-  border: 1px solid var(--borda-controle); border-radius: var(--raio-pilula);
-  padding: 3px var(--esp-8); cursor: pointer; }
-
 /* O acesso da pesquisa (D39): um link no rodapé da entrada, em letra miúda,
    que não disputa com as duas saídas; e a tela dele, com um bloco só. */
 .rodape-da-entrada { margin-top: var(--esp-32); font-size: var(--fonte-miuda); }
@@ -1331,7 +1271,7 @@ button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula)
 .menu-da-conta a:hover { color: var(--acao); }
 .menu-da-conta a[aria-current="page"] { color: var(--grafite); font-weight: 700; }
 /* Nas telas de conta, que têm o próprio cabeçalho: a volta à esquerda, e o
-   menu e o tema à direita. */
+   menu à direita. */
 .barra-da-conta { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8) var(--esp-16); }
-.barra-da-conta > :first-child:not(.menu-da-conta):not(.seletor-de-tema) { margin-right: auto; }
+.barra-da-conta > :first-child:not(.menu-da-conta) { margin-right: auto; }
 .barra-da-conta > .menu-da-conta:first-child { margin-left: auto; }

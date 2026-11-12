@@ -34,7 +34,6 @@ import {
   guardarRespostasNoAparelho,
   lerPercurso,
 } from './percurso-guardado';
-import { temaNaPagina } from './tema';
 import { useIdentidade } from './usar-identidade';
 import { baixarMetricas } from './usar-metricas';
 
@@ -464,10 +463,8 @@ export function AreaDoEstudo({ aplicacao }: { aplicacao: string }) {
       percurso={{
         rotulo: rotuloDaEtapa(passo.etapa),
         ultimo: ultimaEtapa(passo.etapa),
-        // O tema lido da página, e não da regra: a marca diz o que o
-        // participante viu, e a análise confere que foi sempre o padrão (D39).
         sessao: {
-          marca: marcaDaEtapa(estado, passo.etapa, temaNaPagina(document.documentElement)),
+          marca: marcaDaEtapa(estado, passo.etapa),
           participanteId: estado.participanteId,
         },
         prazo: estado.prazos[passo.etapa]!,

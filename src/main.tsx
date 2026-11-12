@@ -13,15 +13,6 @@ import './index.css';
 import { ativarEspelho } from './nucleo/metricas';
 import { espelhoLocal } from './componentes/espelho-local';
 import { ligarPersistencia } from './supabase/sessoes-remotas';
-import { aplicarTema, armazenamentoDoNavegador, carregarTema, temaDaTela } from './componentes/tema';
-import { interpretarHash } from './componentes/usar-rota';
-
-// O tema antes da primeira pintura (D39), para a tela não abrir no padrão e
-// trocar em seguida. Na área do estudo, o padrão, qualquer que seja o guardado.
-aplicarTema(
-  document.documentElement,
-  temaDaTela(interpretarHash(window.location.hash).tela, carregarTema(armazenamentoDoNavegador()))
-);
 
 // Antes da primeira tela: o que foi arquivado em outra carga da página volta
 // ao arquivo em memória (D15).

@@ -1,5 +1,5 @@
 import type { NivelDeAndaime } from '../componentes/andaime';
-import type { MarcaDoEstudo, MotivoDoEncerramento, TemaDaInterface } from '../nucleo/metricas';
+import type { MarcaDoEstudo, MotivoDoEncerramento } from '../nucleo/metricas';
 
 /**
  * O percurso da área do estudo (D37): a sequência fixa, o apoio de cada grupo
@@ -172,20 +172,12 @@ export function concluirQuestionario(estado: EstadoDoPercurso): EstadoDoPercurso
   return { ...estado, passo: { tela: 'agradecimento' } };
 }
 
-/**
- * A marca que vai em cada sessão aberta numa etapa. O tema vem de fora, lido
- * da página: aqui não há navegador (D39).
- */
-export function marcaDaEtapa(
-  estado: EstadoDoPercurso,
-  etapa: number,
-  tema: TemaDaInterface
-): MarcaDoEstudo {
+/** A marca que vai em cada sessão aberta numa etapa. */
+export function marcaDaEtapa(estado: EstadoDoPercurso, etapa: number): MarcaDoEstudo {
   return {
     aplicacao: estado.aplicacao,
     etapa,
     aquecimento: ETAPAS[etapa].aquecimento,
-    tema,
     ...(estado.grupoNoAparelho && estado.grupo ? { grupoNoAparelho: estado.grupo } : {}),
   };
 }
