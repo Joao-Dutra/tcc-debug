@@ -18,7 +18,7 @@ import type { Exercicio } from '../nucleo/tipos';
  */
 export const vetorOrdenar: Exercicio = {
   id: 'vetor-ordenar',
-  titulo: 'Vetor: a ordenação termina com valores repetidos',
+  titulo: 'BubbleSort: a ordenação termina com valores repetidos',
   enunciado:
     'O programa deve deixar o vetor ordenado do menor para o maior valor. A cada passagem, ele ' +
     'compara cada par de vizinhos até a posição ultimo e troca os dois de lugar quando estão ' +

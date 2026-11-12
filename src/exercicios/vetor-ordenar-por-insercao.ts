@@ -21,7 +21,7 @@ import type { Exercicio } from '../nucleo/tipos';
  */
 export const vetorOrdenarPorInsercao: Exercicio = {
   id: 'vetor-ordenar-por-insercao',
-  titulo: 'Vetor: a ordenação por inserção faz um valor sumir',
+  titulo: 'InsertionSort: a ordenação faz um valor sumir',
   enunciado:
     'O programa deve deixar o vetor ordenado do menor para o maior valor. A cada passagem, ele ' +
     'guarda em chave o valor da posição i e, da posição i - 1 para trás, desloca uma casa para a ' +

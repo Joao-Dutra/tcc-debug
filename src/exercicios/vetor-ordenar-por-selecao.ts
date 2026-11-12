@@ -18,7 +18,7 @@ import type { Exercicio } from '../nucleo/tipos';
  */
 export const vetorOrdenarPorSelecao: Exercicio = {
   id: 'vetor-ordenar-por-selecao',
-  titulo: 'Vetor: a ordenação por seleção deixa o começo fora de ordem',
+  titulo: 'SelectionSort: a ordenação deixa o começo fora de ordem',
   enunciado:
     'O programa deve deixar o vetor ordenado do menor para o maior valor. A cada passagem, ele ' +
     'procura o menor valor entre a posição i e o fim do vetor, guarda em menor a posição dele e, ' +
