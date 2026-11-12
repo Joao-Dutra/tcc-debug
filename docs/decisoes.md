@@ -4267,3 +4267,29 @@ tela de exercício e das telas de conta; é um ajuste dentro do congelamento de
 Os testes que cobriam o tema saíram com ele (8 rápidos e 3 de ponta a ponta),
 e o da marca do percurso passou a cobrir a marca sem o campo. Na suíte, 505
 testes rápidos e 125 de ponta a ponta, todos passando.
+
+### Ajustes no congelamento (12/11/2026)
+
+Dois ajustes no que o participante vê, com esta data. Nenhum toca em defeito,
+caso, dica, apoio ou retorno de acerto.
+
+- **"A lista ainda não foi criada".** Em `lista-inserir-depois`, os primeiros
+  quadros vinham em branco: cada quadro mostra o estado antes da linha
+  indicada, e até `cabeca` existir não há nada observado para desenhar — o nó
+  30 já existe em `segundo`, mas `segundo` não é observada de propósito, senão
+  o nó 30 nunca sumiria e o quadro que denuncia o defeito deixaria de existir.
+  Um quadro em branco parecia defeito do desenho. Agora, quando o quadro não
+  tem nó nem variável observada, o desenho da lista diz "a lista ainda não foi
+  criada", nos dois níveis de apoio: é o estado, e não orientação. Não se
+  confunde com `cabeca = null`, a lista vazia, que é variável e continua
+  desenhada com o aterramento. Teste: `e2e/exercicio.spec.ts`, nos dois níveis.
+- **O título da ordenação diz o algoritmo.** Os três exercícios da seção da
+  ordenação (D34) começavam por "Vetor:", que repetia a estrutura e não dizia
+  qual algoritmo era. Agora começam pelo nome dele: "BubbleSort:",
+  "SelectionSort:" e "InsertionSort:". Só o título muda; os ids continuam os
+  mesmos, e as sessões já gravadas, que identificam o exercício pelo id, não se
+  separam.
+
+`SelectionSort` e `vetor-ordenar` estão no percurso do estudo (etapas 4 e 5),
+e a lista na etapa 3: os dois ajustes aparecem na área do estudo, e entram
+antes do piloto final.
