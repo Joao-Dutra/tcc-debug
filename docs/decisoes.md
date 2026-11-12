@@ -4235,3 +4235,35 @@ próprio navegador e comparados pixel a pixel, por canal, com e sem os 6 px de
 borda do recorte — na borda, o que muda é o fundo da página aparecendo pelos
 cantos arredondados. Os scripts ficaram fora do repositório; o que precisa
 continuar valendo está nos papéis fixos do CSS e nos testes acima.
+
+### Retirada do tema azul (12/11/2026)
+
+**Decisão, do autor: o tema azul sai, e com ele o seletor.** A interface volta a
+ter um tema só, o padrão, que é a areia de antes. O azul não agradou visto na
+tela, e um seletor que só troca entre uma opção e nenhuma não tem razão de
+existir.
+
+- **O que sai:** o conjunto `:root[data-tema="azul"]` e as primitivas da paleta
+  azul em `src/index.css`; o seletor do cabeçalho e das telas de conta; e
+  `src/componentes/tema.ts`, `usar-tema.ts`, `tema.test.ts` e
+  `e2e/tema.spec.ts`. A raiz não recebe mais `data-tema`, e o que um navegador
+  tiver guardado em `depurar:tema` fica lá, sem ser lido.
+- **O que fica, porque é do padrão e não do azul:** os papéis próprios da
+  bancada, do sinal de acerto e do convite do número da linha, que separam o
+  que tem significado do que é aparência; e o halo do "Executar" na
+  anilina-500 (2,18:1 sobre a sala), aceito como mudança do padrão.
+- **O registro.** Com um tema só, o tema na marca do estudo não distingue nada,
+  e deixa de ser gravado. **`VERSAO_DO_REGISTRO` passa a 13.** Os registros da
+  versão 12 continuam com o campo, que na área do estudo é sempre `padrao`, e a
+  coluna `tema` do CSV do estudo continua lendo-o deles; da versão 13 em
+  diante, ela sai vazia. O campo ficou no tipo da marca só para essa leitura.
+
+**O congelamento.** A área do estudo não muda em nada: o tema dela já era fixo
+no padrão, e o seletor nunca aparecia ali. O piloto e a coleta continuam vendo a
+mesma ferramenta. Fora do estudo, o seletor some do cabeçalho da vitrine, da
+tela de exercício e das telas de conta; é um ajuste dentro do congelamento de
+29/10/2026, com esta data, e o resto do que está congelado não muda.
+
+Os testes que cobriam o tema saíram com ele (8 rápidos e 3 de ponta a ponta),
+e o da marca do percurso passou a cobrir a marca sem o campo. Na suíte, 505
+testes rápidos e 125 de ponta a ponta, todos passando.
