@@ -145,3 +145,20 @@ test('na troca de ordem, apontar a segunda linha também é acerto (D30)', async
   await expect(page.locator('.apontadas li').first()).toContainText('Linha 16');
   await expect(page.locator('.apontadas li').first()).toContainText('o defeito está aqui');
 });
+
+for (const andaime of ['com-apoio', 'sem-apoio']) {
+  test(`a lista diz que ainda não foi criada, até a linha que a cria (${andaime})`, async ({ page }) => {
+    // Antes de `cabeca` existir, o quadro não tem nada a desenhar. Um quadro
+    // em branco parecia defeito do desenho; a frase diz o estado, nos dois
+    // níveis, e some quando a lista aparece.
+    await page.goto(`/#/exercicio/lista-inserir-depois?andaime=${andaime}`);
+    await expect(page.locator('.contador')).toContainText('passo 1 /');
+    const aviso = page.locator('.lista-ainda-nao-criada');
+    await expect(aviso).toHaveText('a lista ainda não foi criada');
+    await expect(page.getByRole('img', { name: 'Lista encadeada ainda não criada' })).toBeVisible();
+
+    for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'próximo passo' }).click();
+    await expect(page.locator('.contador')).toContainText('passo 4 /');
+    await expect(aviso).toHaveCount(0);
+  });
+}

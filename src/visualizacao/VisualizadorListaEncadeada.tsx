@@ -413,6 +413,12 @@ export function VisualizadorListaEncadeada({
 
   const nomesDeLigacao = [...ligacoes];
 
+  // Nenhum nó e nenhuma variável observada: o programa ainda não chegou à
+  // linha que cria a lista. Um quadro em branco parecia defeito do desenho.
+  // Não é o mesmo que `cabeca = null`, a lista vazia, que é variável e desenha
+  // o aterramento. Igual nos dois níveis: diz o estado, e não orienta.
+  const aindaNaoCriada = mapa.size === 0 && ponteiros.length === 0;
+
   return (
     <>
       <svg
@@ -421,11 +427,18 @@ export function VisualizadorListaEncadeada({
         style={{ maxHeight: 360 }}
         role="img"
         aria-label={
-          rotulos
-            ? 'Lista encadeada com ' + cadeia.length + ' nós na cadeia e ' + soltos.length + ' fora dela'
-            : 'Lista encadeada com ' + cadeia.length + ' nós'
+          aindaNaoCriada
+            ? 'Lista encadeada ainda não criada'
+            : rotulos
+              ? 'Lista encadeada com ' + cadeia.length + ' nós na cadeia e ' + soltos.length + ' fora dela'
+              : 'Lista encadeada com ' + cadeia.length + ' nós'
         }
       >
+        {aindaNaoCriada && (
+          <text className="svg-rotulo lista-ainda-nao-criada" x={260} y={160} textAnchor="middle" fontSize="15">
+            a lista ainda não foi criada
+          </text>
+        )}
         {cadeia.map((no, i) => desenharNo(no, xDoNo(i), Y_NO, 'ativa'))}
         {soltos.map((no, i) => desenharNo(no, xDoNo(i), Y_SOLTO, estadoDoSolto))}
 
