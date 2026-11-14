@@ -1,4 +1,5 @@
 import { catalogo } from '../exercicios/catalogo';
+import type { ExercicioDeExemplo } from '../exercicios/exemplos-publicos';
 import { rascunhoDoExercicio } from '../nucleo/verificacao-do-exercicio';
 import { formularioDe } from './formulario-do-exercicio';
 import type { FormularioDoExercicio } from './formulario-do-exercicio';
@@ -19,17 +20,25 @@ import type { Exercicio, SecaoEspecial, TipoEstrutura } from '../nucleo/tipos';
  * e não no componente, para o teste alcançá-la.
  */
 
-/** O exercício do catálogo de onde vêm os exemplos de cada estrutura. */
-const EXEMPLO_DA_ESTRUTURA: Record<TipoEstrutura, string> = {
+/**
+ * O exercício do catálogo de onde vêm os exemplos de cada estrutura. Só os
+ * exemplos públicos (D41): o campo "código correto" mostra o código correto
+ * do exemplo, e o build apaga o de todos os outros. O tipo impede apontar um
+ * exercício do percurso, cujo código correto não pode ir ao navegador.
+ */
+const EXEMPLO_DA_ESTRUTURA: Record<TipoEstrutura, ExercicioDeExemplo> = {
   vetor: 'vetor-dobrar',
-  pilha: 'pilha-desempilhar',
-  fila: 'fila-atender-todos',
-  'lista-encadeada': 'lista-inserir-depois',
+  pilha: 'pilha-reverter',
+  fila: 'fila-inverter',
+  'lista-encadeada': 'lista-inserir-posicao',
 };
 
-/** E o da ordenação: a bolha, que tem os dois marcadores e a temporária da troca. */
-const EXEMPLO_DO_AGRUPAMENTO: Record<SecaoEspecial, string> = {
-  ordenacao: 'vetor-ordenar',
+/**
+ * E o da ordenação: a inserção, que tem os dois marcadores e uma variável de
+ * valor, a chave. Até D41 era a bolha, que está no percurso.
+ */
+const EXEMPLO_DO_AGRUPAMENTO: Record<SecaoEspecial, ExercicioDeExemplo> = {
+  ordenacao: 'vetor-ordenar-por-insercao',
 };
 
 export function exercicioDeExemplo(

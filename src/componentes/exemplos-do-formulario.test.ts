@@ -61,9 +61,9 @@ describe('o formulário inteiro preenchido com os exemplos', () => {
     const { rascunho } = rascunhoDoFormulario(preenchidoComExemplos('vetor', 'ordenacao'));
     expect(rascunho?.estrutura).toBe('vetor');
     expect(rascunho?.secao).toBe('ordenacao');
-    // Os marcadores e a temporária da troca vêm junto do exemplo.
+    // Os marcadores e a variável de valor vêm junto do exemplo.
     expect(rascunho?.marcadores.length).toBeGreaterThan(0);
-    expect(rascunho?.variaveisDeValor).toContain('temp');
+    expect(rascunho?.variaveisDeValor).toContain('chave');
   });
 
   it('fora do vetor, o agrupamento não vale', () => {

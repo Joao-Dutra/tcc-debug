@@ -340,9 +340,9 @@ test.describe('os exemplos do formulário (D35)', () => {
     const exemplo = page.getByRole('note', { name: 'Exemplo de título' });
 
     await page.getByLabel(/Agrupamento na vitrine/).selectOption('ordenacao');
-    await expect(exemplo).toContainText('a ordenação termina com valores repetidos');
+    await expect(exemplo).toContainText('InsertionSort: a ordenação faz um valor sumir');
     await page.getByRole('button', { name: 'Ver exemplo de variáveis de valor' }).click();
-    await expect(page.getByRole('note', { name: 'Exemplo de variáveis de valor' })).toContainText('temp');
+    await expect(page.getByRole('note', { name: 'Exemplo de variáveis de valor' })).toContainText('chave');
 
     await page.getByLabel('Estrutura de dados').selectOption('pilha');
     await expect(exemplo).toContainText('Pilha:');
