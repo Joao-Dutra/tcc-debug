@@ -43,6 +43,8 @@ export interface AplicacaoNoPainel {
   aberta: boolean;
   protegida: boolean;
   entradas: number;
+  /** Quantos participantes a aplicação recebe, no máximo (0006). */
+  limiteDeParticipantes: number;
   criadaEm: string;
   participantesA: number;
   participantesB: number;
@@ -59,6 +61,7 @@ export async function listarAplicacoes(): Promise<AplicacaoNoPainel[]> {
     aberta: boolean;
     protegida: boolean;
     entradas: number;
+    limite_de_participantes: number;
     criada_em: string;
     participantes_a: number;
     participantes_b: number;
@@ -70,6 +73,7 @@ export async function listarAplicacoes(): Promise<AplicacaoNoPainel[]> {
     aberta: l.aberta,
     protegida: l.protegida,
     entradas: l.entradas,
+    limiteDeParticipantes: l.limite_de_participantes,
     criadaEm: l.criada_em,
     // Contagens vêm de `count(*)`, que é bigint: o PostgREST as entrega como
     // número, mas um proxy no caminho poderia trazer texto.
@@ -87,6 +91,14 @@ export async function criarAplicacao(codigo: string, teste: boolean): Promise<vo
 
 export async function definirAplicacaoAberta(codigo: string, aberta: boolean): Promise<void> {
   await chamar('definir_aplicacao_aberta', { p_codigo: codigo, p_aberta: aberta });
+}
+
+/**
+ * O limite de participantes da aplicação (0006). O banco recusa um limite
+ * abaixo das entradas já feitas: para não receber mais ninguém, fecha-se.
+ */
+export async function definirLimiteDeParticipantes(codigo: string, limite: number): Promise<void> {
+  await chamar('definir_limite_de_participantes', { p_codigo: codigo, p_limite: limite });
 }
 
 /** Num sentido só: não há como desproteger pelo painel nem pelo banco (0005). */

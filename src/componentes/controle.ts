@@ -11,6 +11,21 @@
 export const REGRA_DO_CODIGO = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 export const LIMITE_DO_CODIGO = 60;
 
+/** O intervalo que `definir_limite_de_participantes` aceita (0006). */
+export const LIMITE_MINIMO_DE_PARTICIPANTES = 1;
+export const LIMITE_MAXIMO_DE_PARTICIPANTES = 1000;
+
+/**
+ * O limite digitado pelo pesquisador, como número, ou nulo se não serve. Só
+ * inteiros no intervalo do banco: o resto seria recusado lá, e aqui a tela
+ * diz antes.
+ */
+export function limiteDigitado(texto: string): number | null {
+  if (!/^\d+$/.test(texto.trim())) return null;
+  const n = Number(texto.trim());
+  return n >= LIMITE_MINIMO_DE_PARTICIPANTES && n <= LIMITE_MAXIMO_DE_PARTICIPANTES ? n : null;
+}
+
 /** O que há de errado com o código, para a tela dizer antes de enviar; nulo se nada. */
 export function problemaDoCodigo(codigo: string): string | null {
   if (codigo === '') return 'Escreva o código da aplicação.';
@@ -31,8 +46,8 @@ export function confirmacaoConfere(digitado: string, alvo: string): boolean {
 }
 
 /**
- * O motivo de cada recusa das funções da 0005, como o pesquisador o lê. O
- * teste confere que todo motivo que a migração devolve tem texto aqui.
+ * O motivo de cada recusa das funções da 0005 e da 0006, como o pesquisador o
+ * lê. O teste confere que todo motivo que as migrações devolvem tem texto aqui.
  */
 export const TEXTOS_DOS_MOTIVOS: Record<string, string> = {
   'so-pesquisador': 'Só a conta de pesquisador pode fazer isto.',
@@ -45,6 +60,9 @@ export const TEXTOS_DOS_MOTIVOS: Record<string, string> = {
   'confirmacao-nao-confere': 'O código digitado não confere com o da aplicação.',
   'sem-linha-da-coleta': 'O interruptor da coleta não está no banco: a migração 0003 rodou?',
   'nao-publicado': 'O exercício não está mais publicado.',
+  'limite-invalido': 'O limite de participantes vai de 1 a 1000.',
+  'abaixo-das-entradas':
+    'O limite não pode ficar abaixo de quem já entrou. Para não receber mais ninguém, feche a aplicação.',
 };
 
 export function textoDoMotivo(motivo: string | undefined): string {

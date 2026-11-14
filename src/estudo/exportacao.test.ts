@@ -8,10 +8,12 @@ import {
   campoDoCsv,
   csvDoEstudo,
   desfechoNoEstudo,
+  MOTIVOS_DE_SUSPEITA,
   linhasDoEstudo,
+  motivosDeSuspeita,
   sessoesDoEstudo,
 } from './exportacao';
-import type { ParticipanteDoEstudo, RespostaLida } from './exportacao';
+import type { MarcaDeSuspeita, ParticipanteDoEstudo, RespostaLida } from './exportacao';
 import { ITENS_DAS_ESCALAS } from './questionario';
 
 /**
@@ -106,9 +108,9 @@ function lerCsv(texto: string): Record<string, string>[] {
 
 describe('o formato do arquivo', () => {
   it('o cabeçalho tem as colunas combinadas, na ordem', () => {
-    const cabecalho = csvDoEstudo([], [], []).split('\r\n')[0].split(',');
+    const cabecalho = csvDoEstudo([], [], [], null).split('\r\n')[0].split(',');
     expect(cabecalho).toEqual([...COLUNAS_DO_CSV]);
-    expect(cabecalho.slice(0, 7)).toEqual([
+    expect(cabecalho.slice(0, 9)).toEqual([
       'aplicacao',
       'participante_id',
       'grupo',
@@ -116,6 +118,8 @@ describe('o formato do arquivo', () => {
       'perfil_aeds1',
       'perfil_depurador',
       'perfil_visualizacao',
+      'suspeito',
+      'motivos_de_suspeita',
     ]);
     expect(cabecalho.slice(-20)).toEqual([
       'versao_do_questionario',
@@ -129,7 +133,7 @@ describe('o formato do arquivo', () => {
   });
 
   it('CRLF no fim de cada linha, sem BOM, e uma linha por sessão', () => {
-    const texto = csvDoEstudo([sessao(), sessao()], [participanteA], []);
+    const texto = csvDoEstudo([sessao(), sessao()], [participanteA], [], null);
     expect(texto.charCodeAt(0)).not.toBe(0xfeff);
     expect(texto.endsWith('\r\n')).toBe(true);
     expect(texto.split('\r\n')).toHaveLength(4);
@@ -150,7 +154,7 @@ describe('o formato do arquivo', () => {
 
   it('um texto com vírgula, aspas e quebra de linha volta inteiro, na coluna certa', () => {
     const resposta = { ...respostaA, oQueAtrapalhou: 'o tempo, "curto"\r\ne a fila' };
-    const [linha] = lerCsv(csvDoEstudo([sessao()], [participanteA], [resposta]));
+    const [linha] = lerCsv(csvDoEstudo([sessao()], [participanteA], [resposta], null));
     expect(linha.ajudou).toBe('ver a pilha, "andando"');
     expect(linha.atrapalhou).toBe('o tempo, "curto"\r\ne a fila');
   });
@@ -166,7 +170,7 @@ describe('as colunas da sessão', () => {
         s.registrarExecucao('estudante', 'corrigido', passou);
       },
     });
-    const [linha] = lerCsv(csvDoEstudo([s], [participanteA], [respostaA]));
+    const [linha] = lerCsv(csvDoEstudo([s], [participanteA], [respostaA], null));
     expect(linha).toMatchObject({
       aplicacao: 'piloto-nov',
       participante_id: 'uid-a',
@@ -208,14 +212,14 @@ describe('as colunas da sessão', () => {
   it('as métricas saem do log, e não do resumo gravado', () => {
     const s = sessao({ passos: (s) => s.registrarExecucao('estudante', 'x', passou) });
     const adulterada = { ...s, resumo: { ...s.resumo, execucoes: 99, corrigido: false } };
-    const [linha] = lerCsv(csvDoEstudo([adulterada], [participanteA], []));
+    const [linha] = lerCsv(csvDoEstudo([adulterada], [participanteA], [], null));
     expect(linha.execucoes).toBe('1');
     expect(linha.corrigido).toBe('true');
   });
 
   it('antes da versão 10, a navegação sai vazia, e não zero', () => {
     const antiga = { ...sessao(), versao: 9 };
-    const [linha] = lerCsv(csvDoEstudo([antiga], [participanteA], []));
+    const [linha] = lerCsv(csvDoEstudo([antiga], [participanteA], [], null));
     expect(linha.navegacoes).toBe('');
     expect(linha.passos_distintos_visitados).toBe('');
     expect(linha.retrocessos).toBe('');
@@ -225,7 +229,7 @@ describe('as colunas da sessão', () => {
   });
 
   it('quem não respondeu o questionário sai com as colunas dele vazias', () => {
-    const [linha] = lerCsv(csvDoEstudo([sessao()], [participanteA], []));
+    const [linha] = lerCsv(csvDoEstudo([sessao()], [participanteA], [], null));
     for (const coluna of ['versao_do_questionario', 'sus_1', 'sus_escore', 'vis_1', 'ajudou', 'atrapalhou']) {
       expect(linha[coluna], coluna).toBe('');
     }
@@ -233,7 +237,7 @@ describe('as colunas da sessão', () => {
 
   it('o questionário e o perfil se repetem em cada sessão do participante', () => {
     const etapa = (n: number) => sessao({ estudo: { aplicacao: 'piloto-nov', etapa: n, aquecimento: n === 0 } });
-    const linhas = lerCsv(csvDoEstudo([etapa(2), etapa(0), etapa(1)], [participanteA], [respostaA]));
+    const linhas = lerCsv(csvDoEstudo([etapa(2), etapa(0), etapa(1)], [participanteA], [respostaA], null));
     expect(linhas.map((l) => l.etapa)).toEqual(['0', '1', '2']);
     expect(new Set(linhas.map((l) => l.sus_escore))).toEqual(new Set(['50']));
     expect(new Set(linhas.map((l) => l.perfil_aeds1))).toEqual(new Set(['cursando']));
@@ -241,7 +245,7 @@ describe('as colunas da sessão', () => {
 
   it('a resposta e o perfil são os da mesma aplicação', () => {
     const outra = { ...respostaA, aplicacao: 'aeds1-2026' };
-    const [linha] = lerCsv(csvDoEstudo([sessao()], [], [outra]));
+    const [linha] = lerCsv(csvDoEstudo([sessao()], [], [outra], null));
     expect(linha.sus_escore).toBe('');
     expect(linha.grupo).toBe('');
     expect(linha.ordem_de_entrada).toBe('');
@@ -253,7 +257,7 @@ describe('as colunas da sessão', () => {
       estudo: { aplicacao: 'piloto-nov', etapa: 1, aquecimento: false, grupoNoAparelho: 'B' },
       andaime: 'sem-apoio',
     });
-    const [linha] = lerCsv(csvDoEstudo([s], [], []));
+    const [linha] = lerCsv(csvDoEstudo([s], [], [], null));
     expect(linha).toMatchObject({ grupo: 'B', participante_id: '', apoio_confere_com_plano: 'true' });
   });
 
@@ -261,7 +265,7 @@ describe('as colunas da sessão', () => {
     expect(COLUNAS_DO_CSV).toContain('tema');
     const comTema = sessao({ estudo: { aplicacao: 'piloto-nov', etapa: 1, aquecimento: false, tema: 'padrao' } });
     const semTema = sessao({ estudo: { aplicacao: 'piloto-nov', etapa: 2, aquecimento: false } });
-    const linhas = lerCsv(csvDoEstudo([comTema, semTema], [participanteA], []));
+    const linhas = lerCsv(csvDoEstudo([comTema, semTema], [participanteA], [], null));
     expect(linhas.map((l) => [l.etapa, l.tema])).toEqual([
       ['1', 'padrao'],
       ['2', ''],
@@ -278,8 +282,7 @@ describe('as colunas da sessão', () => {
           sessao({ participanteId: 'uid-a' }),
         ],
         [b, participanteA],
-        []
-      )
+        [], null)
     );
     expect(linhas.map((l) => [l.participante_id, l.etapa])).toEqual([
       ['uid-a', '1'],
@@ -288,8 +291,36 @@ describe('as colunas da sessão', () => {
     ]);
   });
 
+  it('suspeito sai de qualquer marca, com os motivos, e vazio quando as marcas não foram lidas (D41)', () => {
+    const b: ParticipanteDoEstudo = { ...participanteA, participanteId: 'uid-b', grupo: 'B', ordemDeEntrada: 2 };
+    const sessoes = [sessao({ participanteId: 'uid-a' }), sessao({ participanteId: 'uid-b' })];
+    const marcas: MarcaDeSuspeita[] = [
+      // Fora da ordem e com outra pessoa no meio: a coluna segue a ordem dos motivos.
+      { participanteId: 'uid-a', motivo: 'sessao-grande' },
+      { participanteId: 'uid-c', motivo: 'gabarito' },
+      { participanteId: 'uid-a', motivo: 'gabarito' },
+    ];
+    const [a, semMarca] = lerCsv(csvDoEstudo(sessoes, [participanteA, b], [], marcas));
+    expect([a.suspeito, a.motivos_de_suspeita]).toEqual(['true', 'gabarito;sessao-grande']);
+    expect([semMarca.suspeito, semMarca.motivos_de_suspeita]).toEqual(['false', '']);
+
+    // Sem as marcas lidas, as duas colunas ficam vazias: "não sabemos" não vira "não é suspeito".
+    const naoLidas = lerCsv(csvDoEstudo(sessoes, [participanteA, b], [], null));
+    for (const linha of naoLidas) expect([linha.suspeito, linha.motivos_de_suspeita]).toEqual(['', '']);
+
+    // Uma sessão sem identidade nunca é suspeita, por mais marcas que existam.
+    expect(motivosDeSuspeita(marcas, null)).toEqual([]);
+  });
+
+  it('a marca não tira ninguém do arquivo', () => {
+    const marcas: MarcaDeSuspeita[] = MOTIVOS_DE_SUSPEITA.map((motivo) => ({ participanteId: 'uid-a', motivo }));
+    const comMarca = lerCsv(csvDoEstudo([sessao(), sessao()], [participanteA], [], marcas));
+    expect(comMarca).toHaveLength(2);
+    expect(comMarca[0].motivos_de_suspeita).toBe('gabarito;sessoes-demais;sessao-grande');
+  });
+
   it('a sessão de fora do estudo não entra', () => {
-    expect(linhasDoEstudo([sessao({ estudo: null })], [participanteA], [])).toEqual([]);
+    expect(linhasDoEstudo([sessao({ estudo: null })], [participanteA], [], null)).toEqual([]);
   });
 });
 

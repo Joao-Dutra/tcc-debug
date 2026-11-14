@@ -16,7 +16,8 @@ import {
   intervalosOciosos,
   varreduraDe,
 } from '../nucleo/sinais-de-sessao';
-import { csvDoEstudo, sessoesDoEstudo } from '../estudo/exportacao';
+import { csvDoEstudo, motivosDeSuspeita, sessoesDoEstudo } from '../estudo/exportacao';
+import type { MotivoDeSuspeita } from '../estudo/exportacao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import { sair } from '../supabase/identidade';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
@@ -198,13 +199,29 @@ function descreverOciosidade(ociosos: IntervaloOcioso[]): string {
         `nenhum, o maior ${onde}; ficam fora da duração ativa`;
 }
 
-/** Os sinais da sessão, lidos do log na hora (D25, D26): nada disto está gravado. */
-function Sinais({ sessao }: { sessao: RegistroDeSessao }) {
+/** O que cada marca de suspeita quer dizer, para o título da etiqueta (D41). */
+const SENTIDO_DA_MARCA: Record<MotivoDeSuspeita, string> = {
+  gabarito: 'chamou a função isca que promete o gabarito',
+  'sessoes-demais': 'mandou mais sessões que o limite, e as de sobra foram descartadas',
+  'sessao-grande': 'mandou uma sessão maior que 2 MiB, que foi descartada',
+};
+
+/**
+ * Os sinais da sessão. Varredura e ociosidade são lidas do log na hora (D25,
+ * D26); a marca de suspeita vem do banco, e é da identidade, não da sessão
+ * (D41): aparece em todas as sessões de quem foi marcado.
+ */
+function Sinais({ sessao, suspeita }: { sessao: RegistroDeSessao; suspeita: readonly MotivoDeSuspeita[] }) {
   const varredura = varreduraDe(sessao.eventos);
   const ociosos = intervalosOciosos(sessao);
-  if (!varredura && ociosos.length === 0) return <>—</>;
+  if (!varredura && ociosos.length === 0 && suspeita.length === 0) return <>—</>;
   return (
     <span className="sinais">
+      {suspeita.length > 0 && (
+        <span className="sinal" title={'Suspeito: ' + suspeita.map((m) => SENTIDO_DA_MARCA[m]).join('; ') + '.'}>
+          suspeito
+        </span>
+      )}
       {varredura && (
         <span className="sinal" title={descreverVarredura(varredura)}>
           varredura
@@ -364,7 +381,12 @@ export function PainelDeMetricas() {
   const csvPronto = doEstudo.length > 0 && (!pesquisador || estudo.dados !== null);
   const exportarCsv = () =>
     baixarMetricas(
-      csvDoEstudo(doEstudo, estudo.dados?.participantes ?? [], estudo.dados?.respostas ?? []),
+      csvDoEstudo(
+        doEstudo,
+        estudo.dados?.participantes ?? [],
+        estudo.dados?.respostas ?? [],
+        estudo.dados?.marcas ?? null
+      ),
       `estudo-${filtro.aplicacao ?? 'todas'}.csv`,
       'text/csv;charset=utf-8'
     );
@@ -472,6 +494,13 @@ export function PainelDeMetricas() {
       {pesquisador && banco.erro && (
         <p className="erro">A leitura do banco falhou ({banco.erro}).</p>
       )}
+      {pesquisador && estudo.dados?.erroDasMarcas && (
+        <p className="erro">
+          A leitura das marcas de suspeita falhou ({estudo.dados.erroDasMarcas}): a etiqueta não
+          aparece, e as colunas suspeito e motivos_de_suspeita saem vazias no CSV. A migração 0006
+          rodou?
+        </p>
+      )}
       {pesquisador && estudo.erro && (
         <p className="erro">
           A leitura do estudo falhou ({estudo.erro}): o CSV do estudo fica indisponível até
@@ -575,7 +604,10 @@ export function PainelDeMetricas() {
                         <td>{sessao.andaime ?? 'não registrado'}</td>
                         <td>{sessaoValida(sessao) ? 'sim' : 'não'}</td>
                         <td>
-                          <Sinais sessao={sessao} />
+                          <Sinais
+                            sessao={sessao}
+                            suspeita={motivosDeSuspeita(estudo.dados?.marcas ?? [], sessao.participanteId)}
+                          />
                         </td>
                         <td>{duracao(sessao.duracaoTotalMs)}</td>
                         <td>{duracao(duracaoAtivaMs(sessao))}</td>

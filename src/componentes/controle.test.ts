@@ -2,9 +2,12 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   LIMITE_DO_CODIGO,
+  LIMITE_MAXIMO_DE_PARTICIPANTES,
+  LIMITE_MINIMO_DE_PARTICIPANTES,
   REGRA_DO_CODIGO,
   TEXTOS_DOS_MOTIVOS,
   confirmacaoConfere,
+  limiteDigitado,
   mensagemDaFalha,
   problemaDoCodigo,
   textoDoMotivo,
@@ -25,6 +28,10 @@ const migracao0004 = readFileSync(
 );
 const migracao0005 = readFileSync(
   new URL('../../supabase/migracoes/0005_painel_de_controle.sql', import.meta.url),
+  'utf8'
+);
+const migracao0006 = readFileSync(
+  new URL('../../supabase/migracoes/0006_protecao_leve.sql', import.meta.url),
   'utf8'
 );
 
@@ -62,10 +69,40 @@ describe('a confirmação digitada', () => {
   });
 });
 
+describe('o limite de participantes', () => {
+  it('o intervalo da tela é o da função da 0006', () => {
+    const daFuncao = /p_limite < (\d+) or p_limite > (\d+)/.exec(migracao0006);
+    expect(daFuncao?.slice(1).map(Number)).toEqual([
+      LIMITE_MINIMO_DE_PARTICIPANTES,
+      LIMITE_MAXIMO_DE_PARTICIPANTES,
+    ]);
+    const doCheck = /check \(limite_de_participantes between (\d+) and (\d+)\)/.exec(migracao0006);
+    expect(doCheck?.slice(1).map(Number)).toEqual([
+      LIMITE_MINIMO_DE_PARTICIPANTES,
+      LIMITE_MAXIMO_DE_PARTICIPANTES,
+    ]);
+  });
+
+  it('aceita só inteiros dentro do intervalo', () => {
+    expect(limiteDigitado('45')).toBe(45);
+    expect(limiteDigitado(' 60 ')).toBe(60);
+    expect(limiteDigitado('1')).toBe(1);
+    expect(limiteDigitado('1000')).toBe(1000);
+    for (const ruim of ['', '0', '1001', '-3', '4.5', '1e2', 'sessenta']) {
+      expect(limiteDigitado(ruim), ruim).toBeNull();
+    }
+  });
+});
+
 describe('os motivos das recusas', () => {
-  it('todo motivo que a 0005 devolve tem texto na tela', () => {
-    const motivos = new Set([...migracao0005.matchAll(/'motivo', '([a-z-]+)'/g)].map((m) => m[1]));
+  it('todo motivo que a 0005 e a 0006 devolvem tem texto na tela', () => {
+    const motivos = new Set(
+      [migracao0005, migracao0006].flatMap((sql) =>
+        [...sql.matchAll(/'motivo', '([a-z-]+)'/g)].map((m) => m[1])
+      )
+    );
     expect(motivos.size).toBeGreaterThan(5);
+    expect(motivos).toContain('abaixo-das-entradas');
     for (const motivo of motivos) expect(Object.keys(TEXTOS_DOS_MOTIVOS), motivo).toContain(motivo);
   });
 

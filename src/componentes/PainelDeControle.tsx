@@ -6,6 +6,7 @@ import { supabaseConfigurado } from '../supabase/cliente';
 import {
   criarAplicacao,
   definirAplicacaoAberta,
+  definirLimiteDeParticipantes,
   lerAuditoria,
   limparAplicacao,
   listarAplicacoes,
@@ -19,7 +20,15 @@ import type {
 import { lerDadosDoEstudo } from '../supabase/estudo';
 import { sair } from '../supabase/identidade';
 import { lerSessoesDoBanco } from '../supabase/sessoes-remotas';
-import { confirmacaoConfere, mensagemDaFalha, problemaDoCodigo, textoDoMotivo } from './controle';
+import {
+  LIMITE_MAXIMO_DE_PARTICIPANTES,
+  LIMITE_MINIMO_DE_PARTICIPANTES,
+  confirmacaoConfere,
+  limiteDigitado,
+  mensagemDaFalha,
+  problemaDoCodigo,
+  textoDoMotivo,
+} from './controle';
 import { FreioDosPublicados, InterruptorDaColeta, quando } from './ControlesDaColeta';
 import { EntradaDoPesquisador } from './EntradaDoPesquisador';
 import { MenuDaConta } from './MenuDaConta';
@@ -192,6 +201,24 @@ function SecaoDasAplicacoes({ leitura }: { leitura: ReturnType<typeof useAplicac
     if (confirmado) void agir(() => protegerAplicacao(codigo));
   };
 
+  // Um prompt, como o confirmar de proteger: é um número só, e não se perde
+  // nada — subir de novo desfaz. O banco confere de novo o intervalo e que o
+  // limite não fica abaixo de quem já entrou (0006).
+  const ajustarLimite = (a: AplicacaoNoPainel) => {
+    const digitado = window.prompt(
+      `Limite de participantes de ${a.codigo} (de ${LIMITE_MINIMO_DE_PARTICIPANTES} a ` +
+        `${LIMITE_MAXIMO_DE_PARTICIPANTES}; já entraram ${a.entradas}):`,
+      String(a.limiteDeParticipantes)
+    );
+    if (digitado === null) return;
+    const limite = limiteDigitado(digitado);
+    if (limite === null) {
+      setFalha(textoDoMotivo('limite-invalido'));
+      return;
+    }
+    void agir(() => definirLimiteDeParticipantes(a.codigo, limite));
+  };
+
   const emLimpezaAgora = aplicacoes?.find((a) => a.codigo === emLimpeza) ?? null;
 
   return (
@@ -216,6 +243,7 @@ function SecaoDasAplicacoes({ leitura }: { leitura: ReturnType<typeof useAplicac
                   <th>Situação</th>
                   <th>Proteção</th>
                   <th>Entradas</th>
+                  <th>Limite</th>
                   <th>Grupo A</th>
                   <th>Grupo B</th>
                   <th>Sessões</th>
@@ -233,6 +261,19 @@ function SecaoDasAplicacoes({ leitura }: { leitura: ReturnType<typeof useAplicac
                     <td>{a.aberta ? 'aberta' : 'fechada'}</td>
                     <td>{a.protegida ? 'protegida' : 'de teste'}</td>
                     <td>{a.entradas}</td>
+                    <td>
+                      <span className="acoes-da-linha">
+                        {a.limiteDeParticipantes}
+                        <button
+                          className="discreto"
+                          disabled={agindo}
+                          onClick={() => ajustarLimite(a)}
+                          aria-label={`Ajustar o limite de participantes de ${a.codigo}`}
+                        >
+                          Ajustar
+                        </button>
+                      </span>
+                    </td>
                     <td>{a.participantesA}</td>
                     <td>{a.participantesB}</td>
                     <td>{a.sessoes}</td>
@@ -375,7 +416,12 @@ function PainelDaLimpeza({
     try {
       const [sessoes, dados] = await Promise.all([lerSessoesDoBanco(), lerDadosDoEstudo()]);
       baixarMetricas(
-        csvDoEstudo(sessoesDoEstudo(sessoes, aplicacao.codigo), dados.participantes, dados.respostas),
+        csvDoEstudo(
+          sessoesDoEstudo(sessoes, aplicacao.codigo),
+          dados.participantes,
+          dados.respostas,
+          dados.marcas
+        ),
         `estudo-${aplicacao.codigo}.csv`,
         'text/csv;charset=utf-8'
       );

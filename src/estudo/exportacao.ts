@@ -39,6 +39,34 @@ export interface RespostaLida {
   oQueAtrapalhou: string | null;
 }
 
+/** Os motivos de `marcas_de_suspeita` (0006), na ordem em que o CSV os lista. */
+export const MOTIVOS_DE_SUSPEITA = ['gabarito', 'sessoes-demais', 'sessao-grande'] as const;
+export type MotivoDeSuspeita = (typeof MOTIVOS_DE_SUSPEITA)[number];
+
+/**
+ * Uma linha de marcas_de_suspeita, como o painel a lê (D41). A marca é da
+ * identidade, e não da aplicação: no estudo, a identidade é nova a cada
+ * entrada (D37), e é a mesma coisa que o participante daquela aplicação.
+ */
+export interface MarcaDeSuspeita {
+  participanteId: string;
+  motivo: MotivoDeSuspeita;
+}
+
+/**
+ * Os motivos com que esta identidade foi marcada, na ordem de
+ * `MOTIVOS_DE_SUSPEITA`, sem repetição. A marca não exclui ninguém: só
+ * identifica, e quem decide o que fazer com ela é a análise.
+ */
+export function motivosDeSuspeita(
+  marcas: readonly MarcaDeSuspeita[],
+  participanteId: string | null
+): MotivoDeSuspeita[] {
+  if (participanteId === null) return [];
+  const dele = new Set(marcas.filter((m) => m.participanteId === participanteId).map((m) => m.motivo));
+  return MOTIVOS_DE_SUSPEITA.filter((m) => dele.has(m));
+}
+
 /**
  * Como a sessão terminou, derivado do log, e não gravado (D37: o log guarda o
  * gesto, e não o juízo). Corrigir vale mais que o gesto do fim: quem corrige e
@@ -80,6 +108,9 @@ export const COLUNAS_DO_CSV = [
   'perfil_aeds1',
   'perfil_depurador',
   'perfil_visualizacao',
+  // Marcas de suspeita (D41): vazias quando não foram lidas do banco
+  'suspeito',
+  'motivos_de_suspeita',
   // Sessão
   'sessao_id',
   'versao_do_registro',
@@ -131,11 +162,16 @@ const chave = (participanteId: string | null, aplicacao: string) => `${aplicacao
  * As linhas do CSV, uma por sessão, ainda como valores. O questionário e o
  * perfil se repetem em cada linha do mesmo participante, e saem vazios para
  * quem não respondeu: é o formato longo, que a análise agrupa como quiser.
+ *
+ * As marcas de suspeita são `null` quando não foram lidas — sem banco, ou com
+ * a leitura delas falhando —, e então as duas colunas saem vazias: "não
+ * sabemos" não pode virar "não é suspeito".
  */
 export function linhasDoEstudo(
   sessoes: RegistroDeSessao[],
   participantes: ParticipanteDoEstudo[],
-  respostas: RespostaLida[]
+  respostas: RespostaLida[],
+  marcas: readonly MarcaDeSuspeita[] | null
 ): Record<ColunaDoCsv, Valor>[] {
   const participantePor = new Map(participantes.map((p) => [chave(p.participanteId, p.aplicacao), p]));
   const respostaPor = new Map(respostas.map((r) => [chave(r.participanteId, r.aplicacao), r]));
@@ -153,6 +189,7 @@ export function linhasDoEstudo(
       // A navegação só existe a partir da versão 10: antes dela, ausente é
       // "não coletado", e não zero.
       const comNavegacao = sessao.versao >= 10;
+      const motivos = marcas === null ? null : motivosDeSuspeita(marcas, sessao.participanteId);
 
       const linha: Record<ColunaDoCsv, Valor> = {
         aplicacao: marca.aplicacao,
@@ -162,6 +199,10 @@ export function linhasDoEstudo(
         perfil_aeds1: participante?.perfil.aeds1,
         perfil_depurador: participante?.perfil.depurador,
         perfil_visualizacao: participante?.perfil.usouVisualizacao,
+        suspeito: motivos === null ? null : motivos.length > 0,
+        // Separados por ponto e vírgula, e não por vírgula: o campo não
+        // precisa de aspas, e a análise separa com um `split` só.
+        motivos_de_suspeita: motivos === null ? null : motivos.join(';'),
         sessao_id: sessao.id,
         versao_do_registro: sessao.versao,
         exercicio_id: sessao.exercicioId,
@@ -236,9 +277,10 @@ export function campoDoCsv(valor: Valor): string {
 export function csvDoEstudo(
   sessoes: RegistroDeSessao[],
   participantes: ParticipanteDoEstudo[],
-  respostas: RespostaLida[]
+  respostas: RespostaLida[],
+  marcas: readonly MarcaDeSuspeita[] | null
 ): string {
-  const linhas = linhasDoEstudo(sessoes, participantes, respostas);
+  const linhas = linhasDoEstudo(sessoes, participantes, respostas, marcas);
   return [COLUNAS_DO_CSV.join(','), ...linhas.map((l) => COLUNAS_DO_CSV.map((c) => campoDoCsv(l[c])).join(','))]
     .map((l) => `${l}\r\n`)
     .join('');

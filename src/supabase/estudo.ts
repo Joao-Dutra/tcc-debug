@@ -4,7 +4,12 @@ import { sincronizarPendentes } from '../nucleo/metricas';
 import type { GrupoDoEstudo } from '../estudo/percurso';
 import type { PerfilDoParticipante } from '../estudo/perfil';
 import type { RespostaDoQuestionario } from '../estudo/questionario';
-import type { ParticipanteDoEstudo, RespostaLida } from '../estudo/exportacao';
+import type {
+  MarcaDeSuspeita,
+  MotivoDeSuspeita,
+  ParticipanteDoEstudo,
+  RespostaLida,
+} from '../estudo/exportacao';
 
 /**
  * A área do estudo no banco (D37, migração 0004).
@@ -114,6 +119,13 @@ export interface DadosDoEstudo {
   aplicacoes: string[];
   participantes: ParticipanteDoEstudo[];
   respostas: RespostaLida[];
+  /**
+   * As marcas de suspeita (0006, D41), ou `null` se a leitura delas falhou —
+   * num projeto sem a 0006, por exemplo. A falha não derruba o resto: as
+   * colunas da marca saem vazias, e o painel diz por quê.
+   */
+  marcas: MarcaDeSuspeita[] | null;
+  erroDasMarcas: string | null;
 }
 
 const LINHAS_POR_PAGINA = 1000;
@@ -141,7 +153,7 @@ async function lerTodas<Linha>(tabela: string, colunas: string, ordem: string[])
  * tabelas; para qualquer outra identidade, o RLS devolve listas vazias (0004).
  */
 export async function lerDadosDoEstudo(): Promise<DadosDoEstudo> {
-  const [aplicacoes, participantes, respostas] = await Promise.all([
+  const [aplicacoes, participantes, respostas, marcas] = await Promise.all([
     lerTodas<{ codigo: string }>('aplicacoes_do_estudo', 'codigo', ['codigo']),
     lerTodas<{
       participante_id: string;
@@ -168,6 +180,14 @@ export async function lerDadosDoEstudo(): Promise<DadosDoEstudo> {
       'participante_id, aplicacao, versao_do_questionario, escalas, o_que_ajudou, o_que_atrapalhou',
       ['aplicacao', 'participante_id']
     ),
+    lerTodas<{ participante_id: string; motivo: MotivoDeSuspeita }>(
+      'marcas_de_suspeita',
+      'participante_id, motivo',
+      ['participante_id', 'motivo']
+    ).then(
+      (lidas) => ({ lidas, erro: null }),
+      (e: unknown) => ({ lidas: null, erro: e instanceof Error ? e.message : String(e) })
+    ),
   ]);
   return {
     aplicacoes: aplicacoes.map((a) => a.codigo),
@@ -186,6 +206,8 @@ export async function lerDadosDoEstudo(): Promise<DadosDoEstudo> {
       oQueAjudou: r.o_que_ajudou,
       oQueAtrapalhou: r.o_que_atrapalhou,
     })),
+    marcas: marcas.lidas?.map((m) => ({ participanteId: m.participante_id, motivo: m.motivo })) ?? null,
+    erroDasMarcas: marcas.erro,
   };
 }
 

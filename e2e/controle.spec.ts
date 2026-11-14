@@ -51,6 +51,7 @@ const aplicacao = (codigo: string, mudanca: Record<string, unknown>) => ({
   aberta: true,
   protegida: false,
   entradas: 0,
+  limite_de_participantes: 60,
   criada_em: '2026-10-27T10:00:00Z',
   participantes_a: 0,
   participantes_b: 0,
@@ -240,8 +241,9 @@ test('as aplicações aparecem com os grupos, e a protegida não tem como ser li
   await page.goto('/#/controle');
   const protegida = linhaDa(page, 'aeds1-2026');
   await expect(protegida).toContainText('protegida');
-  await expect(protegida.locator('td').nth(4)).toHaveText('15');
+  await expect(protegida.locator('td').nth(4)).toContainText('60');
   await expect(protegida.locator('td').nth(5)).toHaveText('15');
+  await expect(protegida.locator('td').nth(6)).toHaveText('15');
   await expect(protegida.getByRole('button', { name: 'Limpar' })).toHaveCount(0);
   await expect(protegida.getByRole('button', { name: 'Proteger' })).toHaveCount(0);
   await expect(linhaDa(page, 'piloto-nov')).toContainText('de teste');
@@ -307,6 +309,48 @@ test('abrir e fechar vão pela função, e proteger pede confirmação', async (
   await expect.poll(() => banco.chamadas.filter((c) => c.funcao === 'proteger_aplicacao')).toEqual([
     { funcao: 'proteger_aplicacao', corpo: { p_codigo: 'treino-1' } },
   ]);
+});
+
+test('o limite de participantes se ajusta pela função, e o número inválido nem sai da tela (0006)', async ({
+  page,
+}) => {
+  const banco = novoBanco();
+  await entrarComo(page, PESQUISADOR);
+  await bancoFalso(page, banco);
+  await page.goto('/#/controle');
+  const ajustar = linhaDa(page, 'aeds1-2026').getByRole('button', {
+    name: 'Ajustar o limite de participantes de aeds1-2026',
+  });
+
+  // Cancelar não manda nada.
+  page.once('dialog', (d) => void d.dismiss());
+  await ajustar.click();
+
+  // Fora do intervalo, a tela diz, e o banco não é chamado.
+  page.once('dialog', (d) => void d.accept('0'));
+  await ajustar.click();
+  await expect(page.getByText('O limite de participantes vai de 1 a 1000.')).toBeVisible();
+
+  page.once('dialog', (d) => {
+    expect(d.message()).toContain('já entraram 30');
+    expect(d.defaultValue()).toBe('60');
+    void d.accept('45');
+  });
+  await ajustar.click();
+  await expect
+    .poll(() => banco.chamadas.filter((c) => c.funcao === 'definir_limite_de_participantes'))
+    .toEqual([{ funcao: 'definir_limite_de_participantes', corpo: { p_codigo: 'aeds1-2026', p_limite: 45 } }]);
+});
+
+test('o limite abaixo de quem já entrou volta recusado, com o motivo', async ({ page }) => {
+  const banco = novoBanco();
+  banco.respostas.definir_limite_de_participantes = { ok: false, motivo: 'abaixo-das-entradas', entradas: 30 };
+  await entrarComo(page, PESQUISADOR);
+  await bancoFalso(page, banco);
+  await page.goto('/#/controle');
+  page.once('dialog', (d) => void d.accept('10'));
+  await linhaDa(page, 'aeds1-2026').getByRole('button', { name: /Ajustar o limite/ }).click();
+  await expect(page.getByText(/não pode ficar abaixo de quem já entrou/)).toBeVisible();
 });
 
 test('limpar: o CSV antes, o botão só com o código digitado, e a aberta não limpa', async ({ page }) => {

@@ -48,6 +48,8 @@ const marca = (etapa: number): MarcaDoEstudo => ({ aplicacao: 'piloto-nov', etap
 interface Banco {
   /** A leitura das respostas falha, como num projeto sem a migração 0004. */
   respostasFalham: boolean;
+  /** A leitura das marcas falha, como num projeto sem a migração 0006. */
+  marcasFalham?: boolean;
 }
 
 async function entrarComoPesquisador(page: Page) {
@@ -99,6 +101,8 @@ async function bancoFalso(page: Page, banco: Banco) {
         o_que_atrapalhou: null,
       },
     ],
+    // Bia chamou a isca (D41). A marca é da identidade, e não da sessão.
+    marcas_de_suspeita: [{ participante_id: BIA, motivo: 'gabarito' }],
   };
   await page.route(`${BANCO}/**`, async (rota) => {
     const pedido = rota.request();
@@ -107,6 +111,9 @@ async function bancoFalso(page: Page, banco: Banco) {
     const tabela = url.pathname.replace('/rest/v1/', '');
     if (tabela === 'perfis') return rota.fulfill({ status: 200, json: { papel: 'pesquisador' } });
     if (pedido.method() !== 'GET') return rota.fulfill({ status: 201, body: '' });
+    if (tabela === 'marcas_de_suspeita' && banco.marcasFalham) {
+      return rota.fulfill({ status: 404, json: { message: 'relation "marcas_de_suspeita" does not exist' } });
+    }
     if (tabela === 'respostas_do_questionario' && banco.respostasFalham) {
       return rota.fulfill({ status: 404, json: { message: 'relation "respostas_do_questionario" does not exist' } });
     }
@@ -172,6 +179,37 @@ test('o filtro por aplicação vem do banco, e o CSV junta participante, sessão
   // O questionário se repete em cada sessão de quem respondeu, e Bia não respondeu.
   expect(linhas[1].sus_escore).toBe('50');
   expect(linhas[2]).toMatchObject({ perfil_aeds1: 'ja-cursou', versao_do_questionario: '', sus_escore: '' });
+  // A marca de Bia vai para a linha dela, e Ana sai como não suspeita (D41).
+  expect(linhas.map((l) => [l.participante_id, l.suspeito, l.motivos_de_suspeita])).toEqual([
+    [ANA, 'false', ''],
+    [ANA, 'false', ''],
+    [BIA, 'true', 'gabarito'],
+  ]);
+});
+
+test('a marca de suspeita vira etiqueta nas sessões de quem foi marcado, e só nelas (D41)', async ({ page }) => {
+  await entrarComoPesquisador(page);
+  await bancoFalso(page, { respostasFalham: false });
+  await page.goto('/#/metricas');
+  await expect(page.getByRole('heading', { name: 'Sessões (4 de 4 · 0 válidas)' })).toBeVisible();
+  const etiquetas = page.locator('.tabela-metricas .sinal', { hasText: 'suspeito' });
+  await expect(etiquetas).toHaveCount(1);
+  await expect(etiquetas.first()).toHaveAttribute('title', /isca que promete o gabarito/);
+  await expect(page.getByText(/A leitura das marcas de suspeita falhou/)).toHaveCount(0);
+});
+
+test('sem as marcas, o painel avisa e o CSV sai com as colunas da marca vazias', async ({ page }) => {
+  await entrarComoPesquisador(page);
+  await bancoFalso(page, { respostasFalham: false, marcasFalham: true });
+  await page.goto('/#/metricas');
+  await expect(page.getByText(/A leitura das marcas de suspeita falhou/)).toBeVisible();
+  await expect(page.locator('.tabela-metricas .sinal', { hasText: 'suspeito' })).toHaveCount(0);
+
+  await page.getByLabel('Aplicação').selectOption('piloto-nov');
+  const baixando = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Exportar CSV do estudo' }).click();
+  const linhas = lerCsv(readFileSync(await (await baixando).path(), 'utf8'));
+  for (const l of linhas) expect([l.suspeito, l.motivos_de_suspeita]).toEqual(['', '']);
 });
 
 test('sem as respostas, o CSV fica indisponível em vez de sair com o questionário vazio', async ({ page }) => {

@@ -42,6 +42,7 @@ describe('as ações do painel', () => {
     await modulo.criarAplicacao('aeds1-2026', false);
     await modulo.definirAplicacaoAberta('aeds1-2026', false);
     await modulo.protegerAplicacao('aeds1-2026');
+    await modulo.definirLimiteDeParticipantes('aeds1-2026', 45);
     responder = () => ({
       data: { ok: true, respostas: 1, sessoes: 2, participantes: 3, entradas_antes: 3 },
       error: null,
@@ -56,6 +57,7 @@ describe('as ações do painel', () => {
       { funcao: 'criar_aplicacao', argumentos: { p_codigo: 'aeds1-2026', p_teste: false } },
       { funcao: 'definir_aplicacao_aberta', argumentos: { p_codigo: 'aeds1-2026', p_aberta: false } },
       { funcao: 'proteger_aplicacao', argumentos: { p_codigo: 'aeds1-2026' } },
+      { funcao: 'definir_limite_de_participantes', argumentos: { p_codigo: 'aeds1-2026', p_limite: 45 } },
       // O código digitado vai junto, para o banco conferir de novo.
       { funcao: 'limpar_aplicacao', argumentos: { p_codigo: 'teste-1', p_confirmacao: 'teste-1' } },
     ]);
@@ -85,6 +87,7 @@ describe('as ações do painel', () => {
           aberta: true,
           protegida: false,
           entradas: 3,
+          limite_de_participantes: 60,
           criada_em: '2026-10-27T10:00:00Z',
           participantes_a: 2,
           // `count(*)` é bigint; um proxy pode entregá-lo como texto.
@@ -101,6 +104,7 @@ describe('as ações do painel', () => {
         aberta: true,
         protegida: false,
         entradas: 3,
+        limiteDeParticipantes: 60,
         criadaEm: '2026-10-27T10:00:00Z',
         participantesA: 2,
         participantesB: 1,
