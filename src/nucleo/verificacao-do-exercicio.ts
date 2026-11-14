@@ -53,6 +53,11 @@ export interface NomesDaEstrutura {
  * leem as variáveis pelo nome, e o formulário mostra este contrato antes de o
  * professor começar a escrever — recusar só na verificação seria deixá-lo
  * descobrir a regra depois de escrever o programa inteiro.
+ *
+ * Na pilha e na fila o desenho lê também o significado, e é o do Ziviani
+ * (D40): `topo` conta os elementos, e `tras` é a vaga do próximo. A
+ * verificação confere o nome, e não o significado: quem diz o significado ao
+ * professor é o `papel`, mostrado no formulário.
  */
 export const NOMES_DA_ESTRUTURA: Record<TipoEstrutura, NomesDaEstrutura> = {
   vetor: {
@@ -63,7 +68,10 @@ export const NOMES_DA_ESTRUTURA: Record<TipoEstrutura, NomesDaEstrutura> = {
   pilha: {
     obrigatorios: [
       { nome: 'itens', papel: 'o vetor que guarda a pilha' },
-      { nome: 'topo', papel: 'a posição do topo' },
+      {
+        nome: 'topo',
+        papel: 'quantos elementos a pilha tem: começa em 0, e o do topo fica em itens[topo - 1]',
+      },
     ],
     opcionais: [{ nome: 'capacidade', papel: 'o tamanho fixo, se a pilha tiver um' }],
     declaraMarcadores: false,
@@ -71,8 +79,11 @@ export const NOMES_DA_ESTRUTURA: Record<TipoEstrutura, NomesDaEstrutura> = {
   fila: {
     obrigatorios: [
       { nome: 'itens', papel: 'o vetor que guarda a fila' },
-      { nome: 'inicio', papel: 'a posição de quem sai' },
-      { nome: 'fim', papel: 'a posição de quem entrou por último' },
+      { nome: 'frente', papel: 'a posição de quem sai' },
+      {
+        nome: 'tras',
+        papel: 'a posição em que o próximo entra, uma depois do último: a fila está vazia quando frente == tras',
+      },
     ],
     opcionais: [],
     declaraMarcadores: false,

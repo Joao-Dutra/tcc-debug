@@ -4,9 +4,11 @@ import type { Exercicio } from '../nucleo/tipos';
  * Pilha dinâmica: não há capacidade declarada, e o desenho mostra os blocos
  * aparecendo conforme as letras entram (D10).
  *
- * Defeito implantado: o laço que esvazia a pilha para enquanto o topo ainda
- * está na posição 0. A última letra a sair — que é a primeira da palavra —
- * nunca é desempilhada, e sobra uma caixa na pilha.
+ * O topo conta os elementos, na convenção do Ziviani (D40).
+ *
+ * Defeito implantado: o laço que esvazia a pilha para quando ainda resta um
+ * elemento nela. A última letra a sair — que é a primeira da palavra — nunca é
+ * desempilhada, e sobra uma caixa na pilha.
  */
 export const pilhaInverterPalavra: Exercicio = {
   id: 'pilha-inverter-palavra',
@@ -24,20 +26,20 @@ export const pilhaInverterPalavra: Exercicio = {
   // Miniatura da lista: a palavra inteira empilhada.
   // Estado que as duas versões atravessam antes de divergirem (D20).
   miniatura: {
-    variaveis: { itens: ['P', 'I', 'L', 'H', 'A'], topo: 4 },
+    variaveis: { itens: ['P', 'I', 'L', 'H', 'A'], topo: 5 },
   },
 
   codigoComDefeito: `var itens = [];
-var topo = -1;
+var topo = 0;
 
 function empilhar(valor) {
   topo = topo + 1;
-  itens[topo] = valor;
+  itens[topo - 1] = valor;
   return topo;
 }
 
 function desempilhar() {
-  var removido = itens[topo];
+  var removido = itens[topo - 1];
   topo = topo - 1;
   return removido;
 }
@@ -49,7 +51,7 @@ function inverter(texto) {
     i = i + 1;
   }
   var saida = '';
-  while (topo > 0) {
+  while (topo > 1) {
     saida = saida + desempilhar();
   }
   return saida;
@@ -58,16 +60,16 @@ function inverter(texto) {
 var invertida = inverter('PILHA');`,
 
   codigoCorreto: `var itens = [];
-var topo = -1;
+var topo = 0;
 
 function empilhar(valor) {
   topo = topo + 1;
-  itens[topo] = valor;
+  itens[topo - 1] = valor;
   return topo;
 }
 
 function desempilhar() {
-  var removido = itens[topo];
+  var removido = itens[topo - 1];
   topo = topo - 1;
   return removido;
 }
@@ -79,7 +81,7 @@ function inverter(texto) {
     i = i + 1;
   }
   var saida = '';
-  while (topo >= 0) {
+  while (topo >= 1) {
     saida = saida + desempilhar();
   }
   return saida;
@@ -96,7 +98,7 @@ var invertida = inverter('PILHA');`,
     {
       descricao: 'A pilha termina vazia',
       expressao: 'topo',
-      esperado: -1,
+      esperado: 0,
     },
     {
       descricao: 'Todas as letras entraram na pilha',

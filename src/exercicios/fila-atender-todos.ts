@@ -1,9 +1,14 @@
 import type { Exercicio } from '../nucleo/tipos';
 
 /**
- * Defeito implantado: `estaVazia` considera a fila vazia quando o início
- * alcança o fim, e não quando o ultrapassa. O laço de atendimento para com o
- * último elemento ainda na fila.
+ * Modelo da fila (D40): a convenção do Ziviani, que é o livro da disciplina,
+ * sem a volta circular. `frente` é a posição de quem sai e `tras` a posição em
+ * que o próximo entra; a fila vai de `frente` até `tras - 1`, e está vazia
+ * quando os dois se encontram.
+ *
+ * Defeito implantado: `estaVazia` considera a fila vazia quando a frente chega
+ * à posição anterior a `tras`, e não quando alcança `tras`. O laço de
+ * atendimento para com o último elemento ainda na fila.
  *
  * O defeito mora no predicado, não no laço: o estudante vê o atendimento parar
  * cedo em `atenderTodos` e precisa seguir a pista até `estaVazia`, que é onde a
@@ -13,41 +18,42 @@ export const filaAtenderTodos: Exercicio = {
   id: 'fila-atender-todos',
   titulo: 'Fila: nem todos os elementos são atendidos',
   enunciado:
-    'A fila deve seguir a política FIFO: o primeiro a entrar é o primeiro a sair. ' +
-    'atenderTodos() deve atender todos os elementos enfileirados, na ordem de chegada, ' +
-    'até que a fila fique vazia. Enfileire alguns nomes e observe a fila enquanto o ' +
+    'A fila deve seguir a política FIFO: o primeiro a entrar é o primeiro a sair. Ela guarda ' +
+    'seus elementos no vetor itens: frente é a posição de quem sai, e tras, a posição em que ' +
+    'o próximo vai entrar. atenderTodos() deve atender todos os elementos enfileirados, na ' +
+    'ordem de chegada, até que a fila fique vazia. Execute e observe a fila enquanto o ' +
     'atendimento acontece.',
   estrutura: 'fila',
   categoriaDefeito: 'condicao-de-parada',
   dificuldade: 2,
   linhaDoDefeito: 12,
-  variaveisObservadas: ['itens', 'inicio', 'fim'],
+  variaveisObservadas: ['itens', 'frente', 'tras'],
   // Miniatura da lista: os três na fila, antes do primeiro atendimento.
   // Estado que as duas versões atravessam antes de divergirem (D20).
   miniatura: {
-    variaveis: { itens: ['ana', 'bruno', 'carla'], inicio: 0, fim: 2 },
+    variaveis: { itens: ['ana', 'bruno', 'carla'], frente: 0, tras: 3 },
   },
 
   codigoComDefeito: `var itens = [];
-var inicio = 0;
-var fim = -1;
+var frente = 0;
+var tras = frente;
 
 function enfileirar(valor) {
-  fim = fim + 1;
-  itens[fim] = valor;
-  return fim;
+  itens[tras] = valor;
+  tras = tras + 1;
+  return tras;
 }
 
 function estaVazia() {
-  return inicio >= fim;
+  return frente >= tras - 1;
 }
 
 function desenfileirar() {
   if (estaVazia()) {
     return null;
   }
-  var removido = itens[inicio];
-  inicio = inicio + 1;
+  var removido = itens[frente];
+  frente = frente + 1;
   return removido;
 }
 
@@ -67,25 +73,25 @@ enfileirar('carla');
 var atendidos = atenderTodos();`,
 
   codigoCorreto: `var itens = [];
-var inicio = 0;
-var fim = -1;
+var frente = 0;
+var tras = frente;
 
 function enfileirar(valor) {
-  fim = fim + 1;
-  itens[fim] = valor;
-  return fim;
+  itens[tras] = valor;
+  tras = tras + 1;
+  return tras;
 }
 
 function estaVazia() {
-  return inicio > fim;
+  return frente == tras;
 }
 
 function desenfileirar() {
   if (estaVazia()) {
     return null;
   }
-  var removido = itens[inicio];
-  inicio = inicio + 1;
+  var removido = itens[frente];
+  frente = frente + 1;
   return removido;
 }
 
@@ -112,7 +118,7 @@ var atendidos = atenderTodos();`,
     },
     {
       descricao: 'Não sobra nenhum elemento por atender na fila',
-      expressao: 'fim - inicio + 1',
+      expressao: 'tras - frente',
       esperado: 0,
     },
     {
@@ -128,8 +134,8 @@ var atendidos = atenderTodos();`,
   ],
 
   dicas: [
-    'Acompanhe os marcadores inicio e fim na visualização enquanto atenderTodos() é executado.',
+    'Acompanhe os marcadores frente e tras na visualização enquanto atenderTodos() é executado.',
     'Repare no quadro em que o atendimento para e compare-o com o estado da fila naquele instante.',
-    'Enquanto os dois marcadores estiverem sobre a mesma posição, ainda há exatamente um elemento por atender: a fila só está vazia quando o início ultrapassa o fim.',
+    'Enquanto frente estiver uma posição antes de tras, ainda há exatamente um elemento por atender: a fila só está vazia quando frente alcança tras.',
   ],
 };

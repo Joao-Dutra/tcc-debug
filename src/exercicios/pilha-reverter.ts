@@ -28,26 +28,26 @@ export const pilhaReverter: Exercicio = {
   // Miniatura da lista: os três valores empilhados.
   // Estado que as duas versões atravessam antes de divergirem (D20).
   miniatura: {
-    variaveis: { itens: [10, 20, 30], topo: 2 },
+    variaveis: { itens: [10, 20, 30], topo: 3 },
   },
 
   codigoComDefeito: `var itens = [];
-var topo = -1;
+var topo = 0;
 
 function empilhar(valor) {
   topo = topo + 1;
-  itens[topo] = valor;
+  itens[topo - 1] = valor;
   return topo;
 }
 
 function desempilhar() {
-  var removido = itens[topo];
+  var removido = itens[topo - 1];
   topo = topo - 1;
   return removido;
 }
 
 function estaVazia() {
-  return topo < 0;
+  return topo == 0;
 }
 
 function reverter() {
@@ -68,22 +68,22 @@ empilhar(30);
 reverter();`,
 
   codigoCorreto: `var itens = [];
-var topo = -1;
+var topo = 0;
 
 function empilhar(valor) {
   topo = topo + 1;
-  itens[topo] = valor;
+  itens[topo - 1] = valor;
   return topo;
 }
 
 function desempilhar() {
-  var removido = itens[topo];
+  var removido = itens[topo - 1];
   topo = topo - 1;
   return removido;
 }
 
 function estaVazia() {
-  return topo < 0;
+  return topo == 0;
 }
 
 function reverter() {
@@ -111,7 +111,7 @@ reverter();`,
     },
     {
       descricao: 'O topo passa a ser o valor que estava no fundo',
-      expressao: 'itens[topo]',
+      expressao: 'itens[topo - 1]',
       esperado: 10,
     },
     {
@@ -122,7 +122,7 @@ reverter();`,
     {
       descricao: 'A pilha continua com três elementos',
       expressao: 'topo',
-      esperado: 2,
+      esperado: 3,
     },
   ],
 

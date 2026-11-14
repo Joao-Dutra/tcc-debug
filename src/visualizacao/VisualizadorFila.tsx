@@ -6,7 +6,12 @@ import type { Instantaneo } from '../nucleo/tipos';
 
 /**
  * Representa a fila como uma fileira de células da esquerda para a direita,
- * com dois marcadores independentes: `inicio`, acima, e `fim`, abaixo.
+ * com dois marcadores independentes: `frente`, acima, e `tras`, abaixo.
+ *
+ * A convenção é a do Ziviani (D40): `frente` é a posição de quem sai, e `tras`
+ * é a posição em que o próximo vai entrar — uma depois do último. A fila são
+ * as posições de `frente` até `tras - 1`, e o lugar normal de `tras` é logo
+ * depois da última célula.
  *
  * Os marcadores são desenhados FORA das células e onde quer que apontem,
  * inclusive além da fileira — é o descompasso entre "onde o marcador aponta" e
@@ -52,8 +57,14 @@ interface PropsMarcador {
   indice: number;
   /** Quantidade de células realmente desenhadas, para saber até onde ir. */
   desenhadas: number;
+  /**
+   * A última posição em que o marcador ainda está no lugar dele. Para `frente`
+   * é a última célula; para `tras`, a vaga logo depois dela, que é onde o
+   * próximo entra.
+   */
+  ultimaNoLugar: number;
   acima: boolean;
-  /** Classe da seta: cheia no início, vazada no fim (MARCADOR, D19). */
+  /** Classe da seta: cheia na frente, vazada atrás (MARCADOR, D19). */
   classe: string;
   /** Rótulo com o nome e o valor do marcador; some sem apoio (D9). */
   rotulos: boolean;
@@ -65,11 +76,23 @@ interface PropsMarcador {
  * horizontal do triângulo é limitada, e apenas quando o índice ficaria fora do
  * viewBox. Assim nenhum estado é escondido do estudante.
  */
-function Marcador({ nome, indice, desenhadas, acima, classe, rotulos }: PropsMarcador) {
+function Marcador({
+  nome,
+  indice,
+  desenhadas,
+  ultimaNoLugar,
+  acima,
+  classe,
+  rotulos,
+}: PropsMarcador) {
   // Deixamos o marcador ir até uma posição além de cada ponta: é lá que ele
   // aparece quando aponta para fora da fileira, e isso precisa ser visível.
-  const limitado = Math.min(Math.max(indice, -1), desenhadas);
-  const fora = indice < 0 || indice >= desenhadas;
+  // À direita, a ponta é a vaga de `tras`, e o marcador vai até uma posição
+  // depois dela: quem passou de `tras` não pode parar em cima dele, senão, sem
+  // rótulo, os dois estados seriam o mesmo desenho. Com a fileira cheia não há
+  // quadro para essa posição, e ela fica no limite.
+  const limitado = Math.min(Math.max(indice, -1), Math.min(desenhadas + 1, LIMITE_DE_CELULAS));
+  const fora = indice < 0 || indice > ultimaNoLugar;
 
   return (
     <motion.g
@@ -118,13 +141,13 @@ interface Props {
 export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }: Props) {
   const bruto = instantaneo?.variaveis.itens;
   const itens = Array.isArray(bruto) ? (bruto as unknown[]) : [];
-  const inicio =
-    typeof instantaneo?.variaveis.inicio === 'number'
-      ? (instantaneo.variaveis.inicio as number)
+  const frente =
+    typeof instantaneo?.variaveis.frente === 'number'
+      ? (instantaneo.variaveis.frente as number)
       : undefined;
-  const fim =
-    typeof instantaneo?.variaveis.fim === 'number'
-      ? (instantaneo.variaveis.fim as number)
+  const tras =
+    typeof instantaneo?.variaveis.tras === 'number'
+      ? (instantaneo.variaveis.tras as number)
       : undefined;
 
   const legendas = mostrarLegendas(nivelAndaime);
@@ -135,18 +158,19 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
 
   // Uma célula está ativa quando nenhum dos dois marcadores a deixou de fora.
   // Marcador ausente não restringe nada — instantâneos iniciais não têm todas
-  // as variáveis declaradas ainda. O que sobra à esquerda do início já saiu da
-  // fila; o que sobra à direita do fim ainda não entrou.
+  // as variáveis declaradas ainda. O que sobra à esquerda da frente já saiu da
+  // fila; de `tras` em diante, ainda não entrou — `tras` é a vaga do próximo, e
+  // não faz parte da fila.
   const estadoDa = (i: number) =>
-    (inicio === undefined || i >= inicio) && (fim === undefined || i <= fim)
+    (frente === undefined || i >= frente) && (tras === undefined || i < tras)
       ? 'ativa'
       : 'consumida';
 
-  // O anel marca a célula que o início aponta como a próxima a sair — mesmo
-  // que ela já esteja fora do intervalo dos marcadores. Se o início aponta
+  // O anel marca a célula que a frente aponta como a próxima a sair — mesmo
+  // que ela já esteja fora do intervalo dos marcadores. Se a frente aponta
   // para fora da fileira, não há anel, e essa ausência é o sintoma. Nada aqui
   // sabe qual célula deveria ser a certa.
-  const apontada = inicio !== undefined && inicio >= 0 && inicio < desenhadas ? inicio : null;
+  const apontada = frente !== undefined && frente >= 0 && frente < desenhadas ? frente : null;
 
   return (
     <svg
@@ -158,7 +182,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
       // leitor de tela devolveria o apoio que o nível acabou de retirar.
       aria-label={
         rotulos
-          ? `Fila com ${itens.length} células; início = ${inicio ?? 'indefinido'}, fim = ${fim ?? 'indefinido'}`
+          ? `Fila com ${itens.length} células; frente = ${frente ?? 'indefinido'}, trás = ${tras ?? 'indefinido'}`
           : `Fila com ${itens.length} células`
       }
     >
@@ -232,7 +256,7 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
         })}
       </AnimatePresence>
 
-      {/* Anel da próxima célula a ser tratada, segundo o início atual. */}
+      {/* Anel da próxima célula a ser tratada, segundo a frente atual. */}
       {apontada !== null && (
         <motion.g
           initial={false}
@@ -263,21 +287,23 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
         </text>
       )}
 
-      {inicio !== undefined && (
+      {frente !== undefined && (
         <Marcador
-          nome="início"
-          indice={inicio}
+          nome="frente"
+          indice={frente}
           desenhadas={desenhadas}
+          ultimaNoLugar={desenhadas - 1}
           acima
           classe={MARCADOR.primeiro}
           rotulos={rotulos}
         />
       )}
-      {fim !== undefined && (
+      {tras !== undefined && (
         <Marcador
-          nome="fim"
-          indice={fim}
+          nome="trás"
+          indice={tras}
           desenhadas={desenhadas}
+          ultimaNoLugar={desenhadas}
           acima={false}
           classe={MARCADOR.segundo}
           rotulos={rotulos}
@@ -287,10 +313,10 @@ export function VisualizadorFila({ instantaneo, nivelAndaime = ANDAIME_PADRAO }:
       {legendas && (
         <>
           <text x={X_INICIAL - 6} y={182} fontSize="10" className="svg-rotulo">
-            ◀ sai pelo início
+            ◀ sai pela frente
           </text>
           <text x={474} y={182} textAnchor="end" fontSize="10" className="svg-rotulo">
-            entra pelo fim ▶
+            entra por trás ▶
           </text>
         </>
       )}

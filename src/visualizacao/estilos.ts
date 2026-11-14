@@ -12,8 +12,8 @@
 
 /**
  * `consumida` é toda posição fora do intervalo que os marcadores delimitam.
- * Na pilha é o que ficou acima do topo; na fila, o que já saiu pelo início —
- * e, no limite, o que ainda não entrou pelo fim. De que lado está diz qual é
+ * Na pilha é o que ficou acima do topo; na fila, o que já saiu pela frente —
+ * e, no limite, o que ainda não entrou por trás. De que lado está diz qual é
  * o caso, sem precisar de uma terceira cor.
  */
 export type EstadoDaCelula = 'ativa' | 'consumida';
@@ -97,7 +97,7 @@ export const DESTAQUE = {
 };
 
 /**
- * Marcadores — índice, topo, início, fim, cabeça, atual (D19).
+ * Marcadores — índice, topo, frente, trás, cabeça, atual (D19).
  *
  * Todos em grafite. Dentro da bancada matiz é significado, e marcador não é
  * nenhum dos estados de D10: um marcador azul se confundia com a célula ativa,
@@ -107,9 +107,9 @@ export const DESTAQUE = {
  * apoio, onde os rótulos somem.
  */
 export const MARCADOR = {
-  /** Seta do marcador principal da estrutura: topo, índice, início, cabeça. */
+  /** Seta do marcador principal da estrutura: topo, índice, frente, cabeça. */
   primeiro: 'svg-seta-cheia',
-  /** Seta de um segundo marcador no mesmo desenho: fim, atual. */
+  /** Seta de um segundo marcador no mesmo desenho: trás, atual. */
   segundo: 'svg-seta-vazada',
   /** Rótulo, sempre cheio: é texto, e texto vazado não se lê. */
   rotulo: 'svg-marcador',

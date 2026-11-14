@@ -1,8 +1,11 @@
 import type { Exercicio } from '../nucleo/tipos';
 
 /**
- * Defeito implantado: o topo da pilha auxiliar começa em 0, e não em -1. A
- * pilha nasce "com" uma posição que ninguém escreveu, e desempilhar devolve um
+ * Fila e pilha auxiliar seguem a convenção do Ziviani (D40): a fila vai de
+ * `frente` até `tras - 1`, e o topo da pilha conta os elementos.
+ *
+ * Defeito implantado: o topo da pilha auxiliar começa em 1, e não em 0. A
+ * pilha nasce "com" um elemento que ninguém empilhou, e desempilhar devolve um
  * elemento a mais no fim — um `null` que volta para a fila.
  *
  * A causa mora na estrutura auxiliar, que não é desenhada; o sintoma aparece
@@ -26,48 +29,48 @@ export const filaInverter: Exercicio = {
   categoriaDefeito: 'inicializacao-incorreta',
   dificuldade: 3,
   linhaDoDefeito: 21,
-  variaveisObservadas: ['itens', 'inicio', 'fim'],
+  variaveisObservadas: ['itens', 'frente', 'tras'],
   // Miniatura da lista: a fila com o primeiro já atendido.
   // Estado que as duas versões atravessam antes de divergirem (D20).
   miniatura: {
-    variaveis: { itens: ['ana', 'bruno', 'carla'], inicio: 1, fim: 2 },
+    variaveis: { itens: ['ana', 'bruno', 'carla'], frente: 1, tras: 3 },
   },
 
   codigoComDefeito: `var itens = [];
-var inicio = 0;
-var fim = -1;
+var frente = 0;
+var tras = frente;
 
 function enfileirar(valor) {
-  fim = fim + 1;
-  itens[fim] = valor;
+  itens[tras] = valor;
+  tras = tras + 1;
 }
 
 function desenfileirar() {
-  var removido = itens[inicio];
-  inicio = inicio + 1;
+  var removido = itens[frente];
+  frente = frente + 1;
   return removido;
 }
 
 function filaVazia() {
-  return inicio > fim;
+  return frente == tras;
 }
 
 var pilha = [];
-var topoDaPilha = 0;
+var topoDaPilha = 1;
 
 function empilhar(valor) {
   topoDaPilha = topoDaPilha + 1;
-  pilha[topoDaPilha] = valor;
+  pilha[topoDaPilha - 1] = valor;
 }
 
 function desempilhar() {
-  var removido = pilha[topoDaPilha];
+  var removido = pilha[topoDaPilha - 1];
   topoDaPilha = topoDaPilha - 1;
   return removido;
 }
 
 function pilhaVazia() {
-  return topoDaPilha < 0;
+  return topoDaPilha == 0;
 }
 
 function inverter() {
@@ -85,40 +88,40 @@ enfileirar('carla');
 inverter();`,
 
   codigoCorreto: `var itens = [];
-var inicio = 0;
-var fim = -1;
+var frente = 0;
+var tras = frente;
 
 function enfileirar(valor) {
-  fim = fim + 1;
-  itens[fim] = valor;
+  itens[tras] = valor;
+  tras = tras + 1;
 }
 
 function desenfileirar() {
-  var removido = itens[inicio];
-  inicio = inicio + 1;
+  var removido = itens[frente];
+  frente = frente + 1;
   return removido;
 }
 
 function filaVazia() {
-  return inicio > fim;
+  return frente == tras;
 }
 
 var pilha = [];
-var topoDaPilha = -1;
+var topoDaPilha = 0;
 
 function empilhar(valor) {
   topoDaPilha = topoDaPilha + 1;
-  pilha[topoDaPilha] = valor;
+  pilha[topoDaPilha - 1] = valor;
 }
 
 function desempilhar() {
-  var removido = pilha[topoDaPilha];
+  var removido = pilha[topoDaPilha - 1];
   topoDaPilha = topoDaPilha - 1;
   return removido;
 }
 
 function pilhaVazia() {
-  return topoDaPilha < 0;
+  return topoDaPilha == 0;
 }
 
 function inverter() {
@@ -138,22 +141,22 @@ inverter();`,
   casosDeTeste: [
     {
       descricao: 'O primeiro da fila passa a ser o último que tinha entrado',
-      expressao: 'itens[inicio]',
+      expressao: 'itens[frente]',
       esperado: 'carla',
     },
     {
       descricao: 'O segundo da fila continua no meio',
-      expressao: 'itens[inicio + 1]',
+      expressao: 'itens[frente + 1]',
       esperado: 'bruno',
     },
     {
       descricao: 'O último da fila passa a ser o primeiro que tinha entrado',
-      expressao: 'itens[fim]',
+      expressao: 'itens[tras - 1]',
       esperado: 'ana',
     },
     {
       descricao: 'A fila continua com três elementos',
-      expressao: 'fim - inicio + 1',
+      expressao: 'tras - frente',
       esperado: 3,
     },
   ],

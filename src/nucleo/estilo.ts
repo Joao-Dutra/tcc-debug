@@ -127,7 +127,7 @@ function avisoDoNo(no: AnyNode): Omit<AvisoDeEstilo, 'linha'> | null {
       ) {
         return {
           construcao: `método de vetor ${alvo.property.name}()`,
-          sugestao: 'use atribuição por índice e um laço, como em itens[topo] = valor.',
+          sugestao: 'use atribuição por índice e um laço, como em itens[tras] = valor.',
         };
       }
       return null;

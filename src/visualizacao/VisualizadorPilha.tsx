@@ -12,6 +12,10 @@ import type { Instantaneo } from '../nucleo/tipos';
  * separado do conteúdo, porque é justamente o descompasso entre os dois que
  * revela a maior parte dos defeitos desta estrutura.
  *
+ * `topo` conta os elementos, como no Ziviani (D40): a pilha vazia tem topo 0,
+ * e o elemento do topo mora na posição `topo - 1`. É essa posição que a seta e
+ * o anel apontam; o rótulo traz o valor da variável, sem ajuste.
+ *
  * Pilha de capacidade fixa ou dinâmica é propriedade do exercício, e chega
  * aqui pelo instantâneo (D10): o exercício de capacidade fixa declara
  * `capacidade`, e as posições que existem no vetor e nunca receberam valor são
@@ -39,6 +43,8 @@ interface Props {
 export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }: Props) {
   const itens = (instantaneo?.variaveis.itens as unknown[] | undefined) ?? [];
   const topo = instantaneo?.variaveis.topo as number | undefined;
+  // A posição do elemento do topo. Com a pilha vazia é -1, abaixo da base.
+  const ultimo = topo === undefined ? undefined : topo - 1;
   const capacidade =
     typeof instantaneo?.variaveis.capacidade === 'number'
       ? (instantaneo.variaveis.capacidade as number)
@@ -64,16 +70,17 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
       ? []
       : Array.from({ length: posicoes }, (_, i) => i).filter((i) => !ocupada(i));
 
-  // Tudo acima do topo já saiu da pilha. Sem marcador ainda, nada foi
-  // consumido: instantâneos iniciais não têm todas as variáveis declaradas.
-  const estadoDa = (i: number) => (topo === undefined || i <= topo ? 'ativa' : 'consumida');
+  // A pilha são as `topo` primeiras posições; o que está acima já saiu dela.
+  // Sem marcador ainda, nada foi consumido: instantâneos iniciais não têm
+  // todas as variáveis declaradas.
+  const estadoDa = (i: number) => (topo === undefined || i < topo ? 'ativa' : 'consumida');
 
   // O anel marca o elemento que o topo aponta — mesmo que seja uma caixa já
   // consumida. Se o topo aponta para fora do vetor, ou para uma posição vazia,
   // não há anel nenhum, e essa ausência é o sintoma. Nada aqui sabe qual caixa
   // deveria ser a certa.
   const apontada =
-    topo !== undefined && topo >= 0 && topo < posicoes && ocupada(topo) ? topo : null;
+    ultimo !== undefined && ultimo >= 0 && ultimo < posicoes && ocupada(ultimo) ? ultimo : null;
 
   return (
     <svg viewBox="0 0 360 360" width="100%" style={{ maxHeight: 380 }}>
@@ -191,9 +198,9 @@ export function VisualizadorPilha({ instantaneo, nivelAndaime = ANDAIME_PADRAO }
 
           A seta é forma, não texto: sem apoio o rótulo some, e sem ela o
           marcador sumiria junto, deixando a cor como único portador. */}
-      {topo !== undefined && (
+      {topo !== undefined && ultimo !== undefined && (
         <motion.g
-          animate={{ y: topo < 0 ? BASE_Y - 20 : yDaPosicao(topo) + ALTURA_CAIXA / 2 - 8 }}
+          animate={{ y: ultimo < 0 ? BASE_Y - 20 : yDaPosicao(ultimo) + ALTURA_CAIXA / 2 - 8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 26 }}
         >
           <path d="M 268 5 L 268 19 L 256 12 Z" className={MARCADOR.primeiro} />
