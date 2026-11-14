@@ -822,6 +822,10 @@ existe justamente para evitar um interpretador próprio.
 
 ## D18 — Pilha como vetor de capacidade fixa e índice de topo
 
+*Revisto em D40: o topo deixou de ser o índice do último elemento e passou a
+contar os elementos, como no Ziviani. Continua valendo o resto — vetor mais
+um número, sem encolher o vetor.*
+
 **Decisão.** A pilha do exercício de referência é um vetor de capacidade fixa
 (`var itens = [0, 0, 0, 0]`) e um índice `topo`. A pilha vai da posição 0 até o
 topo; o que está acima dele continua no vetor, mas fora da pilha. Desempilhar
@@ -4293,3 +4297,206 @@ caso, dica, apoio ou retorno de acerto.
 `SelectionSort` e `vetor-ordenar` estão no percurso do estudo (etapas 4 e 5),
 e a lista na etapa 3: os dois ajustes aparecem na área do estudo, e entram
 antes do piloto final.
+
+## D40 — Pilha e fila na convenção do Ziviani
+
+**Decisão.** Os cinco exercícios de pilha e fila do catálogo, e os dois
+desenhos, passam a seguir a convenção do capítulo 3 do Ziviani, *Projeto de
+Algoritmos*, que é o livro que a professora da turma do estudo adota.
+`VERSAO_DO_REGISTRO` passa a 14. Na pilha,
+`topo` começa em 0 e conta os elementos. Na fila, os marcadores se chamam
+`frente` e `tras`, e `tras` é a posição em que o próximo entra. Muda o que o
+participante vê em duas etapas do percurso: **descongela D39**, e a interface é
+congelada de novo ao final desta decisão, na véspera do piloto final.
+
+### O que motivou
+
+O estudante do estudo aprendeu pilha e fila pelo livro. O catálogo usava a
+outra convenção comum — `topo` como índice do último elemento, começando em
+-1, e a fila com `inicio` e `fim` inclusivos. As duas estão certas, mas quem
+aprendeu que a pilha está vazia com `topo == 0` lê `var topo = -1` como
+suspeito, e gasta a investigação numa linha correta. Isso mediria a distância
+entre o exercício e a aula, e não a depuração — o mesmo argumento de D17 para
+a sintaxe.
+
+### A convenção
+
+**A fonte conferida são slides de aula em C que citam o Ziviani, capítulo 3,
+como fonte** — e não o livro impresso. **A conferência no livro impresso
+continua pendente**, e precisa acontecer antes de a monografia atribuir a
+convenção ao livro. O que os slides trazem, e como ficou aqui:
+
+| | Nos slides, em C | Aqui |
+|---|---|---|
+| Pilha vazia | `Topo = 0` | `var topo = 0`; vazia quando `topo == 0` |
+| Empilhar | `Topo++` e `Item[Topo - 1] = x` | `topo = topo + 1; itens[topo - 1] = valor` |
+| Fila vazia | `Frente = 0`, `Tras = Frente`; vazia quando `Frente == Tras` | `var frente = 0; var tras = frente`; vazia quando `frente == tras` |
+
+O resto segue do mesmo significado, e é escolha deste trabalho, e não
+transcrição: desempilhar lê `itens[topo - 1]` e depois faz
+`topo = topo - 1`; enfileirar grava em `itens[tras]` e avança `tras`;
+desenfileirar lê `itens[frente]` e avança `frente`. `Topo++` virou
+`topo = topo + 1`, que é como o catálogo escreve todo incremento (D17).
+
+O `- 1` da pilha vem do vetor que começa em 0: `topo` conta os elementos, e
+o último deles mora em `topo - 1`.
+
+**A fila fica sem a volta circular.** O desenho
+da fila ainda não representa `frente > tras` (roadmap, depois do experimento),
+e um exercício que o desenho não mostra direito é o que D16 recusa. Sem a
+volta, os índices só crescem, como já era.
+
+### Os defeitos, medidos por execução
+
+Como em D28 e D34: cada candidato rodou pelo mesmo Worker do navegador, e para
+cada entrada se mediu se termina, que casos quebra e se o quadro-denúncia
+aprova (D16). As categorias foram mantidas, porque o percurso e a análise já
+contam com elas.
+
+**Pilha, índice deslocado.** Cinco sequências: a do exercício (três empilhar,
+dois desempilhar), uma de um elemento, a pilha cheia e esvaziada, uma
+alternada e uma que tenta passar da capacidade.
+
+| Candidato | Quebra | Quadro-denúncia | Por que não |
+|---|---|---|---|
+| `itens[topo - 2] = valor` em empilhar | 5 de 5 | aprova | O primeiro empilhar escreve em `itens[-1]`: em Java, uma exceção; aqui, um valor que some sem deixar posição — o estudante investigaria a linguagem (D17, D34) |
+| `var removido = itens[topo]` em desempilhar | 5 de 5 | **recusa** | Só o valor devolvido muda; as trajetórias são idênticas. É o caso que motivou D16 |
+| `var removido = itens[topo - 2]` em desempilhar | 5 de 5 | **recusa** | Idem |
+| `topo - 1 == capacidade` no teste de cheia | 1 de 5 | recusa em 4 | Só aparece ao passar da capacidade, que o exercício não faz |
+| `topo + 1 == capacidade` no teste de cheia | 2 de 5 | recusa em 3 | Idem, só com a pilha cheia |
+| **`itens[topo] = valor` em empilhar** | **5 de 5** | **aprova** | **Escolhido** |
+
+**O escolhido** é o mesmo equívoco do exercício anterior (D18), na convenção
+nova: depois de `topo = topo + 1`, escrever em `itens[topo]` é o que se faz
+quando `topo` é índice, e não contagem. Na leitura, `itens[topo] = valor` é a
+linha mais natural do programa. **O quadro que denuncia é o do primeiro
+empilhar():** o 10 aparece na posição 1, tracejado, fora da pilha, e a seta do
+topo fica sobre a posição 0, que ninguém escreveu — sem anel, porque não há
+elemento ali. Falham três dos quatro casos; passa "sobra apenas um elemento",
+que diz ao estudante que a contagem está certa e o problema é onde os valores
+foram parar.
+
+**Fila, condição de parada.** Cinco entradas: três nomes, que é a do
+exercício, e um, dois, cinco e nenhum.
+
+| Candidato em `estaVazia` | Quebra | Por que não |
+|---|---|---|
+| `frente >= tras` | 0 de 5 | **Mutante equivalente**: sem a volta circular, a frente nunca passa de `tras` |
+| `frente > tras` | 5 de 5 | Para tarde: atende um a mais, lendo `itens[tras]`, que não existe — em Java, uma exceção (D17) |
+| `frente != tras` | 5 de 5 | O laço não atende ninguém, e a inversão se lê na hora |
+| `tras == 0` | 4 de 5 | **Não termina** com qualquer elemento na fila |
+| `frente == tras - 1` | 5 de 5 | Com a fila já vazia, **não termina**: a frente passa de `tras - 1` sem nunca igualar |
+| `frente + 1 == tras` | 5 de 5 | Idem |
+| `frente == itens.length - 1` | 5 de 5 | Idem, e usa `length`, que a fila do livro não tem |
+| `frente + 1 >= tras` | 4 de 5 | Igual ao escolhido em tudo; perdeu por esconder `tras - 1`, que é a posição do último |
+| **`frente >= tras - 1`** | **4 de 5** | **Escolhido** |
+
+**O escolhido** trata `tras` como a posição do último elemento, e não como a
+vaga depois dele — é o equívoco de quem mistura as duas convenções de fila. A
+fila é dada como vazia quando resta exatamente um. Termina em toda entrada,
+inclusive na fila vazia, que é a única em que não se manifesta. O defeito
+continua morando no predicado, e não no laço, como antes: o estudante vê o
+atendimento parar cedo em `atenderTodos` e segue a pista até `estaVazia`.
+**O quadro que denuncia é o último:** o programa terminou, e `carla` continua
+na fila, com o contorno contínuo e o anel de próxima a sair; a seta da frente
+está sobre ela, e a de trás, na vaga seguinte. Falham "todos são atendidos" e
+"não sobra nenhum"; passam os outros dois.
+
+`linhaDoDefeito` não mudou em nenhum dos dois — 10 na pilha, 12 na fila —, e
+os dois continuam sendo uma linha alterada (D30).
+
+### Os outros três exercícios
+
+O desenho lê os nomes pelo significado, então nenhum exercício podia ficar na
+convenção antiga: sairia desenhado uma posição acima, ou sem marcadores. Os
+três fora do percurso foram convertidos, com o mesmo defeito e a mesma linha:
+
+- **`pilha-reverter`** — o auxiliar que é a própria pilha. Nada muda no
+  defeito.
+- **`pilha-inverter-palavra`** — o laço que esvazia. A versão correta passou
+  a `while (topo >= 1)` e o defeito a `while (topo > 1)`, para a diferença
+  continuar sendo a de antes, entre `>=` e `>`.
+- **`fila-inverter`** — o topo da pilha auxiliar começa em 1, e não em 0: é o
+  mesmo elemento a mais, o `null` que volta para a fila.
+
+Os cinco passam no quadro-denúncia, na conferência da linha e na verificação
+do professor.
+
+### O desenho
+
+- **Pilha.** A seta e o anel ficam em `topo - 1`, o elemento do topo; o rótulo
+  traz o valor da variável, sem ajuste ("topo = 3" ao lado da posição 2, que é
+  o que o código diz). Ativas são as `topo` primeiras posições. Com `topo`
+  em 0, a seta fica junto da base, como ficava com -1.
+- **Fila.** Os marcadores são `frente`, em cima, e `tras`, embaixo, com os
+  rótulos "frente" e "trás" e as legendas "sai pela frente" e "entra por
+  trás". A célula em `tras` não faz parte da fila. O lugar normal de `tras` é
+  logo depois da última célula, e ali ele **não** leva o aviso "fora da
+  fileira" — levaria em todo quadro, e um aviso permanente não avisa nada. A
+  frente no mesmo lugar leva, como levava: ela não aponta célula nenhuma.
+- **Um marcador que passou de `tras` não para em cima dele.** O limite do
+  desenho à direita era a posição depois da última célula, que agora é o lugar
+  de `tras`; uma frente que o ultrapassasse cairia sobre ele, e sem rótulo os
+  dois estados seriam o mesmo desenho. O limite foi uma posição adiante. Com a
+  fileira cheia, de oito células, não há quadro para essa posição, e ela fica
+  no limite — o catálogo não chega lá.
+
+Nada aqui sabe qual posição deveria ser a certa: o desenho continua mostrando
+o estado, inclusive o inválido.
+
+### O contrato de nomes da área do professor
+
+O contrato (D31) passou a pedir `frente` e `tras` na fila, e a frase que
+acompanha cada nome no formulário diz o significado: `topo`, "quantos
+elementos a pilha tem: começa em 0, e o do topo fica em itens[topo - 1]";
+`tras`, "a posição em que o próximo entra, uma depois do último". Os exemplos
+do formulário (D35) saem dos mesmos exercícios, já convertidos.
+
+**Limitação que fica: a verificação confere o nome, e não o significado.** Um
+professor que escreva uma pilha com `topo` começando em -1 passa em tudo — as
+duas versões divergem do mesmo jeito — e o exercício sai desenhado uma posição
+abaixo. O que segura é a frase do formulário, o exemplo e a pré-visualização
+(D33), em que o autor vê o desenho antes de publicar.
+
+**Os publicados antes desta data.** Publicado não muda (D31). Uma pilha ou
+uma fila publicada na convenção antiga passa a ser desenhada errada: a fila,
+sem marcadores, porque `inicio` e `fim` não são mais procurados. A seção dos
+propostos está oculta durante a coleta (D33), e nenhum participante os vê;
+antes de reabri-la, os de pilha e fila precisam ser retirados e refeitos pelos
+autores. Não foi mantida a leitura dos nomes antigos: um desenho com duas
+convenções é o que esta decisão existe para evitar.
+
+### O registro
+
+**`VERSAO_DO_REGISTRO` passa a 14.** O formato do registro é o mesmo, e os ids
+não mudam; o que muda é o que está por trás de cinco deles. As sessões de
+pilha e fila até a versão 13 foram feitas sobre outro código e outro desenho,
+e não se juntam às da 14 em diante. Sem a versão, a análise só as separaria
+pela data, que não está no nome de nada; com ela, o corte está no próprio
+registro, como em D30, quando `correta` mudou de sentido num exercício. Nos
+outros oito exercícios do catálogo, a 14 não muda nada. A coleta ainda não
+começou: todas as sessões anteriores são de pilotos e testes.
+
+### Congelamento de novo (14/11/2026)
+
+**Congelado de novo em 14/11/2026; o piloto final roda sobre esta versão**, e
+a coleta sobre a mesma. Dentro do congelamento: os cinco exercícios de pilha e
+fila na convenção do livro, com os enunciados e as dicas ajustados a ela, e os
+dois desenhos. Vale o que D20 diz: corrigir defeito que quebre o comportamento
+descrito é permitido, desde que restaure o que está descrito.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Os cinco divergem da versão correta em estado observável, e a miniatura é anterior à divergência | `src/exercicios/quadro-denuncia.test.ts` |
+| A linha do defeito bate com a comparação das versões | `src/exercicios/linha-do-defeito.test.ts` |
+| Os cinco passam na verificação do professor, com os nomes novos do contrato | `src/nucleo/verificacao-do-exercicio.test.ts` |
+| O formulário preenchido com os exemplos de pilha e de fila passa na verificação | `src/componentes/exemplos-do-formulario.test.ts` |
+| Na pilha, seta e anel em `topo - 1`: o topo sobre posição vazia não tem anel, e `topo = 1` corrigido é uma célula ativa só | `e2e/pilha-e-fila.spec.ts` |
+| Na fila, a célula em `tras` não é da fila; `tras` no lugar dele não é "fora da fileira", e a frente que o alcança é; sem apoio, somem os rótulos e ficam as duas setas | o mesmo arquivo |
+
+A medição dos candidatos foi um teste provisório, fora do repositório, como em
+D34. Os quadros que denunciam foram conferidos por captura no navegador, nos
+dois níveis de apoio, em 1366 × 657. Na suíte, 505 testes rápidos e 130 de
+ponta a ponta, todos passando.

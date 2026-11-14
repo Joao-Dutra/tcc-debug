@@ -73,8 +73,8 @@ exercício.
 | vazia | posição da capacidade que nunca recebeu valor: contorno pontilhado com `POSICAO_VAZIA`, sem preenchimento e sem nada dentro — não confundir com consumida, que tem valor esmaecido |
 
 **Marcadores em grafite, diferenciados pela forma (D19).** Use `MARCADOR` de
-`estilos.ts`: seta cheia para o marcador principal (topo, índice, início,
-cabeça), vazada para o segundo (fim, atual), rótulo sempre cheio. Dentro da
+`estilos.ts`: seta cheia para o marcador principal (topo, índice, frente,
+cabeça), vazada para o segundo (trás, atual), rótulo sempre cheio. Dentro da
 bancada matiz é significado — marcador colorido se confunde com um estado de
 D10, e a cor de ação da interface nunca entra no desenho.
 
@@ -101,6 +101,12 @@ outra peça do desenho — no vetor, quem garante isso é a altura do arco, em
 `disposicao-do-vetor.ts`, com teste sobre cada quadro do catálogo. Se as duas
 pontas caem no mesmo lugar do desenho, ou são dois marcadores, não desenhe
 rastro nenhum.
+
+**Pilha e fila leem os marcadores pelo significado do Ziviani (D40).** `topo`
+conta os elementos: a seta e o anel ficam em `topo - 1`, e o rótulo traz o
+valor da variável, sem ajuste. Na fila, `tras` é a vaga do próximo, uma
+depois do último: a célula em `tras` não faz parte da fila, e `tras` logo
+depois da última célula está no lugar dele, e não fora da fileira.
 
 **Capacidade fixa é dado do instantâneo, não do componente.** Quando o
 exercício declara `capacidade` e a observa, o desenho mostra as posições ainda

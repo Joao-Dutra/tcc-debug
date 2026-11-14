@@ -40,7 +40,7 @@ não da leitura do código — ver a verificação obrigatória abaixo.
 7. **Liste em `variaveisObservadas`** apenas o que a visualização precisa. Toda
    variável observada entra em cada instantâneo e infla a execução. E só o que
    o visualizador da estrutura de fato desenha: a pilha desenha `itens`,
-   `topo` e, quando existe, `capacidade`; a fila, `itens`, `inicio` e `fim`; o
+   `topo` e, quando existe, `capacidade`; a fila, `itens`, `frente` e `tras`; o
    vetor, `itens`, os marcadores declarados e as demais observadas, que viram
    caixas de valor; a
    lista, `cabeca`, `atual` e qualquer outra variável que seja nó ou `null`.
@@ -78,12 +78,17 @@ Use:
 - `var` para toda variável;
 - laços explícitos com índice: `for (var i = 0; i < n; i = i + 1)`, ou `while`
   com o índice à vista;
-- atribuição direta em posição de vetor: `itens[topo] = valor`;
+- atribuição direta em posição de vetor: `itens[tras] = valor`;
 - `==` e `!=` nas comparações de igualdade;
 - funções declaradas com `function`;
 - nós de lista como instâncias de uma classe `No`, criados com
   `new No(valor, proximo)`, e não como literal de objeto;
-- pilha como vetor mais índice de topo, sem encolher o vetor (D18). Pilha de
+- pilha e fila na convenção do Ziviani, o livro da disciplina (D40): `topo`
+  começa em 0 e conta os elementos, e o do topo fica em `itens[topo - 1]`; a
+  fila vai de `frente` até `tras - 1`, sem volta circular, e está vazia
+  quando `frente == tras`. O desenho lê os três pelo significado: um
+  exercício em outra convenção passa na verificação e sai desenhado errado;
+- pilha como vetor mais contador de topo, sem encolher o vetor (D18). Pilha de
   capacidade fixa declara `capacidade` e a observa, e o desenho mostra as
   posições ainda não usadas; pilha dinâmica não declara capacidade nenhuma. A
   escolha é do exercício, nunca do estudante (D10).
@@ -144,10 +149,11 @@ auditoria reprovou e que aguardam correção.
 Descreve **o comportamento esperado**, nunca o sintoma nem a região do código.
 Diga o que o programa deveria fazer e convide à observação.
 
-- Bom: "A pilha guarda seus elementos no vetor itens, da posição 0 até a
-  posição topo; o que está acima do topo não faz parte dela. Ela deve seguir a
+- Bom: "A pilha guarda seus elementos num vetor de capacidade fixa, e topo
+  conta quantos elementos ela tem: a pilha vai da posição 0 até a posição
+  topo - 1, e o que está acima disso não faz parte dela. Ela deve seguir a
   política LIFO. Execute e acompanhe, na visualização, a caixa em que cada
-  valor empilhado é guardado e a posição do topo."
+  valor empilhado é guardado e a caixa que o topo aponta."
 - Ruim: "A função desempilhar() está com o índice errado, corrija."
 
 O convite à observação precisa levar ao quadro-denúncia. Convide a olhar o que
