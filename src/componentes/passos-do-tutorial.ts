@@ -43,7 +43,7 @@ export const PASSOS_DO_TUTORIAL: readonly PassoDoTutorial[] = [
     ilustracao: 'tela',
   },
   {
-    titulo: 'Executar',
+    titulo: 'Como executar',
     texto:
       'O botão Executar roda o código que está no editor e confere o resultado nos casos de ' +
       'teste, que aparecem abaixo do desenho. Quando o exercício abre, o código já é executado ' +
@@ -68,7 +68,7 @@ export const PASSOS_DO_TUTORIAL: readonly PassoDoTutorial[] = [
     ilustracao: 'observar',
   },
   {
-    titulo: 'Apontar a linha',
+    titulo: 'Identificar o erro',
     texto:
       'Quando achar que sabe em que linha está o defeito, clique no número dessa linha, na ' +
       'margem esquerda do código. A resposta aparece logo abaixo do código, em “Onde você ' +
@@ -77,7 +77,7 @@ export const PASSOS_DO_TUTORIAL: readonly PassoDoTutorial[] = [
     ilustracao: 'apontar',
   },
   {
-    titulo: 'Editar e executar de novo',
+    titulo: 'Como corrigir o erro',
     texto:
       'Para corrigir, edite o código direto no editor. Enquanto houver alteração ainda não ' +
       'executada, o botão Executar fica destacado. Execute de novo para conferir os casos de ' +

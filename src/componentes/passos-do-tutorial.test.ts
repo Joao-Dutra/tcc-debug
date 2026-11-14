@@ -21,9 +21,18 @@ describe('o texto do tutorial', () => {
   });
 
   it('cobre executar, avançar os passos, ler o desenho, apontar a linha e editar', () => {
-    const titulos = PASSOS_DO_TUTORIAL.map((p) => p.titulo).join(' | ');
-    for (const tema of [/Executar/, /passos/, /visualização/, /Apontar/, /Editar/]) {
-      expect(titulos).toMatch(tema);
+    // Os títulos de D42; o texto de cada passo continua o de D32.
+    expect(PASSOS_DO_TUTORIAL.map((p) => p.titulo)).toEqual([
+      'Como esta tela funciona',
+      'Como executar',
+      'Avançar os passos',
+      'Ler a visualização',
+      'Identificar o erro',
+      'Como corrigir o erro',
+    ]);
+    const textos = PASSOS_DO_TUTORIAL.map((p) => p.texto).join(' | ');
+    for (const tema of [/Executar/, /passos?/, /desenho/, /número dessa linha/, /edite o código/]) {
+      expect(textos).toMatch(tema);
     }
   });
 });
