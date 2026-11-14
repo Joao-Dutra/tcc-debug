@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
 import type { Page, Request } from '@playwright/test';
 import { VERSAO_DO_AVISO } from '../src/estudo/aviso';
+import { ITENS_DAS_ESCALAS, VERSAO_DO_QUESTIONARIO } from '../src/estudo/questionario';
 import { responderQuestionario } from './questionario-do-estudo';
 
 /**
@@ -294,12 +295,12 @@ test('a resposta é gravada pelo participante, antes da troca, sem pedir a linha
   expect(pedido.prefer).not.toContain('resolution=');
   expect(pedido.corpo).toMatchObject({
     aplicacao: 'piloto-nov',
-    versao_do_questionario: 1,
+    versao_do_questionario: VERSAO_DO_QUESTIONARIO,
     o_que_ajudou: null,
     o_que_atrapalhou: null,
   });
   const escalas = (pedido.corpo as { escalas: Record<string, number> }).escalas;
-  expect(Object.keys(escalas)).toHaveLength(16);
+  expect(Object.keys(escalas)).toHaveLength(ITENS_DAS_ESCALAS.length);
   expect(escalas).toMatchObject({ 'sus-1': 1, 'sus-2': 2, 'sus-5': 5, 'sus-6': 1, 'vis-6': 1 });
   // Depois da resposta, a troca do fim.
   await expect.poll(() => banco.saidas).toEqual([banco.anonimas[0], participante]);

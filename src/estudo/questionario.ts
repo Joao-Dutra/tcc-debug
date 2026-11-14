@@ -1,7 +1,7 @@
 /**
- * O questionário do fim do percurso (D37): a usabilidade, pelo SUS, e o que o
+ * O questionário do fim do percurso (D37): a usabilidade, pelo SUS, o que o
  * participante achou da visualização e dos exercícios, numa escala de 1 a 5,
- * e duas perguntas abertas.
+ * a utilidade de cada recurso da ferramenta (D42), e duas perguntas abertas.
  *
  * O texto é **pendente da orientadora**, como o do aviso. Quais itens existem,
  * e com que texto, é a versão que diz: ela vai para o banco com cada resposta,
@@ -10,9 +10,11 @@
  *
  * Os ids dos itens são as chaves de `escalas` no banco (0004). O banco só
  * confere que cada valor é um inteiro de 1 a 5; quais chaves valem é daqui.
+ *
+ * Versão 2 (D42): o bloco dos recursos, e a primeira aberta reescrita.
  */
 
-export const VERSAO_DO_QUESTIONARIO = 1;
+export const VERSAO_DO_QUESTIONARIO = 2;
 
 /**
  * A versão brasileira do SUS, citada em D37. Os dez itens são os da Tabela 1
@@ -27,6 +29,16 @@ export const FONTE_DO_SUS =
 export type ValorDaEscala = 1 | 2 | 3 | 4 | 5;
 
 export const VALORES_DA_ESCALA: readonly ValorDaEscala[] = [1, 2, 3, 4, 5];
+
+/**
+ * "Não usei", no bloco dos recursos (D42). É resposta — o item conta como
+ * respondido —, mas não é nota: não vai para `escalas`, e fica ausente no
+ * banco e no CSV. Um 1 no lugar dele diria que o recurso foi inútil para quem
+ * nem chegou a usá-lo.
+ */
+export const NAO_USEI = 'nao-usei';
+
+export type RespostaDoItem = ValorDaEscala | typeof NAO_USEI;
 
 export interface ItemDaEscala {
   id: string;
@@ -67,7 +79,35 @@ export const ITENS_DA_VISUALIZACAO: readonly ItemDaEscala[] = [
   { id: 'vis-6', texto: 'Eu usaria esta ferramenta para estudar AEDS' },
 ];
 
-export const ITENS_DAS_ESCALAS: readonly ItemDaEscala[] = [...ITENS_DO_SUS, ...ITENS_DA_VISUALIZACAO];
+/**
+ * A utilidade de cada recurso da ferramenta (D42). Só os que existem nos dois
+ * níveis de apoio: um recurso que só um grupo vê numa etapa não se compara
+ * entre os grupos, e por isso as dicas — que só aparecem com apoio (D9) —
+ * ficam de fora. Os casos de teste existem nos dois, com mais detalhe com
+ * apoio.
+ */
+export const ITENS_DOS_RECURSOS: readonly ItemDaEscala[] = [
+  { id: 'rec-1', texto: 'Apontar a linha do defeito, clicando no número dela' },
+  { id: 'rec-2', texto: 'Avançar e voltar a execução passo a passo' },
+  { id: 'rec-3', texto: 'O desenho da estrutura de dados' },
+  { id: 'rec-4', texto: 'Os casos de teste' },
+];
+
+export const ITENS_DAS_ESCALAS: readonly ItemDaEscala[] = [
+  ...ITENS_DO_SUS,
+  ...ITENS_DA_VISUALIZACAO,
+  ...ITENS_DOS_RECURSOS,
+];
+
+export interface BlocoDoQuestionario {
+  titulo: string;
+  /** Como responder, quando o bloco não segue a introdução. */
+  instrucao?: string;
+  itens: readonly ItemDaEscala[];
+  ancoras: Partial<Record<ValorDaEscala, string>>;
+  /** Se o item aceita "Não usei" além da escala. */
+  naoUsei: boolean;
+}
 
 /** O limite das respostas abertas é o do `check` da tabela. */
 export const LIMITE_DA_RESPOSTA_ABERTA = 2000;
@@ -84,34 +124,58 @@ export const QUESTIONARIO = {
   ],
   // As âncoras são as da fonte do SUS, que nomeia só os extremos.
   ancoras: { 1: 'Discordo fortemente', 5: 'Concordo fortemente' } as Partial<Record<ValorDaEscala, string>>,
-  blocos: [
-    { titulo: 'Sobre a ferramenta', itens: ITENS_DO_SUS },
-    { titulo: 'Sobre a visualização e os exercícios', itens: ITENS_DA_VISUALIZACAO },
-  ],
+  blocos: [] as BlocoDoQuestionario[],
+  naoUsei: 'Não usei',
   abertas: [
-    { campo: 'oQueAjudou', pergunta: 'O que mais ajudou?' },
+    // Versão 2: era "O que mais ajudou?". O campo e a coluna do banco seguem
+    // os mesmos; é a versão que diz que pergunta foi feita.
+    { campo: 'oQueAjudou', pergunta: 'O que foi mais útil na ferramenta, e por quê?' },
     { campo: 'oQueAtrapalhou', pergunta: 'O que atrapalhou ou faltou?' },
   ] as { campo: CampoAberto; pergunta: string }[],
   opcional: 'opcional',
   enviar: 'Enviar respostas',
 };
 
+QUESTIONARIO.blocos = [
+  { titulo: 'Sobre a ferramenta', itens: ITENS_DO_SUS, ancoras: QUESTIONARIO.ancoras, naoUsei: false },
+  {
+    titulo: 'Sobre a visualização e os exercícios',
+    itens: ITENS_DA_VISUALIZACAO,
+    ancoras: QUESTIONARIO.ancoras,
+    naoUsei: false,
+  },
+  {
+    titulo: 'Os recursos da ferramenta',
+    instrucao:
+      'Para cada recurso, marque de 1 a 5 o quanto ele foi útil para você. Se não chegou a usá-lo, ' +
+      'marque “Não usei”.',
+    itens: ITENS_DOS_RECURSOS,
+    ancoras: { 1: 'Nada útil', 5: 'Muito útil' },
+    naoUsei: true,
+  },
+];
+
 /** Tudo o que o participante lê, na ordem: é o que a impressão da versão cobre. */
 export function textoDoQuestionario(): string {
   return [
     QUESTIONARIO.titulo,
     ...QUESTIONARIO.introducao,
-    ...VALORES_DA_ESCALA.map((v) => `${v} ${QUESTIONARIO.ancoras[v] ?? ''}`.trim()),
-    ...QUESTIONARIO.blocos.flatMap((b) => [b.titulo, ...b.itens.map((i) => i.texto)]),
+    ...QUESTIONARIO.blocos.flatMap((b) => [
+      b.titulo,
+      ...(b.instrucao ? [b.instrucao] : []),
+      ...VALORES_DA_ESCALA.map((v) => `${v} ${b.ancoras[v] ?? ''}`.trim()),
+      ...(b.naoUsei ? [QUESTIONARIO.naoUsei] : []),
+      ...b.itens.map((i) => i.texto),
+    ]),
     ...QUESTIONARIO.abertas.map((a) => a.pergunta),
     QUESTIONARIO.opcional,
     QUESTIONARIO.enviar,
   ].join('\n');
 }
 
-export type EscalasEmAndamento = Partial<Record<string, ValorDaEscala>>;
+export type EscalasEmAndamento = Partial<Record<string, RespostaDoItem>>;
 
-/** Quantas afirmações ainda estão sem resposta: todas são obrigatórias. */
+/** Quantos itens ainda estão sem resposta: todos são obrigatórios, e "Não usei" é resposta. */
 export function afirmacoesQueFaltam(escalas: EscalasEmAndamento): number {
   return ITENS_DAS_ESCALAS.filter((i) => escalas[i.id] === undefined).length;
 }
@@ -139,7 +203,13 @@ export function montarResposta(
   };
   return {
     versao: VERSAO_DO_QUESTIONARIO,
-    escalas: Object.fromEntries(ITENS_DAS_ESCALAS.map((i) => [i.id, escalas[i.id]!])),
+    // "Não usei" fica de fora: ausente, e não nota (D42).
+    escalas: Object.fromEntries(
+      ITENS_DAS_ESCALAS.flatMap((i) => {
+        const valor = escalas[i.id];
+        return valor === undefined || valor === NAO_USEI ? [] : [[i.id, valor]];
+      })
+    ),
     oQueAjudou: aberta('oQueAjudou'),
     oQueAtrapalhou: aberta('oQueAtrapalhou'),
   };
@@ -157,7 +227,7 @@ export function montarResposta(
  * Nulo se falta algum dos dez: o SUS não tem escore parcial, e um zero no
  * lugar da falta puxaria a média para baixo.
  */
-export function escoreDoSus(escalas: Partial<Record<string, number>>): number | null {
+export function escoreDoSus(escalas: Partial<Record<string, unknown>>): number | null {
   let soma = 0;
   for (const [indice, item] of ITENS_DO_SUS.entries()) {
     const valor = escalas[item.id];

@@ -186,21 +186,28 @@ test('o questionário: as afirmações são obrigatórias, e as abertas, não', 
 
   const enviar = page.getByRole('button', { name: 'Enviar respostas' });
   await expect(enviar).toBeDisabled();
-  await expect(page.getByRole('status')).toHaveText('Faltam 16 afirmações para marcar.');
-  // As âncoras da fonte, sob os extremos de cada afirmação.
+  await expect(page.getByRole('status')).toHaveText('Faltam 20 itens para marcar.');
+  // As âncoras da fonte, sob os extremos de cada afirmação do SUS e da visualização.
   await expect(page.locator('.ancora', { hasText: 'Discordo fortemente' })).toHaveCount(16);
   await expect(page.locator('.ancora', { hasText: 'Concordo fortemente' })).toHaveCount(16);
+  // Os recursos, com a escala de utilidade e "Não usei" (D42).
+  await expect(page.getByRole('heading', { name: 'Os recursos da ferramenta' })).toBeVisible();
+  await expect(page.locator('.ancora', { hasText: 'Nada útil' })).toHaveCount(4);
+  await expect(page.locator('.ancora', { hasText: 'Muito útil' })).toHaveCount(4);
+  await expect(page.getByLabel('Não usei')).toHaveCount(4);
 
-  // Todas menos uma: ainda não envia.
+  // Todas menos uma: ainda não envia. Um recurso como "Não usei", que conta como resposta.
   for (const item of ITENS_DAS_ESCALAS.slice(0, -1)) {
-    await page.getByRole('group', { name: item.texto }).locator('input[value="2"]').check();
+    const grupo = page.getByRole('group', { name: item.texto });
+    if (item.id === 'rec-1') await grupo.getByLabel('Não usei').check();
+    else await grupo.locator('input[value="2"]').check();
   }
-  await expect(page.getByRole('status')).toHaveText('Falta 1 afirmação para marcar.');
+  await expect(page.getByRole('status')).toHaveText('Falta 1 item para marcar.');
   await expect(enviar).toBeDisabled();
   await page.getByRole('group', { name: ITENS_DAS_ESCALAS.at(-1)!.texto }).locator('input[value="5"]').check();
   await expect(enviar).toBeEnabled();
 
-  await page.getByLabel('O que mais ajudou?').fill('  ver a fila andando  ');
+  await page.getByLabel('O que foi mais útil na ferramenta, e por quê?').fill('  ver a fila andando  ');
   await enviar.click();
   await expect(page.getByRole('heading', { name: 'Obrigado pela participação' })).toBeVisible();
 
@@ -215,9 +222,13 @@ test('o questionário: as afirmações são obrigatórias, e as abertas, não', 
     oQueAjudou: 'ver a fila andando',
     oQueAtrapalhou: null,
   });
-  expect(Object.keys(guardadas[0].escalas)).toEqual(ITENS_DAS_ESCALAS.map((i) => i.id));
+  // "Não usei" fica ausente, e não como nota (D42).
+  expect(Object.keys(guardadas[0].escalas)).toEqual(
+    ITENS_DAS_ESCALAS.map((i) => i.id).filter((id) => id !== 'rec-1')
+  );
   expect(guardadas[0].escalas['sus-1']).toBe(2);
-  expect(guardadas[0].escalas['vis-6']).toBe(5);
+  expect(guardadas[0].escalas['vis-6']).toBe(2);
+  expect(guardadas[0].escalas['rec-4']).toBe(5);
 });
 
 test('quem recarrega depois do prazo vai direto à tela do tempo, sem abrir sessão', async ({ page }) => {

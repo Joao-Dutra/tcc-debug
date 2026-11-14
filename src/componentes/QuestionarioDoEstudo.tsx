@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { ArrowRightIcon } from '@heroicons/react/20/solid';
 import {
   LIMITE_DA_RESPOSTA_ABERTA,
+  NAO_USEI,
   QUESTIONARIO,
   VALORES_DA_ESCALA,
   afirmacoesQueFaltam,
@@ -14,9 +15,10 @@ import type { CampoAberto, EscalasEmAndamento, RespostaDoQuestionario } from '..
  * O questionário do fim do percurso (D37). O texto e a ordem moram em
  * `src/estudo/questionario.ts`; aqui fica só o formulário.
  *
- * As afirmações são obrigatórias, e o botão só se libera com todas: o SUS não
- * tem escore parcial. As abertas são opcionais. A tela diz quantas faltam, e
- * não quais, para não apontar a pergunta como se ela tivesse resposta certa.
+ * Os itens são obrigatórios, e o botão só se libera com todos: o SUS não
+ * tem escore parcial. No bloco dos recursos, "Não usei" é resposta (D42). As
+ * abertas são opcionais. A tela diz quantos faltam, e não quais, para não
+ * apontar a pergunta como se ela tivesse resposta certa.
  */
 export function QuestionarioDoEstudo({
   aoEnviar,
@@ -54,10 +56,11 @@ export function QuestionarioDoEstudo({
       {QUESTIONARIO.blocos.map((bloco) => (
         <section key={bloco.titulo}>
           <h2>{bloco.titulo}</h2>
+          {bloco.instrucao && <p>{bloco.instrucao}</p>}
           {bloco.itens.map((item) => (
             <fieldset key={item.id} className="afirmacao">
               <legend>{item.texto}</legend>
-              <div className="escala">
+              <div className={bloco.naoUsei ? 'escala com-nao-usei' : 'escala'}>
                 {VALORES_DA_ESCALA.map((valor) => (
                   <label key={valor}>
                     <input
@@ -68,9 +71,21 @@ export function QuestionarioDoEstudo({
                       onChange={() => setEscalas((atual) => ({ ...atual, [item.id]: valor }))}
                     />
                     <span className="valor">{valor}</span>
-                    {QUESTIONARIO.ancoras[valor] && <span className="ancora">{QUESTIONARIO.ancoras[valor]}</span>}
+                    {bloco.ancoras[valor] && <span className="ancora">{bloco.ancoras[valor]}</span>}
                   </label>
                 ))}
+                {bloco.naoUsei && (
+                  <label className="nao-usei">
+                    <input
+                      type="radio"
+                      name={item.id}
+                      value={NAO_USEI}
+                      checked={escalas[item.id] === NAO_USEI}
+                      onChange={() => setEscalas((atual) => ({ ...atual, [item.id]: NAO_USEI }))}
+                    />
+                    <span className="valor">{QUESTIONARIO.naoUsei}</span>
+                  </label>
+                )}
               </div>
             </fieldset>
           ))}
@@ -91,7 +106,7 @@ export function QuestionarioDoEstudo({
       ))}
       {faltam > 0 && (
         <p className="rodape-painel" role="status">
-          {faltam === 1 ? 'Falta 1 afirmação para marcar.' : `Faltam ${faltam} afirmações para marcar.`}
+          {faltam === 1 ? 'Falta 1 item para marcar.' : `Faltam ${faltam} itens para marcar.`}
         </p>
       )}
       {falha && <p className="erro">{falha}</p>}

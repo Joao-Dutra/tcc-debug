@@ -1188,6 +1188,10 @@ button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula)
 .questionario-do-estudo .escala label { display: flex; flex-direction: column; align-items: center;
   gap: var(--esp-4); padding: var(--esp-4) 0; cursor: pointer; text-align: center; }
 .questionario-do-estudo .escala input { width: 18px; height: 18px; margin: 0; accent-color: var(--acao); }
+/* Com "Não usei" (D42), uma coluna a mais, separada da escala por um fio:
+   não é o grau seis, é ficar fora dela. */
+.questionario-do-estudo .escala.com-nao-usei { grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.3fr); }
+.questionario-do-estudo .escala .nao-usei { border-left: 1px solid var(--regua); }
 .questionario-do-estudo .valor { font-weight: 700; }
 .questionario-do-estudo .ancora { font-size: var(--fonte-miuda); color: var(--grafite-suave);
   line-height: 1.3; }

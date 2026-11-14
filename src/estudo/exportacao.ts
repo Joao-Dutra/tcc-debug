@@ -4,7 +4,7 @@ import { duracaoAtivaMs } from '../nucleo/sinais-de-sessao';
 import { ETAPAS } from './percurso';
 import type { GrupoDoEstudo } from './percurso';
 import type { PerfilDoParticipante } from './perfil';
-import { ITENS_DA_VISUALIZACAO, ITENS_DO_SUS, escoreDoSus } from './questionario';
+import { ITENS_DA_VISUALIZACAO, ITENS_DOS_RECURSOS, ITENS_DO_SUS, escoreDoSus } from './questionario';
 
 /**
  * O CSV do estudo (D37): uma linha por sessão do percurso, com o participante,
@@ -145,6 +145,9 @@ export const COLUNAS_DO_CSV = [
   ...ITENS_DO_SUS.map((i) => i.id.replace('-', '_')),
   'sus_escore',
   ...ITENS_DA_VISUALIZACAO.map((i) => i.id.replace('-', '_')),
+  // Os recursos (D42), da versão 2 do questionário. Vazio é "não usei" na
+  // versão 2 e "não perguntado" na 1: a coluna da versão separa os dois.
+  ...ITENS_DOS_RECURSOS.map((i) => i.id.replace('-', '_')),
   'ajudou',
   'atrapalhou',
 ] as const;
@@ -235,7 +238,7 @@ export function linhasDoEstudo(
         ajudou: resposta?.oQueAjudou,
         atrapalhou: resposta?.oQueAtrapalhou,
       } as Record<ColunaDoCsv, Valor>;
-      for (const item of [...ITENS_DO_SUS, ...ITENS_DA_VISUALIZACAO]) {
+      for (const item of [...ITENS_DO_SUS, ...ITENS_DA_VISUALIZACAO, ...ITENS_DOS_RECURSOS]) {
         linha[item.id.replace('-', '_') as ColunaDoCsv] = resposta?.escalas[item.id];
       }
       return { linha, participante };

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   ITENS_DA_VISUALIZACAO,
   ITENS_DAS_ESCALAS,
+  ITENS_DOS_RECURSOS,
+  NAO_USEI,
   ITENS_DO_SUS,
   QUESTIONARIO,
   VERSAO_DO_QUESTIONARIO,
@@ -23,6 +25,8 @@ import type { EscalasEmAndamento, ValorDaEscala } from './questionario';
 
 const IMPRESSOES: Record<number, string> = {
   1: '786c7e75',
+  // D42: o bloco dos recursos, com "Não usei", e a primeira aberta reescrita.
+  2: '33da6408',
 };
 
 /** FNV-1a de 32 bits, a mesma do teste do aviso. */
@@ -86,12 +90,34 @@ describe('o texto do questionário', () => {
   });
 
   it('as duas abertas são as pedidas', () => {
-    expect(QUESTIONARIO.abertas.map((a) => a.pergunta)).toEqual(['O que mais ajudou?', 'O que atrapalhou ou faltou?']);
+    expect(QUESTIONARIO.abertas.map((a) => a.pergunta)).toEqual([
+      'O que foi mais útil na ferramenta, e por quê?',
+      'O que atrapalhou ou faltou?',
+    ]);
+  });
+
+  it('o bloco dos recursos tem os quatro dos dois níveis de apoio, com escala de utilidade e "Não usei" (D42)', () => {
+    expect(ITENS_DOS_RECURSOS.map((i) => i.id)).toEqual(['rec-1', 'rec-2', 'rec-3', 'rec-4']);
+    expect(ITENS_DOS_RECURSOS.map((i) => i.texto)).toEqual([
+      'Apontar a linha do defeito, clicando no número dela',
+      'Avançar e voltar a execução passo a passo',
+      'O desenho da estrutura de dados',
+      'Os casos de teste',
+    ]);
+    // As dicas só existem com apoio (D9): não entram.
+    expect(ITENS_DOS_RECURSOS.map((i) => i.texto).join(' ')).not.toMatch(/dica/i);
+    const bloco = QUESTIONARIO.blocos.find((b) => b.titulo === 'Os recursos da ferramenta')!;
+    expect(bloco.itens).toBe(ITENS_DOS_RECURSOS);
+    expect(bloco.ancoras).toEqual({ 1: 'Nada útil', 5: 'Muito útil' });
+    expect(bloco.naoUsei).toBe(true);
+    // Só os recursos aceitam "Não usei"; o SUS e a visualização seguem com a escala da fonte.
+    expect(QUESTIONARIO.blocos.filter((b) => b.naoUsei)).toEqual([bloco]);
+    for (const b of QUESTIONARIO.blocos.filter((x) => !x.naoUsei)) expect(b.ancoras).toEqual(QUESTIONARIO.ancoras);
   });
 
   it('cada item tem um id só, e o banco recebe exatamente estas chaves', () => {
     const ids = ITENS_DAS_ESCALAS.map((i) => i.id);
-    expect(new Set(ids).size).toBe(16);
+    expect(new Set(ids).size).toBe(20);
     expect(Object.keys(montarResposta(respostas([]), {})!.escalas)).toEqual(ids);
   });
 });
@@ -102,7 +128,29 @@ describe('a resposta', () => {
     delete quase['vis-6'];
     expect(afirmacoesQueFaltam(quase)).toBe(1);
     expect(montarResposta(quase, {})).toBeNull();
-    expect(afirmacoesQueFaltam({})).toBe(16);
+    expect(afirmacoesQueFaltam({})).toBe(20);
+  });
+
+  it('"Não usei" conta como resposta, e fica ausente, e não como nota (D42)', () => {
+    const escalas = respostas([]);
+    escalas['rec-1'] = NAO_USEI;
+    escalas['rec-4'] = NAO_USEI;
+    expect(afirmacoesQueFaltam(escalas)).toBe(0);
+    const resposta = montarResposta(escalas, {})!;
+    expect(resposta.escalas).not.toHaveProperty('rec-1');
+    expect(resposta.escalas).not.toHaveProperty('rec-4');
+    expect(resposta.escalas['rec-2']).toBe(3);
+    // O que vai ao banco passa no check da 0004: só inteiros de 1 a 5.
+    for (const valor of Object.values(resposta.escalas)) expect([1, 2, 3, 4, 5]).toContain(valor);
+    // E o escore do SUS não muda com os recursos.
+    expect(escoreDoSus(escalas)).toBe(escoreDoSus(respostas([])));
+  });
+
+  it('"Não usei" não vale fora do bloco dos recursos', () => {
+    // O formulário não oferece a opção lá; se chegasse, o item sairia ausente, e o SUS sem escore.
+    const escalas = respostas([]);
+    escalas['sus-3'] = NAO_USEI;
+    expect(escoreDoSus(escalas)).toBeNull();
   });
 
   it('as abertas são opcionais, e a em branco vai nula', () => {

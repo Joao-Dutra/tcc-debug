@@ -121,11 +121,12 @@ describe('o formato do arquivo', () => {
       'suspeito',
       'motivos_de_suspeita',
     ]);
-    expect(cabecalho.slice(-20)).toEqual([
+    expect(cabecalho.slice(-24)).toEqual([
       'versao_do_questionario',
       'sus_1', 'sus_2', 'sus_3', 'sus_4', 'sus_5', 'sus_6', 'sus_7', 'sus_8', 'sus_9', 'sus_10',
       'sus_escore',
       'vis_1', 'vis_2', 'vis_3', 'vis_4', 'vis_5', 'vis_6',
+      'rec_1', 'rec_2', 'rec_3', 'rec_4',
       'ajudou',
       'atrapalhou',
     ]);
@@ -317,6 +318,15 @@ describe('as colunas da sessão', () => {
     const comMarca = lerCsv(csvDoEstudo([sessao(), sessao()], [participanteA], [], marcas));
     expect(comMarca).toHaveLength(2);
     expect(comMarca[0].motivos_de_suspeita).toBe('gabarito;sessoes-demais;sessao-grande');
+  });
+
+  it('os recursos saem com a nota, e "não usei" sai vazio (D42)', () => {
+    const escalas = Object.fromEntries(ITENS_DAS_ESCALAS.map((i) => [i.id, 4]));
+    delete escalas['rec-2'];
+    const resposta: RespostaLida = { ...respostaA, versao: 2, escalas };
+    const [linha] = lerCsv(csvDoEstudo([sessao()], [participanteA], [resposta], null));
+    expect([linha.rec_1, linha.rec_2, linha.rec_3, linha.rec_4]).toEqual(['4', '', '4', '4']);
+    expect(linha.versao_do_questionario).toBe('2');
   });
 
   it('a sessão de fora do estudo não entra', () => {
