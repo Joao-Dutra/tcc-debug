@@ -2824,6 +2824,9 @@ pela altura, e o tamanho das células não muda.
 
 ### 4. Tutorial do participante
 
+*Revisto em D42: os títulos dos passos 2, 5 e 6 passaram a "Como executar",
+"Identificar o erro" e "Como corrigir o erro". O texto dos passos não mudou.*
+
 Um modal passo a passo na tela de exercício, com seis passos: como a tela se
 organiza, executar, avançar os passos, ler a visualização, apontar a linha,
 editar e executar de novo. **Abre sozinho na primeira entrada do aparelho**, e
@@ -3729,6 +3732,9 @@ sobre ela que o piloto de novembro roda.
   etapa abre outra sessão, com o mesmo prazo.
 
 ### O questionário
+
+*Revisto em D42: a versão 2 acrescenta o bloco dos recursos da ferramenta,
+com "Não usei", e troca a primeira aberta. O SUS não muda.*
 
 Depois do último exercício — pelo botão ou pelo prazo —, o questionário; dele,
 o agradecimento. Ele vem **antes** do agradecimento porque é no agradecimento
@@ -4716,3 +4722,81 @@ A Fase 2 do painel (D38), os papéis, passa a ser a migração 0007.
 | A etiqueta nas sessões de quem foi marcado, e só nelas; sem as marcas, o aviso e o CSV com as colunas vazias | `e2e/painel-do-estudo.spec.ts` |
 | O intervalo do limite na tela é o do banco; todo motivo da 0006 tem texto; o ajuste vai pela função, e o inválido nem sai da tela | `src/componentes/controle.test.ts` e `e2e/controle.spec.ts` |
 | O recado diz que é pesquisa e que fica registrado, sem entregar a isca nem os limites, e aparece no console de verdade | `src/componentes/aviso-no-console.test.ts` e `e2e/console.spec.ts` |
+
+## D42 — Títulos do tutorial e os recursos no questionário
+
+**Decisão.** Dois ajustes no que o participante vê, antes do piloto de
+15/11/2026: três títulos do tutorial do participante (D32) e a versão 2 do
+questionário (D37), com um bloco sobre a utilidade de cada recurso da
+ferramenta. **O SUS não muda.**
+
+### O tutorial
+
+| Passo | Antes | Agora |
+|---|---|---|
+| 2 | Executar | Como executar |
+| 5 | Apontar a linha | Identificar o erro |
+| 6 | Editar e executar de novo | Como corrigir o erro |
+
+Mudam só os títulos. O texto de cada passo continua o de D32, e com ele as
+duas regras: ensina a interface, nunca a estratégia, e é o mesmo nos dois
+níveis de apoio. O tutorial continua uma constante, sem receber o nível. O
+log não muda: ele registra o passo alcançado pelo número, e não pelo título
+(D32).
+
+### O questionário, versão 2
+
+- **O bloco "Os recursos da ferramenta"**, depois dos outros dois: para cada
+  recurso, de 1 ("Nada útil") a 5 ("Muito útil"), ou "Não usei". São quatro:
+  apontar a linha do defeito; avançar e voltar a execução passo a passo; o
+  desenho da estrutura de dados; os casos de teste.
+- **As dicas ficaram de fora, embora estivessem no pedido.** O pedido também
+  era usar só recursos que existem nos dois níveis de apoio, e as dicas só
+  existem com apoio (D9). No percurso, cada participante passa pelos dois
+  níveis, mas em etapas diferentes conforme o grupo (D37). Uma nota para as
+  dicas mediria um recurso que um grupo viu em três exercícios, e o outro em
+  dois, além do aquecimento. Os casos de teste entram: existem nos dois
+  níveis, com o esperado e o obtido só com apoio.
+- **"Não usei" é resposta, e não nota.** O item conta como respondido, e o
+  envio se libera. Mas o valor não vai para `escalas`: fica ausente no banco e
+  vazio no CSV. Um 1 no lugar dele diria que o recurso foi inútil para quem
+  nem chegou a usá-lo. Como na versão 2 todo item é obrigatório, a ausência de
+  um recurso numa resposta da versão 2 quer dizer "não usei". O banco não
+  muda: o `check` da 0004 só exige inteiros de 1 a 5 nas chaves presentes.
+- **"Não usei" não é o grau seis.** Fica numa coluna separada da escala por
+  um fio, e só no bloco dos recursos: o SUS e as afirmações da visualização
+  seguem com a escala da fonte, sem a opção.
+- **A primeira aberta passou a "O que foi mais útil na ferramenta, e por
+  quê?"**, no lugar de "O que mais ajudou?". O campo no banco e a coluna do CSV
+  continuam os mesmos (`o_que_ajudou`, `ajudou`): é a versão do questionário
+  que diz que pergunta foi feita.
+- **A contagem do que falta** diz "itens", e não "afirmações": os recursos
+  não são afirmações.
+- **`VERSAO_DO_QUESTIONARIO` passa a 2**, com a impressão do texto guardada no
+  teste, ao lado da 1 (D37).
+
+### O CSV
+
+Quatro colunas, `rec_1` a `rec_4`, depois de `vis_6` e antes das abertas.
+**Vazio quer dizer coisas diferentes conforme a versão:** "não usei" na versão
+2, e "não perguntado" na 1. A coluna `versao_do_questionario` separa as duas.
+
+### O congelamento
+
+As duas mudanças são do que o participante vê, e entram no congelamento de
+D39 com a data de hoje, 14/11/2026. O piloto final roda sobre esta versão, e a
+coleta sobre a mesma.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Os seis títulos do tutorial, e o texto de cada passo ainda cobrindo executar, avançar, o desenho, apontar e editar | `src/componentes/passos-do-tutorial.test.ts` |
+| O texto da versão 2 tem impressão própria; o SUS continua o da fonte; os quatro recursos, sem as dicas, com as âncoras de utilidade e "Não usei" só neles; a aberta nova | `src/estudo/questionario.test.ts` |
+| "Não usei" conta como resposta e sai ausente das escalas, e não muda o escore do SUS | o mesmo arquivo |
+| `rec_1` a `rec_4` no CSV, com a nota, e vazio para "não usei" | `src/estudo/exportacao.test.ts` |
+| Na tela, o bloco com as âncoras e "Não usei" em cada recurso; a contagem em itens; "Não usei" ausente da resposta guardada; a aberta nova | `e2e/estudo.spec.ts` |
+| Com banco, a resposta vai com a versão 2 | `e2e/estudo-com-banco.spec.ts` |
+
+Conferido por captura em 1366 × 657 e em 360 px de largura, sem rolagem
+lateral.
