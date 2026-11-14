@@ -1526,6 +1526,229 @@ describe('painel do pesquisador: aplicações (0005)', () => {
   });
 });
 
+// ------------------------------------------------- proteção leve (0006) ---
+
+/** A resposta da isca, igual à da 0006. */
+const RESPOSTA_DA_ISCA = 'Boa tentativa 😄 O gabarito não mora aqui. Volta pro exercício!';
+
+/** Os limites da 0006, repetidos aqui para a verificação dizer o que conferiu. */
+const LIMITE_DE_SESSOES_NO_ESTUDO = 40;
+const TAMANHO_MAXIMO = 2 * 1024 * 1024;
+
+async function marcasNoBanco(participanteId: string) {
+  return (await linhasNoBanco(
+    admin
+      .from('marcas_de_suspeita')
+      .select('motivo, vezes, detalhe')
+      .eq('participante_id', participanteId)
+      .order('motivo')
+  )) as { motivo: string; vezes: number; detalhe: Record<string, unknown> }[];
+}
+
+async function sessoesDaContaNaAplicacao(participanteId: string, aplicacao: string | null): Promise<number> {
+  let consulta = admin
+    .from('sessoes')
+    .select('*', { count: 'exact', head: true })
+    .eq('participante_id', participanteId);
+  consulta = aplicacao === null ? consulta.is('aplicacao', null) : consulta.eq('aplicacao', aplicacao);
+  const { count, error } = await consulta;
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+describe('proteção leve (0006)', () => {
+  const doLimite = aplicacaoDeTeste('limite-sessoes');
+  const cheia = aplicacaoDeTeste('limite-participantes');
+  let brincalhao: Conta;
+  let colega: Conta;
+  const id = (rotulo: string) => `${EXERCICIO_DE_TESTE}-0006-${rotulo}-${carimbo}`;
+  const noEstudo = (rotulo: string, mudanca: Record<string, unknown> = {}) => ({
+    ...linhaDeSessao(id(rotulo), brincalhao.id),
+    aplicacao: doLimite,
+    estudo: { etapa: 1, aquecimento: false },
+    ...mudanca,
+  });
+  // Um evento com o código inteiro, como a edição grava (D6), passando do limite.
+  const eventosGrandes = [{ tipo: 'edicao', t: 1, codigo: 'x'.repeat(TAMANHO_MAXIMO + 1024) }];
+
+  beforeAll(async () => {
+    const { error } = await admin
+      .from('aplicacoes_do_estudo')
+      .insert({ codigo: doLimite, aberta: true, protegida: false });
+    if (error) throw new Error(`não foi possível criar a aplicação de teste: ${error.message}`);
+    brincalhao = await criarConta('brincalhao');
+    colega = await criarConta('colega');
+    for (const conta of [brincalhao, colega]) {
+      const { error: erroDeEntrada } = await entrar(conta, doLimite);
+      if (erroDeEntrada) throw new Error(`a conta não entrou na aplicação de teste: ${erroDeEntrada.message}`);
+    }
+  });
+
+  it(`até ${LIMITE_DE_SESSOES_NO_ESTUDO} sessões novas gravam, e chegar ao limite não marca ninguém`, async () => {
+    const lote = Array.from({ length: LIMITE_DE_SESSOES_NO_ESTUDO }, (_, i) => noEstudo(`s${i}`));
+    const { error } = await brincalhao.cliente.from('sessoes').upsert(lote, { onConflict: 'id' });
+    expect(error).toBeNull();
+    expect(await sessoesDaContaNaAplicacao(brincalhao.id, doLimite)).toBe(LIMITE_DE_SESSOES_NO_ESTUDO);
+    expect(await marcasNoBanco(brincalhao.id)).toEqual([]);
+  });
+
+  it('no limite, o reenvio grava, e as novas do lote são descartadas sem derrubar as outras', async () => {
+    // O lote que o navegador manda: tudo o que está no aparelho, por upsert.
+    const lote = [
+      noEstudo('s0', { duracao_total_ms: 999 }),
+      noEstudo('nova-1'),
+      noEstudo('s7', { duracao_total_ms: 777 }),
+      noEstudo('nova-2'),
+    ];
+    const { error } = await brincalhao.cliente.from('sessoes').upsert(lote, { onConflict: 'id' });
+    expect(error, 'o lote não pode falhar inteiro').toBeNull();
+    expect((await sessaoNoBanco(id('s0')))?.duracao_total_ms, 'reenvio de s0').toBe(999);
+    expect((await sessaoNoBanco(id('s7')))?.duracao_total_ms, 'reenvio de s7').toBe(777);
+    expect(await sessaoNoBanco(id('nova-1')), 'a 41ª').toBeNull();
+    expect(await sessaoNoBanco(id('nova-2')), 'a 42ª').toBeNull();
+    expect(await sessoesDaContaNaAplicacao(brincalhao.id, doLimite)).toBe(LIMITE_DE_SESSOES_NO_ESTUDO);
+    expect(await marcasNoBanco(brincalhao.id)).toMatchObject([
+      { motivo: 'sessoes-demais', vezes: 2, detalhe: { aplicacao: doLimite } },
+    ]);
+  });
+
+  it('fora do estudo, o limite do estudo não vale', async () => {
+    const { error } = await brincalhao.cliente
+      .from('sessoes')
+      .upsert([{ ...linhaDeSessao(id('fora'), brincalhao.id) }], { onConflict: 'id' });
+    expect(error).toBeNull();
+    expect(await sessoesDaContaNaAplicacao(brincalhao.id, null)).toBe(1);
+  });
+
+  it('a sessão de mais de 2 MiB é descartada sem derrubar o lote, e marca quem mandou', async () => {
+    const pequena = { ...linhaDeSessao(id('colega-ok'), colega.id), aplicacao: doLimite, estudo: { etapa: 1, aquecimento: false } };
+    const grande = { ...pequena, id: id('colega-grande'), eventos: eventosGrandes };
+    const { error } = await colega.cliente.from('sessoes').upsert([pequena, grande], { onConflict: 'id' });
+    // Um 413 aqui quer dizer que o servidor do Supabase recusou o pedido antes
+    // de ele chegar ao banco: o lote inteiro falharia, e o descarte da 0006
+    // nunca seria alcançado.
+    expect(error, `o lote falhou inteiro: ${error?.message}`).toBeNull();
+    expect(await sessaoNoBanco(id('colega-ok')), 'a pequena do mesmo lote').not.toBeNull();
+    expect(await sessaoNoBanco(id('colega-grande')), 'a grande').toBeNull();
+    const marcas = await marcasNoBanco(colega.id);
+    expect(marcas).toMatchObject([{ motivo: 'sessao-grande', vezes: 1 }]);
+    expect(Number(marcas[0].detalhe.bytes)).toBeGreaterThan(TAMANHO_MAXIMO);
+
+    // Regravar a existente com mais de 2 MiB também é descartado: a antiga fica.
+    const crescida = { ...pequena, eventos: eventosGrandes, duracao_total_ms: 5 };
+    expect((await colega.cliente.from('sessoes').upsert([crescida], { onConflict: 'id' })).error).toBeNull();
+    expect((await sessaoNoBanco(id('colega-ok')))?.duracao_total_ms).toBe(0);
+  });
+
+  it('a sessão grande em nome de outra pessoa é recusada pelo RLS, e não marca essa pessoa', async () => {
+    const antes = await marcasNoBanco(colega.id);
+    const forjada = { ...noEstudo('forjada'), participante_id: colega.id, eventos: eventosGrandes };
+    const { error } = await brincalhao.cliente.from('sessoes').upsert([forjada], { onConflict: 'id' });
+    recusadaPeloRls(error);
+    expect(await marcasNoBanco(colega.id)).toEqual(antes);
+  });
+
+  it('a isca responde com bom humor, marca quem chamou e conta as vezes', async () => {
+    for (let i = 0; i < 2; i++) {
+      const { data, error } = await brincalhao.cliente.rpc('obter_gabarito', { p_exercicio: 'pilha-desempilhar' });
+      expect(error).toBeNull();
+      expect(data).toBe(RESPOSTA_DA_ISCA);
+    }
+    const marcas = await marcasNoBanco(brincalhao.id);
+    expect(marcas.find((m) => m.motivo === 'gabarito')).toMatchObject({
+      vezes: 2,
+      detalhe: { exercicio: 'pilha-desempilhar' },
+    });
+  });
+
+  it('o visitante sem identidade recebe a mesma resposta', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    const { data, error } = await visitante.rpc('obter_gabarito');
+    expect(error).toBeNull();
+    expect(data).toBe(RESPOSTA_DA_ISCA);
+  });
+
+  it('o participante não lê, não apaga e não escreve marca nenhuma — nem a própria', async () => {
+    const lidas = await brincalhao.cliente.from('marcas_de_suspeita').select('motivo');
+    expect(lidas.error).toBeNull();
+    expect(lidas.data ?? []).toEqual([]);
+
+    const antes = await marcasNoBanco(brincalhao.id);
+    const apagar = await brincalhao.cliente.from('marcas_de_suspeita').delete().eq('participante_id', brincalhao.id);
+    recusadaPeloRls(apagar.error);
+    expect(await marcasNoBanco(brincalhao.id)).toEqual(antes);
+
+    const marcarOutro = await brincalhao.cliente
+      .from('marcas_de_suspeita')
+      .insert({ participante_id: colega.id, motivo: 'gabarito' });
+    recusadaPeloRls(marcarOutro.error);
+    const pelaFuncao = await brincalhao.cliente.rpc('marcar_suspeita', {
+      p_quem: colega.id,
+      p_motivo: 'gabarito',
+      p_detalhe: {},
+    });
+    expect(pelaFuncao.error, 'marcar_suspeita chamada de fora').not.toBeNull();
+    expect((await marcasNoBanco(colega.id)).map((m) => m.motivo)).toEqual(['sessao-grande']);
+  });
+
+  it('o pesquisador lê as marcas', async () => {
+    const { data, error } = await pesquisador.cliente
+      .from('marcas_de_suspeita')
+      .select('participante_id, motivo')
+      .in('participante_id', [brincalhao.id, colega.id]);
+    expect(error).toBeNull();
+    expect((data ?? []).length).toBe(3);
+  });
+
+  it('o limite de participantes: só o pesquisador ajusta, com o intervalo e sem ficar abaixo das entradas', async () => {
+    expect(await acao(pesquisador, 'criar_aplicacao', { p_codigo: cheia, p_teste: true })).toMatchObject({ ok: true });
+    for (const conta of [a, professorA]) {
+      await esperarRecusa(conta, 'definir_limite_de_participantes', { p_codigo: cheia, p_limite: 2 }, 'so-pesquisador');
+    }
+    await esperarRecusa(pesquisador, 'definir_limite_de_participantes', { p_codigo: cheia, p_limite: 0 }, 'limite-invalido');
+    expect(await acao(pesquisador, 'definir_limite_de_participantes', { p_codigo: cheia, p_limite: 2 })).toMatchObject({
+      ok: true,
+      limite: 2,
+    });
+    const { data } = await pesquisador.cliente.rpc('listar_aplicacoes');
+    const linha = (data as { codigo: string; limite_de_participantes: number }[]).find((l) => l.codigo === cheia);
+    expect(linha?.limite_de_participantes).toBe(2);
+  });
+
+  it('a aplicação cheia recusa a entrada seguinte, e a vaga não se perde', async () => {
+    const tres = [await criarConta('cheia-1'), await criarConta('cheia-2'), await criarConta('cheia-3')];
+    expect((await entrar(tres[0], cheia)).error).toBeNull();
+    expect((await entrar(tres[1], cheia)).error).toBeNull();
+    const terceira = await entrar(tres[2], cheia);
+    expect(terceira.error?.code, terceira.error?.message).toBe('P0001');
+    expect(terceira.error?.message).toMatch(/atingiu o limite de 2 participantes/);
+    expect(await entradasNoBanco(cheia)).toBe(2);
+    // Quem já entrou entra de novo, com a aplicação cheia, e recebe a mesma vaga.
+    expect((await entrar(tres[1], cheia)).linha?.ordem_de_entrada).toBe(2);
+    // Sala cheia não é brincadeira: ninguém é marcado.
+    expect(await marcasNoBanco(tres[2].id)).toEqual([]);
+
+    await esperarRecusa(
+      pesquisador,
+      'definir_limite_de_participantes',
+      { p_codigo: cheia, p_limite: 1 },
+      'abaixo-das-entradas'
+    );
+    expect(await acao(pesquisador, 'definir_limite_de_participantes', { p_codigo: cheia, p_limite: 3 })).toMatchObject({ ok: true });
+    expect((await entrar(tres[2], cheia)).linha?.ordem_de_entrada).toBe(3);
+  });
+
+  it('o piloto ganhou o limite padrão, ou o que o pesquisador definiu', async () => {
+    const { data, error } = await admin
+      .from('aplicacoes_do_estudo')
+      .select('limite_de_participantes')
+      .eq('codigo', 'piloto-nov')
+      .single();
+    expect(error).toBeNull();
+    expect(data?.limite_de_participantes).toBeGreaterThanOrEqual(1);
+  });
+});
+
 describe('limpeza', () => {
   it('não deixa resíduo no banco do estudo', async () => {
     await devolverInterruptor();
@@ -1548,6 +1771,10 @@ describe('limpeza', () => {
         admin.from('respostas_do_questionario').select('participante_id').in('participante_id', criadas)
       );
       expect(respostas, 'respostas das contas de teste').toEqual([]);
+      const marcas = await linhasNoBanco(
+        admin.from('marcas_de_suspeita').select('participante_id').in('participante_id', criadas)
+      );
+      expect(marcas, 'marcas de suspeita das contas de teste').toEqual([]);
     }
     const aplicacoes = await linhasNoBanco(
       admin.from('aplicacoes_do_estudo').select('codigo').like('codigo', `${PREFIXO_DO_EMAIL}%`)
