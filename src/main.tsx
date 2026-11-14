@@ -13,6 +13,11 @@ import './index.css';
 import { ativarEspelho } from './nucleo/metricas';
 import { espelhoLocal } from './componentes/espelho-local';
 import { ligarPersistencia } from './supabase/sessoes-remotas';
+import { avisarNoConsole } from './componentes/aviso-no-console';
+
+// O recado para quem abre as ferramentas de desenvolvedor (D41). Só no
+// console: a tela não muda.
+avisarNoConsole();
 
 // Antes da primeira tela: o que foi arquivado em outra carga da página volta
 // ao arquivo em memória (D15).
