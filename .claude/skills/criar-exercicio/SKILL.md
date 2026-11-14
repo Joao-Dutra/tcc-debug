@@ -108,6 +108,12 @@ C entende a linha sem consultar nada sobre JavaScript? Atribuir a `length` para
 encolher um vetor, por exemplo, não está na lista, mas não tem equivalente em
 nenhuma das duas linguagens.
 
+`codigoCorreto` é sempre um texto entre crases, sem crase nem `${}` dentro: o
+build o tira do pacote do navegador por essa forma, e para se não a reconhecer
+(D41). Só os exemplos do formulário do professor, em `exemplos-publicos.ts`,
+levam o código correto ao navegador — e nenhum deles pode estar no percurso
+do estudo.
+
 A regra vale para `codigoComDefeito` e `codigoCorreto`, que é o que o estudante
 lê. As expressões dos casos de teste não aparecem na tela.
 

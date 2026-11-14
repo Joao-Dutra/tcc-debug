@@ -3397,6 +3397,10 @@ junto ao congelamento de D32.
 
 ### Os exemplos vêm de um exercício só
 
+*Revisto em D41: os exemplos que eram do percurso do estudo foram trocados
+pelos equivalentes de fora dele, porque o código correto deles vai ao
+navegador. A tabela abaixo é a de D35.*
+
 Os exemplos de um formulário vêm todos de **um** exercício do catálogo: o da
 estrutura escolhida, ou o da ordenação, quando é esse o agrupamento. Assim
 eles são coerentes entre si — o código com defeito é o do código correto ao
@@ -4034,6 +4038,9 @@ arnês fica para uma fatia própria.
 
 ### Fase 2: os papéis (0006)
 
+*A migração 0006 ficou com a proteção leve (D41); os papéis passam a ser a
+0007.*
+
 **Adiada para depois da coleta (29/10/2026), por decisão do autor.** Até lá,
 os papéis continuam sendo concedidos à mão no banco, como em D29.
 
@@ -4500,3 +4507,212 @@ A medição dos candidatos foi um teste provisório, fora do repositório, como 
 D34. Os quadros que denunciam foram conferidos por captura no navegador, nos
 dois níveis de apoio, em 1366 × 657. Na suíte, 505 testes rápidos e 130 de
 ponta a ponta, todos passando.
+
+## D41 — Proteção leve contra brincadeira no laboratório
+
+**Decisão.** Uma camada de proteção leve, pensada para a sala de aula, e não
+para um atacante. O objetivo é que um aluno mexendo no console não atrapalhe
+os colegas nem suje os dados do estudo. São cinco peças: limites no banco, por
+gatilho (migração 0006); o código correto fora do pacote do navegador; uma
+isca que marca quem procura o gabarito; a marca virando coluna no CSV e
+etiqueta no painel; e um recado no console. **Nada aqui exclui ninguém da
+análise.** A marca só identifica, e quem decide o que fazer com ela é quem
+analisa.
+
+### O que motivou
+
+O estudo roda num laboratório, com a turma inteira ao mesmo tempo, e o piloto
+de 15/11/2026 é o ensaio da coleta. Num laboratório sempre tem alguém que abre
+as ferramentas de desenvolvedor. A chave pública está no pacote (D21), e com
+ela qualquer um fala com a API como o navegador fala: manda mil sessões, uma
+sessão de cem megabytes, cria identidades em laço. O RLS (D24) já impede ler e
+alterar o que é dos outros. Faltava o volume, e faltava saber quem tentou.
+
+### Os limites (0006)
+
+| Limite | Valor | Por quê esse número |
+|---|---|---|
+| Sessões por participante, numa aplicação | 40 | O percurso tem seis etapas, e cada recarga abre outra sessão (D37): 40 é mais de seis recargas por etapa |
+| Sessões por participante, fora do estudo | 2000 | Um semestre de uso diário da vitrine |
+| Tamanho de uma sessão | 2 MiB | Oito minutos digitando sem parar dão umas 240 edições com o código inteiro (uma por rajada de 2 s), perto de 300 KB |
+| Participantes por aplicação | 60, ajustável | Cabe numa turma com folga; o pesquisador ajusta no painel antes da aula |
+
+- **O limite de sessões descarta a linha, e não dá erro.** O navegador sobe as
+  pendentes num lote só, por `upsert` (D21). Uma exceção numa linha derrubaria
+  o lote inteiro, e de novo a cada tentativa. No fim do percurso, a troca de
+  identidade espera a fila esvaziar (D37), e o aluno que passou do limite
+  ficaria preso em "chame o pesquisador", com as sessões legítimas dele junto.
+  Um gatilho `BEFORE` que devolve `null` descarta só aquela linha: as outras
+  gravam, e o navegador para de reenviar. O descarte deixa a marca.
+- **O reenvio da mesma sessão passa sempre.** Num `upsert`, o reenvio chega ao
+  gatilho como `insert`. O gatilho reconhece o id que já existe e o deixa
+  seguir para a atualização, mesmo com o participante no limite.
+- **O tamanho é o da linha inteira**, e não só de `eventos`: o resumo, o id e
+  o exercício também vêm do navegador, e o limite só nos eventos levaria o
+  excesso para outra coluna.
+- **O limite fora do estudo não estava no pedido.** Entrou porque, pelo
+  console, o mesmo aluno inundaria as sessões sem aplicação, e o painel de
+  métricas lê todas.
+- **O limite de participantes dá erro, e não descarta.** A entrada é uma
+  chamada só, e a tela precisa saber que não entrou. A exceção desfaz a entrada
+  inteira, com o incremento da alternância junto, e a vaga não se perde — o
+  mesmo caminho do perfil fora da lista (D37). O aluno vê a mensagem de falha
+  que já existia, que pede para chamar o pesquisador, sem dizer que a sala
+  lotou: trocar o texto mudaria a tela congelada (D39).
+- **O limite não fica abaixo de quem já entrou.** Para não receber mais
+  ninguém, fecha-se a aplicação. A função é auditada, no molde da 0005.
+- **A chave secreta e as funções do banco passam sem limite.** Sem
+  `auth.uid()`, não há de quem contar: a limpeza e a verificação não esbarram
+  em nada.
+
+### A isca
+
+`obter_gabarito`, uma função com nome tentador, aberta a todos. Não lê tabela
+nenhuma — não há gabarito no banco para devolver nem por engano. Marca quem
+chamou e responde: "Boa tentativa 😄 O gabarito não mora aqui. Volta pro
+exercício!". O visitante sem identidade recebe a mesma resposta e não é
+marcado, porque não há de quem seja a marca.
+
+### As marcas
+
+`marcas_de_suspeita` guarda uma linha por pessoa e motivo, com a contagem e o
+detalhe da última vez. Quem repete mil vezes não cria mil linhas: a tabela
+não vira, ela mesma, alvo de flood. São três motivos: `gabarito`, a isca;
+`sessoes-demais` e `sessao-grande`, os descartes. Bater num desses limites é
+tão sinal de mexer no console quanto a isca, porque o uso normal fica longe
+deles. Bater no limite de participantes não marca ninguém: é sala cheia, e não
+brincadeira.
+
+- **A marca vai para quem chamou, e não para o dono que a linha declara.** Um
+  gatilho que marcasse `participante_id` deixaria um aluno marcar outro,
+  mandando uma sessão grande com o id alheio. Linha em nome de outra pessoa
+  passa direto ao RLS, que a recusa com erro, e ninguém é marcado.
+- **Só o pesquisador lê.** O participante não lê, não apaga nem escreve marca
+  nenhuma, nem a própria; a função que marca não é chamável de fora.
+- **No CSV do estudo (D37)**, duas colunas depois do perfil: `suspeito`,
+  verdadeiro para qualquer marca, e `motivos_de_suspeita`, os motivos
+  separados por ponto e vírgula, na ordem `gabarito`, `sessoes-demais`,
+  `sessao-grande`. A marca é da identidade, e no estudo a identidade é nova a
+  cada entrada (D37). Quando a leitura das marcas falha — num projeto sem a
+  0006, por exemplo —, as duas colunas saem vazias, e não falsas: "não
+  sabemos" não pode virar "não é suspeito". O painel avisa a falha, e o resto
+  do CSV sai normalmente.
+- **No painel de métricas**, a etiqueta "suspeito" ao lado de "varredura" e
+  "ociosa", com os motivos no título, em todas as sessões de quem foi marcado.
+
+### O código correto fora do pacote
+
+Até aqui, o pacote entregue ao navegador levava o catálogo inteiro, com o
+código correto de todo exercício, inclusive os seis do percurso. Agora um
+plugin do build troca o código correto por texto vazio em cada módulo de
+exercício.
+
+- **Menos os exemplos do formulário do professor (D35)**, que precisam dele
+  para o campo "código correto". Os exemplos que eram do percurso foram
+  trocados pelos equivalentes de fora dele: `pilha-reverter`,
+  `fila-inverter`, `lista-inserir-posicao` e `vetor-ordenar-por-insercao`. O
+  `vetor-dobrar` já não era do percurso. A lista mora em
+  `exemplos-publicos.ts`, e o tipo dos exemplos só aceita ids dela. A pilha de
+  exemplo deixou de ser a de capacidade fixa: o professor que quiser declarar
+  `capacidade` vê o nome no contrato, mas não tem mais o exemplo pronto.
+- **No build e no servidor de desenvolvimento**, para os testes de ponta a
+  ponta rodarem sobre o mesmo pacote que o participante recebe. Não na suíte
+  rápida, que confere o catálogo inteiro.
+- **Cada exercício continua sendo um módulo só**, com as duas versões lado a
+  lado. Separar o código correto em outro arquivo dobraria os arquivos do
+  catálogo para resolver um problema que é só do que vai ao navegador.
+- **O build para quando não reconhece a forma.** O código correto é sempre um
+  texto entre crases, sem crase nem `${}` dentro (D17). Um exercício fora
+  dessa forma iria ao navegador inteiro e em silêncio.
+- **O build confere o próprio pacote.** No fim, procura cada código correto
+  retirado no que vai ser publicado, e para se achar algum.
+
+### O recado no console
+
+Na carga de qualquer página, uma linha no console: "Oi! 👋 Isto aqui é um
+ambiente de pesquisa, de um TCC do IFMG — Campus Ouro Branco. O que este
+navegador manda ao servidor fica registrado. O gabarito não mora no console
+😄 — o defeito está no código, esperando por você. Bom proveito!". Não fala
+da isca nem dos limites: avisar onde está a isca a tornaria inútil. Fica no
+console, e não na tela: quem não abre as ferramentas não vê nada.
+
+### O congelamento
+
+**Nada do que o participante vê na tela muda.** O recado só existe para quem
+abre o console. Os limites ficam longe do uso real. O código correto nunca
+apareceu na tela. Pelo combinado em D39 — a ferramenta idêntica entre o piloto
+final e a coleta —, tudo isto entra antes do piloto de 15/11/2026.
+
+### O que fica sem proteção
+
+**A chave pública é pública por definição.** Ela está no pacote, e é com ela
+que o navegador fala com o banco; não há como escondê-la de quem tem o pacote.
+Tudo o que o navegador pode fazer, quem tem a chave também pode. O que segura
+é o RLS e o que as funções conferem por dentro. Ficam abertos:
+
+- **A linha do defeito continua no pacote.** O veredito da localização é
+  calculado no navegador, pela linha declarada no exercício (D7, D30). Quem
+  procurar no pacote acha `linhaDoDefeito` de cada exercício. Escondê-la
+  exigiria o veredito no servidor, e não cabe antes da coleta.
+- **O código com defeito está no pacote, como sempre esteve**: é o que a tela
+  mostra. Para quase todo exercício, a correção é uma linha.
+- **Criar identidades anônimas em laço.** O Supabase tem um limite próprio
+  para isso, por IP. Num laboratório, todas as máquinas costumam sair pelo
+  mesmo IP: o limite protege o projeto, mas um aluno criando identidades em
+  laço pode esgotá-lo para a sala inteira. Antes da aula, confere-se o valor
+  em *Authentication → Rate Limits*. Cada participante consome pelo menos
+  três: a conferência da máquina, a entrada e a troca do fim (D37).
+- **Sessões dentro dos limites, mas forjadas.** Quem entra no estudo pode
+  gravar até 40 sessões com o conteúdo que quiser, sob a própria identidade.
+  Elas entram no CSV como dele. A marca não pega isso; a leitura das sessões,
+  sim, e o pesquisador decide na análise.
+- **Muitos pedidos válidos em pouco tempo.** Ler a vitrine, consultar a
+  situação de uma aplicação, chamar a isca: nada disso tem limite de
+  frequência além do que o Supabase impõe ao projeto.
+- **O gatilho de aplicação protegida com dado continua sem teste no projeto
+  real** (D38). A 0006 não muda isso.
+
+### A verificação
+
+**Num Postgres local (PGlite), antes de aplicar.** As migrações 0001 a 0006
+rodaram em sequência sobre um esboço do `auth` do Supabase, numa pasta
+temporária fora do projeto, como em D33. Foram 48 conferências da 0006.
+Entre elas:
+
+- a sessão nova abaixo do limite grava;
+- o reenvio por `upsert` grava com o participante no limite, inclusive no meio
+  do lote;
+- a 41ª e a 42ª sessões novas são descartadas sem derrubar o lote e geram a
+  marca, uma vez por linha;
+- a sessão de mais de 2 MiB é descartada, e a de 1,9 MiB grava;
+- a sessão grande em nome de outra pessoa é recusada pelo RLS e não marca
+  ninguém;
+- a aplicação cheia recusa a entrada seguinte sem perder a vaga;
+- a nova `listar_aplicacoes` tem a mesma configuração de segurança da versão
+  da 0005: `security invoker`, `stable`, `search_path` vazio, execução só para
+  `authenticated`.
+
+A conferência local pegou um erro de sintaxe no gatilho das sessões, um `case
+when … then` dentro de um `if` do plpgsql, que corta a condição no primeiro
+`then`. Foi corrigido antes de aplicar.
+
+**Contra o projeto real, pelo `npm run verificar-rls`**, a seção "proteção
+leve (0006)" refaz pela API o caminho das sessões, do tamanho, da isca, das
+marcas e do limite de participantes. A limpeza do fim confere que nenhuma
+marca das contas de teste ficou. **Ainda não rodou contra o projeto**: roda
+depois de aplicar a 0006.
+
+A Fase 2 do painel (D38), os papéis, passa a ser a migração 0007.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Os limites, a isca, as marcas, o limite de participantes e a limpeza, contra o projeto real | `supabase/verificacao/rls.verificacao.ts` (`npm run verificar-rls`) |
+| O pacote de produção não tem o código correto de nenhum exercício fora dos exemplos, os do percurso inclusive, e tem o dos exemplos; com o plugin desligado, o teste falha | `src/exercicios/pacote-sem-gabarito.test.ts` |
+| Os exemplos públicos estão no catálogo e fora do percurso; a regra do plugin, e a parada do build quando não reconhece a forma | o mesmo arquivo |
+| O formulário preenchido com os exemplos novos passa na verificação; a ordenação traz a chave como variável de valor | `src/componentes/exemplos-do-formulario.test.ts` e `e2e/autoria.spec.ts` |
+| `suspeito` e `motivos_de_suspeita` no CSV, depois do perfil; vazios quando as marcas não foram lidas; a marca não tira ninguém do arquivo | `src/estudo/exportacao.test.ts` |
+| A etiqueta nas sessões de quem foi marcado, e só nelas; sem as marcas, o aviso e o CSV com as colunas vazias | `e2e/painel-do-estudo.spec.ts` |
+| O intervalo do limite na tela é o do banco; todo motivo da 0006 tem texto; o ajuste vai pela função, e o inválido nem sai da tela | `src/componentes/controle.test.ts` e `e2e/controle.spec.ts` |
+| O recado diz que é pesquisa e que fica registrado, sem entregar a isca nem os limites, e aparece no console de verdade | `src/componentes/aviso-no-console.test.ts` e `e2e/console.spec.ts` |
