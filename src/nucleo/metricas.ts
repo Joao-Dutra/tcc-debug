@@ -91,8 +91,14 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * 13 — a marca do estudo perdeu `tema` (D39, retirada do tema azul). Com um
  * tema só, o campo não distingue nada. Ele continua só nos registros da
  * versão 12, onde é sempre o padrão na área do estudo.
+ *
+ * 14 — pilha e fila na convenção do Ziviani (D40). O formato do registro não
+ * muda; muda o código e o desenho por trás dos cinco exercícios de pilha e
+ * fila, com os mesmos ids. As sessões desses exercícios até a versão 13 não
+ * se juntam às da 14 em diante, e é a versão que as separa. Nos demais
+ * exercícios, nada muda.
  */
-export const VERSAO_DO_REGISTRO = 13;
+export const VERSAO_DO_REGISTRO = 14;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
