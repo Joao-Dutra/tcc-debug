@@ -85,6 +85,54 @@ test('as linhas apontadas aparecem da mais recente para a mais antiga', async ({
   await expect(apontadas.last()).toContainText('Linha 3');
 });
 
+test.describe('a linha em execução no editor (D44)', () => {
+  // Até a versão 14 do registro o destaque saía sem apoio. Desde D44 ele é
+  // da ferramenta, e não do apoio: aparece igual nos dois níveis, e acompanha
+  // o passo exibido.
+  for (const nivel of ['com-apoio', 'sem-apoio']) {
+    test(`a linha do passo exibido fica destacada, ${nivel}`, async ({ page }) => {
+      await page.goto(`/#/exercicio/pilha-desempilhar?andaime=${nivel}`);
+      await expect(page.locator('.contador')).toContainText('passo 1 /');
+
+      const destacada = page.locator('.cm-linha-em-execucao');
+      const indicador = page.locator('.indicador-linha');
+      const linhaDoIndicador = async () => Number((await indicador.innerText()).match(/linha (\d+)/)![1]);
+      // O número da linha destacada, lido na régua do editor pela mesma altura.
+      const linhaDestacada = () =>
+        destacada.evaluate((el) => {
+          const topo = el.getBoundingClientRect().top;
+          const numeros = [...document.querySelectorAll('.cm-lineNumbers .cm-gutterElement')];
+          const igual = numeros.find((n) => Math.abs(n.getBoundingClientRect().top - topo) < 2 && n.textContent !== '');
+          return Number(igual?.textContent);
+        });
+
+      await expect(destacada).toHaveCount(1);
+      expect(await linhaDestacada()).toBe(await linhaDoIndicador());
+
+      // Alguns passos adiante, o destaque foi junto.
+      const antes = await linhaDoIndicador();
+      const proximo = page.locator('.controles button').nth(2);
+      for (let i = 0; i < 4; i++) await proximo.click();
+      await expect(destacada).toHaveCount(1);
+      const depois = await linhaDoIndicador();
+      expect(depois).not.toBe(antes);
+      expect(await linhaDestacada()).toBe(depois);
+    });
+  }
+
+  test('o que continua separando as condições: dicas, rótulos e o detalhe dos casos', async ({ page }) => {
+    await page.goto('/#/exercicio/pilha-desempilhar?andaime=sem-apoio');
+    await expect(page.locator('.contador')).toContainText('passo 1 /');
+    await expect(page.getByRole('button', { name: 'Revelar dica 1' })).toHaveCount(0);
+    await expect(page.locator('.faixa-casos')).not.toContainText('esperado');
+
+    await page.goto('/#/exercicio/pilha-desempilhar?andaime=com-apoio');
+    await expect(page.locator('.contador')).toContainText('passo 1 /');
+    await expect(page.getByRole('button', { name: 'Revelar dica 1' })).toBeVisible();
+    await expect(page.locator('.faixa-casos')).toContainText('esperado');
+  });
+});
+
 test.describe('intervalo entre tentativas de localização (D25)', () => {
   // Nos dois níveis: o intervalo não é apoio, e é o mesmo com e sem ele.
   for (const nivel of ['com-apoio', 'sem-apoio']) {

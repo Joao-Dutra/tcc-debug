@@ -97,8 +97,14 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * fila, com os mesmos ids. As sessões desses exercícios até a versão 13 não
  * se juntam às da 14 em diante, e é a versão que as separa. Nos demais
  * exercícios, nada muda.
+ *
+ * 15 — a linha em execução passa a ser destacada no editor também sem apoio
+ * (D44), por decisão da orientadora. O formato do registro não muda; muda o
+ * que a condição "sem apoio" mostra. As sessões sem apoio até a versão 14 não
+ * se juntam às da 15 em diante, e a comparação entre as condições só vale
+ * dentro da mesma versão: é ela que separa os dois conjuntos.
  */
-export const VERSAO_DO_REGISTRO = 14;
+export const VERSAO_DO_REGISTRO = 15;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).

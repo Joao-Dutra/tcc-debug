@@ -78,10 +78,18 @@ export function mostrarRotulos(nivel: NivelDeAndaime): boolean {
 }
 
 /**
- * Destaque, no editor, da linha do passo exibido. Sai junto com os rótulos e
- * pelo mesmo motivo: fica o indicador textual com o número da linha, e achar
- * essa linha no código volta a ser trabalho do estudante.
+ * Destaque, no editor, da linha do passo exibido.
+ *
+ * **Vale nos dois níveis desde D44**, por decisão da orientadora. Até a
+ * versão 14 do registro ele saía sem apoio, junto com os rótulos: ficava só o
+ * indicador textual com o número da linha, e achar essa linha no código era
+ * trabalho do estudante. Agora o destaque é parte da ferramenta, como o
+ * indicador, e não do apoio.
+ *
+ * A função continua recebendo o nível, e a tela continua perguntando a ela:
+ * a tabela de D9 mora neste módulo, e é aqui que se lê o que cada nível
+ * revela — inclusive o que os dois revelam igual.
  */
-export function destacarLinhaNoEditor(nivel: NivelDeAndaime): boolean {
-  return nivel === 'com-apoio';
+export function destacarLinhaNoEditor(_nivel: NivelDeAndaime): boolean {
+  return true;
 }

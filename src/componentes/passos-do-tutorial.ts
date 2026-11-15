@@ -13,8 +13,8 @@
  *   e não uma função do nível: se o tutorial variasse com o apoio, a diferença
  *   entre as condições deixaria de ser só o que o apoio revela (D9). Também
  *   por isso nenhum passo descreve o que só um dos níveis mostra — os rótulos
- *   dos marcadores, a linha marcada no editor, o esperado e o obtido, as
- *   dicas.
+ *   dos marcadores, o esperado e o obtido, as dicas. (A linha marcada no
+ *   editor deixou de ser um deles em D44: aparece nos dois níveis.)
  *
  * Mora fora do componente para o teste alcançá-lo sem navegador.
  */
