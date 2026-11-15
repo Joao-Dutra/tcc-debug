@@ -1,6 +1,6 @@
+import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { catalogo } from '../exercicios/catalogo';
 import { csvDoEstudo, sessoesDoEstudo } from '../estudo/exportacao';
 import { supabaseConfigurado } from '../supabase/cliente';
 import {
@@ -35,7 +35,7 @@ import { MenuDaConta } from './MenuDaConta';
 import { enderecoCompleto, mapaDeRotas } from './mapa-de-rotas';
 import { useIdentidade } from './usar-identidade';
 import { baixarMetricas } from './usar-metricas';
-import { CAMINHO_METRICAS } from './usar-rota';
+import { CAMINHO_INICIAL, CAMINHO_METRICAS } from './usar-rota';
 
 /**
  * O painel de controle do pesquisador (D38): o que antes era SQL à mão no
@@ -53,9 +53,14 @@ import { CAMINHO_METRICAS } from './usar-rota';
 
 function Moldura({ children }: { children: ReactNode }) {
   return (
+    <div className="jardim bancada-de-trabalho">
     <div className="pagina controle">
       <header>
         <div className="barra-da-conta">
+          <a className="voltar" href={CAMINHO_INICIAL}>
+            <ArrowLeftIcon className="icone" aria-hidden="true" />
+            Início
+          </a>
           <a className="discreto" href={CAMINHO_METRICAS}>
             Métricas das sessões
           </a>
@@ -67,7 +72,10 @@ function Moldura({ children }: { children: ReactNode }) {
           que muda alguma coisa fica registrada, com quem, quando e o resultado.
         </p>
       </header>
-      {children}
+      {/* O trabalho fica numa folha clara sobre o jardim (D44): as tabelas e
+          os formulários continuam com as cores em que foram desenhados. */}
+      <div className="folha-de-trabalho papeis-claros">{children}</div>
+    </div>
     </div>
   );
 }
@@ -533,7 +541,7 @@ function BotaoDeCopiar({ texto }: { texto: string }) {
 }
 
 function SecaoDoMapaDeRotas({ aplicacoes, emFoco }: { aplicacoes: string[]; emFoco: boolean }) {
-  const grupos = mapaDeRotas(catalogo, aplicacoes);
+  const grupos = mapaDeRotas(aplicacoes);
   // Pelo menu, "Mapa de rotas" abre o painel já nesta seção (D39).
   const secao = useRef<HTMLElement>(null);
   useEffect(() => {

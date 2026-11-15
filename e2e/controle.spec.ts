@@ -1,7 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
-import { catalogo } from '../src/exercicios/catalogo';
 import { vetorDobrar } from '../src/exercicios/vetor-dobrar';
 import { COLUNAS_DO_CSV } from '../src/estudo/exportacao';
 import { criarSessao } from '../src/nucleo/metricas';
@@ -419,17 +418,17 @@ test('o freio pede o título digitado, e vai pela função', async ({ page }) =>
   await expect(page.getByText('A seção “Propostos por professores” está oculta aos alunos.')).toBeVisible();
 });
 
-test('o mapa de rotas tem cada exercício nos dois apoios e as rotas de cada aplicação, para copiar', async ({
+test('o mapa de rotas tem as telas e as rotas de cada aplicação, para copiar, sem os exercícios (D44)', async ({
   page,
 }) => {
   await entrarComo(page, PESQUISADOR);
   await bancoFalso(page, novoBanco());
   await page.goto('/#/controle');
   const mapa = page.locator('section', { has: page.getByRole('heading', { name: 'Mapa de rotas' }) });
-  for (const nivel of ['com-apoio', 'sem-apoio']) {
-    await expect(mapa.locator(`a[href="#/exercicio/${catalogo[0].id}?andaime=${nivel}"]`)).toHaveCount(1);
-  }
-  await expect(mapa.locator('a[href^="#/exercicio/"]')).toHaveCount(catalogo.length * 2);
+  // A seção "Exercícios do catálogo" saiu da tela: a vitrine já os lista.
+  await expect(mapa.getByRole('heading', { name: 'Exercícios do catálogo' })).toHaveCount(0);
+  await expect(mapa.locator('a[href^="#/exercicio/"]')).toHaveCount(0);
+  await expect(mapa.locator('a[href="#/exercicios"]')).toHaveCount(1);
   await expect(mapa.locator('a[href="#/estudo/aeds1-2026"]')).toHaveCount(1);
   await expect(mapa.locator('a[href="#/estudo/aeds1-2026/conferir"]')).toHaveCount(1);
 

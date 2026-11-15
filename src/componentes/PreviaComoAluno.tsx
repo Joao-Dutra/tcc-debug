@@ -39,7 +39,7 @@ type Leitura =
 
 function Aviso({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <div className="pagina com-cabecalho">
+    <div className="pagina com-cabecalho na-noite">
       <Cabecalho
         navegacao={
           <a className="voltar" href={CAMINHO_AUTORIA}>
@@ -116,7 +116,7 @@ export function PreviaComoAluno({ id, andaime }: { id: string; andaime: NivelDeA
   }
   if (estado === 'conferindo' || leitura.estado === 'lendo') {
     return (
-      <div className="pagina com-cabecalho">
+      <div className="pagina com-cabecalho na-noite">
         <Cabecalho />
         <p className="rodape-painel" role="status">
           Preparando a pré-visualização…

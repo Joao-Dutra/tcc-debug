@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { catalogo } from '../exercicios/catalogo';
 import { enderecoCompleto, mapaDeRotas } from './mapa-de-rotas';
 import { interpretarHash } from './usar-rota';
 
@@ -9,7 +8,7 @@ import { interpretarHash } from './usar-rota';
  * interpretador de rotas e tem de cair na tela certa.
  */
 
-const grupos = mapaDeRotas(catalogo, ['piloto-nov', 'aeds1-2026']);
+const grupos = mapaDeRotas(['piloto-nov', 'aeds1-2026']);
 const grupo = (titulo: string) => grupos.find((g) => g.titulo === titulo)!.rotas;
 
 describe('o mapa de rotas', () => {
@@ -25,16 +24,9 @@ describe('o mapa de rotas', () => {
     ]);
   });
 
-  it('cada exercício do catálogo aparece com e sem apoio, e o link abre esse apoio', () => {
-    const rotas = grupo('Exercícios do catálogo');
-    expect(rotas).toHaveLength(catalogo.length * 2);
-    for (const e of catalogo) {
-      for (const nivel of ['com-apoio', 'sem-apoio'] as const) {
-        const rota = rotas.find((r) => r.caminho === `#/exercicio/${e.id}?andaime=${nivel}`);
-        expect(rota, `${e.id} ${nivel}`).toBeDefined();
-        expect(interpretarHash(rota!.caminho)).toEqual({ tela: 'exercicio', id: e.id, andaime: nivel });
-      }
-    }
+  it('os exercícios do catálogo não entram no mapa: quem os lista é a vitrine (D44)', () => {
+    expect(grupos.map((g) => g.titulo)).toEqual(['Telas', 'Aplicações do estudo']);
+    expect(grupos.flatMap((g) => g.rotas).filter((r) => r.caminho.startsWith('#/exercicio/'))).toEqual([]);
   });
 
   it('cada aplicação tem o percurso e a conferência', () => {

@@ -1,3 +1,4 @@
+import { ArrowLeftIcon } from '@heroicons/react/20/solid';
 import { Fragment, useEffect, useState } from 'react';
 import {
   SEM_FILTRO,
@@ -26,7 +27,7 @@ import { baixarMetricas } from './usar-metricas';
 import { useDadosDoEstudo } from './usar-dados-do-estudo';
 import { useIdentidade } from './usar-identidade';
 import { useSessoesDoBanco } from './usar-sessoes-do-banco';
-import { CAMINHO_CONTROLE } from './usar-rota';
+import { CAMINHO_CONTROLE, CAMINHO_INICIAL } from './usar-rota';
 import type { Identidade } from '../supabase/identidade';
 import type {
   Evento,
@@ -413,9 +414,14 @@ export function PainelDeMetricas() {
     !pesquisador;
 
   return (
+    <div className="jardim bancada-de-trabalho">
     <div className="pagina">
       <header>
         <div className="barra-da-conta">
+          <a className="voltar" href={CAMINHO_INICIAL}>
+            <ArrowLeftIcon className="icone" aria-hidden="true" />
+            Início
+          </a>
           <MenuDaConta />
         </div>
         <h1>Métricas das sessões</h1>
@@ -433,6 +439,7 @@ export function PainelDeMetricas() {
         )}
       </header>
 
+      <div className="folha-de-trabalho papeis-claros">
       {!espelho.ativo && (
         <p className="erro">
           O armazenamento do navegador não está ligado: as sessões se perdem ao
@@ -642,6 +649,8 @@ export function PainelDeMetricas() {
           </div>
         )}
       </section>
+      </div>
+    </div>
     </div>
   );
 }

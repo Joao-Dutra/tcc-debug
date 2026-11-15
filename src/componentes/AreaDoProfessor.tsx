@@ -50,6 +50,7 @@ import type { RascunhoDeExercicio } from '../nucleo/verificacao-do-exercicio';
 function Moldura({ children, identidade }: { children: ReactNode; identidade?: Identidade }) {
   const comConta = identidade && (identidade.forma === 'google' || identidade.forma === 'email');
   return (
+    <div className="jardim bancada-de-trabalho">
     <div className="pagina autoria">
       <header>
         <div className="barra-da-conta">
@@ -71,7 +72,8 @@ function Moldura({ children, identidade }: { children: ReactNode; identidade?: I
           </div>
         )}
       </header>
-      {children}
+      <div className="folha-de-trabalho papeis-claros">{children}</div>
+    </div>
     </div>
   );
 }

@@ -64,22 +64,31 @@ function comPrazo(estado: EstadoDoPercurso, agora: number): EstadoDoPercurso {
 function TelaDoEstudo({
   rotulo,
   titulo,
+  noJardim = false,
   children,
 }: {
   rotulo?: string;
   titulo: string;
+  /**
+   * A moldura das telas de fora (D43), com o bloco centrado em papel claro.
+   * Só o questionário a usa (D44): o aviso, o perfil e os exercícios do
+   * percurso continuam como estavam.
+   */
+  noJardim?: boolean;
   children: ReactNode;
 }) {
-  return (
+  const tela = (
     <div className="pagina area-do-estudo com-cabecalho">
       <Cabecalho
         semSaida
+        logo={noJardim}
         navegacao={rotulo && <span className="posicao-no-percurso">{rotulo}</span>}
         titulo={titulo}
       />
-      <main className="corpo-do-estudo">{children}</main>
+      <main className={noJardim ? 'corpo-do-estudo papeis-claros' : 'corpo-do-estudo'}>{children}</main>
     </div>
   );
+  return noJardim ? <div className="jardim questionario-no-jardim">{tela}</div> : tela;
 }
 
 const FALHA_DO_BANCO = 'Não foi possível falar com o servidor do estudo. Chame o pesquisador.';
@@ -422,7 +431,7 @@ export function AreaDoEstudo({ aplicacao }: { aplicacao: string }) {
 
   if (passo.tela === 'questionario') {
     return (
-      <TelaDoEstudo titulo={QUESTIONARIO.titulo}>
+      <TelaDoEstudo titulo={QUESTIONARIO.titulo} noJardim>
         <QuestionarioDoEstudo
           aoEnviar={async (resposta) => {
             if (comBanco) {

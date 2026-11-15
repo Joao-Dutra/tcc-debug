@@ -19,7 +19,7 @@ import type { NivelDeAndaime } from './andaime';
 
 function Aviso({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <div className="pagina com-cabecalho">
+    <div className="pagina com-cabecalho na-noite">
       <Cabecalho
         navegacao={
           <a className="voltar" href={CAMINHO_EXERCICIOS}>
@@ -40,7 +40,7 @@ export function AberturaDoProposto({ id, andaime }: { id: string; andaime: Nivel
 
   if (publicados.estado === 'lendo') {
     return (
-      <div className="pagina com-cabecalho">
+      <div className="pagina com-cabecalho na-noite">
         <Cabecalho />
         <p className="rodape-painel" role="status">
           Abrindo o exercício…

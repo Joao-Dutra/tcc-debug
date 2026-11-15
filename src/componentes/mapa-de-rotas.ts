@@ -1,4 +1,3 @@
-import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
 import {
   CAMINHO_AUTORIA,
   CAMINHO_CONTROLE,
@@ -9,11 +8,14 @@ import {
   CAMINHO_METRICAS,
   caminhoDaConferencia,
   caminhoDoEstudo,
-  caminhoDoExercicio,
 } from './usar-rota';
 
 /**
  * O mapa de rotas do painel de controle (D38), sem React.
+ *
+ * Os exercícios do catálogo saíram do mapa em D44: eram duas linhas por
+ * exercício, que a vitrine já oferece, e empurravam para longe os endereços
+ * das aplicações do estudo, que são os que se entregam na aula.
  *
  * Cada caminho sai das funções de `usar-rota.ts`, e nunca é escrito à mão
  * aqui: um endereço copiado do painel e entregue na aula precisa ser o que a
@@ -31,10 +33,7 @@ export interface GrupoDoMapa {
   rotas: RotaDoMapa[];
 }
 
-export function mapaDeRotas(
-  exercicios: readonly { id: string; titulo: string }[],
-  aplicacoes: readonly string[]
-): GrupoDoMapa[] {
+export function mapaDeRotas(aplicacoes: readonly string[]): GrupoDoMapa[] {
   return [
     {
       titulo: 'Telas',
@@ -47,17 +46,6 @@ export function mapaDeRotas(
         { rotulo: 'Métricas', caminho: CAMINHO_METRICAS },
         { rotulo: 'Painel de controle', caminho: CAMINHO_CONTROLE },
       ],
-    },
-    {
-      titulo: 'Exercícios do catálogo',
-      // O nível vai sempre explícito: é o endereço que diz sob qual apoio a
-      // sessão foi aberta (usar-rota.ts).
-      rotas: exercicios.flatMap((e) =>
-        NIVEIS_DE_ANDAIME.map((nivel) => ({
-          rotulo: `${e.titulo} — ${rotuloDoAndaime(nivel)}`,
-          caminho: caminhoDoExercicio(e.id, nivel),
-        }))
-      ),
     },
     {
       titulo: 'Aplicações do estudo',

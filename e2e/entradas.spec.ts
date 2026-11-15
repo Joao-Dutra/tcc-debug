@@ -44,9 +44,10 @@ test('o estudante vem antes do professor, na leitura e na tela', async ({ page }
     await page.setViewportSize({ width: largura, height: 800 });
     const estudante = await page.getByRole('link', { name: 'Entrar como estudante' }).boundingBox();
     const google = await page.getByRole('button', { name: 'Entrar com Google' }).boundingBox();
-    // No cartão dividido (D43) as saídas ficam uma sobre a outra em qualquer
-    // largura, e o estudante é a de cima.
-    expect(estudante!.y, `${largura}`).toBeLessThan(google!.y);
+    // No cartão dividido (D43, D44): em tela larga o estudante fica à
+    // esquerda, embaixo da arte; em tela estreita, em cima.
+    if (largura > 900) expect(estudante!.x, `${largura}`).toBeLessThan(google!.x);
+    else expect(estudante!.y, `${largura}`).toBeLessThan(google!.y);
   }
 });
 

@@ -1156,9 +1156,16 @@ button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content:
   flex-wrap: wrap; gap: var(--esp-8) var(--esp-20); }
 .perfil-do-estudo legend { font-weight: 700; padding: 0 var(--esp-4); }
 .perfil-do-estudo label { display: flex; align-items: center; gap: var(--esp-6); cursor: pointer; }
-/* O seguir pesa como o botão de ajuda ao lado, e não como a ação principal:
-   a ação principal da tela continua sendo investigar. */
-button.seguir-no-percurso { padding: 5px 12px; border-radius: var(--raio-pilula); background: transparent; }
+/* O seguir é o botão mais visível da barra (D44): maior, cheio, na cor da
+   ação, com um halo. Até D39 ele pesava como o botão de ajuda ao lado, e
+   passava despercebido por quem já tinha terminado. Muda só a aparência: o
+   clique abre a mesma confirmação, e o registro e os prazos são os de antes. */
+button.seguir-no-percurso { padding: 10px 22px; border-radius: var(--raio-pilula);
+  font-size: var(--fonte-corpo); font-weight: 700;
+  background: var(--acao); border-color: var(--acao); color: var(--sobre-acao);
+  box-shadow: 0 0 0 3px var(--acao-rala); }
+button.seguir-no-percurso:hover:not(:disabled) { background: var(--acao-forte);
+  border-color: var(--acao-forte); color: var(--sobre-acao); }
 /* A confirmação mora numa linha própria, abaixo da barra, e nenhum botão
    quebra o rótulo: a barra não muda de largura quando a pergunta abre (D39). */
 .cabecalho-acoes button, .cabecalho-abaixo-da-barra button { white-space: nowrap; }
@@ -1450,7 +1457,7 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
   animation: cartao-de-entrada-chega .5s cubic-bezier(.2, .7, .2, 1) backwards; }
 @keyframes cartao-de-entrada-chega { from { opacity: 0; transform: translateY(12px); } }
 .arte-da-entrada { display: grid; place-items: start center; padding: 56px var(--esp-32) var(--esp-32); }
-.arte-da-entrada .folha { max-width: 540px; filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .45)); }
+.arte-da-entrada .folha { width: min(100%, 470px); max-width: 540px; filter: drop-shadow(0 18px 26px rgba(0, 0, 0, .45)); }
 
 .lado-das-saidas { display: flex; flex-direction: column; justify-content: center; min-width: 0;
   padding: 36px 48px; background: var(--areia-100); }
@@ -1458,24 +1465,34 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
   margin: 0 0 var(--esp-4); }
 .chamada-da-entrada { margin: 0 0 var(--esp-20); color: var(--grafite-suave); }
 
-/* As duas saídas, cada uma no seu bloco. O estudante em cima, no chão da cor
-   da ação e com um botão só; o professor embaixo, contornado, dizendo antes
-   de qualquer campo que aquele login é dele. */
-.jardim .saidas-da-entrada { display: block; }
-.jardim .saida-estudante { display: block; background: var(--acao-rala); border-radius: 20px;
-  padding: var(--esp-20) var(--esp-24); }
-.jardim .saida-estudante .leveza { font-size: 17px; margin-bottom: var(--esp-16); max-width: none; }
-.jardim .saida-estudante .aviso-pesquisa { max-width: 52ch; color: var(--areia-800); }
-.jardim .saida-professor { border: 1.5px solid var(--regua); border-radius: 20px;
-  padding: var(--esp-20) var(--esp-24); margin-top: var(--esp-16); }
+/* Cada coluna é de uma saída (D44). À esquerda, sobre o jardim, a folha e,
+   embaixo dela, o bloco do estudante, no chão da cor da ação e com um botão
+   só. À direita, em papel claro, o professor, dizendo antes de qualquer campo
+   que aquele login é dele. */
+.tela-de-entrada .cabecalho { padding-bottom: var(--esp-16); }
+.tela-de-entrada .cabecalho h1 { font-size: clamp(30px, 3.6vw, 42px); color: #fff8ea;
+  text-shadow: 0 0 18px rgba(232, 190, 120, .4), 0 0 44px rgba(201, 163, 102, .25); }
+.jardim .saida-estudante { display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start; background: none; padding: 0;
+  border-radius: 0; min-width: 0; }
+/* A folha é menor aqui do que no acesso da pesquisa: o botão do estudante
+   precisa caber na primeira tela de um notebook, sem rolar (D32). */
+.jardim .saida-estudante .arte-da-entrada { flex: none; place-items: center; padding: var(--esp-24) var(--esp-32) var(--esp-20); }
+.jardim .saida-estudante .arte-da-entrada .folha { width: min(100%, 300px); }
+.bloco-do-estudante { margin: 0 var(--esp-24) var(--esp-24); padding: var(--esp-20) var(--esp-24);
+  border-radius: 20px; background: var(--anilina-200); box-shadow: 0 5px 0 rgba(0, 0, 0, .38); }
+.bloco-do-estudante .leveza { font-size: 17px; margin-bottom: var(--esp-16); max-width: none; }
+.bloco-do-estudante .aviso-pesquisa { max-width: 56ch; color: var(--areia-800); }
+.jardim .saida-professor { border: 0; border-radius: 0; margin: 0; }
 .titulo-da-saida { display: flex; flex-wrap: wrap; align-items: center; gap: var(--esp-8) var(--esp-12);
   margin-bottom: var(--esp-8); }
-.jardim .titulo-da-saida h2 { margin: 0; font-size: 20px; }
+.jardim .saidas-da-entrada h2 { margin: 0 0 var(--esp-8); font-size: 22px; }
+.jardim .titulo-da-saida h2 { margin: 0; }
 .so-professores { font-size: var(--fonte-miuda); font-weight: 700; padding: 3px 12px;
   border-radius: var(--raio-pilula); background: var(--grafite); color: var(--campo); }
-.jardim .saida-professor > .rodape-painel { margin-bottom: var(--esp-12); }
+.jardim .saida-professor > .rodape-painel { margin-bottom: var(--esp-16); }
 .nota-do-login { margin: var(--esp-12) 0 0; font-size: var(--fonte-miuda); color: var(--grafite-suave); }
-.jardim .rodape-da-entrada { margin-top: var(--esp-16); }
+/* O acesso da pesquisa: um link discreto, fora do cartão, sobre o jardim. */
+.jardim .rodape-da-entrada { margin: var(--esp-8) 0 0; text-align: right; }
 
 /* Campos e botões arredondados, e mais altos: peças de mão, e não de planilha. */
 .cartao-de-entrada .entrada-conta input, .cartao-de-entrada .entrada-pesquisador input {
@@ -1536,7 +1553,8 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
   .cartao-de-entrada { grid-template-columns: 1fr; margin-top: var(--esp-16); border-radius: 20px; }
   .arte-da-entrada { display: none; }
   .lado-das-saidas { padding: var(--esp-24) var(--esp-20); justify-content: flex-start; }
-  .jardim .saida-estudante, .jardim .saida-professor { padding: var(--esp-16); }
+  .bloco-do-estudante { margin: var(--esp-16); padding: var(--esp-16); }
+  .jardim .saida-professor { padding: var(--esp-20) var(--esp-16); }
 }
 
 /* --- A vitrine ----------------------------------------------------------- */
@@ -1610,7 +1628,9 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
 .vitrine .cartao:focus-within .corpo-cartao::after { opacity: 1; transform: none; }
 .vitrine a.nivel { transition: transform .14s ease-out, border-color .18s ease-out,
   color .18s ease-out, background-color .18s ease-out; }
-.vitrine a.nivel:hover { background: var(--acao); border-color: var(--acao); color: var(--sobre-acao);
+/* No ocre da tela do exercício, que é para onde o link leva (D44), e não no
+   roxo: dentro da ficha os papéis são os claros, e a ação lá é a anilina. */
+.vitrine a.nivel:hover { background: #e3c084; border-color: #e3c084; color: #1a231c;
   transform: translateY(-1px); }
 .vitrine a.nivel:active { transform: scale(.96); }
 
@@ -1671,6 +1691,96 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
   animation: lupa-fecha .5s cubic-bezier(.2, .7, .2, 1) backwards; }
 @keyframes lupa-fecha { from { opacity: 0; transform: scale(1.9); } }
 
+/* --- A navbar em pílulas (D44) -------------------------------------------- */
+/* Os links do topo — o menu do papel, a volta, o atalho para as métricas —
+   são botões de navegar, e ganham fundo de pílula. O da tela em que se está
+   fica cheio, no ocre. */
+.jardim .menu-da-conta ul { gap: var(--esp-8); }
+.jardim .menu-da-conta a, .jardim .barra-da-conta > a, .jardim .cabecalho .voltar {
+  display: inline-flex; align-items: center; gap: var(--esp-6); padding: 6px 14px;
+  border: 1px solid var(--regua); border-radius: var(--raio-pilula);
+  background: rgba(244, 238, 227, .07); color: var(--grafite); font-size: var(--fonte-apoio);
+  font-weight: 500; text-decoration: none; white-space: nowrap;
+  transition: background-color .18s ease-out, border-color .18s ease-out, color .18s ease-out,
+    transform .14s ease-out; }
+.jardim .menu-da-conta a:hover, .jardim .barra-da-conta > a:hover, .jardim .cabecalho .voltar:hover,
+.jardim .menu-da-conta a[aria-current="page"] { background: var(--acao); border-color: var(--acao);
+  color: var(--sobre-acao); }
+.jardim .menu-da-conta a[aria-current="page"] { font-weight: 700; }
+.jardim .menu-da-conta a:active, .jardim .barra-da-conta > a:active,
+.jardim .cabecalho .voltar:active { transform: scale(.96); }
+
+/* --- As telas de trabalho: os painéis e a área do professor (D44) --------- */
+/* A moldura é a do jardim, e o trabalho fica numa folha clara sobre ele. As
+   tabelas, os filtros e os formulários não foram redesenhados: dentro da
+   folha os papéis são os da raiz, e cada peça tem as cores em que foi
+   feita. Mudam o canto e o acabamento. Nenhuma função muda. */
+.bancada-de-trabalho header { padding-top: var(--esp-8); }
+.bancada-de-trabalho header h1 { color: #fff8ea;
+  text-shadow: 0 0 18px rgba(232, 190, 120, .4), 0 0 44px rgba(201, 163, 102, .25); }
+.bancada-de-trabalho header > p { color: var(--grafite); }
+.bancada-de-trabalho header button { border-radius: var(--raio-pilula); }
+.folha-de-trabalho { background: var(--areia-300); border-radius: 26px; padding: var(--esp-24);
+  margin-bottom: var(--esp-32);
+  box-shadow: 0 0 0 1px rgba(244, 238, 227, .16), 0 30px 60px -30px rgba(0, 0, 0, .7); }
+.folha-de-trabalho > :last-child { margin-bottom: 0; }
+.folha-de-trabalho .painel { border-radius: 18px; }
+.folha-de-trabalho button, .folha-de-trabalho a.discreto { border-radius: var(--raio-pilula); }
+.folha-de-trabalho select, .folha-de-trabalho textarea,
+.folha-de-trabalho input:not([type=checkbox]):not([type=radio]):not([type=range]) { border-radius: 12px; }
+@media (max-width: 700px) { .folha-de-trabalho { padding: var(--esp-12); border-radius: 18px; } }
+
+/* As telas de aviso da pré-visualização e do exercício proposto: uma página
+   só, sem moldura em volta. A cor da noite sai pelos lados como tinta, sem
+   contar como conteúdo. */
+.na-noite { --grafite: #f4eee3; --grafite-suave: #b7c4b8; --regua: rgba(244, 238, 227, .16);
+  --painel: transparent; --acao: #e3c084; --foco: #e3c084; --foco-halo: rgba(227, 192, 132, .3);
+  min-height: 100vh; color: var(--grafite); background: #12211c;
+  box-shadow: 0 0 0 100vmax #12211c; clip-path: inset(0 -100vmax); }
+
+/* --- O questionário do estudo (D44) --------------------------------------- */
+/* Só a aparência: o bloco centrado, em papel claro sobre o jardim, e cada
+   afirmação numa ficha. O texto, a ordem e as escalas são os de
+   `src/estudo/questionario.ts`, e nenhum deles muda. */
+.questionario-no-jardim .cabecalho { text-align: center; padding-bottom: var(--esp-20); }
+.questionario-no-jardim .cabecalho-barra { text-align: left; }
+.questionario-no-jardim .cabecalho h1 { font-size: clamp(30px, 3.6vw, 42px); color: #fff8ea;
+  text-shadow: 0 0 18px rgba(232, 190, 120, .4), 0 0 44px rgba(201, 163, 102, .25); }
+.questionario-no-jardim .corpo-do-estudo { width: 100%; max-width: 880px; margin: var(--esp-24) auto var(--esp-48);
+  background: var(--areia-100); border-radius: 26px; padding: 36px 44px;
+  box-shadow: 0 0 0 1px rgba(244, 238, 227, .16), 0 30px 60px -30px rgba(0, 0, 0, .7); }
+.questionario-no-jardim .questionario-do-estudo > p { text-align: center; }
+.questionario-no-jardim .questionario-do-estudo h2 { font-size: 20px; text-align: center;
+  margin-bottom: var(--esp-16); }
+.questionario-no-jardim .questionario-do-estudo section > p { text-align: center; margin: 0 0 var(--esp-16); }
+.questionario-no-jardim .questionario-do-estudo .afirmacao { border: 0; border-radius: 18px;
+  background: var(--areia-200); padding: var(--esp-16) var(--esp-20); margin-bottom: var(--esp-12); }
+.questionario-no-jardim .questionario-do-estudo legend { text-align: center; }
+.questionario-no-jardim .questionario-do-estudo .escala { gap: var(--esp-8); padding-top: var(--esp-12); }
+.questionario-no-jardim .questionario-do-estudo .escala label { border-radius: 14px; padding: var(--esp-8) var(--esp-4);
+  background: var(--areia-100); box-shadow: inset 0 0 0 1px var(--regua);
+  transition: background-color .16s ease-out, box-shadow .16s ease-out, transform .12s ease-out; }
+.questionario-no-jardim .questionario-do-estudo .escala label:hover { background: var(--anilina-100);
+  box-shadow: inset 0 0 0 1px var(--anilina-400); }
+.questionario-no-jardim .questionario-do-estudo .escala label:active { transform: scale(.97); }
+/* A escolhida: o chão da cor da ação, com o contorno dela. */
+.questionario-no-jardim .questionario-do-estudo .escala label:has(input:checked) { background: var(--anilina-200);
+  box-shadow: inset 0 0 0 2px var(--acao); }
+.questionario-no-jardim .questionario-do-estudo .escala .nao-usei { border-left: 0; }
+.questionario-no-jardim .questionario-do-estudo .escala input { width: 20px; height: 20px; }
+.questionario-no-jardim .questionario-do-estudo textarea { border-radius: 14px; border: 1.5px solid var(--regua);
+  background: #fff; padding: var(--esp-10) var(--esp-16);
+  transition: border-color .16s ease-out; }
+.questionario-no-jardim .questionario-do-estudo textarea:hover { border-color: var(--borda-controle); }
+.questionario-no-jardim .questionario-do-estudo .rodape-painel,
+.questionario-no-jardim .questionario-do-estudo .erro { text-align: center; }
+.questionario-no-jardim .questionario-do-estudo button.primario { display: flex; margin: var(--esp-8) auto 0;
+  padding: 12px 30px; font-size: var(--fonte-corpo); border-radius: var(--raio-pilula); }
+@media (max-width: 700px) {
+  .questionario-no-jardim .corpo-do-estudo { padding: var(--esp-20) var(--esp-16); border-radius: 18px; }
+  .questionario-no-jardim .questionario-do-estudo .afirmacao { padding: var(--esp-12); }
+}
+
 /* Quem pediu menos movimento: nada chega, nada passeia, nada desliza. O
    estado final de cada peça é o mesmo, só sem o caminho até ele. */
 @media (prefers-reduced-motion: reduce) {
@@ -1686,7 +1796,12 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
   .cartao-de-entrada .entrada-conta input, .cartao-de-entrada .entrada-pesquisador input,
   .vitrine .filtro.com-pilula::before, .vitrine button.opcao-filtro,
   .vitrine .cartao, .vitrine .corpo-cartao::after, .vitrine a.nivel,
-  .exercicio-no-jardim button, .exercicio-no-jardim .nivel, .joaninha-curiosa { transition: none; }
+  .exercicio-no-jardim button, .exercicio-no-jardim .nivel, .joaninha-curiosa,
+  .jardim .menu-da-conta a, .jardim .barra-da-conta > a, .jardim .cabecalho .voltar,
+  .questionario-no-jardim .questionario-do-estudo .escala label,
+  .questionario-no-jardim .questionario-do-estudo textarea { transition: none; }
+  .jardim .menu-da-conta a:active, .jardim .barra-da-conta > a:active, .jardim .cabecalho .voltar:active,
+  .questionario-no-jardim .questionario-do-estudo .escala label:active { transform: none; }
   .exercicio-no-jardim button:active:not(:disabled) { transform: none; }
   .joaninha-curiosa:hover { translate: none; }
   a.marca:hover .logo, .inicial a.botao.primario:hover, .inicial .passos li:hover,
