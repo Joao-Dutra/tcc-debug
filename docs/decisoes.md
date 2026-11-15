@@ -4800,3 +4800,225 @@ coleta sobre a mesma.
 
 Conferido por captura em 1366 × 657 e em 360 px de largura, sem rolagem
 lateral.
+
+## D43 — A aparência das telas de fora: o detetive, a inicial, as entradas, a vitrine e o exercício fora do estudo
+
+**Decisão.** A tela inicial, as entradas (a de estudante e professor, e o
+acesso da pesquisa), a vitrine de exercícios e a tela do exercício aberta
+pela vitrine ganham identidade visual própria, com o mascote do trabalho: um
+menino detetive e a joaninha, que é o *bug*. **A área do estudo, com a tela do
+exercício dentro dela, e os painéis do pesquisador não mudaram**: foram
+capturados antes e depois e comparados pixel a pixel, e a diferença é zero em
+todas as telas.
+
+O trabalho foi feito na branch `redesign-visual`, a partir da `main` em
+15/11/2026. A entrada na `main` é decisão à parte.
+
+### O que não mudou, e como se sabe
+
+O congelamento de D39 e de D42 continua valendo para tudo o que o participante
+vê no estudo. O que garante isso são duas coisas.
+
+- **O isolamento.** Toda regra nova de CSS está presa à moldura das telas de
+  fora (`jardim`) ou a uma peça que só elas montam. Nenhum papel de cor da
+  raiz mudou. O cabeçalho é um componente só, usado também no exercício e no
+  estudo: por isso o retrato do detetive na marca é uma opção (`logo`), que só
+  as telas de fora ligam, e as outras seguem com o inseto.
+- **A comparação.** `e2e/telas-congeladas.spec.ts` captura as telas
+  congeladas quando recebe uma pasta em `CONGELADO_DIR`, e sem a variável não
+  faz nada. Foram 36 telas, capturadas na `main` e depois na branch:
+
+| Grupo | Telas | Pixels diferentes |
+|---|---|---|
+| Aviso do estudo em 360 px de largura | 1 | 0 |
+| Área do estudo: aviso, perfil, tutorial, aquecimento, confirmação de seguir, os cinco exercícios, questionário, fim e a conferência da máquina | 13 | 0 |
+| Painéis do pesquisador sem banco: métricas, controle e o mapa de rotas | 3 | 0 |
+| Painel de controle e painel do estudo com dados, no fim de cada teste do banco falso | 16 | 0 |
+| Área do professor sem conta aberta: entrar, criar conta e a mensagem de erro | 3 | 0 |
+
+  A captura é estável: duas rodadas seguidas da `main` dão as mesmas imagens,
+  byte a byte. E o comparador enxerga diferença: trocada uma imagem por outra
+  do mesmo tamanho, ele acusa.
+
+  A área do professor entrou na comparação porque o formulário de entrada dela
+  é o mesmo componente da tela de entrada, que mudou por dentro.
+
+**A tela do exercício tem duas aparências, e a do estudo é a congelada.** A
+mesma tela é usada dentro do percurso e fora dele. Fora — aberta pela vitrine,
+por um exercício proposto ou pela pré-visualização do professor — ela ganha a
+aparência descrita abaixo. Dentro do percurso do estudo nada é montado: nem a
+moldura, nem a joaninha, nem o retrato na marca. Os cinco exercícios e o
+aquecimento estão entre as telas comparadas acima, com zero pixels de
+diferença.
+
+A consequência a saber: **quem treina pela vitrine vê uma tela diferente, na
+cor e no acabamento, da que o participante vê no estudo.** As posições, o
+código e o desenho são os mesmos. Levar a aparência nova para dentro do estudo
+é uma linha (`noJardim`, em `TelaExercicio.tsx`), e descongela D39.
+
+**O que muda fora da página, em todas as rotas:** o ícone da aba, que passa a
+ser o detetive (`favicon-64.png`). Não é pixel de tela nenhuma, mas o
+participante o vê na aba do navegador.
+
+### A paleta e a moldura
+
+Tirada da arte: a noite do jardim (`#12211c`), o ocre do sobretudo
+(`#e3c084`) e o creme (`#f4eee3`). O tema azul já tinha sido retirado em D39.
+
+As três telas dividem uma moldura, `jardim`: fundo escuro, com o jardim da
+arte desfocado e parado atrás do que rola, de modo que o verde das folhas e o
+rosa da flor aparecem em toda a altura da página. A imagem já vem desfocada
+do arquivo: um filtro de desfoque numa área daquele tamanho pesaria nas
+máquinas do laboratório.
+
+A moldura troca os papéis de cor para o que está dentro dela, em vez de ganhar
+uma regra para cada peça: o cabeçalho, o menu do papel e os filtros já leem os
+papéis, e acompanham. O que precisa continuar claro — as fichas da vitrine, o
+formulário, as ilustrações — volta aos papéis da raiz com `papeis-claros`.
+
+**O vermelho da joaninha, o verde da folha e o rosa da flor ficam só dentro
+da arte e do fundo.** Na bancada, vermelho, azul e âmbar dizem estado de
+estrutura (D10), e o verde é o sinal de acerto. Um botão nessas cores
+ensinaria outro sentido para elas. Sobre papel claro o botão de ação continua
+o de D39: é o mesmo botão que o estudante encontra dentro do exercício. Sobre
+o escuro, a ação é o ocre.
+
+### A tela inicial
+
+O título grande, em creme, com um halo no ocre, e a cena à direita. O texto e
+o botão único (D32) são os de antes.
+
+- **A cena em três camadas** (fundo, menino, joaninha), que se deslocam em
+  medidas diferentes conforme o ponteiro e a rolagem, com a cena inteira
+  inclinando alguns graus. O ponteiro escreve em variáveis CSS do elemento,
+  um quadro por vez, sem redesenho do React.
+- **Nunca maior que 900 px.** A arte tem 596 px de largura na origem. O fundo
+  da cena se dissolve na noite pelas bordas, em vez de terminar numa moldura.
+- **Um movimento só quando a tela abre**: a cena chega, o título acende da
+  esquerda para a direita, o texto e o botão entram. Depois, só o que responde
+  ao ponteiro, e o menino e a joaninha, que se mexem pouco.
+- **Os três passos em cartões claros.** As ilustrações deles foram desenhadas
+  para papel claro; direto sobre a noite, saíam com as cores trocadas, como um
+  negativo.
+- **O rodapé no fim da página**, e não logo depois dos passos.
+
+### As entradas
+
+Um cartão dividido que ocupa quase a tela toda: de um lado, sobre o jardim, a
+folha de exercício mimeografada com a lupa (a ilustração que era da tela
+inicial desde D20, agora em `FolhaDeExercicio.tsx`); do outro, em papel claro,
+o que se faz. **Nenhum fluxo mudou**: o estudante segue anônimo com um botão
+só (D29), o professor entra pelo Google ou por e-mail e senha, o acesso da
+pesquisa continua um link discreto (D39).
+
+- **As duas saídas, cada uma no seu bloco, uma sobre a outra.** Antes ficavam
+  lado a lado. O estudante em cima, com o botão único na cor da ação e o aviso
+  de registro junto (D32). O teste que cobrava "à esquerda" em tela larga
+  passou a cobrar "em cima" nas duas larguras.
+- **O login diz que é de professor.** O bloco do professor leva a etiqueta
+  "Login só para professores" ao lado do título, e uma linha embaixo:
+  "Estudante não usa este formulário: o botão de cima já leva aos exercícios."
+  Sem isso os campos se liam como "a tela pede conta", que é o engano que esta
+  tela existe para evitar (D32).
+- **Entrar e criar conta se distinguem.** Os campos são os mesmos nos dois
+  modos, e a troca passava sem ser vista. Agora o formulário tem um título
+  ("Já tenho conta de professor" ou "Criar conta de professor") que entra de
+  novo a cada troca, e o chão do formulário muda de cor no modo de criar. Só
+  na tela de entrada: na área do professor o formulário continua como era.
+- **Nada empurra os campos.** A regra da senha fica na linha do rótulo, e a
+  mensagem de erro tem a altura guardada: os campos e os botões não descem
+  quando uma das duas aparece.
+- **Campos e botões arredondados** e mais altos.
+- Em tela estreita a folha sai, e o botão do estudante fica perto do topo.
+
+### A vitrine
+
+Jeito de jogo, e **nenhuma mecânica de jogo**: não há fase travada, estrela,
+pontuação nem contagem, porque saber o que já foi resolvido muda a forma como
+o estudante encara o que falta (D8).
+
+- Cada seção é uma trilha: uma faixa escura e translúcida, com o glifo da
+  estrutura num emblema no ocre.
+- Cada exercício é uma ficha em papel claro, de canto redondo, com a sombra
+  seca de uma peça pousada. **As miniaturas continuam sendo o desenho de
+  verdade**, sobre a mesa de luz, com as cores de significado.
+- A joaninha passeia ao lado do título, e entra pelo canto da ficha sob o
+  ponteiro. Todo exercício tem um defeito: ela não diz onde, só que ele está
+  lá. Fica no pé da ficha, fora da miniatura, para não cobrir estado nenhum.
+- O menino não aparece na vitrine: deitado numa faixa estreita, ficava
+  cortado.
+
+### A tela do exercício, fora do estudo
+
+**Só cor, canto e sombra.** Nenhuma medida, margem ou posição mudou, e o
+editor e o desenho ficaram como eram.
+
+- O fundo é o jardim; os títulos e o enunciado passam ao creme; os casos de
+  teste e as dicas ficam em papel claro, com canto redondo e a sombra seca das
+  fichas da vitrine; os botões viram pílulas, e a ação fica no ocre.
+- O erro e o acerto que pousam direto no escuro (as linhas apontadas) usam o
+  tom claro da mesma família, para manter o contraste. Dentro dos cartões
+  claros, e no sinal de acerto, as cores são as de sempre.
+- **A joaninha mora no fio do cabeçalho.** A cada execução ela corre para
+  outro ponto do fio; com o ponteiro em cima, pula; quando todos os casos
+  passam, fica parada debaixo de um aro, como sob a lupa. **Ela nunca diz onde
+  o defeito está**: as paradas são uma lista fixa, percorrida na ordem das
+  execuções, e não dependem do código, da linha do defeito nem do resultado.
+  Fica no cabeçalho, sobre a margem que já existia, longe do código e do
+  desenho.
+
+Como se conferiu, contra a `main`, em 18 estados (quatro exercícios, com e
+sem apoio, na abertura e alguns passos adiante com uma linha apontada, e mais
+duas larguras):
+
+| O quê | Resultado |
+|---|---|
+| Posição e tamanho de cada elemento da tela (5083 no total) | nenhum mudou |
+| A imagem do desenho | igual; muda só a borda de 1 px, onde o canto arredondado e a linha de baixo deixam ver o fundo novo |
+| A imagem do editor, em 1366 e 1024 px de largura | igual; mudam só os 8 px de cada canto arredondado, pelo mesmo motivo |
+| A imagem do editor em 360 px de largura | as letras saem com outra suavização de borda: mesmo texto, mesma posição, mesmas cores. A causa não foi encontrada; não é o fundo, a joaninha nem as transições, que foram desligados um a um |
+
+O fundo do exercício é pintado no próprio elemento, e não numa camada fixa
+atrás dele como nas outras telas: com a camada fixa, a suavização das letras
+do editor e do desenho mudava também em tela larga.
+
+### As microinterações
+
+- A ficha sobe 5 px e inclina meio grau sob o ponteiro, com um contorno no
+  ocre. **A miniatura não se mexe**: ela mostra um estado, e não enfeita.
+- A pílula do filtro desliza até a opção escolhida. Quem diz qual opção vale
+  continua sendo o `aria-pressed` de cada botão.
+- Botões e campos das entradas respondem ao ponteiro e ao clique; a seta do
+  botão do estudante anda um pouco.
+- As fichas da vitrine chegam em cascata, uma vez.
+
+Tudo em CSS, mais dois trechos pequenos de script (o ponteiro na cena e a
+medida da pílula). Nenhuma biblioteca nova.
+
+### As restrições
+
+- **Movimento reduzido.** Com a preferência ligada, nenhuma animação roda,
+  nenhuma transição acontece, e a cena nem recebe os ouvintes do ponteiro e da
+  rolagem.
+- **Nada de fora em tempo de execução (D13).** As imagens são empacotadas no
+  build, como as fontes.
+- **Peso.** As camadas viram webp de 1200 px: 19, 47 e 8 kB. Com a joaninha,
+  o retrato da marca e o fundo desfocado, a arte soma cerca de 90 kB. Os
+  originais em PNG, de 1 a 1,5 MB cada, ficam em `arte/originais/`, fora de
+  `public/`, e não entram no build.
+- **O banco não muda**, e `npm run verificar-rls` não é afetado.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| Toda animação nova tem a exceção de movimento reduzido escrita | `src/componentes/movimento-reduzido.test.ts`, que lê o CSS inteiro |
+| Com movimento reduzido, nada roda na inicial, e o ponteiro não mexe na cena | `e2e/movimento-reduzido.spec.ts` |
+| Com movimento normal, o menino e a joaninha animam, e a camada da frente anda mais que a de trás | o mesmo arquivo |
+| O estudante vem antes do professor, em cima, nas duas larguras | `e2e/entradas.spec.ts` |
+| As telas congeladas, para comparar antes e depois | `e2e/telas-congeladas.spec.ts`, com `CONGELADO_DIR` |
+| A animação da joaninha tem a exceção de movimento reduzido | `src/componentes/movimento-reduzido.test.ts` |
+
+Os demais testes das três telas (o botão único da inicial, as duas saídas, o
+link da pesquisa, a entrada do professor, o filtro, a largura de celular, a
+marca no cabeçalho) passaram sem alteração.
