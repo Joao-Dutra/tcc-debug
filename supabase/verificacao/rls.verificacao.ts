@@ -1749,6 +1749,158 @@ describe('proteção leve (0006)', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Aprovação de professores pelo painel (0007, D45)
+//
+// O que se cobra: só o pesquisador lista, concede e revoga; as funções só
+// levam de participante a professor e de volta; e por elas ninguém vira
+// pesquisador nem deixa de ser — nem a própria conta, nem a de outro.
+// ---------------------------------------------------------------------------
+
+interface LinhaDoCadastro {
+  id: string;
+  email: string;
+  nome: string | null;
+  cadastrado_em: string;
+  papel: string;
+}
+
+describe('aprovação de professores (0007)', () => {
+  let candidata: Conta;
+  let outroPesquisador: Conta;
+  let anonima: Conta;
+
+  beforeAll(async () => {
+    candidata = await criarConta('candidata');
+    outroPesquisador = await criarConta('outro-pesquisador', 'pesquisador');
+    // Uma conta anônima de verdade, como a do estudante: é a que a listagem
+    // não pode mostrar, e a que nunca pode virar professor. Não tem e-mail, e
+    // por isso sai pela lista de criadas, e não pelo prefixo.
+    const cliente = createClient(url, chavePublica, semPersistencia);
+    const entrada = await cliente.auth.signInAnonymously();
+    if (entrada.error || !entrada.data.user) {
+      throw new Error(`a conta anônima de teste não entrou: ${entrada.error?.message}`);
+    }
+    criadas.push(entrada.data.user.id);
+    anonima = { id: entrada.data.user.id, cliente };
+  });
+
+  it('participante, professor, anônimo e visitante não listam os cadastros', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    for (const cliente of [a.cliente, professorA.cliente, anonima.cliente, visitante]) {
+      const { data, error } = await cliente.rpc('listar_cadastros_de_professor');
+      recusadaPeloRls(error);
+      expect(data).toBeNull();
+    }
+  });
+
+  it('participante, professor e anônimo não concedem nem revogam, e a recusa fica na auditoria', async () => {
+    for (const conta of [a, professorA, anonima]) {
+      await esperarRecusa(conta, 'conceder_papel_de_professor', { p_usuario: candidata.id }, 'so-pesquisador');
+      await esperarRecusa(conta, 'revogar_papel_de_professor', { p_usuario: professorB.id }, 'so-pesquisador');
+      // Nem para si mesma: o participante não se aprova.
+      await esperarRecusa(conta, 'conceder_papel_de_professor', { p_usuario: conta.id }, 'so-pesquisador');
+    }
+    expect(await papelNoBanco(candidata.id)).toBe('participante');
+    expect(await papelNoBanco(professorB.id)).toBe('professor');
+    expect(await papelNoBanco(a.id)).toBe('participante');
+    expect(await papelNoBanco(anonima.id)).toBe('participante');
+  });
+
+  it('o visitante sem sessão nem chega às funções', async () => {
+    const visitante = createClient(url, chavePublica, semPersistencia);
+    for (const funcao of ['conceder_papel_de_professor', 'revogar_papel_de_professor']) {
+      const { error } = await visitante.rpc(funcao, { p_usuario: candidata.id });
+      recusadaPeloRls(error);
+    }
+    expect(await papelNoBanco(candidata.id)).toBe('participante');
+  });
+
+  it('o pesquisador lista as contas com e-mail e o papel de cada uma, sem as anônimas', async () => {
+    const { data, error } = await pesquisador.cliente.rpc('listar_cadastros_de_professor');
+    expect(error).toBeNull();
+    const linhas = (data ?? []) as LinhaDoCadastro[];
+    const porId = new Map(linhas.map((l) => [l.id, l]));
+    expect(porId.get(candidata.id)).toMatchObject({ papel: 'participante' });
+    expect(porId.get(candidata.id)?.email).toContain(PREFIXO_DO_EMAIL);
+    expect(porId.get(professorB.id)).toMatchObject({ papel: 'professor' });
+    expect(porId.get(pesquisador.id)).toMatchObject({ papel: 'pesquisador' });
+    expect(porId.has(anonima.id), 'a conta anônima apareceu na lista').toBe(false);
+    // Nenhuma linha sem e-mail, e só as cinco colunas.
+    expect(linhas.every((l) => typeof l.email === 'string' && l.email.length > 0)).toBe(true);
+    expect(Object.keys(linhas[0]).sort()).toEqual(['cadastrado_em', 'email', 'id', 'nome', 'papel']);
+  });
+
+  it('o pesquisador aprova, e a concessão fica na auditoria com quem, para quem e o quê', async () => {
+    const resposta = await acao(pesquisador, 'conceder_papel_de_professor', { p_usuario: candidata.id });
+    expect(resposta).toMatchObject({ ok: true, papel: 'professor' });
+    expect(await papelNoBanco(candidata.id)).toBe('professor');
+    expect(await ultimaAuditoria(pesquisador, 'conceder-papel-de-professor')).toMatchObject({
+      quem: pesquisador.id,
+      alvo: candidata.id,
+      resultado: 'ok',
+      detalhe: { papel: 'professor' },
+    });
+    // Aprovar de novo não faz nada.
+    await esperarRecusa(pesquisador, 'conceder_papel_de_professor', { p_usuario: candidata.id }, 'ja-e-professor');
+  });
+
+  it('conta anônima nunca vira professor, nem pelo pesquisador', async () => {
+    await esperarRecusa(pesquisador, 'conceder_papel_de_professor', { p_usuario: anonima.id }, 'conta-anonima');
+    expect(await papelNoBanco(anonima.id)).toBe('participante');
+  });
+
+  it('ninguém vira pesquisador nem deixa de ser por estas funções', async () => {
+    // O pesquisador não mexe na própria conta.
+    await esperarRecusa(pesquisador, 'revogar_papel_de_professor', { p_usuario: pesquisador.id }, 'a-propria-conta');
+    await esperarRecusa(pesquisador, 'conceder_papel_de_professor', { p_usuario: pesquisador.id }, 'e-pesquisador');
+    // Nem na de outro pesquisador: conceder não o rebaixa, revogar não o tira.
+    await esperarRecusa(pesquisador, 'conceder_papel_de_professor', { p_usuario: outroPesquisador.id }, 'e-pesquisador');
+    await esperarRecusa(pesquisador, 'revogar_papel_de_professor', { p_usuario: outroPesquisador.id }, 'e-pesquisador');
+    expect(await papelNoBanco(pesquisador.id)).toBe('pesquisador');
+    expect(await papelNoBanco(outroPesquisador.id)).toBe('pesquisador');
+
+    // E nenhuma conta de teste que não era pesquisadora passou a ser.
+    for (const conta of [a, b, professorA, professorB, candidata, anonima]) {
+      expect(await papelNoBanco(conta.id), 'virou pesquisador').not.toBe('pesquisador');
+    }
+    // As funções não aceitam papel nenhum como parâmetro: pedir um é erro de
+    // assinatura, e não concessão.
+    const { error } = await pesquisador.cliente.rpc('conceder_papel_de_professor', {
+      p_usuario: a.id,
+      p_papel: 'pesquisador',
+    });
+    expect(error, 'a função aceitou um papel como parâmetro').not.toBeNull();
+    expect(await papelNoBanco(a.id)).toBe('participante');
+  });
+
+  it('o pesquisador revoga, a conta volta a participante e deixa de escrever', async () => {
+    // Enquanto é professora, cria um rascunho.
+    const rascunho = await candidata.cliente
+      .from('exercicios_de_professor')
+      .insert({ conteudo: conteudoDeTeste('da candidata') })
+      .select('id')
+      .single();
+    expect(rascunho.error).toBeNull();
+
+    await esperarRecusa(pesquisador, 'revogar_papel_de_professor', { p_usuario: a.id }, 'nao-e-professor');
+    const resposta = await acao(pesquisador, 'revogar_papel_de_professor', { p_usuario: candidata.id });
+    expect(resposta).toMatchObject({ ok: true, papel: 'participante' });
+    expect(await papelNoBanco(candidata.id)).toBe('participante');
+    expect(await ultimaAuditoria(pesquisador, 'revogar-papel-de-professor')).toMatchObject({
+      quem: pesquisador.id,
+      alvo: candidata.id,
+      resultado: 'ok',
+    });
+
+    // Sem o papel, não cria mais exercício: as políticas da 0002 conferem a cada escrita.
+    const depois = await candidata.cliente
+      .from('exercicios_de_professor')
+      .insert({ conteudo: conteudoDeTeste('depois da revogação') });
+    recusadaPeloBanco(depois.error);
+  });
+});
+
 describe('limpeza', () => {
   it('não deixa resíduo no banco do estudo', async () => {
     await devolverInterruptor();
