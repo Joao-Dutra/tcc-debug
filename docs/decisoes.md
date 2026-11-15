@@ -5022,3 +5022,120 @@ medida da pílula). Nenhuma biblioteca nova.
 Os demais testes das três telas (o botão único da inicial, as duas saídas, o
 link da pesquisa, a entrada do professor, o filtro, a largura de celular, a
 marca no cabeçalho) passaram sem alteração.
+
+## D44 — A linha em execução nos dois níveis de apoio, e os ajustes antes da coleta
+
+**Decisão.** Sete ajustes antes da coleta de terça, 17/11/2026. Um muda uma
+condição do experimento; os outros seis são de aparência.
+
+### A linha em execução passa a ser destacada também sem apoio
+
+**A decisão é da orientadora.** No modo sem apoio, a linha do passo exibido
+passa a ser destacada no editor durante o passo a passo, como já era com
+apoio.
+
+- **O que era.** Desde D9, sem apoio ficava só o indicador textual
+  ("Executando a linha 7"), e achar essa linha no código era trabalho do
+  estudante. O destaque saía junto com os rótulos dos marcadores.
+- **O que é.** O destaque é da ferramenta, como o indicador, e não do apoio:
+  aparece igual nos dois níveis. Em `src/componentes/andaime.ts`,
+  `destacarLinhaNoEditor` devolve verdadeiro para os dois.
+- **O que continua separando as condições:** as três dicas, as legendas e os
+  rótulos do desenho, e o esperado e o obtido nos casos de teste. Só com
+  apoio.
+
+**`VERSAO_DO_REGISTRO` passa a 15, e os dados da versão 14 e da 15 não se
+misturam.** O formato do registro é o mesmo; o que mudou é o que a condição
+"sem apoio" mostra. Uma sessão sem apoio da versão 14 e uma da 15 são de
+condições diferentes com o mesmo nome. A comparação entre com e sem apoio só
+vale dentro da mesma versão, e é a coluna da versão que separa os dois
+conjuntos na análise. Os pilotos, até a 14, ficam como pilotos.
+
+O destaque não aponta o defeito: marca a linha que o programa está
+executando no passo exibido, em todo passo, certa ou errada. A regra de que
+nada aponta o defeito (D7) continua inteira.
+
+### O botão de seguir no percurso
+
+Na área do estudo, "Seguir para o próximo" (e "Concluir os exercícios") fica
+maior, cheio, na cor da ação e com um halo, no mesmo lugar da barra. Até D39
+ele pesava de propósito como o botão de ajuda ao lado, para a ação principal
+continuar sendo investigar; na prática, passava despercebido por quem já
+tinha terminado.
+
+**Só a aparência.** O clique abre a mesma confirmação, com o foco no lado que
+não perde nada; o registro do encerramento e os prazos são os de antes. Por
+ser mais alto, o botão aumenta a barra em alguns pixels, e o resto da tela
+desce o mesmo tanto.
+
+### O questionário
+
+Centrado, em papel claro sobre o jardim de D43, com cada afirmação numa ficha
+e a opção marcada destacada. **O texto, a ordem e as escalas não mudaram**: o
+SUS segue o de Lourenço et al. (2022), e a impressão do texto guardada no
+teste é a mesma.
+
+**`VERSAO_DO_QUESTIONARIO` continua 2**, a de D42. O pedido dizia "continua
+1"; a versão em uso desde D42 é a 2, com o bloco dos recursos, e ela não foi
+tocada.
+
+Só o questionário ganhou a moldura. O aviso, o perfil, os exercícios e a
+tela do fim continuam com a aparência de antes: o percurso muda de fundo ao
+chegar ao questionário.
+
+### A vitrine
+
+No hover de "com apoio" e "sem apoio", o ocre da tela do exercício, no lugar
+do roxo.
+
+### A entrada
+
+Cada coluna do cartão é de uma saída: à esquerda, sobre o jardim, a folha de
+exercício e, embaixo dela, o bloco do estudante; à direita, em papel claro,
+o do professor. Em D43 as duas ficavam empilhadas na coluna da direita. O
+título "Entrar" voltou para o cabeçalho, e o acesso da pesquisa fica num link
+discreto abaixo do cartão. Fluxos e textos iguais, com uma palavra trocada na
+nota do login ("o botão ao lado", e não "de cima").
+
+O estudante continua vindo primeiro (D32): à esquerda em tela larga, em cima
+em tela estreita. O teste voltou a cobrar isso.
+
+### A navbar e as telas de trabalho
+
+- **Os links do topo em pílulas**: o menu do papel, a volta e o atalho para
+  as métricas. O da tela em que se está fica cheio, no ocre.
+- **Os painéis de controle e de métricas e a área do professor** ganham a
+  moldura do jardim, com o trabalho numa folha clara sobre ele. As tabelas, os
+  filtros e os formulários não foram redesenhados: dentro da folha os papéis
+  de cor são os da raiz. Mudam o canto e o acabamento.
+- **Um botão "Início"** na barra dos dois painéis, como a área do professor
+  já tinha.
+- **O mapa de rotas perdeu o grupo "Exercícios do catálogo".** Eram duas
+  linhas por exercício, que a vitrine já oferece, e empurravam para longe os
+  endereços das aplicações do estudo. Saiu da tela; no banco nada muda.
+- **Nenhuma função mudou**: abrir, fechar e limpar aplicação, a proteção, o
+  limite de participantes, o CSV, o JSON e as métricas.
+
+### O congelamento
+
+D39 e D42 congelavam o que o participante vê. Três itens daqui o descongelam,
+por decisão explícita: o destaque sem apoio, o botão de seguir e a aparência
+do questionário. O novo estado congelado é este, de 15/11/2026, e a coleta de
+terça roda sobre ele. A comparação pixel a pixel de D43 deixa de valer para a
+tela do exercício no percurso e para o questionário, que mudaram de
+propósito; para o aviso e o perfil ela continua valendo.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| A linha do passo exibido fica destacada com e sem apoio, na mesma linha que o indicador diz, e acompanha o passo | `e2e/exercicio.spec.ts` |
+| O que continua separando as condições: dicas e o esperado e o obtido só com apoio | o mesmo arquivo |
+| O mapa de rotas tem as telas e as aplicações, e nenhum exercício | `src/componentes/mapa-de-rotas.test.ts`, `e2e/controle.spec.ts` |
+| O estudante à esquerda em tela larga, em cima em tela estreita | `e2e/entradas.spec.ts` |
+| O texto do questionário é o da versão 2, sem alteração | `src/estudo/questionario.test.ts`, que já existia |
+
+Conferido no navegador, com o banco falso: abrir e fechar aplicação, limpar
+com o CSV antes, exportar o CSV do estudo e exportar o JSON. São os testes que
+já existiam em `e2e/controle.spec.ts`, `e2e/painel-do-estudo.spec.ts` e
+`e2e/painel.spec.ts`, e passaram sem mudança no que cobram.
