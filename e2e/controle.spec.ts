@@ -22,6 +22,8 @@ const CHAVE_DA_SESSAO = 'sb-supabase-falso-auth-token';
 const PESQUISADOR = '0c0c0c0c-0000-4000-8000-00000000000c';
 const OUTRA_CONTA = '0d0d0d0d-0000-4000-8000-00000000000d';
 const ANA = '0a0a0a0a-0000-4000-8000-0000000000a1';
+const BIA = '0b0b0b0b-0000-4000-8000-0000000000b1';
+const CAIO = '0c0c0c0c-0000-4000-8000-0000000000c1';
 const ID_PUBLICADO = '33333333-3333-4333-8333-333333333333';
 
 function linhaDeSessao(participanteId: string, exercicioId: string, estudo: MarcaDoEstudo) {
@@ -65,6 +67,8 @@ interface Banco {
   chamadas: { funcao: string; corpo: unknown }[];
   /** O que cada função responde; sem resposta, `{ ok: true }`. */
   respostas: Record<string, unknown>;
+  /** As contas não anônimas, que a aprovação de professores lista e muda (0007). */
+  cadastros: { id: string; email: string; nome: string | null; cadastrado_em: string; papel: string }[];
 }
 
 async function entrarComo(page: Page, usuarioId: string) {
@@ -103,7 +107,16 @@ async function entrarComo(page: Page, usuarioId: string) {
 }
 
 function novoBanco(papel: Banco['papel'] = 'pesquisador'): Banco {
-  return { papel, chamadas: [], respostas: {} };
+  return {
+    papel,
+    chamadas: [],
+    respostas: {},
+    cadastros: [
+      { id: BIA, email: 'bia@example.com', nome: 'Bia Nova', cadastrado_em: '2026-11-14T10:00:00Z', papel: 'participante' },
+      { id: CAIO, email: 'caio@example.com', nome: null, cadastrado_em: '2026-11-10T10:00:00Z', papel: 'professor' },
+      { id: PESQUISADOR, email: 'pesquisa@example.com', nome: null, cadastrado_em: '2026-10-01T10:00:00Z', papel: 'pesquisador' },
+    ],
+  };
 }
 
 async function bancoFalso(page: Page, banco: Banco) {
@@ -191,9 +204,23 @@ async function bancoFalso(page: Page, banco: Banco) {
         ],
       });
     }
+    if (caminho === 'rpc/listar_cadastros_de_professor') {
+      // Como no banco: quem não é pesquisador recebe erro, e não lista vazia.
+      if (banco.papel !== 'pesquisador') {
+        return rota.fulfill({ status: 403, json: { message: 'só o pesquisador lista os cadastros' } });
+      }
+      return rota.fulfill({ status: 200, json: banco.cadastros });
+    }
     if (caminho.startsWith('rpc/')) {
       const funcao = caminho.slice('rpc/'.length);
       banco.chamadas.push({ funcao, corpo: pedido.postDataJSON() });
+      // As duas funções de papel mudam a lista, como o banco mudaria, a menos
+      // que o teste tenha dado outra resposta.
+      const papelNovo = { conceder_papel_de_professor: 'professor', revogar_papel_de_professor: 'participante' }[funcao];
+      if (papelNovo && !banco.respostas[funcao]) {
+        const alvo = (pedido.postDataJSON() as { p_usuario: string }).p_usuario;
+        banco.cadastros = banco.cadastros.map((c) => (c.id === alvo ? { ...c, papel: papelNovo } : c));
+      }
       return rota.fulfill({ status: 200, json: banco.respostas[funcao] ?? { ok: true } });
     }
     if (pedido.method() !== 'GET' && pedido.method() !== 'HEAD') {
@@ -449,4 +476,83 @@ test('a auditoria mostra as ações, com o motivo da recusa em texto', async ({ 
   await expect(linhas.nth(0)).toContainText('limpar-aplicacao');
   await expect(linhas.nth(0)).toContainText('A aplicação é protegida: o painel nunca a limpa.');
   await expect(linhas.nth(1)).toContainText('esta conta');
+});
+
+// ------------------------------------------------ aprovação de professores ---
+
+const secaoDosProfessores = (page: Page) =>
+  page.locator('section', { has: page.getByRole('heading', { name: 'Professores', exact: true }) });
+
+test('os cadastros aparecem em duas listas, sem o pesquisador e sem botão para o papel dele (D45)', async ({ page }) => {
+  await entrarComo(page, PESQUISADOR);
+  await bancoFalso(page, novoBanco());
+  await page.goto('/#/controle');
+  const secao = secaoDosProfessores(page);
+  const aguardando = secao.getByRole('list', { name: 'Aguardando aprovação' });
+  const aprovados = secao.getByRole('list', { name: 'Professores aprovados' });
+  await expect(aguardando.getByRole('listitem')).toHaveCount(1);
+  await expect(aguardando).toContainText('Bia Nova');
+  await expect(aguardando).toContainText('bia@example.com');
+  await expect(aprovados.getByRole('listitem')).toHaveCount(1);
+  await expect(aprovados).toContainText('caio@example.com');
+  // A conta de pesquisador não entra em lista nenhuma, e nada na seção fala em dar esse papel.
+  await expect(secao).not.toContainText('pesquisa@example.com');
+  await expect(secao.getByRole('button', { name: /pesquisador/i })).toHaveCount(0);
+});
+
+test('aprovar vai pela função, diz o que aconteceu e a lista se atualiza', async ({ page }) => {
+  await entrarComo(page, PESQUISADOR);
+  const banco = novoBanco();
+  await bancoFalso(page, banco);
+  await page.goto('/#/controle');
+  const secao = secaoDosProfessores(page);
+  await secao.getByRole('button', { name: 'Aprovar bia@example.com' }).click();
+
+  await expect(secao.getByRole('status')).toHaveText('bia@example.com foi aprovada: já pode escrever exercícios.');
+  expect(banco.chamadas).toEqual([{ funcao: 'conceder_papel_de_professor', corpo: { p_usuario: BIA } }]);
+  // Sem recarregar a página: ela saiu de uma lista e entrou na outra.
+  await expect(secao.getByText('Ninguém aguardando.')).toBeVisible();
+  await expect(secao.getByRole('list', { name: 'Professores aprovados' }).getByRole('listitem')).toHaveCount(2);
+});
+
+test('revogar pede confirmação num diálogo da página, e cancelar não chama nada', async ({ page }) => {
+  await entrarComo(page, PESQUISADOR);
+  const banco = novoBanco();
+  await bancoFalso(page, banco);
+  // Um `confirm` do navegador faria o teste falhar aqui: o diálogo é da página.
+  page.on('dialog', () => {
+    throw new Error('a revogação abriu um diálogo do navegador');
+  });
+  await page.goto('/#/controle');
+  const secao = secaoDosProfessores(page);
+  await secao.getByRole('button', { name: 'Revogar caio@example.com' }).click();
+
+  const dialogo = page.getByRole('dialog', { name: 'Revogar o papel de professor?' });
+  await expect(dialogo).toBeVisible();
+  await expect(dialogo).toContainText('caio@example.com');
+  // O foco cai no lado que não perde nada.
+  await expect(dialogo.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+  await dialogo.getByRole('button', { name: 'Cancelar' }).click();
+  await expect(dialogo).toBeHidden();
+  expect(banco.chamadas).toEqual([]);
+
+  await secao.getByRole('button', { name: 'Revogar caio@example.com' }).click();
+  await dialogo.getByRole('button', { name: 'Revogar o papel' }).click();
+  await expect(dialogo).toBeHidden();
+  await expect(secao.getByRole('status')).toHaveText('caio@example.com não é mais professor.');
+  expect(banco.chamadas).toEqual([{ funcao: 'revogar_papel_de_professor', corpo: { p_usuario: CAIO } }]);
+  await expect(secao.getByText('Nenhum professor aprovado.')).toBeVisible();
+  await expect(secao.getByRole('list', { name: 'Aguardando aprovação' }).getByRole('listitem')).toHaveCount(2);
+});
+
+test('a recusa do banco na aprovação aparece com o motivo, e não como feita', async ({ page }) => {
+  await entrarComo(page, PESQUISADOR);
+  const banco = novoBanco();
+  banco.respostas.conceder_papel_de_professor = { ok: false, motivo: 'ja-e-professor' };
+  await bancoFalso(page, banco);
+  await page.goto('/#/controle');
+  const secao = secaoDosProfessores(page);
+  await secao.getByRole('button', { name: 'Aprovar bia@example.com' }).click();
+  await expect(secao.getByRole('status')).toHaveText('A conta já é de professor.');
+  await expect(secao.getByRole('status')).not.toContainText('aprovada');
 });

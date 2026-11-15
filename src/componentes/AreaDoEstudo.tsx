@@ -64,31 +64,29 @@ function comPrazo(estado: EstadoDoPercurso, agora: number): EstadoDoPercurso {
 function TelaDoEstudo({
   rotulo,
   titulo,
-  noJardim = false,
   children,
 }: {
   rotulo?: string;
   titulo: string;
-  /**
-   * A moldura das telas de fora (D43), com o bloco centrado em papel claro.
-   * Só o questionário a usa (D44): o aviso, o perfil e os exercícios do
-   * percurso continuam como estavam.
-   */
-  noJardim?: boolean;
   children: ReactNode;
 }) {
-  const tela = (
-    <div className="pagina area-do-estudo com-cabecalho">
-      <Cabecalho
-        semSaida
-        logo={noJardim}
-        navegacao={rotulo && <span className="posicao-no-percurso">{rotulo}</span>}
-        titulo={titulo}
-      />
-      <main className={noJardim ? 'corpo-do-estudo papeis-claros' : 'corpo-do-estudo'}>{children}</main>
+  // A moldura das telas de fora (D43), com o bloco centrado em papel claro.
+  // Vale para todas as telas de formulário do percurso — o aviso, o perfil,
+  // as de espera e de fim, e o questionário (D44). A tela do exercício, dentro
+  // do percurso, não passa por aqui.
+  return (
+    <div className="jardim estudo-no-jardim">
+      <div className="pagina area-do-estudo com-cabecalho">
+        <Cabecalho
+          semSaida
+          logo
+          navegacao={rotulo && <span className="posicao-no-percurso">{rotulo}</span>}
+          titulo={titulo}
+        />
+        <main className="corpo-do-estudo papeis-claros">{children}</main>
+      </div>
     </div>
   );
-  return noJardim ? <div className="jardim questionario-no-jardim">{tela}</div> : tela;
 }
 
 const FALHA_DO_BANCO = 'Não foi possível falar com o servidor do estudo. Chame o pesquisador.';
@@ -431,7 +429,7 @@ export function AreaDoEstudo({ aplicacao }: { aplicacao: string }) {
 
   if (passo.tela === 'questionario') {
     return (
-      <TelaDoEstudo titulo={QUESTIONARIO.titulo} noJardim>
+      <TelaDoEstudo titulo={QUESTIONARIO.titulo}>
         <QuestionarioDoEstudo
           aoEnviar={async (resposta) => {
             if (comBanco) {

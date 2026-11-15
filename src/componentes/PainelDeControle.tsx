@@ -35,7 +35,8 @@ import { MenuDaConta } from './MenuDaConta';
 import { enderecoCompleto, mapaDeRotas } from './mapa-de-rotas';
 import { useIdentidade } from './usar-identidade';
 import { baixarMetricas } from './usar-metricas';
-import { CAMINHO_INICIAL, CAMINHO_METRICAS } from './usar-rota';
+import { SecaoDosProfessores } from './SecaoDosProfessores';
+import { CAMINHO_INICIAL } from './usar-rota';
 
 /**
  * O painel de controle do pesquisador (D38): o que antes era SQL à mão no
@@ -61,14 +62,11 @@ function Moldura({ children }: { children: ReactNode }) {
             <ArrowLeftIcon className="icone" aria-hidden="true" />
             Início
           </a>
-          <a className="discreto" href={CAMINHO_METRICAS}>
-            Métricas das sessões
-          </a>
           <MenuDaConta />
         </div>
         <h1>Painel de controle</h1>
         <p>
-          Aplicações do estudo, interruptor da coleta, mapa de rotas e auditoria. Toda ação
+          Aplicações do estudo, professores, interruptor da coleta, mapa de rotas e auditoria. Toda ação
           que muda alguma coisa fica registrada, com quem, quando e o resultado.
         </p>
       </header>
@@ -149,6 +147,7 @@ function PainelDoPesquisador({ secao }: { secao?: 'rotas' }) {
   return (
     <>
       <SecaoDasAplicacoes leitura={leitura} />
+      <SecaoDosProfessores />
       <InterruptorDaColeta />
       <FreioDosPublicados />
       <SecaoDoMapaDeRotas

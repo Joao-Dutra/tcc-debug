@@ -147,3 +147,50 @@ export async function lerAuditoria(limite = 50): Promise<LinhaDaAuditoria[]> {
   if (error) throw new Error(error.message);
   return (data ?? []) as LinhaDaAuditoria[];
 }
+
+/** Uma conta criada por Google ou por e-mail e senha, com o papel que tem (0007). */
+export interface CadastroDeProfessor {
+  id: string;
+  email: string;
+  /** O nome que o Google entregou no cadastro; quem entrou por e-mail não tem. */
+  nome: string | null;
+  cadastradoEm: string;
+  papel: 'participante' | 'professor' | 'pesquisador';
+}
+
+/**
+ * As contas não anônimas, da mais nova para a mais velha. Só o pesquisador
+ * lista; para outra conta a função levanta erro (0007). As contas anônimas dos
+ * estudantes não vêm.
+ */
+export async function listarCadastrosDeProfessor(): Promise<CadastroDeProfessor[]> {
+  const { data, error } = await cliente().rpc('listar_cadastros_de_professor');
+  if (error) throw new Error(error.message);
+  const linhas = (data ?? []) as {
+    id: string;
+    email: string;
+    nome: string | null;
+    cadastrado_em: string;
+    papel: CadastroDeProfessor['papel'];
+  }[];
+  return linhas.map((l) => ({
+    id: l.id,
+    email: l.email,
+    nome: l.nome,
+    cadastradoEm: l.cadastrado_em,
+    papel: l.papel,
+  }));
+}
+
+/** De participante a professor. O banco recusa qualquer outro ponto de partida (0007). */
+export async function concederPapelDeProfessor(usuarioId: string): Promise<void> {
+  await chamar('conceder_papel_de_professor', { p_usuario: usuarioId });
+}
+
+/**
+ * De professor a participante. O banco recusa a própria conta de quem chama
+ * e nunca toca num pesquisador (0007).
+ */
+export async function revogarPapelDeProfessor(usuarioId: string): Promise<void> {
+  await chamar('revogar_papel_de_professor', { p_usuario: usuarioId });
+}

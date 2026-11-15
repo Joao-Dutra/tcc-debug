@@ -86,14 +86,15 @@ export function ConferenciaDoEstudo({ aplicacao }: { aplicacao: string }) {
   const terminou = itens.every((i) => i.resultado.estado !== 'conferindo');
 
   return (
+    <div className="jardim estudo-no-jardim">
     <div className="pagina area-do-estudo com-cabecalho">
-      <Cabecalho semSaida titulo="Conferência da máquina">
+      <Cabecalho semSaida logo titulo="Conferência da máquina">
         <p>
           Aplicação <code>{aplicacao}</code>. Esta página não grava sessão e não ocupa vaga no
           estudo.
         </p>
       </Cabecalho>
-      <main className="corpo-do-estudo">
+      <main className="corpo-do-estudo papeis-claros">
         <ul className="conferencia">
           {itens.map(({ nome, resultado }) => (
             <li key={nome} className={resultado.estado}>
@@ -111,6 +112,7 @@ export function ConferenciaDoEstudo({ aplicacao }: { aplicacao: string }) {
           Conferir de novo
         </button>
       </main>
+    </div>
     </div>
   );
 }

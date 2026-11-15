@@ -10,6 +10,7 @@ import {
   limiteDigitado,
   mensagemDaFalha,
   problemaDoCodigo,
+  separarCadastros,
   textoDoMotivo,
 } from './controle';
 import { RecusaDoPainel } from '../supabase/controle-do-pesquisador';
@@ -94,15 +95,65 @@ describe('o limite de participantes', () => {
   });
 });
 
+const migracao0007 = readFileSync(
+  new URL('../../supabase/migracoes/0007_aprovacao_de_professores.sql', import.meta.url),
+  'utf8'
+);
+
+describe('a aprovação de professores (D45)', () => {
+  it('as duas listas: quem aguarda e quem já é professor, na ordem do banco, sem o pesquisador', () => {
+    const cadastros = [
+      { id: 'a', papel: 'participante' },
+      { id: 'b', papel: 'professor' },
+      { id: 'c', papel: 'pesquisador' },
+      { id: 'd', papel: 'participante' },
+    ];
+    const { aguardando, professores } = separarCadastros(cadastros);
+    expect(aguardando.map((c) => c.id)).toEqual(['a', 'd']);
+    expect(professores.map((c) => c.id)).toEqual(['b']);
+  });
+
+  it('a migração nunca escreve o papel de pesquisador, e só mexe no de professor', () => {
+    // Sem os comentários: é o que o banco executa.
+    const sql = migracao0007.replace(/--.*$/gm, '');
+    const escritas = [...sql.matchAll(/set papel = '([a-z]+)'/g)].map((m) => m[1]);
+    expect(escritas.sort()).toEqual(['participante', 'professor']);
+    // Cada escrita parte de um papel só, nomeado na condição: nunca de pesquisador.
+    expect(sql).toMatch(/set papel = 'professor'\s+where p\.id = p_usuario and p\.papel = 'participante'/);
+    expect(sql).toMatch(/set papel = 'participante'\s+where p\.id = p_usuario and p\.papel = 'professor'/);
+    // E nada existente é trocado: só `create function`.
+    expect(sql).not.toMatch(/\b(drop|alter|create or replace|create table|create policy|create trigger|delete from|truncate)\b/i);
+    expect([...sql.matchAll(/create function public\.(\w+)/g)].map((m) => m[1])).toEqual([
+      'listar_cadastros_de_professor',
+      'conceder_papel_de_professor',
+      'revogar_papel_de_professor',
+    ]);
+  });
+
+  it('as três funções são definer, com search_path fixo, e fechadas para anon e public', () => {
+    const sql = migracao0007.replace(/--.*$/gm, '');
+    expect(sql.match(/security definer\s+set search_path = ''/g)).toHaveLength(3);
+    for (const assinatura of [
+      'listar_cadastros_de_professor()',
+      'conceder_papel_de_professor(uuid)',
+      'revogar_papel_de_professor(uuid)',
+    ]) {
+      expect(sql).toContain(`revoke execute on function public.${assinatura} from public, anon;`);
+      expect(sql).toContain(`grant execute on function public.${assinatura} to authenticated;`);
+    }
+  });
+});
+
 describe('os motivos das recusas', () => {
-  it('todo motivo que a 0005 e a 0006 devolvem tem texto na tela', () => {
+  it('todo motivo que a 0005, a 0006 e a 0007 devolvem tem texto na tela', () => {
     const motivos = new Set(
-      [migracao0005, migracao0006].flatMap((sql) =>
+      [migracao0005, migracao0006, migracao0007].flatMap((sql) =>
         [...sql.matchAll(/'motivo', '([a-z-]+)'/g)].map((m) => m[1])
       )
     );
     expect(motivos.size).toBeGreaterThan(5);
     expect(motivos).toContain('abaixo-das-entradas');
+    expect(motivos).toContain('a-propria-conta');
     for (const motivo of motivos) expect(Object.keys(TEXTOS_DOS_MOTIVOS), motivo).toContain(motivo);
   });
 

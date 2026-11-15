@@ -63,6 +63,13 @@ export const TEXTOS_DOS_MOTIVOS: Record<string, string> = {
   'limite-invalido': 'O limite de participantes vai de 1 a 1000.',
   'abaixo-das-entradas':
     'O limite não pode ficar abaixo de quem já entrou. Para não receber mais ninguém, feche a aplicação.',
+  'conta-inexistente': 'A conta não existe mais.',
+  'conta-anonima': 'Conta anônima de estudante não recebe papel.',
+  'e-pesquisador': 'A conta é de pesquisador, e este painel não mexe nesse papel.',
+  'ja-e-professor': 'A conta já é de professor.',
+  'nao-e-professor': 'A conta não é de professor.',
+  'a-propria-conta': 'Você não pode mexer no papel da sua própria conta.',
+  'papel-mudou': 'O papel da conta mudou enquanto você olhava. Recarregue a lista.',
 };
 
 export function textoDoMotivo(motivo: string | undefined): string {
@@ -76,4 +83,19 @@ export function mensagemDaFalha(falha: unknown): string {
     return textoDoMotivo((falha as Error & { motivo?: string }).motivo);
   }
   return falha instanceof Error ? falha.message : String(falha);
+}
+
+/**
+ * As duas listas da seção "Professores" (D45): quem aguarda aprovação e quem
+ * já é professor. A conta de pesquisador não entra em nenhuma — o painel não
+ * dá nem tira esse papel, e listá-la com um botão ao lado convidaria ao
+ * engano. A ordem de cada lista é a que veio do banco.
+ */
+export function separarCadastros<C extends { papel: string }>(
+  cadastros: readonly C[]
+): { aguardando: C[]; professores: C[] } {
+  return {
+    aguardando: cadastros.filter((c) => c.papel === 'participante'),
+    professores: cadastros.filter((c) => c.papel === 'professor'),
+  };
 }
