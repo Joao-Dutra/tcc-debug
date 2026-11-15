@@ -5079,9 +5079,15 @@ teste é a mesma.
 1"; a versão em uso desde D42 é a 2, com o bloco dos recursos, e ela não foi
 tocada.
 
-Só o questionário ganhou a moldura. O aviso, o perfil, os exercícios e a
-tela do fim continuam com a aparência de antes: o percurso muda de fundo ao
-chegar ao questionário.
+A mesma moldura vale para as outras telas de formulário do percurso: o
+aviso, o perfil, as telas de espera, de tempo esgotado e de fim, e a
+conferência da máquina. No aviso, o aceite fica numa faixa própria; no
+perfil, cada pergunta numa ficha e cada resposta numa pílula. **Nenhum texto
+mudou**, nem a ordem, nem o que cada tela pede.
+
+A tela do exercício dentro do percurso é a única que continua na areia: o
+participante sai do jardim ao abrir o aquecimento e volta a ele no
+questionário.
 
 ### A vitrine
 
@@ -5122,8 +5128,7 @@ D39 e D42 congelavam o que o participante vê. Três itens daqui o descongelam,
 por decisão explícita: o destaque sem apoio, o botão de seguir e a aparência
 do questionário. O novo estado congelado é este, de 15/11/2026, e a coleta de
 terça roda sobre ele. A comparação pixel a pixel de D43 deixa de valer para a
-tela do exercício no percurso e para o questionário, que mudaram de
-propósito; para o aviso e o perfil ela continua valendo.
+área do estudo inteira, que mudou de propósito.
 
 ### O que virou teste
 
@@ -5139,3 +5144,114 @@ Conferido no navegador, com o banco falso: abrir e fechar aplicação, limpar
 com o CSV antes, exportar o CSV do estudo e exportar o JSON. São os testes que
 já existiam em `e2e/controle.spec.ts`, `e2e/painel-do-estudo.spec.ts` e
 `e2e/painel.spec.ts`, e passaram sem mudança no que cobram.
+
+## D45 — A aprovação de professores pelo painel
+
+**Decisão.** O pesquisador passa a aprovar e a revogar o papel de professor
+pelo painel de controle. Até aqui o papel era dado à mão, com um `update` no
+editor SQL (D29): o professor criava a conta, lia "aguardando liberação" e
+esperava alguém abrir o banco.
+
+**O papel de pesquisador continua sendo dado só por SQL manual.** Nenhuma
+função nova o escreve, o concede ou o tira.
+
+### O banco: a migração 0007
+
+**Só acrescenta.** Três funções novas; nenhuma tabela, política, gatilho ou
+função existente muda, e nenhum dado é tocado. Isso foi conferido comparando
+o banco inteiro antes e depois da 0007, num Postgres local.
+
+| Função | O que faz |
+|---|---|
+| `listar_cadastros_de_professor()` | As contas com e-mail (Google ou e-mail e senha), com e-mail, nome quando há, data do cadastro e o papel atual. As contas anônimas dos estudantes ficam de fora |
+| `conceder_papel_de_professor(usuario)` | De participante a professor |
+| `revogar_papel_de_professor(usuario)` | De professor a participante |
+
+As três são `security definer`, com `search_path` fixo, fechadas para `anon`
+e `public`, e conferem por dentro que quem chama é pesquisador.
+
+As regras, todas cobradas no banco, e não na tela:
+
+- **Só o papel de professor entra e sai.** As funções não recebem papel como
+  parâmetro, e cada escrita leva o papel de partida na condição: uma só
+  transforma participante em professor, a outra só professor em participante.
+- **Um pesquisador nunca é tocado.** Conceder não o rebaixa a professor, e
+  revogar não tira o papel dele. As duas respondem `e-pesquisador`.
+- **Ninguém mexe na própria conta.** A revogação recusa a conta de quem chama
+  antes de ler qualquer coisa (`a-propria-conta`). Hoje isso nunca tiraria
+  acesso, porque quem chama é pesquisador e a função não tira esse papel; a
+  recusa está escrita mesmo assim, para o dia em que um papel acumular com
+  outro.
+- **Conta anônima nunca vira professor.**
+- **Cada concessão e revogação fica na auditoria da 0005**: quem fez, para
+  quem (o id da conta, e o e-mail no detalhe), quando e o quê. As recusas
+  também.
+
+**A recusa é resposta, e não exceção**, como nas outras funções do painel
+(D38): quem não é pesquisador recebe `ok: false` com o motivo
+`so-pesquisador`, e a tentativa fica gravada. Uma exceção desfaria a linha da
+auditoria junto. Só a listagem levanta erro, porque não muda nada e não tem o
+que auditar.
+
+**O que a revogação não toca:** os exercícios que o professor já escreveu. Os
+publicados continuam publicados, e quem os tira é o freio do painel. Sem o
+papel, a conta deixa de escrever e de publicar, porque as políticas da 0002
+conferem o papel a cada escrita.
+
+### O painel
+
+Uma seção "Professores", com duas listas:
+
+- **Aguardando aprovação**: as contas com e-mail que ainda são participantes,
+  cada uma com "Aprovar". Um clique: não perde nada, e revogar desfaz.
+- **Professores aprovados**: quem já tem o papel, com "Revogar". A revogação
+  pede confirmação num diálogo da própria página (`<dialog>`), e não num
+  `confirm` do navegador; o foco cai em "Cancelar".
+
+A conta de pesquisador não aparece em nenhuma das duas: listá-la com um botão
+ao lado convidaria ao engano.
+
+Depois de cada ação a seção diz o que aconteceu — ou o motivo da recusa — e
+relê a lista. Ela também se relê sozinha a cada 20 segundos enquanto a aba
+está à vista, para o cadastro novo aparecer sem ninguém apertar nada.
+
+### Do lado do professor
+
+Quem entra e ainda não tem o papel lê **"Seu cadastro está aguardando
+aprovação"**, no lugar de "Aguardando liberação". O acesso da pesquisa
+continua com o texto antigo, porque aquele papel segue sendo dado à mão.
+
+### Outros ajustes desta rodada
+
+- **O atalho "Métricas das sessões" saiu da barra do painel de controle.** O
+  menu já tinha "Métricas", e os dois levavam ao mesmo lugar.
+- **O cartão de entrada não estica mais até o pé da janela.** Tem a altura do
+  que carrega e fica no meio; num monitor de 2560 px ele cresce, com a letra.
+  Esticado, a coluna do professor virava uma folha quase vazia.
+- **A folha de exercício fica no meio da coluna** também no acesso da
+  pesquisa.
+- **O que acende ao clicar na tela do exercício é ocre**, e não a anilina: o
+  pulso do Executar, o anel de foco do editor, o convite do número da linha e
+  a seleção de texto. Só a cor; e só fora do percurso do estudo.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| A 0007 só cria as três funções, nunca escreve "pesquisador", e cada escrita parte de um papel só | `src/componentes/controle.test.ts`, que lê a migração |
+| As três são definer, com `search_path` fixo, fechadas para `anon` e `public` | o mesmo arquivo |
+| Todo motivo de recusa da 0007 tem texto na tela | o mesmo arquivo |
+| As duas listas, sem o pesquisador | o mesmo arquivo, e `e2e/controle.spec.ts` |
+| Aprovar vai pela função, diz o que aconteceu e a lista se atualiza | `e2e/controle.spec.ts` |
+| Revogar pede confirmação em diálogo da página; cancelar não chama nada | o mesmo arquivo |
+| A recusa do banco aparece com o motivo | o mesmo arquivo |
+
+Contra o banco de verdade, em `npm run verificar-rls` (D24): participante,
+professor, anônimo e visitante não listam, não concedem e não revogam, nem
+para si mesmos; o pesquisador lista, aprova e revoga, com a linha na
+auditoria; a listagem não traz conta anônima; conta anônima não vira
+professor; e ninguém vira pesquisador nem deixa de ser por estas funções.
+
+**Esse bloco do `verificar-rls` ainda não rodou contra o projeto**: depende de
+a 0007 estar aplicada e da chave secreta. As mesmas regras foram exercitadas
+num Postgres local, com as sete migrações em ordem.
