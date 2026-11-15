@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { catalogo } from '../exercicios/catalogo';
 import { NIVEIS_DE_ANDAIME, rotuloDoAndaime } from './andaime';
 import { complexidadeDe } from './complexidade';
@@ -15,7 +15,10 @@ import type { Exercicio } from '../nucleo/tipos';
  * dados, e a ordenação (D34) —, com um cartão por exercício.
  *
  * Nada de progresso, pontuação ou marca de resolvido: saber de antemão quais
- * já foram resolvidos muda a forma como o estudante encara os que faltam.
+ * já foram resolvidos muda a forma como o estudante encara os que faltam. A
+ * aparência de D43 — o jardim escuro, os cartões como fichas de caso, a
+ * joaninha que aparece no cartão sob o ponteiro — tem jeito de jogo, e
+ * nenhuma mecânica de jogo: não há fase travada, estrela nem contagem.
  */
 
 type Filtro = SecaoDaVitrine | 'todas';
@@ -95,8 +98,39 @@ function CartaoDoExercicio({ exercicio }: { exercicio: Exercicio }) {
   );
 }
 
+/**
+ * Onde está a opção escolhida do filtro, para a pílula escura deslizar até
+ * ela (D43). A pílula é um enfeite do grupo, e não um elemento a mais: quem
+ * diz qual opção vale continua sendo o `aria-pressed` de cada botão.
+ *
+ * Medido no próprio botão, e de novo quando a largura muda: em tela estreita
+ * as opções quebram de linha, e a pílula precisa descer junto.
+ */
+function usePilulaDoFiltro(filtro: Filtro) {
+  const grupo = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const elemento = grupo.current;
+    if (!elemento) return;
+    const medir = () => {
+      const escolhida = elemento.querySelector<HTMLElement>('[aria-pressed="true"]');
+      if (!escolhida) return;
+      elemento.style.setProperty('--pilula-x', `${escolhida.offsetLeft}px`);
+      elemento.style.setProperty('--pilula-y', `${escolhida.offsetTop}px`);
+      elemento.style.setProperty('--pilula-largura', `${escolhida.offsetWidth}px`);
+      elemento.style.setProperty('--pilula-altura', `${escolhida.offsetHeight}px`);
+      elemento.classList.add('com-pilula');
+    };
+    medir();
+    const observador = new ResizeObserver(medir);
+    observador.observe(elemento);
+    return () => observador.disconnect();
+  }, [filtro]);
+  return grupo;
+}
+
 export function VitrineDeExercicios() {
   const [filtro, setFiltro] = useState<Filtro>('todas');
+  const grupoDoFiltro = usePilulaDoFiltro(filtro);
 
   // O tutorial abre a fileira dele. A ordenação é estável, então o resto
   // mantém a ordem do catálogo, que já é por complexidade (D8).
@@ -121,10 +155,11 @@ export function VitrineDeExercicios() {
       : [];
 
   return (
-    <div className="pagina vitrine com-cabecalho">
+    <div className="jardim vitrine">
+    <div className="pagina com-cabecalho">
       {/* Sem link de volta ao lado da marca: a marca já leva ao início, e dois
           caminhos para o mesmo lugar, lado a lado, seriam ruído. */}
-      <Cabecalho titulo="Exercícios">
+      <Cabecalho titulo="Exercícios" logo>
         {/* As duas escalas são fáceis de confundir, então a tela diz qual é
             qual antes de mostrá-las. */}
         <p>
@@ -141,7 +176,7 @@ export function VitrineDeExercicios() {
         <span className="rotulo-do-filtro" id="rotulo-do-filtro">
           Mostrar
         </span>
-        <div className="filtro" role="group" aria-labelledby="rotulo-do-filtro">
+        <div className="filtro" role="group" aria-labelledby="rotulo-do-filtro" ref={grupoDoFiltro}>
           {[{ tipo: 'todas' as const, nome: 'Todas' }, ...fileiras].map((opcao) => (
             <button
               key={opcao.tipo}
@@ -187,6 +222,7 @@ export function VitrineDeExercicios() {
           </ul>
         </section>
       )}
+    </div>
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { executar } from '../nucleo/executor';
 import { INTERVALO_ENTRE_LOCALIZACOES_MS } from '../nucleo/metricas';
 import { visualizadores } from '../visualizacao/visualizadores';
 import { Cabecalho } from './Cabecalho';
+import { JoaninhaCuriosa } from './JoaninhaCuriosa';
 import { TutorialDoParticipante } from './TutorialDoParticipante';
 import { marcarTutorialVisto, tutorialJaVisto } from './tutorial-visto';
 import { ControlesReprodutor, useReprodutor } from './Reprodutor';
@@ -392,7 +393,14 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
     if (view) marcarLinhaEmExecucao(view, linhaNoEditor);
   }, [linhaNoEditor]);
 
-  return (
+  // A aparência de D43 — o jardim, as peças arredondadas, a joaninha — vale
+  // fora do percurso do estudo. Dentro dele a tela é a congelada em D39: nem
+  // a moldura nem a joaninha são montadas, e nada do que o participante vê
+  // muda.
+  const noJardim = percurso === undefined;
+  const acertou = resultado !== null && resultado.casos.length > 0 && resultado.casos.every((c) => c.passou);
+
+  const tela = (
     <div className="pagina tela-exercicio com-cabecalho">
       {/* Acima de tudo, e fora do cabeçalho: o resto da tela fica exatamente
           como o aluno a vê. */}
@@ -402,6 +410,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
         </p>
       )}
       <Cabecalho
+        logo={noJardim}
         semSaida={percurso !== undefined}
         abaixoDaBarra={percurso && seguir.confirmacao}
         navegacao={
@@ -458,6 +467,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
         titulo={exercicio.titulo}
       >
         <p>{exercicio.enunciado}</p>
+        {noJardim && <JoaninhaCuriosa rodada={rodada} capturada={acertou} />}
       </Cabecalho>
 
       {/* Arranjo compacto (D20): código, visualização e casos de teste cabem
@@ -647,4 +657,6 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
           das métricas não fica aqui, e sim só no painel do pesquisador (D11). */}
     </div>
   );
+
+  return noJardim ? <div className="exercicio-no-jardim">{tela}</div> : tela;
 }

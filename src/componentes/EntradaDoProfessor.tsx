@@ -46,11 +46,17 @@ interface Props {
    * própria área, nada — ela muda sozinha quando a identidade muda.
    */
   aoEntrar?: () => void;
+  /**
+   * Um título que diz em qual dos dois modos o formulário está, entrar ou
+   * criar conta (D43). Na tela de entrada os campos são os mesmos nos dois, e
+   * sem o título a troca passava sem ser vista.
+   */
+  comTituloDoModo?: boolean;
 }
 
 type Envio = 'email' | 'google' | null;
 
-export function EntradaDoProfessor({ aoEntrar }: Props) {
+export function EntradaDoProfessor({ aoEntrar, comTituloDoModo = false }: Props) {
   const [modo, setModo] = useState<'entrar' | 'criar'>('entrar');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -132,7 +138,14 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
         <p className="separador-da-entrada" aria-hidden="true">
           <span>ou</span>
         </p>
-        <form className="entrada-conta" onSubmit={(e) => void enviar(e)}>
+        {/* A classe do modo deixa a aparência acompanhar a troca; a chave no
+            título faz ele entrar de novo a cada troca, que é o que se vê. */}
+        <form className={`entrada-conta modo-${modo}`} onSubmit={(e) => void enviar(e)}>
+          {comTituloDoModo && (
+            <h3 className="titulo-do-modo" key={modo}>
+              {modo === 'entrar' ? 'Já tenho conta de professor' : 'Criar conta de professor'}
+            </h3>
+          )}
           <label>
             E-mail
             <input
@@ -145,7 +158,7 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
               required
             />
           </label>
-          <label>
+          <label className="campo-da-senha">
             Senha
             <input
               type="password"
@@ -163,16 +176,21 @@ export function EntradaDoProfessor({ aoEntrar }: Props) {
               </span>
             )}
           </label>
-          {erro && (
-            <p className="erro" id="erro-da-entrada" role="alert">
-              {erro.texto}
-            </p>
-          )}
-          {aviso && (
-            <p className="aviso-conta" role="status">
-              {aviso}
-            </p>
-          )}
+          {/* Um lugar só para as duas mensagens. Vazio, some; na tela de
+              entrada ele guarda a altura, e os botões não descem quando a
+              mensagem aparece (D43). */}
+          <div className="mensagens-da-entrada">
+            {erro && (
+              <p className="erro" id="erro-da-entrada" role="alert">
+                {erro.texto}
+              </p>
+            )}
+            {aviso && (
+              <p className="aviso-conta" role="status">
+                {aviso}
+              </p>
+            )}
+          </div>
           <button type="submit" disabled={enviando !== null} aria-busy={enviando === 'email'}>
             {enviando === 'email'
               ? modo === 'entrar'

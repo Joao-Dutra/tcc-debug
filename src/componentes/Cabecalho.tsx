@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { CAMINHO_INICIAL } from './usar-rota';
 import { MenuDaConta } from './MenuDaConta';
+import logo from '../arte/detetive-redondo-96.webp';
 
 /**
  * Cabeçalho das telas do participante (D32).
@@ -34,12 +35,17 @@ export function Inseto({ x, y, escala = 1 }: { x: number; y: number; escala?: nu
 }
 
 
-function Marca({ comLink }: { comLink: boolean }) {
+function Marca({ comLink, comLogo }: { comLink: boolean; comLogo: boolean }) {
   const conteudo = (
     <>
-      <svg viewBox="-16 -20 32 34" aria-hidden="true">
-        <Inseto x={0} y={0} />
-      </svg>
+      {comLogo ? (
+        // O nome ao lado já diz a marca: a imagem não repete nada ao leitor de tela.
+        <img className="logo" src={logo} alt="" width={30} height={30} />
+      ) : (
+        <svg viewBox="-16 -20 32 34" aria-hidden="true">
+          <Inseto x={0} y={0} />
+        </svg>
+      )}
       Depurar
     </>
   );
@@ -72,6 +78,12 @@ interface Props {
    * da barra sem mudar a largura dela — a confirmação de seguir no percurso.
    */
   abaixoDaBarra?: ReactNode;
+  /**
+   * O detetive no lugar do inseto (D43). Só a tela inicial, as entradas e a
+   * vitrine pedem: a tela do exercício, a área do estudo e os painéis seguem
+   * com o inseto, porque nada do que o participante vê no estudo muda (D39).
+   */
+  logo?: boolean;
 }
 
 export function Cabecalho({
@@ -82,12 +94,13 @@ export function Cabecalho({
   naInicial = false,
   semSaida = false,
   abaixoDaBarra,
+  logo = false,
 }: Props) {
   return (
     <header className="cabecalho">
       <div className="cabecalho-barra">
         <div className="cabecalho-caminho">
-          <Marca comLink={!naInicial && !semSaida} />
+          <Marca comLink={!naInicial && !semSaida} comLogo={logo} />
           {navegacao && <span className="cabecalho-divisa" aria-hidden="true" />}
           {navegacao}
         </div>

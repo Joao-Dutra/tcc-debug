@@ -33,8 +33,14 @@ test.describe('com movimento reduzido', () => {
 
   test('nenhuma animação roda na tela inicial', async ({ page }) => {
     await page.goto('/#/');
-    await expect(page.locator('.folha')).toBeVisible();
+    await expect(page.locator('.cena-do-detetive')).toBeVisible();
     expect(await animacoesEmCurso(page)).toEqual([]);
+    // Nem o ponteiro mexe na cena (D43): as camadas ficam onde estão.
+    const parada = () => page.locator('.cena-joaninha').evaluate((el) => getComputedStyle(el).transform);
+    const antes = await parada();
+    await page.mouse.move(40, 40);
+    await page.mouse.move(900, 500, { steps: 4 });
+    expect(await parada()).toBe(antes);
   });
 
   test('nenhuma animação roda no sinal de acerto', async ({ page }) => {
@@ -81,12 +87,21 @@ test.describe('com movimento normal', () => {
 
   // Sem este, o teste acima passaria mesmo que as animações tivessem sumido da
   // tela por outro motivo.
-  test('a folha e o marcador animam na tela inicial', async ({ page }) => {
+  test('o menino e a joaninha animam na tela inicial, e a cena segue o ponteiro', async ({ page }) => {
+    await page.setViewportSize({ width: 1366, height: 768 });
     await page.goto('/#/');
-    await expect(page.locator('.folha')).toBeVisible();
+    await expect(page.locator('.cena-do-detetive')).toBeVisible();
     expect(await animacoesEmCurso(page)).toEqual(
-      expect.arrayContaining(['marcador-avanca', 'lupa-investiga'])
+      expect.arrayContaining(['menino-respira', 'joaninha-passeia'])
     );
+    // A camada da frente anda mais que a de trás: é o que dá a profundidade (D43).
+    const desvio = (camada: string) =>
+      page.locator(camada).evaluate((el) => Math.abs(new DOMMatrix(getComputedStyle(el).transform).m41));
+    await page.mouse.move(683, 384);
+    await page.mouse.move(1300, 384, { steps: 4 });
+    await expect.poll(() => desvio('.cena-joaninha')).toBeGreaterThan(20);
+    expect(await desvio('.cena-joaninha')).toBeGreaterThan(await desvio('.cena-menino'));
+    expect(await desvio('.cena-menino')).toBeGreaterThan(await desvio('.cena-fundo'));
   });
 
   test('o botão pulsa enquanto a mudança não foi executada', async ({ page }) => {

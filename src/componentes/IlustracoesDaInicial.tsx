@@ -1,9 +1,10 @@
 /**
  * Ilustrações da tela inicial (D20).
  *
- * Mesmo espírito da folha mimeografada: montadas com primitivas no próprio
- * código, sem arquivo de imagem e sem recurso externo (D13). Grafite no traço e
- * anilina no que é ação — nenhuma cor de significado da bancada aparece aqui,
+ * Montadas com primitivas no próprio código, sem arquivo de imagem e sem
+ * recurso externo (D13). O traço e o que é ação leem os papéis de cor, e por
+ * isso acompanham a tela inicial escura de D43 sem regra própria. Nenhuma cor
+ * de significado da bancada aparece aqui,
  * porque azul, âmbar e vermelho dizem estado de estrutura e a decoração não
  * pode ensinar outro sentido para eles (D19).
  *
@@ -24,7 +25,7 @@ export function IconeExecutar() {
   );
 }
 
-/** Passo 2 — observar: a lupa sobre a fileira, como na folha. */
+/** Passo 2 — observar: a lupa sobre a fileira. */
 export function IconeObservar() {
   return (
     <svg className="icone-passo" viewBox="-3 -3 62 54" aria-hidden="true">
