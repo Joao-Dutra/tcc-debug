@@ -5426,3 +5426,58 @@ captura, não mudança.
 |---|---|
 | As perguntas e os exemplos são exatamente os desta decisão, e a primeira não tem | `src/estudo/perfil.test.ts` |
 | Na tela, os dois exemplos descrevem o grupo da pergunta | `e2e/estudo.spec.ts` |
+
+## D49 — O seguir do percurso: direto quando corrigido, diálogo quando é desistência
+
+**Decisão.** Em 16/11/2026, véspera da coleta, o botão "Seguir para o próximo"
+(e "Concluir os exercícios", no último) do percurso do estudo passa a
+depender de o exercício estar corrigido agora:
+
+| Estado no momento do clique | O botão | O clique |
+|---|---|---|
+| Corrigido | pulsa de leve, chamando | segue direto, sem pergunta |
+| Não corrigido | parado, como antes | abre um diálogo da página |
+
+O diálogo é o mesmo do "Reiniciar código" (D47): título "Quer mesmo seguir
+sem corrigir?", texto "Não dá para voltar a este exercício depois.", botões
+"Ficar neste exercício", com o foco, e "Seguir mesmo assim". O Esc fecha e
+fica. A confirmação em linha abaixo da barra (D39) saiu, e com ela a linha
+do cabeçalho que só existia para ela.
+
+**Corrigido agora** é: a última execução passou em todos os casos — o estado
+que acende o selo "Todos os casos passaram" — e o código no editor é o que
+foi executado. Quem corrigiu e depois editou volta a ser perguntado, e o
+botão para de pulsar, até executar de novo e passar. Uma edição não
+executada pode ter quebrado o código, e o botão não tem como saber.
+
+**Por quê.** Até aqui a pergunta era a mesma corrigido ou não, para ela não
+dizer se o código estava certo (D37). Esse cuidado não valia mais nada: o
+selo de acerto já diz, nos dois níveis de apoio. A pergunta só atrasava quem
+terminou, e o pulso mostra a quem acertou que o próximo passo é seguir —
+quem passava tempo no exercício já resolvido inflava a duração da sessão sem
+nada a medir. Do outro lado, seguir sem corrigir é desistir sem volta, e o
+diálogo modal pesa mais que a linha discreta de antes.
+
+**Igual nos dois níveis de apoio.** O botão responde ao mesmo estado que o
+selo, e a nada além dele; não acrescenta informação que um nível tenha e o
+outro não.
+
+**Movimento reduzido.** Sem movimento, o anel do pulso fica parado e cheio,
+como o do "Executar alterações" (D20).
+
+**O registro não muda.** O gesto continua `encerramento` com motivo
+`seguir`, e o desfecho continua derivado do log: `corrigido` se alguma
+execução do estudante passou, `desistencia` se não. `VERSAO_DO_REGISTRO`
+continua 16. O tempo esgotado continua igual: avança sozinho, sem diálogo.
+
+Uma consequência, que é da regra do desfecho e não desta decisão: quem
+corrigiu, quebrou de novo e clica em "Seguir mesmo assim" sai como
+`corrigido` no registro, embora a tela tenha perguntado "sem corrigir?". O
+desfecho mede se o estudante chegou à correção (D37), e chegou; a tela
+pergunta pelo código de agora.
+
+| Regra | Onde |
+|---|---|
+| Corrigido segue direto; sem correção, o diálogo com o foco em ficar; ficar e Esc não perdem a etapa nem o código; editar ou quebrar depois de corrigir volta a perguntar; o mesmo sem apoio; o desfecho no registro é `corrigido` ou `desistencia` | `e2e/estudo.spec.ts` |
+| O pulso roda com movimento normal, e com movimento reduzido o anel fica parado | `e2e/movimento-reduzido.spec.ts` |
+| O diálogo não mexe na barra, e os botões não quebram | `e2e/layout.spec.ts` |
