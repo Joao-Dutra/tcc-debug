@@ -10,6 +10,11 @@
 export interface PerguntaDoPerfil<Campo extends string, Valor extends string> {
   campo: Campo;
   pergunta: string;
+  /**
+   * Uma linha de exemplo embaixo da pergunta (D48). Só esclarece o termo:
+   * não muda a pergunta, as opções nem o que vai ao banco.
+   */
+  exemplo?: string;
   opcoes: readonly { valor: Valor; rotulo: string }[];
 }
 
@@ -26,6 +31,7 @@ export const PERGUNTAS_DO_PERFIL = [
   {
     campo: 'depurador',
     pergunta: 'Com que frequência você usa um depurador passo a passo quando programa?',
+    exemplo: 'Ex.: o "executar passo a passo" do Portugol Studio, que roda o programa uma linha por vez.',
     opcoes: [
       { valor: 'nunca', rotulo: 'Nunca' },
       { valor: 'as-vezes', rotulo: 'Às vezes' },
@@ -35,6 +41,8 @@ export const PERGUNTAS_DO_PERFIL = [
   {
     campo: 'usouVisualizacao',
     pergunta: 'Você já usou alguma ferramenta de visualização de algoritmos?',
+    exemplo:
+      'Ou seja, um programa que mostra um desenho do vetor, da pilha ou da lista mudando a cada passo — como o desenho que o professor faz no quadro, só que animado.',
     opcoes: [
       { valor: 'sim', rotulo: 'Sim' },
       { valor: 'nao', rotulo: 'Não' },

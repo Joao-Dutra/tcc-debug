@@ -1161,6 +1161,10 @@ button.tutorial-fechar { width: 32px; height: 32px; padding: 0; justify-content:
   flex-wrap: wrap; gap: var(--esp-8) var(--esp-20); }
 .perfil-do-estudo legend { font-weight: 700; padding: 0 var(--esp-4); }
 .perfil-do-estudo label { display: flex; align-items: center; gap: var(--esp-6); cursor: pointer; }
+/* O exemplo da pergunta (D48) ocupa a linha inteira, entre a pergunta e as
+   opções, no tom das ajudas de campo: esclarece o termo sem pesar como ela. */
+.perfil-do-estudo .exemplo-da-pergunta { flex-basis: 100%; margin: 0 0 var(--esp-4);
+  font-size: var(--fonte-miuda); line-height: 1.5; color: var(--grafite-suave); }
 /* O seguir é o botão mais visível da barra (D44): maior, cheio, na cor da
    ação, com um halo. Até D39 ele pesava como o botão de ajuda ao lado, e
    passava despercebido por quem já tinha terminado. Muda só a aparência: o

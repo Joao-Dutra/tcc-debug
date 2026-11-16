@@ -82,6 +82,14 @@ test('o percurso inteiro: plano do grupo A, seguir, prazo, recarga e fim', async
 
   // O perfil só segue completo.
   await expect(page.getByRole('heading', { name: 'Sobre você' })).toBeVisible();
+  // Os exemplos de D48 descrevem o grupo da pergunta, e o primeiro não tem.
+  await expect(page.locator('.exemplo-da-pergunta')).toHaveCount(2);
+  await expect(page.getByRole('group', { name: /depurador passo a passo/ })).toHaveAccessibleDescription(
+    /Portugol Studio/
+  );
+  await expect(page.getByRole('group', { name: /visualização de algoritmos/ })).toHaveAccessibleDescription(
+    /só que animado\.$/
+  );
   const continuar = page.getByRole('button', { name: 'Continuar' });
   await page.getByRole('radio', { name: 'Já cursei' }).check();
   await page.getByRole('radio', { name: 'Nunca' }).check();

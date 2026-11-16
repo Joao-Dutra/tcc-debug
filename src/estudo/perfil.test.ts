@@ -30,4 +30,20 @@ describe('o perfil do participante', () => {
       expect(pergunta.opcoes.map((o) => o.valor)).toEqual(valoresDoBanco(COLUNAS[pergunta.campo]));
     });
   }
+
+  // O texto que o participante lê é condição da coleta (D39): guardado aqui,
+  // qualquer mudança nele aparece no teste antes de chegar ao laboratório.
+  it('as perguntas e os exemplos são os de D48', () => {
+    expect(PERGUNTAS_DO_PERFIL.map((p) => [p.pergunta, 'exemplo' in p ? p.exemplo : null])).toEqual([
+      ['Você já cursou Algoritmos e Estruturas de Dados I (AEDS 1)?', null],
+      [
+        'Com que frequência você usa um depurador passo a passo quando programa?',
+        'Ex.: o "executar passo a passo" do Portugol Studio, que roda o programa uma linha por vez.',
+      ],
+      [
+        'Você já usou alguma ferramenta de visualização de algoritmos?',
+        'Ou seja, um programa que mostra um desenho do vetor, da pilha ou da lista mudando a cada passo — como o desenho que o professor faz no quadro, só que animado.',
+      ],
+    ]);
+  });
 });

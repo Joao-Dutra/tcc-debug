@@ -223,8 +223,13 @@ function PerfilDoEstudo({ aoConfirmar }: { aoConfirmar: (perfil: PerfilDoPartici
       <form className="perfil-do-estudo" onSubmit={(e) => void confirmar(e)}>
         <p>Três perguntas rápidas. Nenhuma delas identifica você.</p>
         {PERGUNTAS_DO_PERFIL.map((p) => (
-          <fieldset key={p.campo}>
+          <fieldset key={p.campo} aria-describedby={'exemplo' in p ? `exemplo-${p.campo}` : undefined}>
             <legend>{p.pergunta}</legend>
+            {'exemplo' in p && (
+              <p className="exemplo-da-pergunta" id={`exemplo-${p.campo}`}>
+                {p.exemplo}
+              </p>
+            )}
             {p.opcoes.map((o) => (
               <label key={o.valor}>
                 <input
