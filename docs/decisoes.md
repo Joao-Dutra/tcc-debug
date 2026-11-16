@@ -5386,3 +5386,43 @@ apagado.
 | O reinício pede confirmação em diálogo da página, cancelar não perde nada, confirmar devolve o código do início, nos dois níveis | `e2e/exercicio.spec.ts` |
 | No registro, a edição do estudante vem antes, e o reinício vem marcado | o mesmo arquivo |
 | O CSV não tem a coluna `tema`, e a sessão da versão 12 sai sem quebrar | `src/estudo/exportacao.test.ts` |
+
+## D48 — Um exemplo embaixo de duas perguntas do perfil
+
+**Decisão.** Em 16/11/2026, véspera da coleta, duas perguntas do perfil (D37)
+ganharam uma linha de exemplo embaixo, em letra menor e no cinza das ajudas de
+campo:
+
+| Pergunta | Exemplo |
+|---|---|
+| Com que frequência você usa um depurador passo a passo quando programa? | Ex.: o "executar passo a passo" do Portugol Studio, que roda o programa uma linha por vez. |
+| Você já usou alguma ferramenta de visualização de algoritmos? | Ou seja, um programa que mostra um desenho do vetor, da pilha ou da lista mudando a cada passo — como o desenho que o professor faz no quadro, só que animado. |
+
+**Por quê.** "Depurador passo a passo" e "ferramenta de visualização de
+algoritmos" são termos que a turma pode não reconhecer pelo nome, embora
+conheça a coisa. Quem nunca ouviu o nome responde "Nunca" ou "Não" mesmo
+tendo usado, e o perfil passa a medir o vocabulário, e não a experiência. O
+exemplo puxa para o que a turma já viu: o Portugol Studio das disciplinas
+iniciais e o desenho do professor no quadro.
+
+**O que não mudou.** O texto das perguntas, as opções, os campos e os valores
+gravados no banco são os mesmos; a migração 0004 não muda. O perfil não tem
+versão própria guardada com a entrada (só o aviso tem, D47), e
+`VERSAO_DO_REGISTRO` continua 16: a coleta ainda não começou, e todas as
+sessões dela respondem ao perfil com os exemplos. As sessões dos pilotos já
+não se juntavam às da coleta (D44).
+
+O exemplo fica dentro do `fieldset`, entre a pergunta e as opções, e o grupo o
+cita em `aria-describedby`: o leitor de tela lê o exemplo junto da pergunta.
+A primeira pergunta, sobre AEDS 1, não precisa de exemplo.
+
+**Conferência.** A captura das telas congeladas foi tirada antes e depois. Só
+a do perfil mudou. O questionário e o quinto exercício também apareceram
+diferentes na primeira comparação, mas diferem do mesmo jeito entre duas
+capturas do mesmo código — no fundo desfocado e num único pixel —; é ruído da
+captura, não mudança.
+
+| Regra | Onde |
+|---|---|
+| As perguntas e os exemplos são exatamente os desta decisão, e a primeira não tem | `src/estudo/perfil.test.ts` |
+| Na tela, os dois exemplos descrevem o grupo da pergunta | `e2e/estudo.spec.ts` |
