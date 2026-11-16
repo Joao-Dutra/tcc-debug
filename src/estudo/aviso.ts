@@ -26,8 +26,11 @@ import { LIMITE_DO_AQUECIMENTO_MS, LIMITE_POR_EXERCICIO_MS, EXERCICIOS_DA_ANALIS
  * participação foi trocado por uma frase só, sobre o que fica de quem fecha a
  * página, e com ele saíram a participação voluntária, a nota e o parar a
  * qualquer momento.
+ *
+ * Versão 4: os tempos de D47 — 8 minutos no aquecimento e 10 nos demais. Só
+ * os dois números mudaram.
  */
-export const VERSAO_DO_AVISO = 3;
+export const VERSAO_DO_AVISO = 4;
 
 /**
  * O contato para dúvidas. Provisório, o do autor, até a orientadora confirmar

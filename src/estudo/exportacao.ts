@@ -119,7 +119,6 @@ export const COLUNAS_DO_CSV = [
   'aquecimento',
   'apoio',
   'apoio_confere_com_plano',
-  'tema',
   'instante_de_inicio',
   'duracao_total_ms',
   'duracao_ativa_ms',
@@ -213,8 +212,6 @@ export function linhasDoEstudo(
         aquecimento: marca.aquecimento,
         apoio: sessao.andaime,
         apoio_confere_com_plano: apoioConfereComPlano(sessao, grupo),
-        // Da marca, e vazio quando ela não o tem: só a versão 12 gravou o tema (D39).
-        tema: marca.tema,
         instante_de_inicio: sessao.instanteDeInicio,
         duracao_total_ms: sessao.duracaoTotalMs,
         duracao_ativa_ms: duracaoAtivaMs(sessao),

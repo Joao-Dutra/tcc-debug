@@ -262,15 +262,13 @@ describe('as colunas da sessão', () => {
     expect(linha).toMatchObject({ grupo: 'B', participante_id: '', apoio_confere_com_plano: 'true' });
   });
 
-  it('o tema sai da marca, e vazio quando ela não o tem (D39)', () => {
-    expect(COLUNAS_DO_CSV).toContain('tema');
+  it('o tema não é coluna: o azul foi retirado em D39, e a coluna não distinguia mais nada (D47)', () => {
+    expect(COLUNAS_DO_CSV).not.toContain('tema');
+    // A sessão da versão 12, que ainda traz o tema na marca, sai sem ele e sem quebrar.
     const comTema = sessao({ estudo: { aplicacao: 'piloto-nov', etapa: 1, aquecimento: false, tema: 'padrao' } });
-    const semTema = sessao({ estudo: { aplicacao: 'piloto-nov', etapa: 2, aquecimento: false } });
-    const linhas = lerCsv(csvDoEstudo([comTema, semTema], [participanteA], [], null));
-    expect(linhas.map((l) => [l.etapa, l.tema])).toEqual([
-      ['1', 'padrao'],
-      ['2', ''],
-    ]);
+    const [linha] = lerCsv(csvDoEstudo([comTema], [participanteA], [], null));
+    expect(linha).not.toHaveProperty('tema');
+    expect(linha.etapa).toBe('1');
   });
 
   it('as linhas saem por aplicação, ordem de entrada e etapa', () => {

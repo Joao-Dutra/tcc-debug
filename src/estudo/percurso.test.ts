@@ -51,10 +51,10 @@ describe('a sequência e o plano', () => {
     expect(ETAPAS.map((e) => e.apoio.B)).toEqual([com, sem, com, sem, com, sem]);
   });
 
-  it('10 minutos no aquecimento e 8 em cada exercício', () => {
-    expect(LIMITE_DO_AQUECIMENTO_MS).toBe(10 * 60_000);
-    expect(LIMITE_POR_EXERCICIO_MS).toBe(8 * 60_000);
-    expect(ETAPAS.map((e) => e.limiteMs / 60_000)).toEqual([10, 8, 8, 8, 8, 8]);
+  it('8 minutos no aquecimento e 10 em cada exercício (D47)', () => {
+    expect(LIMITE_DO_AQUECIMENTO_MS).toBe(8 * 60_000);
+    expect(LIMITE_POR_EXERCICIO_MS).toBe(10 * 60_000);
+    expect(ETAPAS.map((e) => e.limiteMs / 60_000)).toEqual([8, 10, 10, 10, 10, 10]);
   });
 
   it('a posição diz a etapa e o total, e nada sobre o que foi resolvido', () => {

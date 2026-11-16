@@ -15,6 +15,8 @@ const IMPRESSOES: Record<number, string> = {
   1: 'abb5fc58',
   2: 'e804e274',
   3: 'be4ac000',
+  // D47: 8 minutos no aquecimento e 10 nos demais.
+  4: '048863ae',
 };
 
 /** FNV-1a de 32 bits: basta para notar uma mudança, e não depende de nada. */
@@ -51,8 +53,8 @@ describe('o aviso do estudo', () => {
 
   it('cita os tempos do percurso', () => {
     const texto = AVISO.paragrafos.join(' ');
-    expect(texto).toMatch(/10 minutos no aquecimento/);
-    expect(texto).toMatch(/8 minutos nos demais/);
+    expect(texto).toMatch(/8 minutos no aquecimento/);
+    expect(texto).toMatch(/10 minutos nos demais/);
   });
 
   it('a caixa diz "Concordo em participar"', () => {

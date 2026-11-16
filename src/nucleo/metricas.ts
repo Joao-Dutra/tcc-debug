@@ -103,8 +103,17 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * que a condição "sem apoio" mostra. As sessões sem apoio até a versão 14 não
  * se juntam às da 15 em diante, e a comparação entre as condições só vale
  * dentro da mesma versão: é ela que separa os dois conjuntos.
+ *
+ * 16 — o ambiente da coleta de 17/11/2026 (D46, D47). Três coisas mudaram
+ * desde a 15, que não chegou a coletar: o tempo máximo passou a 8 minutos no
+ * aquecimento e 10 em cada exercício; a tela do exercício no percurso ganhou
+ * a aparência nova; e a edição ganhou a marca opcional `reinicio`, do botão
+ * de reiniciar o código. O formato só cresce, com esse campo, ausente em tudo
+ * o que foi gravado antes. O que a versão separa é a condição: uma sessão que
+ * termina por tempo aos 8 minutos e uma que termina aos 10 não são a mesma
+ * medida.
  */
-export const VERSAO_DO_REGISTRO = 15;
+export const VERSAO_DO_REGISTRO = 16;
 
 /**
  * Intervalo mínimo entre duas tentativas de localização julgadas (D25).
@@ -244,7 +253,11 @@ export type Evento =
       todosPassaram: boolean;
       erro: string | null;
     }
-  | { tipo: 'edicao'; t: number; codigo: string }
+  // `reinicio` marca a edição que foi o botão de reiniciar o código (D47): o
+  // código volta inteiro ao do início do exercício. É edição como as outras —
+  // a linha do tempo do código continua completa só com este tipo de evento —,
+  // e a marca a separa de quem desfez tudo à mão. Ausente nas demais.
+  | { tipo: 'edicao'; t: number; codigo: string; reinicio?: true }
   | { tipo: 'dica'; t: number; indice: number }
   | { tipo: 'localizacao'; t: number; linha: number; correta: boolean }
   /** Desde a versão 6. Sem veredito: a linha não chegou a ser julgada. */
@@ -585,7 +598,8 @@ export interface Sessao {
   concluirExecucao(execucao: ExecucaoDisparada, resultado: ResultadoExecucao): void;
   /** Disparo e resultado juntos, para quando o resultado já está na mão. */
   registrarExecucao(origem: OrigemDaExecucao, codigo: string, resultado: ResultadoExecucao): void;
-  registrarEdicao(codigo: string): void;
+  /** `reinicio`: a edição foi o botão de reiniciar o código, e não digitação (D47). */
+  registrarEdicao(codigo: string, reinicio?: boolean): void;
   registrarDica(indice: number): void;
   /**
    * Registra a tentativa e devolve o veredito. Tentativas são ilimitadas, mas
@@ -715,8 +729,8 @@ export function criarSessao(opcoes: OpcoesDaSessao): Sessao {
       sessao.concluirExecucao(sessao.iniciarExecucao(origem, codigo), resultado);
     },
 
-    registrarEdicao(codigo) {
-      anotar({ tipo: 'edicao', t: t(), codigo });
+    registrarEdicao(codigo, reinicio = false) {
+      anotar(reinicio ? { tipo: 'edicao', t: t(), codigo, reinicio: true } : { tipo: 'edicao', t: t(), codigo });
     },
 
     registrarDica(indice) {

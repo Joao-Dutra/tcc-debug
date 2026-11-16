@@ -14,15 +14,20 @@ import type { MarcaDoEstudo, MotivoDoEncerramento } from '../nucleo/metricas';
 export type GrupoDoEstudo = 'A' | 'B';
 
 /**
- * Os tempos de cada etapa. O aquecimento tem mais porque o tutorial corre
- * dentro dele. A aula tem 1h30: 10 + 5 × 8 = 50 minutos de exercício, e a
- * folga fica para os imprevistos do laboratório, e não para alongar o limite.
+ * Os tempos de cada etapa. A aula tem 1h30: 8 + 5 × 10 = 58 minutos de
+ * exercício, e a folga fica para o aviso, o perfil, o questionário e os
+ * imprevistos do laboratório.
+ *
+ * Até D46 era o contrário, 10 no aquecimento e 8 em cada exercício (D37). Em
+ * D47 os exercícios da análise ganharam os dois minutos, que é onde o tempo
+ * decide o dado, e o aquecimento, que só ensina a tela, os perdeu — mesmo com
+ * o tutorial correndo dentro dele.
  *
  * Mudar um destes valores muda o ambiente de coleta: o texto do aviso cita os
  * dois, e a versão dele sobe junto (o teste do aviso cobra).
  */
-export const LIMITE_DO_AQUECIMENTO_MS = 10 * 60_000;
-export const LIMITE_POR_EXERCICIO_MS = 8 * 60_000;
+export const LIMITE_DO_AQUECIMENTO_MS = 8 * 60_000;
+export const LIMITE_POR_EXERCICIO_MS = 10 * 60_000;
 
 export interface EtapaDoPercurso {
   exercicioId: string;
