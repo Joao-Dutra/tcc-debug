@@ -201,53 +201,63 @@ interface Props {
 }
 
 /**
- * O botão de seguir no percurso, com confirmação: um clique por engano
- * perderia o exercício sem volta. A pergunta é a mesma tenha o estudante
- * corrigido ou não — se mudasse, ela própria diria se o código está certo.
+ * O botão de seguir no percurso (D49).
+ *
+ * Com o exercício corrigido, ele pulsa e segue direto: não há o que perder, e
+ * a pergunta só atrasaria quem terminou. Sem correção, seguir é desistir, e
+ * um clique por engano perderia o exercício sem volta — por isso o diálogo,
+ * com o foco no lado que não perde nada.
+ *
+ * Até D48 a pergunta era a mesma nos dois casos, para ela não dizer se o
+ * código estava certo. Deixou de ser preciso: o selo "Todos os casos
+ * passaram" já diz, nos dois níveis de apoio, e o botão responde ao mesmo
+ * estado que o selo, e a nada além dele.
+ *
+ * Vale o estado de agora: quem corrigiu e depois editou volta a ser
+ * perguntado até executar de novo e passar.
  */
-function useSeguirNoPercurso(ultimo: boolean, aoSeguir: () => void) {
+function useSeguirNoPercurso(ultimo: boolean, corrigido: boolean, aoSeguir: () => void) {
   const [confirmando, setConfirmando] = useState(false);
-  const botao = useRef<HTMLButtonElement>(null);
-  const ficar = useRef<HTMLButtonElement>(null);
-  const abriu = useRef(false);
-  // Quem pediu para seguir chega à pergunta pelo teclado; o foco vai para o
-  // lado que não perde nada. Ao ficar, volta para o botão de onde saiu.
+  const dialogo = useRef<HTMLDialogElement>(null);
+
   useEffect(() => {
-    if (confirmando) {
-      abriu.current = true;
-      ficar.current?.focus();
-    } else if (abriu.current) {
-      botao.current?.focus();
-    }
+    const d = dialogo.current;
+    if (!d) return;
+    if (confirmando && !d.open) d.showModal();
+    if (!confirmando && d.open) d.close();
   }, [confirmando]);
 
-  // O botão fica no lugar enquanto a pergunta está aberta, e a pergunta vai
-  // numa linha própria abaixo da barra: dentro da barra, ela disputava a
-  // largura com o botão e quebrava os rótulos em duas linhas (D39).
   const botaoDeSeguir = (
     <button
-      ref={botao}
-      className="seguir-no-percurso"
-      aria-expanded={confirmando}
-      aria-controls="confirmar-seguir"
-      onClick={() => setConfirmando(true)}
+      className={corrigido ? 'seguir-no-percurso chamando' : 'seguir-no-percurso'}
+      aria-haspopup={corrigido ? undefined : 'dialog'}
+      onClick={() => (corrigido ? aoSeguir() : setConfirmando(true))}
     >
       {ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo'}
       <ArrowRightIcon className="icone" aria-hidden="true" />
     </button>
   );
-  const confirmacao = confirmando && (
-    <p className="confirmar-seguir" id="confirmar-seguir" role="group" aria-label="Confirmar">
-      <span>Não dá para voltar a este exercício depois.</span>
-      <button ref={ficar} onClick={() => setConfirmando(false)}>
-        Ficar neste exercício
-      </button>
-      <button className="primario" onClick={aoSeguir}>
-        {ultimo ? 'Concluir' : 'Seguir'}
-      </button>
-    </p>
+  // O mesmo diálogo da página do reinício (D47). Fechar pelo Esc é ficar.
+  const dialogoDeSeguir = (
+    <dialog
+      ref={dialogo}
+      className="dialogo-do-painel"
+      aria-labelledby="titulo-do-seguir"
+      onClose={() => setConfirmando(false)}
+    >
+      <h3 id="titulo-do-seguir">Quer mesmo seguir sem corrigir?</h3>
+      <p>Não dá para voltar a este exercício depois.</p>
+      <div className="acoes-do-dialogo">
+        <button autoFocus onClick={() => setConfirmando(false)}>
+          Ficar neste exercício
+        </button>
+        <button className="primario" onClick={aoSeguir}>
+          Seguir mesmo assim
+        </button>
+      </div>
+    </dialog>
   );
-  return { botaoDeSeguir, confirmacao };
+  return { botaoDeSeguir, dialogoDeSeguir };
 }
 
 export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }: Props) {
@@ -372,7 +382,6 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
   // percurso saber, para o encerramento ser o último evento dela.
   // Uma vez só: o prazo pode vencer no instante em que o estudante confirma.
   const encerrarEtapa = useRef<(motivo: MotivoDoEncerramento) => void>(() => {});
-  const seguir = useSeguirNoPercurso(percurso?.ultimo ?? false, () => encerrarEtapa.current('seguir'));
   const etapaEncerrada = useRef(false);
   useEffect(() => {
     encerrarEtapa.current = (motivo) => {
@@ -420,6 +429,12 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
   // exercício. Só cor, canto e sombra: nada muda de lugar, e o editor e o
   // desenho são os mesmos.
   const acertou = resultado !== null && resultado.casos.length > 0 && resultado.casos.every((c) => c.passou);
+  // Corrigido agora (D49): a última execução passou, e é o código que está no
+  // editor. Uma edição ainda não executada não se sabe se quebrou; o seguir
+  // volta a perguntar até ela rodar.
+  const seguir = useSeguirNoPercurso(percurso?.ultimo ?? false, acertou && !pendente, () =>
+    encerrarEtapa.current('seguir')
+  );
 
   const tela = (
     <div className="pagina tela-exercicio com-cabecalho">
@@ -433,7 +448,6 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
       <Cabecalho
         logo
         semSaida={percurso !== undefined}
-        abaixoDaBarra={percurso && seguir.confirmacao}
         navegacao={
           percurso ? (
             <span className="posicao-no-percurso">{percurso.rotulo}</span>
@@ -683,6 +697,8 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
       </main>
 
       <TutorialDoParticipante aberto={tutorialAberto} aoFechar={fecharTutorial} />
+
+      {percurso && seguir.dialogoDeSeguir}
 
       <dialog
         ref={dialogoDoReinicio}

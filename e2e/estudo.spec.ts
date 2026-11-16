@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 import type { Page } from '@playwright/test';
+import { desfechoNoEstudo } from '../src/estudo/exportacao';
 import { LIMITE_POR_EXERCICIO_MS } from '../src/estudo/percurso';
+import { filaAtenderTodos } from '../src/exercicios/fila-atender-todos';
+import { vetorZerarNegativos } from '../src/exercicios/vetor-zerar-negativos';
+import type { RegistroDeSessao } from '../src/nucleo/metricas';
 import { ITENS_DAS_ESCALAS, VERSAO_DO_QUESTIONARIO } from '../src/estudo/questionario';
 import { responderQuestionario } from './questionario-do-estudo';
 
@@ -57,9 +61,20 @@ async function exercicioAberto(page: Page, rotulo: string) {
   await expect(page.locator('.contador')).toContainText('passo 1 /');
 }
 
+/** Seguir sem ter corrigido: o botão e, no diálogo, a desistência. */
 async function seguir(page: Page, ultimo = false) {
   await page.getByRole('button', { name: ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo' }).click();
-  await page.getByRole('button', { name: ultimo ? 'Concluir' : 'Seguir', exact: true }).click();
+  await page.getByRole('button', { name: 'Seguir mesmo assim' }).click();
+}
+
+/** Troca o código do editor e executa. */
+async function escreverEExecutar(page: Page, codigo: string) {
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+A');
+  // insertText, e não type: o editor fecha chave e indenta sozinho.
+  await page.keyboard.insertText(codigo);
+  await page.getByRole('button', { name: /Executar/ }).click();
+  await expect(page.getByRole('button', { name: /Executar/ })).toHaveText('Executar');
 }
 
 test('sem marcar "Concordo em participar", não se entra', async ({ page }) => {
@@ -107,12 +122,8 @@ test('o percurso inteiro: plano do grupo A, seguir, prazo, recarga e fim', async
   await expect(page.getByRole('link')).toHaveCount(0);
   await expect(page.getByText('trocar o apoio recomeça o exercício')).toHaveCount(0);
 
-  // Seguir pede confirmação; ficar não perde nada.
-  await page.getByRole('button', { name: 'Seguir para o próximo' }).click();
-  await expect(page.getByText('Não dá para voltar a este exercício depois.')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Ficar neste exercício' })).toBeFocused();
-  await page.getByRole('button', { name: 'Ficar neste exercício' }).click();
-  await expect(page.locator('.posicao-no-percurso')).toHaveText('Aquecimento');
+  // Sem correção, seguir pede confirmação (D49); o caminho todo está no teste
+  // do seguir, abaixo.
   await seguir(page);
 
   // Grupo A: com apoio no primeiro, sem no segundo. O tutorial não abre mais.
@@ -176,6 +187,93 @@ test('o percurso inteiro: plano do grupo A, seguir, prazo, recarga e fim', async
   // Recarregar depois do fim abre o aviso, para o próximo participante.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Antes de começar' })).toBeVisible();
+});
+
+test('seguir (D49): corrigido segue direto; sem correção, o diálogo; quebrou de novo, volta a perguntar', async ({
+  page,
+}) => {
+  await aceitarEEntrar(page);
+  await page.getByRole('button', { name: 'Pular tutorial' }).click();
+  await exercicioAberto(page, 'Aquecimento');
+  const botao = page.getByRole('button', { name: 'Seguir para o próximo' });
+  const dialogo = page.getByRole('dialog', { name: 'Quer mesmo seguir sem corrigir?' });
+  const ficar = dialogo.getByRole('button', { name: 'Ficar neste exercício' });
+
+  // Sem correção: não chama, e o clique abre o diálogo, com o foco em ficar.
+  await expect(botao).not.toHaveClass(/chamando/);
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.insertText('\n// rascunho meu');
+  await botao.click();
+  await expect(dialogo).toBeVisible();
+  await expect(dialogo).toContainText('Não dá para voltar a este exercício depois.');
+  await expect(dialogo.getByRole('button')).toHaveText(['Ficar neste exercício', 'Seguir mesmo assim']);
+  await expect(ficar).toBeFocused();
+  // Ficar não perde nada: a etapa, o código escrito.
+  await ficar.click();
+  await expect(dialogo).toBeHidden();
+  await expect(page.locator('.posicao-no-percurso')).toHaveText('Aquecimento');
+  await expect(page.locator('.cm-content')).toContainText('// rascunho meu');
+  // O Esc também é ficar.
+  await botao.click();
+  await expect(dialogo).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(dialogo).toBeHidden();
+  await expect(page.locator('.posicao-no-percurso')).toHaveText('Aquecimento');
+
+  // Corrigiu: o botão chama.
+  await escreverEExecutar(page, vetorZerarNegativos.codigoCorreto);
+  await expect(page.locator('.painel.acertou')).toBeVisible();
+  await expect(botao).toHaveClass(/chamando/);
+
+  // Editou: até executar de novo, não se sabe, e volta a perguntar.
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+End');
+  await page.keyboard.insertText(' ');
+  await expect(botao).not.toHaveClass(/chamando/);
+  await botao.click();
+  await expect(dialogo).toBeVisible();
+  await ficar.click();
+
+  // Quebrou de novo, executado: continua perguntando.
+  await escreverEExecutar(page, vetorZerarNegativos.codigoComDefeito);
+  await expect(page.locator('.painel.acertou')).toHaveCount(0);
+  await expect(botao).not.toHaveClass(/chamando/);
+  await botao.click();
+  await expect(dialogo).toBeVisible();
+  await ficar.click();
+
+  // Corrigiu outra vez: segue direto, sem diálogo.
+  await escreverEExecutar(page, vetorZerarNegativos.codigoCorreto);
+  await expect(botao).toHaveClass(/chamando/);
+  await botao.click();
+  await exercicioAberto(page, 'Exercício 1 de 5');
+  await expect(dialogo).toHaveCount(0);
+
+  // No seguinte, sem correção, seguir mesmo assim é desistir.
+  await page.getByRole('button', { name: 'Seguir para o próximo' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Seguir mesmo assim' }).click();
+  await exercicioAberto(page, 'Exercício 2 de 5');
+
+  // Sem apoio, o mesmo: corrigido, chama e segue direto.
+  await expect(page.getByRole('button', { name: 'Revelar dica 1' })).toHaveCount(0);
+  await escreverEExecutar(page, filaAtenderTodos.codigoCorreto);
+  await expect(botao).toHaveClass(/chamando/);
+  await botao.click();
+  await exercicioAberto(page, 'Exercício 3 de 5');
+
+  // O registro é o de sempre: o gesto é "seguir" nos dois, e o desfecho sai do log.
+  const sessoes = (await sessoesDoEstudo(page)).filter((s) => s.estudo!.etapa < 3);
+  expect(sessoes.map(descrever)).toEqual([
+    [0, 'vetor-zerar-negativos', 'com-apoio', 'seguir'],
+    [1, 'pilha-desempilhar', 'com-apoio', 'seguir'],
+    [2, 'fila-atender-todos', 'sem-apoio', 'seguir'],
+  ]);
+  expect(sessoes.map((s) => desfechoNoEstudo(s as unknown as RegistroDeSessao))).toEqual([
+    'corrigido',
+    'desistencia',
+    'corrigido',
+  ]);
 });
 
 test('o questionário: as afirmações são obrigatórias, e as abertas, não', async ({ page }) => {

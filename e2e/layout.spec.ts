@@ -4,7 +4,7 @@ import type { Locator, Page } from '@playwright/test';
 /**
  * Os dois defeitos de layout corrigidos em D39, nas larguras prováveis do
  * laboratório: o seguir do percurso, que quebrava em duas linhas quando a
- * confirmação abria, e as notas dos formulários, espremidas à esquerda de um
+ * confirmação abria (desde D49 ela é um diálogo), e as notas dos formulários, espremidas à esquerda de um
  * bloco mais largo.
  */
 
@@ -40,7 +40,7 @@ for (const tamanho of TAMANHOS) {
   test.describe(`${tamanho.width} × ${tamanho.height}`, () => {
     test.use({ viewport: tamanho });
 
-    test('o seguir e a confirmação ficam em uma linha, e a barra não muda', async ({ page }) => {
+    test('o seguir fica em uma linha, e o diálogo de seguir não mexe na barra', async ({ page }) => {
       await aceitarEEntrar(page);
       const pular = page.getByRole('button', { name: 'Pular tutorial' });
       await pular.click();
@@ -49,20 +49,13 @@ for (const tamanho of TAMANHOS) {
       const barra = page.locator('.cabecalho-barra');
       const alturaAntes = (await barra.boundingBox())!.height;
 
+      // Sem correção, a pergunta vem num diálogo da página (D49), por cima.
       await seguir.click();
-      const confirmacao = page.locator('.confirmar-seguir');
-      await expect(confirmacao).toBeVisible();
-      // A pergunta numa linha só, com os dois botões.
-      const caixas = await Promise.all(
-        [confirmacao.locator('span'), ...(await confirmacao.getByRole('button').all())].map((l) => l.boundingBox())
-      );
-      const topos = new Set(caixas.map((c) => Math.round(c!.y + c!.height / 2)));
-      expect(Math.max(...topos) - Math.min(...topos)).toBeLessThan(4);
-      for (const botao of await confirmacao.getByRole('button').all()) await emUmaLinha(botao);
+      const dialogo = page.getByRole('dialog', { name: 'Quer mesmo seguir sem corrigir?' });
+      await expect(dialogo).toBeVisible();
+      for (const botao of await dialogo.getByRole('button').all()) await emUmaLinha(botao);
       await emUmaLinha(seguir);
-      // O botão continua no lugar, e a barra, da mesma altura.
       expect((await barra.boundingBox())!.height).toBe(alturaAntes);
-      await expect(seguir).toHaveAttribute('aria-expanded', 'true');
     });
 
     test('a nota do aviso ocupa a largura do bloco a que pertence', async ({ page }) => {

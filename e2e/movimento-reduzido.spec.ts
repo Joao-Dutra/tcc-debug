@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { vetorDobrar } from '../src/exercicios/vetor-dobrar';
+import { vetorZerarNegativos } from '../src/exercicios/vetor-zerar-negativos';
 
 /**
  * Movimento reduzido no navegador (D20).
@@ -28,7 +29,40 @@ const animacoesEmCurso = (page: import('@playwright/test').Page) =>
       .filter((nome) => !nome.startsWith('cm-'))
   );
 
+/** Entra no estudo e corrige o aquecimento: o seguir passa a chamar (D49). */
+async function aquecimentoCorrigido(page: import('@playwright/test').Page) {
+  await page.goto('/#/estudo/piloto-nov');
+  await page.getByLabel('Concordo em participar').check();
+  await page.getByRole('button', { name: 'Começar' }).click();
+  await page.getByRole('radio', { name: 'Estou cursando' }).check();
+  await page.getByRole('radio', { name: 'Às vezes' }).check();
+  await page.getByRole('radio', { name: 'Não', exact: true }).check();
+  await page.getByRole('button', { name: 'Continuar' }).click();
+  await page.getByRole('button', { name: 'Pular tutorial' }).click();
+  await expect(page.locator('.contador')).toContainText('passo 1 /');
+  await page.locator('.cm-content').click();
+  await page.keyboard.press('Control+A');
+  await page.keyboard.insertText(vetorZerarNegativos.codigoCorreto);
+  await page.getByRole('button', { name: /Executar/ }).click();
+  await expect(page.locator('.painel.acertou')).toBeVisible();
+  const botao = page.getByRole('button', { name: 'Seguir para o próximo' });
+  await expect(botao).toHaveClass(/chamando/);
+  return botao;
+}
+
 test.describe('com movimento reduzido', () => {
+  test('o seguir corrigido não pulsa, e o destaque fica parado', async ({ page }) => {
+    const botao = await aquecimentoCorrigido(page);
+    expect(await animacoesEmCurso(page)).toEqual([]);
+    const anel = await botao.evaluate((b) => {
+      const estilo = getComputedStyle(b, '::after');
+      return { conteudo: estilo.content, opacidade: Number(estilo.opacity), borda: estilo.borderTopWidth };
+    });
+    expect(anel.conteudo).not.toBe('none');
+    expect(anel.opacidade).toBeGreaterThan(0.5);
+    expect(anel.borda).toBe('2px');
+  });
+
   test.use({ reducedMotion: 'reduce' });
 
   test('nenhuma animação roda na tela inicial', async ({ page }) => {
@@ -102,6 +136,11 @@ test.describe('com movimento normal', () => {
     await expect.poll(() => desvio('.cena-joaninha')).toBeGreaterThan(20);
     expect(await desvio('.cena-joaninha')).toBeGreaterThan(await desvio('.cena-menino'));
     expect(await desvio('.cena-menino')).toBeGreaterThan(await desvio('.cena-fundo'));
+  });
+
+  test('o seguir pulsa com o exercício corrigido', async ({ page }) => {
+    await aquecimentoCorrigido(page);
+    expect(await animacoesEmCurso(page)).toContain('seguir-chama');
   });
 
   test('o botão pulsa enquanto a mudança não foi executada', async ({ page }) => {

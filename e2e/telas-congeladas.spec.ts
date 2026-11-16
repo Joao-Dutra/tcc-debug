@@ -53,13 +53,13 @@ test('área do estudo, do aviso ao fim', async ({ page }) => {
   await foto(page, 'estudo-4-aquecimento');
   await page.getByRole('button', { name: 'Seguir para o próximo' }).click();
   await foto(page, 'estudo-5-confirmar-seguir');
-  await page.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await page.getByRole('button', { name: 'Seguir mesmo assim' }).click();
   for (let n = 1; n <= 5; n++) {
     await expect(page.locator('.posicao-no-percurso')).toHaveText(`Exercício ${n} de 5`);
     await aberto(page);
     await foto(page, `estudo-6-exercicio-${n}`);
     await page.getByRole('button', { name: n === 5 ? 'Concluir os exercícios' : 'Seguir para o próximo' }).click();
-    await page.getByRole('button', { name: n === 5 ? 'Concluir' : 'Seguir', exact: true }).click();
+    await page.getByRole('button', { name: 'Seguir mesmo assim' }).click();
   }
   await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
   await foto(page, 'estudo-7-questionario');

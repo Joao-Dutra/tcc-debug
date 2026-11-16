@@ -149,7 +149,7 @@ test('a entrada troca de identidade, o grupo vem do banco, e as sessões sobem m
   await page.getByRole('button', { name: 'Pular tutorial' }).click();
   await expect(page.locator('.contador')).toContainText('passo 1 /');
   await page.getByRole('button', { name: 'Seguir para o próximo' }).click();
-  await page.getByRole('button', { name: 'Seguir', exact: true }).click();
+  await page.getByRole('button', { name: 'Seguir mesmo assim' }).click();
 
   // Grupo B: o primeiro exercício da análise é sem apoio.
   await expect(page.locator('.posicao-no-percurso')).toHaveText('Exercício 1 de 5');
@@ -181,7 +181,7 @@ async function chegarAoQuestionario(page: Page, banco: Banco): Promise<string> {
     await expect(page.locator('.contador')).toContainText('passo 1 /');
     const ultimo = etapa === 5;
     await page.getByRole('button', { name: ultimo ? 'Concluir os exercícios' : 'Seguir para o próximo' }).click();
-    await page.getByRole('button', { name: ultimo ? 'Concluir' : 'Seguir', exact: true }).click();
+    await page.getByRole('button', { name: 'Seguir mesmo assim' }).click();
   }
   await expect(page.getByRole('heading', { name: 'Para terminar' })).toBeVisible();
   return banco.anonimas[1];

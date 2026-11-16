@@ -1175,14 +1175,24 @@ button.seguir-no-percurso { padding: 10px 22px; border-radius: var(--raio-pilula
   box-shadow: 0 0 0 3px var(--acao-rala); }
 button.seguir-no-percurso:hover:not(:disabled) { background: var(--acao-forte);
   border-color: var(--acao-forte); color: var(--sobre-acao); }
-/* A confirmação mora numa linha própria, abaixo da barra, e nenhum botão
-   quebra o rótulo: a barra não muda de largura quando a pergunta abre (D39). */
-.cabecalho-acoes button, .cabecalho-abaixo-da-barra button { white-space: nowrap; }
-.cabecalho-abaixo-da-barra { display: flex; justify-content: flex-end; margin-top: var(--esp-8); }
-/* Sem o limite de medida que todo `header p` recebe: era ele, e não a falta
-   de espaço, que quebrava a pergunta em duas linhas. */
-.confirmar-seguir { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end;
-  gap: var(--esp-8); margin: 0; max-width: none; font-size: var(--fonte-apoio); }
+/* Nenhum botão da barra quebra o rótulo (D39). */
+.cabecalho-acoes button { white-space: nowrap; }
+/* Com o exercício corrigido, o seguir chama (D49): um halo que se abre e
+   some, no mesmo desenho do anel do executar pendente. Num elemento por cima,
+   para o alvo do clique não mudar de tamanho debaixo do ponteiro. */
+button.seguir-no-percurso { position: relative; }
+/* Fora do halo de 3px que o botão já tem: em cima dele, o anel sumia. */
+button.seguir-no-percurso.chamando::after { content: ''; position: absolute; inset: -7px;
+  border: 2px solid var(--acao); border-radius: var(--raio-pilula);
+  pointer-events: none; animation: seguir-chama 1.6s ease-out infinite; }
+@keyframes seguir-chama {
+  0% { opacity: .8; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.18, 1.35); }
+}
+/* Sem movimento, só o destaque parado: o anel fica, cheio. */
+@media (prefers-reduced-motion: reduce) {
+  button.seguir-no-percurso.chamando::after { animation: none; opacity: .9; }
+}
 /* O questionário: uma afirmação por faixa, e a escala de 1 a 5 em cinco
    colunas iguais, para os números ficarem alinhados de uma afirmação para a
    outra. As âncoras ficam sob os extremos, como no papel. */

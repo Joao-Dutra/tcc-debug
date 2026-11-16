@@ -74,11 +74,6 @@ interface Props {
    */
   semSaida?: boolean;
   /**
-   * Uma linha logo abaixo da barra, à direita, para o que responde a uma ação
-   * da barra sem mudar a largura dela — a confirmação de seguir no percurso.
-   */
-  abaixoDaBarra?: ReactNode;
-  /**
    * O detetive no lugar do inseto (D43). Só a tela inicial, as entradas e a
    * vitrine pedem: a tela do exercício, a área do estudo e os painéis seguem
    * com o inseto, porque nada do que o participante vê no estudo muda (D39).
@@ -93,7 +88,6 @@ export function Cabecalho({
   children,
   naInicial = false,
   semSaida = false,
-  abaixoDaBarra,
   logo = false,
 }: Props) {
   return (
@@ -112,7 +106,6 @@ export function Cabecalho({
           </div>
         )}
       </div>
-      {abaixoDaBarra && <div className="cabecalho-abaixo-da-barra">{abaixoDaBarra}</div>}
       {titulo && <h1>{titulo}</h1>}
       {children}
     </header>
