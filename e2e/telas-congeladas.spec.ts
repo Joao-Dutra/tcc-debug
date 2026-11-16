@@ -7,9 +7,10 @@ import { responderQuestionario } from './questionario-do-estudo';
  * depois de uma mudança de aparência em outras telas. As imagens vão para a
  * pasta de CONGELADO_DIR; sem a variável, o arquivo não faz nada.
  *
- * A tela do exercício entra aqui pelo percurso do estudo, que é onde ela está
- * congelada. Aberta pela vitrine ela tem a aparência de D43, e não é mais
- * comparada pixel a pixel: lá o que se confere é que nada mudou de lugar.
+ * As telas daqui são as do percurso do estudo e os painéis sem banco. Desde
+ * D44 e D46 todas elas têm a aparência nova, por decisão: a captura serve
+ * para comparar o estado de agora com o de depois de uma mudança futura, e
+ * não mais com o de antes de D43.
  */
 const PASTA = process.env.CONGELADO_DIR;
 test.skip(!PASTA, 'só roda com CONGELADO_DIR');

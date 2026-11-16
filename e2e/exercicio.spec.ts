@@ -85,6 +85,71 @@ test('as linhas apontadas aparecem da mais recente para a mais antiga', async ({
   await expect(apontadas.last()).toContainText('Linha 3');
 });
 
+test.describe('reiniciar o código (D47)', () => {
+  const codigoNoEditor = (page: import('@playwright/test').Page) =>
+    page.locator('.cm-content').evaluate((el) =>
+      [...el.querySelectorAll('.cm-line')].map((l) => l.textContent ?? '').join('\n')
+    );
+  const edicoes = (page: import('@playwright/test').Page) =>
+    page.evaluate(() => {
+      const sessoes = JSON.parse(localStorage.getItem('depurar:sessoes-arquivadas') ?? '[]') as {
+        eventos: { tipo: string; codigo?: string; reinicio?: boolean }[];
+      }[];
+      return (sessoes.at(-1)?.eventos ?? []).filter((e) => e.tipo === 'edicao');
+    });
+
+  // Igual nos dois níveis: não é apoio, é desfazer.
+  for (const nivel of ['com-apoio', 'sem-apoio']) {
+    test(`o botão pede confirmação num diálogo da página e devolve o código do início, ${nivel}`, async ({ page }) => {
+      // Um `confirm` do navegador faria o teste falhar: o diálogo é da página.
+      page.on('dialog', () => {
+        throw new Error('o reinício abriu um diálogo do navegador');
+      });
+      await page.goto(`/#/exercicio/vetor-dobrar?andaime=${nivel}`);
+      await expect(page.locator('.contador')).toContainText('passo 1 /');
+      const original = await codigoNoEditor(page);
+      const reiniciar = page.getByRole('button', { name: 'Reiniciar código' });
+      // Sem nada escrito não há o que reiniciar.
+      await expect(reiniciar).toBeDisabled();
+
+      await page.locator('.cm-content').click();
+      await page.keyboard.press('Control+End');
+      await page.keyboard.insertText('\n// rascunho do estudante');
+      await expect(reiniciar).toBeEnabled();
+      const editado = await codigoNoEditor(page);
+      expect(editado).toContain('rascunho do estudante');
+
+      // Primeira etapa: o clique só abre a pergunta.
+      await reiniciar.click();
+      const dialogo = page.getByRole('dialog', { name: 'Quer mesmo reiniciar o código?' });
+      await expect(dialogo).toBeVisible();
+      await expect(dialogo.getByRole('button', { name: 'Cancelar' })).toBeFocused();
+      expect(await codigoNoEditor(page)).toBe(editado);
+
+      // Cancelar não perde nada.
+      await dialogo.getByRole('button', { name: 'Cancelar' }).click();
+      await expect(dialogo).toBeHidden();
+      expect(await codigoNoEditor(page)).toBe(editado);
+
+      // Segunda etapa: confirmar devolve o código do início — o com defeito.
+      await reiniciar.click();
+      await dialogo.getByRole('button', { name: 'Reiniciar o código' }).click();
+      await expect(dialogo).toBeHidden();
+      await expect.poll(() => codigoNoEditor(page)).toBe(original);
+      await expect(reiniciar).toBeDisabled();
+      // O código voltou ao que foi executado na abertura: nada pendente.
+      await expect(page.locator('button.executar')).not.toHaveClass(/pendente/);
+
+      // No registro: a edição do estudante, e depois o reinício, marcado.
+      await page.goto('/#/exercicios');
+      const log = await edicoes(page);
+      expect(log.map((e) => e.reinicio ?? false)).toEqual([false, true]);
+      expect(log[0].codigo).toContain('rascunho do estudante');
+      expect(log[1].codigo).not.toContain('rascunho do estudante');
+    });
+  }
+});
+
 test.describe('a linha em execução no editor (D44)', () => {
   // Até a versão 14 do registro o destaque saía sem apoio. Desde D44 ele é
   // da ferramenta, e não do apoio: aparece igual nos dois níveis, e acompanha

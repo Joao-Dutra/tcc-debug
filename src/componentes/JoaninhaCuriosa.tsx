@@ -12,8 +12,9 @@ import joaninha from '../arte/joaninha.webp';
  * dependem do código, da linha do defeito nem do resultado. E ela fica no
  * cabeçalho, longe do código e do desenho, que é onde se investiga.
  *
- * Fora do percurso do estudo só: lá a tela do exercício continua como estava
- * (D39). Decoração, e por isso escondida do leitor de tela.
+ * Igual dentro e fora do percurso do estudo, e nos dois níveis de apoio
+ * (D46): não é apoio, e não varia com a condição. Decoração, e por isso
+ * escondida do leitor de tela.
  */
 
 /** Em porcentagem da largura do fio. Espalhadas, para a corrida ser visível. */

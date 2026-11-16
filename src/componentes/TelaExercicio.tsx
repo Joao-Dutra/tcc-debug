@@ -5,6 +5,7 @@ import { javascript } from '@codemirror/lang-javascript';
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
+  ArrowUturnLeftIcon,
   FlagIcon,
   PlayIcon,
   QuestionMarkCircleIcon,
@@ -259,6 +260,8 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
   const [codigoExecutado, setCodigoExecutado] = useState<string | null>(null);
   const [rodada, setRodada] = useState(0);
   const [tutorialAberto, setTutorialAberto] = useState(false);
+  const [confirmandoReinicio, setConfirmandoReinicio] = useState(false);
+  const dialogoDoReinicio = useRef<HTMLDialogElement>(null);
 
   const metricas = useMetricas(exercicio, andaime, previa === undefined, percurso?.sessao);
   // A navegação entra no log da sessão (D36); a tela não muda com isso.
@@ -308,6 +311,24 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
     if (valor === codigo) return;
     setCodigo(valor);
     metricas.registrarEdicao(valor);
+  };
+
+  // Reiniciar o código (D47): volta ao código com defeito do início do
+  // exercício — nunca ao correto. Pede confirmação num diálogo da página,
+  // porque o que foi escrito se perde. Igual nos dois níveis de apoio e
+  // dentro do percurso: não é apoio, é desfazer.
+  useEffect(() => {
+    const d = dialogoDoReinicio.current;
+    if (!d) return;
+    if (confirmandoReinicio && !d.open) d.showModal();
+    if (!confirmandoReinicio && d.open) d.close();
+  }, [confirmandoReinicio]);
+
+  const reiniciarCodigo = () => {
+    setConfirmandoReinicio(false);
+    if (codigo === exercicio.codigoComDefeito) return;
+    setCodigo(exercicio.codigoComDefeito);
+    metricas.registrarReinicio(exercicio.codigoComDefeito);
   };
 
   // O tutorial abre por cima da tela, sem mexer em nada dela (D32). A execução
@@ -394,10 +415,10 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
   }, [linhaNoEditor]);
 
   // A aparência de D43 — o jardim, as peças arredondadas, a joaninha — vale
-  // fora do percurso do estudo. Dentro dele a tela é a congelada em D39: nem
-  // a moldura nem a joaninha são montadas, e nada do que o participante vê
-  // muda.
-  const noJardim = percurso === undefined;
+  // para a tela inteira, dentro e fora do percurso do estudo (D46). Até D45 o
+  // percurso ficava de fora, e o participante saía do jardim ao abrir cada
+  // exercício. Só cor, canto e sombra: nada muda de lugar, e o editor e o
+  // desenho são os mesmos.
   const acertou = resultado !== null && resultado.casos.length > 0 && resultado.casos.every((c) => c.passou);
 
   const tela = (
@@ -410,7 +431,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
         </p>
       )}
       <Cabecalho
-        logo={noJardim}
+        logo
         semSaida={percurso !== undefined}
         abaixoDaBarra={percurso && seguir.confirmacao}
         navegacao={
@@ -467,7 +488,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
         titulo={exercicio.titulo}
       >
         <p>{exercicio.enunciado}</p>
-        {noJardim && <JoaninhaCuriosa rodada={rodada} capturada={acertou} />}
+        <JoaninhaCuriosa rodada={rodada} capturada={acertou} />
       </Cabecalho>
 
       {/* Arranjo compacto (D20): código, visualização e casos de teste cabem
@@ -479,6 +500,17 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
         <section className="painel painel-codigo">
           <div className="cabecalho-painel">
             <h2>Código</h2>
+            {/* Os dois botões juntos, à direita: o de executar não sai do lugar. */}
+            <div className="acoes-do-codigo">
+            <button
+              className="reiniciar-codigo"
+              onClick={() => setConfirmandoReinicio(true)}
+              disabled={codigo === exercicio.codigoComDefeito}
+              aria-haspopup="dialog"
+            >
+              <ArrowUturnLeftIcon className="icone" aria-hidden="true" />
+              Reiniciar código
+            </button>
             <button
               className={pendente && !rodando ? 'primario executar pendente' : 'primario executar'}
               onClick={() => void rodar('estudante')}
@@ -488,6 +520,7 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
               {rodando ? 'Executando…' : pendente ? 'Executar alterações' : 'Executar'}
               {pendente && !rodando && <span className="ponto" aria-hidden="true" />}
             </button>
+            </div>
           </div>
           {/* Sem o destaque da linha do cursor, que viria ligado por padrão: uma
               segunda faixa que segue o cursor disputaria com a da execução, e
@@ -651,6 +684,27 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
 
       <TutorialDoParticipante aberto={tutorialAberto} aoFechar={fecharTutorial} />
 
+      <dialog
+        ref={dialogoDoReinicio}
+        className="dialogo-do-painel"
+        aria-labelledby="titulo-do-reinicio"
+        onClose={() => setConfirmandoReinicio(false)}
+      >
+        <h3 id="titulo-do-reinicio">Quer mesmo reiniciar o código?</h3>
+        <p>
+          O código volta a ser o do início do exercício, e o que você escreveu se perde. Não
+          dá para desfazer.
+        </p>
+        <div className="acoes-do-dialogo">
+          <button autoFocus onClick={() => setConfirmandoReinicio(false)}>
+            Cancelar
+          </button>
+          <button className="primario" onClick={reiniciarCodigo}>
+            Reiniciar o código
+          </button>
+        </div>
+      </dialog>
+
       {/* Nenhum contador da sessão aparece aqui de propósito: mostrar ao
           estudante quantas vezes ele executou ou quantas dicas abriu muda o
           comportamento que o estudo quer medir. Pela mesma razão a exportação
@@ -658,5 +712,5 @@ export function TelaExercicio({ exercicio, andaime, proximo, previa, percurso }:
     </div>
   );
 
-  return noJardim ? <div className="exercicio-no-jardim">{tela}</div> : tela;
+  return <div className="exercicio-no-jardim">{tela}</div>;
 }

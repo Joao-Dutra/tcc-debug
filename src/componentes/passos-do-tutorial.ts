@@ -81,7 +81,9 @@ export const PASSOS_DO_TUTORIAL: readonly PassoDoTutorial[] = [
     texto:
       'Para corrigir, edite o código direto no editor. Enquanto houver alteração ainda não ' +
       'executada, o botão Executar fica destacado. Execute de novo para conferir os casos de ' +
-      'teste com o código novo: quando todos passarem, o exercício está resolvido.',
+      'teste com o código novo: quando todos passarem, o exercício está resolvido. Se quiser ' +
+      'desfazer tudo o que escreveu, o botão Reiniciar código, ao lado do Executar, devolve o ' +
+      'código do início do exercício.',
     ilustracao: 'editar',
   },
 ];

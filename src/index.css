@@ -893,6 +893,11 @@ button.discreto.perigo { color: var(--erro); border-color: var(--erro); }
   margin: 0 0 var(--esp-8); }
 .painel-visualizacao > h2 { display: flex; align-items: center; }
 .painel-codigo { display: flex; flex-direction: column; min-width: 0; }
+/* Reiniciar e executar juntos, à direita do título (D47). O de reiniciar é
+   discreto: desfaz, e não é o que se quer apertar por engano. */
+.acoes-do-codigo { display: flex; align-items: center; gap: var(--esp-8); }
+button.reiniciar-codigo { background: transparent; color: var(--grafite-suave); }
+button.reiniciar-codigo:hover:not(:disabled) { color: var(--grafite); border-color: var(--grafite); }
 .moldura-editor { height: 420px; }
 
 .retorno-apontadas { margin-top: var(--esp-12); }
@@ -1285,10 +1290,9 @@ button.seguir-no-percurso:hover:not(:disabled) { background: var(--acao-forte);
 /* ---------------------------------------------------------------------------
    As telas de fora do exercício (D43): a inicial, as entradas e a vitrine
 
-   Tudo nesta seção está preso à classe de uma dessas telas. Nenhum papel de
-   cor da raiz muda, e nenhuma regra daqui alcança a tela do exercício, a área
-   do estudo ou os painéis do pesquisador: elas continuam iguais pixel a pixel
-   (D39), o que foi conferido por captura antes e depois.
+   Tudo nesta seção está preso à classe de uma dessas telas, e nenhum papel de
+   cor da raiz muda. Em D43 a área do estudo e os painéis ficavam de fora;
+   entraram depois, por decisão, em D44 e D46.
 
    A paleta sai da arte do detetive: a noite do jardim, o ocre do sobretudo e
    o creme do papel. O vermelho da joaninha, o verde da folha e o rosa da flor
@@ -1319,8 +1323,8 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
 .mensagens-da-entrada:empty { display: none; }
 
 /* --- A moldura das telas de fora ----------------------------------------- */
-/* `exercicio-no-jardim` é a mesma moldura na tela do exercício, fora do
-   percurso do estudo. Tem nome próprio porque lá a página tem o tamanho da
+/* `exercicio-no-jardim` é a mesma moldura na tela do exercício, dentro e
+   fora do percurso do estudo. Tem nome próprio porque lá a página tem o tamanho da
    janela e nada pode mudar de lugar: as regras de arranjo de `jardim` não
    valem para ela. */
 .jardim, .exercicio-no-jardim {
@@ -1354,7 +1358,7 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
 /* De volta aos papéis da raiz: o que é papel claro sobre o jardim. */
 .papeis-claros, .inicial .passos li, .vitrine .cartao,
 .exercicio-no-jardim .faixa-casos .painel, .exercicio-no-jardim .dica,
-.exercicio-no-jardim dialog.tutorial, .exercicio-no-jardim .faixa-da-previa,
+.exercicio-no-jardim dialog, .exercicio-no-jardim .faixa-da-previa,
 .exercicio-no-jardim .moldura-editor {
   --erro: var(--rubi-700);
   --acerto: var(--musgo-700);
@@ -1659,7 +1663,7 @@ a.marca:hover .logo { transform: rotate(-8deg) scale(1.08); }
   transform: translateY(-1px); }
 .vitrine a.nivel:active { transform: scale(.96); }
 
-/* --- A tela do exercício, fora do estudo ---------------------------------- */
+/* --- A tela do exercício, dentro e fora do estudo (D46) ------------------- */
 /* Só cor, canto e sombra: nenhuma medida, margem ou posição muda, e a tela
    continua do tamanho da janela (D20). O editor e o desenho ficam como são —
    o editor volta aos papéis da raiz, e a bancada nunca os leu (D39). O que

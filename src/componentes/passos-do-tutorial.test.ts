@@ -31,7 +31,8 @@ describe('o texto do tutorial', () => {
       'Como corrigir o erro',
     ]);
     const textos = PASSOS_DO_TUTORIAL.map((p) => p.texto).join(' | ');
-    for (const tema of [/Executar/, /passos?/, /desenho/, /número dessa linha/, /edite o código/]) {
+    // O botão de reiniciar entrou no último passo em D47.
+    for (const tema of [/Executar/, /passos?/, /desenho/, /número dessa linha/, /edite o código/, /Reiniciar código/]) {
       expect(textos).toMatch(tema);
     }
   });

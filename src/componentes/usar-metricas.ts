@@ -173,6 +173,17 @@ export function useMetricas(
     [fecharRajada]
   );
 
+  // O reinício do código (D47) não é digitação: entra no log na hora, e não
+  // numa rajada. A rajada em andamento fecha antes, para o que o estudante
+  // tinha escrito ficar registrado antes de ser desfeito.
+  const registrarReinicio = useCallback(
+    (codigo: string) => {
+      fecharRajada();
+      sessao.current?.registrarEdicao(codigo, true);
+    },
+    [fecharRajada]
+  );
+
   // Registrada no disparo, e não quando o resultado volta (D23): o que o
   // estudante fez foi clicar, e o Worker pode não responder a tempo de a
   // sessão ainda estar aberta.
@@ -264,6 +275,7 @@ export function useMetricas(
     iniciarExecucao,
     concluirExecucao,
     registrarEdicao,
+    registrarReinicio,
     registrarDica,
     declararLocalizacao,
     localizacoes,
