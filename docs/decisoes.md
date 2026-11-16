@@ -5255,3 +5255,134 @@ professor; e ninguém vira pesquisador nem deixa de ser por estas funções.
 **Esse bloco do `verificar-rls` ainda não rodou contra o projeto**: depende de
 a 0007 estar aplicada e da chave secreta. As mesmas regras foram exercitadas
 num Postgres local, com as sete migrações em ordem.
+
+## D46 — A tela do exercício do percurso com a aparência nova
+
+**Decisão.** A tela do exercício dentro do percurso do estudo passa a usar a
+mesma aparência da tela aberta pela vitrine (D43): o jardim ao fundo, os casos
+de teste e as dicas em papel claro, os botões em pílula, a ação no ocre, o
+retrato do detetive na marca e a joaninha no fio do cabeçalho.
+
+Até D45 o percurso era a única tela de exercício fora do padrão. Com o aviso,
+o perfil e o questionário já no jardim (D44), o participante saía dele ao
+abrir cada exercício e voltava no fim. Agora o percurso inteiro tem uma
+aparência só.
+
+### O que não muda
+
+- **Nenhuma posição.** As caixas do cabeçalho, do editor, do desenho, dos
+  controles, dos casos de teste, do botão de executar, do botão de seguir e do
+  painel das linhas apontadas foram medidas antes e depois, no aquecimento do
+  percurso, e são idênticas.
+- **O editor e o desenho.** São os mesmos componentes, com as mesmas cores
+  por dentro; a bancada nunca leu a paleta da interface (D39).
+- **O comportamento.** O botão de seguir, a confirmação, os prazos, o
+  tutorial, o registro das sessões e a ausência de qualquer caminho para fora
+  do percurso são os de antes. A marca continua sem link.
+
+### O que muda para o participante
+
+Só cor, canto e sombra, e a joaninha. Ela é a mesma de fora do percurso, e
+**igual nos dois níveis de apoio**: corre para outro ponto do cabeçalho a cada
+execução e fica sob um aro quando todos os casos passam. Não é apoio, não
+varia com a condição e não diz onde está o defeito — as paradas são uma lista
+fixa, que não depende do código nem do resultado.
+
+O aro no acerto soma um sinal ao selo de "Todos os casos passaram", que já
+existia e é idêntico nas duas condições. Como o aro também é, a comparação
+entre com e sem apoio não é afetada.
+
+### O congelamento e os dados
+
+O estado congelado para a coleta de terça, 17/11/2026, passa a ser este. A
+versão do registro continua 15: o que mudou é a aparência, e não o que cada
+condição mostra. As sessões dos pilotos, até a versão 14, foram feitas na
+aparência antiga e com a outra regra do destaque sem apoio (D44), e já não se
+juntavam às da coleta.
+
+### Como foi conferido
+
+O percurso inteiro passa nos testes de navegador que já existiam, sem mudança
+no que cobram: o consentimento, o tutorial no aquecimento, a tela sem caminho
+para fora, o apoio de cada etapa pelo plano do grupo, o seguir com
+confirmação, o prazo, a recarga e o questionário.
+
+## D47 — Os tempos do percurso, o botão de reiniciar o código e a coluna do tema
+
+**Decisão.** Três mudanças antes da coleta de terça, 17/11/2026.
+
+### Os tempos
+
+| Etapa | Até D46 | Agora |
+|---|---|---|
+| Aquecimento | 10 minutos | 8 minutos |
+| Cada exercício da análise | 8 minutos | 10 minutos |
+
+São 8 + 5 × 10 = 58 minutos de exercício, contra 50 antes, numa aula de 1h30.
+A folga para o aviso, o perfil, o questionário e os imprevistos do laboratório
+cai de 40 para 32 minutos.
+
+**O texto do aviso mudou, e a versão dele subiu para 4.** O aviso cita os dois
+tempos, tirados das mesmas constantes do percurso, e a versão aceita vai para
+o banco com a entrada de cada participante (0004). Só os dois números mudaram;
+a impressão do texto da versão 4 está guardada no teste, ao lado das outras.
+
+O tempo máximo é condição da coleta: uma sessão que termina por tempo aos 8
+minutos e uma que termina aos 10 não são a mesma medida. As sessões dos
+pilotos já não se juntavam às da coleta (D44), e esta mudança é mais um motivo.
+
+**`VERSAO_DO_REGISTRO` sobe para 16.** A 15, de D44, não chegou a coletar. A
+16 marca o ambiente da coleta de terça: os tempos novos, a aparência nova da
+tela do exercício no percurso (D46) e a marca do reinício, abaixo. A coleta
+inteira sai com a 16, e é ela que a separa dos pilotos.
+
+### Reiniciar o código
+
+Um botão "Reiniciar código" ao lado do "Executar", acima do editor. Devolve o
+código ao do início do exercício — **o código com defeito, nunca o correto**.
+
+- **Em duas etapas.** O clique abre um diálogo da própria página, "Quer mesmo
+  reiniciar o código?", com o foco em "Cancelar". Só "Reiniciar o código"
+  desfaz o que foi escrito.
+- **Desligado enquanto não há o que reiniciar**, isto é, enquanto o código é
+  o do início.
+- **Igual nos dois níveis de apoio e dentro do percurso.** Não é apoio: é
+  desfazer. Não diz nada sobre onde está o defeito.
+- **O botão de executar não saiu do lugar.** Os dois ficam agrupados à
+  direita do título.
+
+**No registro, o reinício é uma edição marcada.** O evento é o de sempre,
+`{ tipo: 'edicao', t, codigo }`, com `reinicio: true`. Assim a linha do tempo
+do código continua completa só com os eventos de edição, a contagem de
+edições o inclui — o código mudou —, e a marca o separa de quem apagou tudo à
+mão. A rajada de digitação em andamento fecha antes, para o que o estudante
+tinha escrito ficar registrado antes de ser desfeito.
+
+É um campo opcional a mais num evento que já existia, ausente em tudo o que
+foi gravado antes. Entra com a versão 16 do registro.
+
+O tutorial do participante ganhou uma frase, no fim do último passo ("Como
+corrigir o erro"): "Se quiser desfazer tudo o que escreveu, o botão Reiniciar
+código, ao lado do Executar, devolve o código do início do exercício." Diz o
+que o botão faz, e não quando usá-lo: o tutorial ensina a interface, nunca a
+estratégia (D32). É a mesma frase nos dois níveis de apoio.
+
+### A coluna `tema` sai do CSV
+
+A coluna guardava o tema da interface — o padrão ou o azul — e só a versão 12
+do registro a preenchia. O tema azul foi retirado em D39; desde a versão 13 a
+coluna saía sempre vazia.
+
+Sai só do CSV do estudo. O campo continua no registro das sessões da versão
+12 que estão no banco, e o JSON exportado o traz como sempre. Nenhum dado foi
+apagado.
+
+### O que virou teste
+
+| Regra | Onde |
+|---|---|
+| 8 minutos no aquecimento e 10 em cada exercício | `src/estudo/percurso.test.ts` |
+| O aviso cita os tempos novos, e o texto da versão 4 é o registrado | `src/estudo/aviso.test.ts` |
+| O reinício pede confirmação em diálogo da página, cancelar não perde nada, confirmar devolve o código do início, nos dois níveis | `e2e/exercicio.spec.ts` |
+| No registro, a edição do estudante vem antes, e o reinício vem marcado | o mesmo arquivo |
+| O CSV não tem a coluna `tema`, e a sessão da versão 12 sai sem quebrar | `src/estudo/exportacao.test.ts` |
