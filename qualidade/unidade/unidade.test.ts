@@ -33,10 +33,12 @@ describe('CTU01 — analisarDivergencia: uma linha alterada', () => {
     });
   });
 
-  it('ignora diferença só de recuo', () => {
+  it('diferença só de recuo não conta como defeito', () => {
     const correto = 'if (x) {\n  y = 1;\n}';
     const comRecuo = 'if (x) {\n        y = 1;\n}';
-    expect(analisarDivergencia(correto, comRecuo).tipo).toBe('recusada');
+    const r = analisarDivergencia(correto, comRecuo);
+    expect(r.tipo).toBe('recusada');
+    if (r.tipo === 'recusada') expect(r.motivo).toMatch(/iguais/);
   });
 });
 
@@ -63,6 +65,25 @@ describe('CTU03 — analisarDivergencia: entradas inválidas são recusadas', ()
     const r = analisarDivergencia('var a = 1;\nvar b = 2;', 'var a = 1;');
     expect(r.tipo).toBe('recusada');
     if (r.tipo === 'recusada') expect(r.motivo).toMatch(/tamanhos diferentes/);
+  });
+
+  it('recusa a linha alterada que ficou em branco', () => {
+    const r = analisarDivergencia('var a = 1;\nvar b = 2;\nvar c = 3;', 'var a = 1;\n\nvar c = 3;');
+    expect(r).toMatchObject({ tipo: 'recusada', linhas: [2] });
+  });
+
+  it('recusa as mesmas linhas embaralhadas por mais de uma troca', () => {
+    const r = analisarDivergencia('a();\nb();\nc();\nd();', 'b();\na();\nd();\nc();');
+    expect(r).toMatchObject({ tipo: 'recusada', linhas: [1, 2, 3, 4] });
+  });
+
+  it('recusa quando a única linha que mudou de lugar está em branco', () => {
+    const r = analisarDivergencia(
+      'var a = 1;\n\nx = 1;\ny = 2;\nfim();',
+      'var a = 1;\nx = 1;\ny = 2;\n\nfim();'
+    );
+    expect(r.tipo).toBe('recusada');
+    if (r.tipo === 'recusada') expect(r.motivo).toMatch(/em branco/);
   });
 
   it('recusa dois defeitos independentes', () => {
@@ -93,6 +114,7 @@ describe('CTU04 — escoreDoSus: cálculo do System Usability Scale', () => {
     delete faltando['sus-7'];
     expect(escoreDoSus(faltando)).toBeNull();
     expect(escoreDoSus({ ...susTodos(4), 'sus-2': 6 })).toBeNull();
+    expect(escoreDoSus({ ...susTodos(4), 'sus-2': 0 })).toBeNull();
     expect(escoreDoSus({ ...susTodos(4), 'sus-2': 2.5 })).toBeNull();
   });
 });
