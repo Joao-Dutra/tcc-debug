@@ -83,9 +83,21 @@ function linhasMovidas(origem: string[], destino: string[]): number[] {
   return [...movidas].sort((a, b) => a - b);
 }
 
+/**
+ * As linhas do código, sem as em branco do fim. Uma quebra de linha a mais no
+ * fim de uma das versões — comum ao colar o código no formulário — não muda o
+ * programa nem a numeração das linhas de cima, e não pode valer como diferença
+ * de tamanho.
+ */
+function linhasDe(codigo: string): string[] {
+  const linhas = codigo.split('\n').map(normalizar);
+  while (linhas.length > 1 && linhas[linhas.length - 1] === '') linhas.pop();
+  return linhas;
+}
+
 export function analisarDivergencia(correto: string, comDefeito: string): Divergencia {
-  const a = correto.split('\n').map(normalizar);
-  const b = comDefeito.split('\n').map(normalizar);
+  const a = linhasDe(correto);
+  const b = linhasDe(comDefeito);
 
   if (a.length !== b.length) {
     return {
