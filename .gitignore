@@ -31,3 +31,6 @@ coverage/
 # Artefatos do Playwright
 test-results/
 playwright-report/
+
+# Saídas geradas pela suíte do projeto de Qualidade de Software
+qualidade/resultados/
