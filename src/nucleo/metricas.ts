@@ -112,6 +112,10 @@ import type { OrigemDoExercicio, ResultadoExecucao } from './tipos';
  * o que foi gravado antes. O que a versão separa é a condição: uma sessão que
  * termina por tempo aos 8 minutos e uma que termina aos 10 não são a mesma
  * medida.
+ *
+ * Ainda na 16, antes de a coleta começar, o aquecimento perdeu o prazo
+ * (D50). A versão não sobe: o aquecimento fica fora da análise, e nenhuma
+ * sessão da coleta foi gravada com o prazo antigo.
  */
 export const VERSAO_DO_REGISTRO = 16;
 

@@ -337,6 +337,39 @@ test('o questionário: as afirmações são obrigatórias, e as abertas, não', 
   expect(guardadas[0].escalas['rec-4']).toBe(5);
 });
 
+test('o aquecimento não tem prazo; o exercício seguinte tem 10 minutos (D50)', async ({ page }) => {
+  await page.clock.install();
+  await aceitarEEntrar(page);
+  await page.getByRole('button', { name: 'Pular tutorial' }).click();
+  await exercicioAberto(page, 'Aquecimento');
+  const tempoAcabou = page.getByRole('heading', { name: 'O tempo deste exercício terminou' });
+
+  // Uma hora parado no aquecimento: nada acontece, nem depois de recarregar.
+  await page.clock.fastForward(60 * 60_000);
+  await expect(page.locator('.posicao-no-percurso')).toHaveText('Aquecimento');
+  await expect(tempoAcabou).toHaveCount(0);
+  await page.reload();
+  // O tutorial abre de novo a cada carga do aquecimento, como sempre.
+  await page.getByRole('button', { name: 'Pular tutorial' }).click();
+  await exercicioAberto(page, 'Aquecimento');
+  await expect(tempoAcabou).toHaveCount(0);
+  const prazos = () =>
+    page.evaluate(() => JSON.parse(sessionStorage.getItem('depurar:percurso-do-estudo')!).prazos as unknown[]);
+  expect((await prazos())[0]).toBeNull();
+
+  // Só o botão encerra o aquecimento; depois dele, o prazo volta.
+  await seguir(page);
+  await exercicioAberto(page, 'Exercício 1 de 5');
+  await page.clock.fastForward(LIMITE_POR_EXERCICIO_MS - 1000);
+  await expect(page.locator('.posicao-no-percurso')).toHaveText('Exercício 1 de 5');
+  await page.clock.fastForward(2000);
+  await expect(tempoAcabou).toBeVisible();
+
+  // A sessão do aquecimento termina pelo botão, gravada como sempre.
+  const aquecimento = (await sessoesDoEstudo(page)).filter((s) => s.estudo!.etapa === 0);
+  expect(aquecimento.map(descrever).at(-1)).toEqual([0, 'vetor-zerar-negativos', 'com-apoio', 'seguir']);
+});
+
 test('quem recarrega depois do prazo vai direto à tela do tempo, sem abrir sessão', async ({ page }) => {
   await aceitarEEntrar(page);
   await page.getByRole('button', { name: 'Pular tutorial' }).click();

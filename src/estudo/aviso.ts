@@ -1,4 +1,4 @@
-import { LIMITE_DO_AQUECIMENTO_MS, LIMITE_POR_EXERCICIO_MS, EXERCICIOS_DA_ANALISE } from './percurso';
+import { LIMITE_POR_EXERCICIO_MS, EXERCICIOS_DA_ANALISE } from './percurso';
 
 /**
  * O aviso da entrada no estudo, com o consentimento (D37).
@@ -29,8 +29,12 @@ import { LIMITE_DO_AQUECIMENTO_MS, LIMITE_POR_EXERCICIO_MS, EXERCICIOS_DA_ANALIS
  *
  * Versão 4: os tempos de D47 — 8 minutos no aquecimento e 10 nos demais. Só
  * os dois números mudaram.
+ *
+ * Versão 5: o aquecimento sem limite de tempo (D50). A frase dos tempos diz
+ * que o primeiro exercício é de treino, sem limite, e que os demais têm até
+ * 10 minutos cada; o resto do texto é o da versão 4.
  */
-export const VERSAO_DO_AVISO = 4;
+export const VERSAO_DO_AVISO = 5;
 
 /**
  * O contato para dúvidas. Provisório, o do autor, até a orientadora confirmar
@@ -50,8 +54,8 @@ export const AVISO = {
     `Você vai resolver um exercício de aquecimento e mais ${EXERCICIOS_DA_ANALISE} exercícios. Em ` +
       'cada um há um código com um defeito de lógica colocado de propósito, e a tarefa é ' +
       'encontrar e corrigir esse defeito. No fim, há um questionário curto sobre a ferramenta.',
-    `Cada exercício tem um tempo máximo: ${minutos(LIMITE_DO_AQUECIMENTO_MS)} no aquecimento e ` +
-      `${minutos(LIMITE_POR_EXERCICIO_MS)} nos demais. Quando o tempo acaba, você segue para o ` +
+    'O primeiro exercício, o de aquecimento, é de treino, sem limite de tempo. Os demais têm até ' +
+      `${minutos(LIMITE_POR_EXERCICIO_MS)} cada; quando o tempo acaba, você segue para o ` +
       'próximo. Você também pode seguir antes, quando quiser, mas não dá para voltar a um ' +
       'exercício que ficou para trás.',
     'Se você fechar a página antes do fim, o que já foi feito até ali fica salvo — e, como o ' +
