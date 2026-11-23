@@ -17,6 +17,8 @@ const IMPRESSOES: Record<number, string> = {
   3: 'be4ac000',
   // D47: 8 minutos no aquecimento e 10 nos demais.
   4: '048863ae',
+  // D50: o aquecimento é de treino, sem limite; os demais, até 10 minutos cada.
+  5: '01d86e05',
 };
 
 /** FNV-1a de 32 bits: basta para notar uma mudança, e não depende de nada. */
@@ -51,10 +53,11 @@ describe('o aviso do estudo', () => {
     expect(CONTATO_DO_ESTUDO).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]+$/);
   });
 
-  it('cita os tempos do percurso', () => {
+  it('cita os tempos do percurso: o aquecimento sem limite, e 10 minutos nos demais (D50)', () => {
     const texto = AVISO.paragrafos.join(' ');
-    expect(texto).toMatch(/8 minutos no aquecimento/);
-    expect(texto).toMatch(/10 minutos nos demais/);
+    expect(texto).toMatch(/o de aquecimento, é de treino, sem limite de tempo/);
+    expect(texto).toMatch(/Os demais têm até 10 minutos cada/);
+    expect(texto).not.toMatch(/8 minutos/);
   });
 
   it('a caixa diz "Concordo em participar"', () => {

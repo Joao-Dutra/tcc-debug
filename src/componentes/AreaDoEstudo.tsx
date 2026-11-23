@@ -51,11 +51,15 @@ import { baixarMetricas } from './usar-metricas';
  * escolhido no aparelho, marcado como tal em cada sessão.
  */
 
-/** Quando a etapa abre, o prazo começa; se já venceu, nem abre. */
+/**
+ * Quando a etapa abre, o prazo começa; se já venceu, nem abre. O aquecimento
+ * não tem prazo (D50).
+ */
 function comPrazo(estado: EstadoDoPercurso, agora: number): EstadoDoPercurso {
   if (estado.passo.tela !== 'exercicio') return estado;
   const aberto = abrirEtapa(estado, estado.passo.etapa, agora);
-  const prazo = aberto.prazos[estado.passo.etapa]!;
+  const prazo = aberto.prazos[estado.passo.etapa];
+  if (prazo == null) return aberto;
   // Quem recarrega a página depois do prazo vai direto à tela do tempo
   // esgotado, sem abrir uma sessão que nasceria vencida.
   return prazo <= agora ? encerrarEtapa(aberto, estado.passo.etapa, 'tempo-esgotado') : aberto;
@@ -479,7 +483,7 @@ export function AreaDoEstudo({ aplicacao }: { aplicacao: string }) {
           marca: marcaDaEtapa(estado, passo.etapa),
           participanteId: estado.participanteId,
         },
-        prazo: estado.prazos[passo.etapa]!,
+        prazo: estado.prazos[passo.etapa] ?? undefined,
         abrirTutorial: etapa.aquecimento,
         aoEncerrar: (motivo) => mudar(encerrarEtapa(estado, passo.etapa, motivo)),
       }}

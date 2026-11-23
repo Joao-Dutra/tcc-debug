@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { catalogo } from '../exercicios/catalogo';
 import {
   ETAPAS,
-  LIMITE_DO_AQUECIMENTO_MS,
   LIMITE_POR_EXERCICIO_MS,
   abrirEtapa,
   comecarPercurso,
@@ -51,10 +50,11 @@ describe('a sequência e o plano', () => {
     expect(ETAPAS.map((e) => e.apoio.B)).toEqual([com, sem, com, sem, com, sem]);
   });
 
-  it('8 minutos no aquecimento e 10 em cada exercício (D47)', () => {
-    expect(LIMITE_DO_AQUECIMENTO_MS).toBe(8 * 60_000);
+  it('o aquecimento sem prazo, e 10 minutos em cada exercício (D50)', () => {
     expect(LIMITE_POR_EXERCICIO_MS).toBe(10 * 60_000);
-    expect(ETAPAS.map((e) => e.limiteMs / 60_000)).toEqual([8, 10, 10, 10, 10, 10]);
+    expect(ETAPAS.map((e) => (e.limiteMs === null ? null : e.limiteMs / 60_000))).toEqual([
+      null, 10, 10, 10, 10, 10,
+    ]);
   });
 
   it('a posição diz a etapa e o total, e nada sobre o que foi resolvido', () => {
@@ -81,10 +81,16 @@ describe('as passagens', () => {
   });
 
   it('o prazo é gravado na primeira abertura e não recomeça', () => {
-    const aberto = abrirEtapa(inicio(), 0, 1_000);
-    expect(aberto.prazos[0]).toBe(1_000 + LIMITE_DO_AQUECIMENTO_MS);
+    const aberto = abrirEtapa(inicio(), 1, 1_000);
+    expect(aberto.prazos[1]).toBe(1_000 + LIMITE_POR_EXERCICIO_MS);
     // Recarregar a página abre a mesma etapa de novo, mais tarde.
-    expect(abrirEtapa(aberto, 0, 90_000).prazos[0]).toBe(1_000 + LIMITE_DO_AQUECIMENTO_MS);
+    expect(abrirEtapa(aberto, 1, 90_000).prazos[1]).toBe(1_000 + LIMITE_POR_EXERCICIO_MS);
+  });
+
+  it('o aquecimento abre sem prazo, nem na primeira vez nem depois (D50)', () => {
+    const aberto = abrirEtapa(inicio(), 0, 1_000);
+    expect(aberto.prazos[0]).toBeNull();
+    expect(abrirEtapa(aberto, 0, 10 * 60 * 60_000).prazos[0]).toBeNull();
   });
 
   it('seguir vai direto à etapa seguinte; o prazo passa antes pela tela do tempo', () => {

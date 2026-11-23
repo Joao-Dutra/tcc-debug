@@ -14,25 +14,24 @@ import type { MarcaDoEstudo, MotivoDoEncerramento } from '../nucleo/metricas';
 export type GrupoDoEstudo = 'A' | 'B';
 
 /**
- * Os tempos de cada etapa. A aula tem 1h30: 8 + 5 × 10 = 58 minutos de
- * exercício, e a folga fica para o aviso, o perfil, o questionário e os
- * imprevistos do laboratório.
+ * O tempo de cada exercício da análise. A aula tem 1h30: 5 × 10 = 50 minutos
+ * de exercício, e o resto fica para o aviso, o perfil, o aquecimento, o
+ * questionário e os imprevistos do laboratório.
  *
- * Até D46 era o contrário, 10 no aquecimento e 8 em cada exercício (D37). Em
- * D47 os exercícios da análise ganharam os dois minutos, que é onde o tempo
- * decide o dado, e o aquecimento, que só ensina a tela, os perdeu — mesmo com
- * o tutorial correndo dentro dele.
+ * O aquecimento não tem prazo (D50): é treino, com o pesquisador tirando
+ * dúvidas sobre a ferramenta e controlando o tempo na sala. Até D49 ele tinha
+ * 8 minutos (D47), e antes disso 10 (D37).
  *
- * Mudar um destes valores muda o ambiente de coleta: o texto do aviso cita os
- * dois, e a versão dele sobe junto (o teste do aviso cobra).
+ * Mudar este valor muda o ambiente de coleta: o texto do aviso o cita, e a
+ * versão dele sobe junto (o teste do aviso cobra).
  */
-export const LIMITE_DO_AQUECIMENTO_MS = 8 * 60_000;
 export const LIMITE_POR_EXERCICIO_MS = 10 * 60_000;
 
 export interface EtapaDoPercurso {
   exercicioId: string;
   aquecimento: boolean;
-  limiteMs: number;
+  /** Nulo: a etapa não tem prazo, e só o botão de seguir a encerra. */
+  limiteMs: number | null;
   /** O apoio de cada grupo nesta etapa. */
   apoio: Record<GrupoDoEstudo, NivelDeAndaime>;
 }
@@ -47,11 +46,11 @@ const A_SEM = { A: 'sem-apoio', B: 'com-apoio' } as const;
  * condições opostas, e a diferença entre exercícios não se confunde com a
  * diferença entre condições.
  *
- * O aquecimento é com apoio para todos e fica fora da análise: é onde o
- * participante aprende a tela, e o tutorial abre sobre ele.
+ * O aquecimento é com apoio para todos, sem prazo, e fica fora da análise: é
+ * onde o participante aprende a tela, e o tutorial abre sobre ele.
  */
 export const ETAPAS: readonly EtapaDoPercurso[] = [
-  { exercicioId: 'vetor-zerar-negativos', aquecimento: true, limiteMs: LIMITE_DO_AQUECIMENTO_MS, apoio: AMBOS_COM_APOIO },
+  { exercicioId: 'vetor-zerar-negativos', aquecimento: true, limiteMs: null, apoio: AMBOS_COM_APOIO },
   { exercicioId: 'pilha-desempilhar', aquecimento: false, limiteMs: LIMITE_POR_EXERCICIO_MS, apoio: A_COM },
   { exercicioId: 'fila-atender-todos', aquecimento: false, limiteMs: LIMITE_POR_EXERCICIO_MS, apoio: A_SEM },
   { exercicioId: 'lista-inserir-depois', aquecimento: false, limiteMs: LIMITE_POR_EXERCICIO_MS, apoio: A_COM },
@@ -99,7 +98,8 @@ export interface EstadoDoPercurso {
   grupoNoAparelho: boolean;
   passo: PassoDoPercurso;
   /**
-   * O fim de cada etapa já aberta, no relógio de parede, por índice. Gravado
+   * O fim de cada etapa já aberta, no relógio de parede, por índice; nulo na
+   * etapa ainda não aberta e na que não tem prazo, o aquecimento. Gravado
    * na primeira abertura e nunca refeito: recarregar a página não devolve o
    * tempo. Relógio de parede, e não o monotônico, porque precisa sobreviver à
    * carga da página.
@@ -132,11 +132,12 @@ export function entrarComGrupo(
   return { ...estado, grupo, grupoNoAparelho: noAparelho, passo: { tela: 'exercicio', etapa: 0 } };
 }
 
-/** O prazo da etapa, gravado na primeira vez em que ela abre. */
+/** O prazo da etapa, gravado na primeira vez em que ela abre; sem limite, nenhum. */
 export function abrirEtapa(estado: EstadoDoPercurso, etapa: number, agora: number): EstadoDoPercurso {
-  if (estado.prazos[etapa] != null) return estado;
+  const limite = ETAPAS[etapa].limiteMs;
+  if (limite === null || estado.prazos[etapa] != null) return estado;
   const prazos = [...estado.prazos];
-  prazos[etapa] = agora + ETAPAS[etapa].limiteMs;
+  prazos[etapa] = agora + limite;
   return { ...estado, prazos };
 }
 

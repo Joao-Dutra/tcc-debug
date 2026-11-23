@@ -174,8 +174,8 @@ export interface ModoDePercurso {
   /** No último exercício, o botão diz que conclui, e não que segue. */
   ultimo: boolean;
   sessao: SessaoDoEstudo;
-  /** O fim da etapa, no relógio de parede. */
-  prazo: number;
+  /** O fim da etapa, no relógio de parede; ausente no aquecimento, que não tem prazo (D50). */
+  prazo?: number;
   /**
    * No aquecimento, o tutorial abre sozinho. A marca do aparelho não é lida
    * nem gravada: no laboratório o computador é compartilhado, e a marca de
