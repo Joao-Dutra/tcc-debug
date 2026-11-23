@@ -5481,3 +5481,47 @@ pergunta pelo código de agora.
 | Corrigido segue direto; sem correção, o diálogo com o foco em ficar; ficar e Esc não perdem a etapa nem o código; editar ou quebrar depois de corrigir volta a perguntar; o mesmo sem apoio; o desfecho no registro é `corrigido` ou `desistencia` | `e2e/estudo.spec.ts` |
 | O pulso roda com movimento normal, e com movimento reduzido o anel fica parado | `e2e/movimento-reduzido.spec.ts` |
 | O diálogo não mexe na barra, e os botões não quebram | `e2e/layout.spec.ts` |
+
+## D50 — O aquecimento sem limite de tempo
+
+**Decisão.** Em 23/11/2026, véspera da coleta de 24/11, o aquecimento do
+percurso deixa de ter prazo. Não há tempo máximo nem tela de tempo esgotado
+nele: o estudante segue quando clicar em "Seguir para o próximo", com o
+comportamento de D49 — corrigido segue direto, não corrigido abre o diálogo.
+Recarregar a página no aquecimento também não cria prazo.
+
+Os cinco exercícios da análise continuam com 10 minutos cada, sem mudança.
+
+**Por quê.** O aquecimento vira um momento de treino. O pesquisador tira
+dúvidas sobre a ferramenta na sala e controla o tempo dela, chamando a turma
+para seguir quando achar que todos aprenderam a tela. Um corte automático
+pegaria no meio de uma explicação quem ainda está aprendendo, e o tempo do
+aquecimento não entra em nenhuma medida.
+
+**Fora da análise, como antes.** O aquecimento continua com apoio para todos
+e marcado como `aquecimento: true` em cada sessão (D37). A sessão dele é
+gravada como sempre, com duração e encerramento; só não há mais
+encerramento por `tempo-esgotado`.
+
+**O aviso mudou, e a versão dele subiu para 5.** A frase dos tempos passou a
+dizer: "O primeiro exercício, o de aquecimento, é de treino, sem limite de
+tempo. Os demais têm até 10 minutos cada; quando o tempo acaba, você segue
+para o próximo." O resto do texto é o da versão 4. A impressão do texto da
+versão 5 está guardada no teste, ao lado das outras. O tutorial e as telas do
+aquecimento não citavam o prazo, e não mudaram.
+
+**`VERSAO_DO_REGISTRO` continua 16.** O aquecimento fica fora da análise, e a
+coleta ainda não começou: nenhuma sessão dela foi gravada com o prazo
+antigo. A nota da versão 16 em `src/nucleo/metricas.ts` registra a mudança.
+
+No código, a etapa do aquecimento tem `limiteMs: null`, e o prazo dela fica
+nulo no estado do percurso. `LIMITE_DO_AQUECIMENTO_MS` saiu.
+
+**Conferência.** Na captura das telas congeladas antes e depois, só o aviso
+mudou (no computador e no celular), no trecho da frase dos tempos.
+
+| Regra | Onde |
+|---|---|
+| O aquecimento sem prazo, e 10 minutos em cada exercício; o aquecimento não ganha prazo nem ao abrir de novo | `src/estudo/percurso.test.ts` |
+| O aviso cita o aquecimento sem limite e os 10 minutos, e o texto da versão 5 é o registrado | `src/estudo/aviso.test.ts` |
+| Uma hora parado no aquecimento, e uma recarga, não o encerram; o exercício seguinte acaba aos 10 minutos; a sessão do aquecimento termina por `seguir` | `e2e/estudo.spec.ts` |
