@@ -5616,3 +5616,80 @@ lido do catálogo igual ao da execução automática de todas as sessões.
 | Regra | Onde |
 |---|---|
 | Junção, consolidação, localização implícita, exclusão e conferências | `analise/consolidar.py` |
+
+## D52 — As regras da análise da coleta, fixadas antes dos resultados por condição
+
+**Contexto.** A coleta de 24/11/2026 (`aeds-2026`) está consolidada em uma
+linha por participante × etapa (D51): 21 participantes, 126 linhas. As
+regras abaixo foram decididas em 27/11/2026, **antes** de rodar qualquer
+comparação entre as condições com e sem apoio, e registradas antes da
+primeira execução do script da análise. É um estudo exploratório com
+n = 21: as análises descrevem e estimam, e nenhuma é usada para afirmar
+mais do que os dados sustentam.
+
+**Regras do pesquisador.**
+
+1. **Correção** (desfecho e tempo até corrigir): as 105 etapas de exercício
+   (1 a 5) dos 21 participantes.
+2. **Localização, análise principal:** só as etapas sem recarga (um pedaço,
+   D51). **Análise de sensibilidade:** todas as 105, reportada ao lado.
+3. **As recargas permitiram palpites de localização a menos de 10 s** um do
+   outro, porque o intervalo de D25 é por sessão. Isso é descrito como fato
+   do registro, sem juízo sobre a intenção, e entra como limitação.
+4. **Dicas:** sempre `dicas_distintas` (D51), nunca a soma.
+5. **O aquecimento** (etapa 0) fica fora de todas as análises.
+6. **Tempos de quem não corrigiu** (desistência ou tempo esgotado) são
+   censurados em 600 s, e a taxa de correção é reportada sempre junto do
+   tempo.
+
+**Detalhes de implementação, fixados junto.** Não estavam no pedido, e
+outra pessoa poderia escolher diferente. Ficam registrados aqui para não
+serem escolhidos depois de ver o resultado.
+
+- **Tempo até localizar, na comparação pareada.** A etapa sem localização
+  correta explícita não entra na média do participante naquela condição:
+  não é censurada em 600 s. Entre as etapas corrigidas sem apontar a linha
+  (D51) estão pessoas que acharam o defeito, e tratá-las como "não
+  localizou até 600 s" erraria contra elas. Para a taxa não sumir, a
+  proporção de etapas com localização explícita é comparada ao lado, da
+  mesma forma pareada. Entra no par quem tem ao menos uma etapa com
+  localização em cada condição, e o número de pares é reportado.
+- **Descritiva.** Tempo até localizar só entre quem localizou; tempo até
+  corrigir só entre quem corrigiu; o intervalo de localizar a corrigir só
+  onde há os dois, mantendo os negativos (quem apontou depois de corrigir),
+  que são contados à parte. Mediana e intervalo interquartil, com os
+  quartis pelo método linear do pandas.
+- **Wilcoxon pareado** (`scipy.stats.wilcoxon`), bicaudal, sobre a média
+  com apoio menos a média sem apoio de cada participante. Pares com
+  diferença zero são descartados (`zero_method='wilcox'`), e o número de
+  pares é reportado antes e depois do descarte. O método (exato ou
+  aproximação normal) é o automático do scipy, e o relatório diz qual foi
+  usado.
+- **Tamanho de efeito:** correlação rank-biserial pareada,
+  r = (W⁺ − W⁻) / (W⁺ + W⁻), sobre os postos das diferenças diferentes de
+  zero. Positiva quer dizer que o valor com apoio é maior.
+- **IC 95% por bootstrap** da diferença de medianas (mediana com apoio menos
+  mediana sem apoio), reamostrando participantes com reposição, para manter
+  o pareamento. Percentil, 10.000 reamostras, semente 20261124.
+- **Modelo misto (análise D).** `BinomialBayesMixedGLM` do statsmodels,
+  ajustado por `fit_map` e por `fit_vb`. Ele é tido como estável se os dois
+  ajustes concordarem no sinal e, aproximadamente, no tamanho do efeito do
+  apoio, e se nenhum exercício tiver todas as etapas com o mesmo desfecho
+  (separação). Se uma das condições falhar, o modelo não é reportado como
+  resultado, e a tabela de corrigido por exercício × apoio fica no lugar.
+- **SUS:** o escore da ferramenta (`escoreDoSus`, já no CSV). A faixa
+  adjetiva é dada pela posição da média entre as médias de cada adjetivo em
+  Bangor, Kortum e Miller (2009), sem inventar cortes.
+- **Itens de visualização e de recursos:** distribuição de 1 a 5, e
+  "Não usei" à parte nos recursos (D42).
+- **Respostas abertas:** listadas na íntegra no relatório, que fica fora do
+  git. O agrupamento por tema é proposta, e só entra no trabalho depois de
+  validado pelo pesquisador.
+
+**Privacidade.** O relatório, as figuras e as respostas abertas ficam em
+`analise/saida/`, fora do git. Só as tabelas agregadas, sem id de
+participante, vão para `analise/resultados/`, para entrar no texto do TCC.
+
+| Regra | Onde |
+|---|---|
+| Recortes, censura, testes, bootstrap, modelo e questionário | `analise/analisar.py` |
