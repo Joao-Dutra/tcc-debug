@@ -5525,3 +5525,94 @@ mudou (no computador e no celular), no trecho da frase dos tempos.
 | O aquecimento sem prazo, e 10 minutos em cada exercício; o aquecimento não ganha prazo nem ao abrir de novo | `src/estudo/percurso.test.ts` |
 | O aviso cita o aquecimento sem limite e os 10 minutos, e o texto da versão 5 é o registrado | `src/estudo/aviso.test.ts` |
 | Uma hora parado no aquecimento, e uma recarga, não o encerram; o exercício seguinte acaba aos 10 minutos; a sessão do aquecimento termina por `seguir` | `e2e/estudo.spec.ts` |
+
+## D51 — A consolidação dos pedaços da coleta e a exclusão de participantes
+
+**Contexto.** Na coleta de 24/11/2026 (`aeds-2026`), vários participantes
+recarregaram a página no meio de um exercício. No percurso, a recarga abre
+uma sessão nova para a mesma etapa: id novo, `t` recomeçando do zero, o
+editor de volta ao `codigoComDefeito`, as dicas ocultas, as marcas de
+localização apagadas e o intervalo de D25 zerado. A anterior fica arquivada
+no `pagehide` sem `encerramento`, com desfecho `sem-encerramento`. O prazo,
+por outro lado, não recomeça: é de relógio de parede, gravado na primeira
+abertura da etapa (`abrirEtapa`), e o tempo perdido na recarga também conta.
+Cada sessão dessas é aqui chamada de **pedaço**.
+
+**Decisão.** A análise trabalha com uma linha por participante × etapa,
+montada por `analise/consolidar.py` a partir dos pedaços, com estas regras:
+
+- **Fontes.** O JSON do banco e os JSON de aparelho (`metricas-aparelho-*`),
+  filtrados pela aplicação, juntados pelo id da sessão. Uma sessão presente
+  nas duas fontes entra uma vez; se as cópias diferissem, valeria a de mais
+  eventos, que é o retrato mais tardio. Na coleta, as duas cópias repetidas
+  eram idênticas.
+- **Ordem.** Os pedaços de uma etapa em ordem de `instanteDeInicio`.
+- **Duração.** A soma das durações dos pedaços. A duração ativa (D26) é a
+  soma das ativas de cada pedaço. A duração no relógio de parede, do início
+  do primeiro ao fim do último, e as lacunas entre pedaços ficam em colunas
+  à parte, informativas.
+- **Tempos até a primeira execução, a localização, a correção e a primeira
+  navegação.** Contados desde o início do primeiro pedaço: o `t` do evento
+  mais a soma das durações dos pedaços anteriores. As lacunas ficam de fora,
+  porque nelas o estudante não estava diante do exercício.
+- **Contagens.** Execuções, execuções com erro, dicas, edições, localizações
+  tentadas, navegações e retrocessos são somados. Passos distintos são a
+  união dos pares (pedaço, execução, passo), que é a soma, porque execuções
+  de pedaços diferentes são execuções diferentes. Como a recarga volta as
+  dicas a ocultas, `dicas_distintas` conta os índices diferentes revelados.
+- **Desfecho.** O do último pedaço que terminou: corrigido, desistência ou
+  tempo esgotado. Na coleta, nenhuma etapa teve um pedaço depois do desfecho
+  final, nem uma correção seguida de outro desfecho.
+- **Número de pedaços** em cada linha, com os ids e os desfechos de cada um.
+
+**Localização implícita, medida secundária.** Quando a etapa termina
+corrigida sem localização correta apontada, a coluna
+`tempo_ate_localizacao_implicita_aprox_ms` guarda o instante da primeira
+edição que mexeu no texto de uma das linhas do defeito (a `linhaDoDefeito`,
+ou as `linhasAceitas` de D30), comparando por conteúdo com o
+`codigoComDefeito` do catálogo, sem considerar espaços, e alinhando os
+códigos para que linhas inseridas acima não contem. Só entram edições
+anteriores à correção. É aproximada: a edição entra no log quando a rajada de
+digitação fecha (2 s de silêncio, ou antes de executar), e a coluna
+`localizacao_implicita` diz `aproximada`, ou `sem-edicao-na-linha-do-defeito`
+quando a correção veio por outro caminho. Não substitui a localização
+declarada, que continua sendo a medida principal (D7).
+
+**Exclusão.** Fica na análise quem tem desfecho final nas seis etapas,
+incluindo o aquecimento. Os outros vão para `excluidos.csv` com o motivo
+(etapa não aberta, ou etapa só com pedaços sem encerramento). Na coleta,
+foram 21 incluídos (12 do grupo A e 9 do B) e 4 excluídos. Um dos excluídos
+é provavelmente o mesmo aluno de um dos incluídos, que reabriu o percurso
+com outra identidade. As duas identidades não são juntadas: nada no
+registro as liga, e a anotação fica só junto dos dados.
+
+**Por quê.** Contar cada pedaço como sessão separada multiplicaria quem
+recarregou, e os pedaços sem encerramento não têm desfecho. Ficar só com o
+último pedaço perderia o que veio antes, como a primeira execução e os
+palpites. Somar as durações, e não usar o relógio, mantém os tempos na mesma
+escala das etapas sem recarga, que são a maioria.
+
+**Privacidade.** O repositório é público. `analise/dados/`, `analise/saida/`
+e o ambiente Python ficam no `.gitignore`. Só o código da análise é
+versionado, e as anotações por participante ficam em
+`analise/dados/anotacoes.json`, fora do código.
+
+**Ponto aberto para a análise.** Em três participantes, os pedaços curtos
+seguem o padrão de um palpite de linha errado, recarga e outro palpite. Em
+oito pares, duas tentativas julgadas ficaram a menos de 10 s uma da outra
+no relógio, o que D25 impede dentro de uma sessão. O registro não diz por que
+a pessoa recarregou. A consolidação mantém os dados como estão e lista os
+casos no relatório. Como tratar a localização nessas etapas é decisão da
+análise.
+
+**Conferência.** O script confere, e falha se alguma não passar: 21
+participantes com as etapas 0 a 5, num total de 126 linhas, e os grupos 12/9;
+apoio e exercício de cada pedaço de acordo com o plano de
+`src/estudo/percurso.ts`; nenhuma etapa de 1 a 5 acima de 10 minutos mais
+5 s; as etapas de um pedaço iguais campo a campo ao CSV do estudo; o resumo
+recalculado igual ao CSV em todas as 166 sessões do banco; o código inicial
+lido do catálogo igual ao da execução automática de todas as sessões.
+
+| Regra | Onde |
+|---|---|
+| Junção, consolidação, localização implícita, exclusão e conferências | `analise/consolidar.py` |
