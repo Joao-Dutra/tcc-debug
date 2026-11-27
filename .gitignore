@@ -31,3 +31,13 @@ coverage/
 # Artefatos do Playwright
 test-results/
 playwright-report/
+
+# Análise do TCC — dados por participante nunca entram no repositório público.
+# Só o código da análise (analise/*.py) é versionado.
+analise/dados/
+analise/saida/
+analise/.venv/
+analise/**/*.csv
+analise/**/*.json
+analise/**/*.md
+!analise/README.md
