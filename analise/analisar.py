@@ -504,7 +504,7 @@ def estilo() -> None:
         'font.size': 10, 'axes.spines.top': False, 'axes.spines.right': False,
         'axes.edgecolor': '#444444', 'axes.linewidth': 0.8, 'xtick.color': '#333333', 'ytick.color': '#333333',
         'axes.grid': True, 'axes.grid.axis': 'y', 'grid.color': '#dddddd', 'grid.linewidth': 0.6,
-        'axes.axisbelow': True, 'savefig.dpi': 200, 'savefig.bbox': 'tight', 'figure.facecolor': 'white',
+        'axes.axisbelow': True, 'savefig.dpi': 300, 'savefig.bbox': 'tight', 'figure.facecolor': 'white',
     })
 
 
