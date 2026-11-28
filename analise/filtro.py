@@ -92,18 +92,15 @@ def marcar_r4(locs: pd.DataFrame, codigos: dict[str, str]) -> dict[tuple[str, in
                 distancia = (b['momento'] - a['momento']).total_seconds() * 1000
                 if distancia >= R4_DISTANCIA_MS:
                     break
-                if min(a['aberta_ms'], b['aberta_ms']) >= R4_ABERTA_MS:
-                    continue
-                # Marca quem tinha acabado de abrir; empate exato marca os dois.
-                if a['aberta_ms'] == b['aberta_ms']:
-                    alvos = [(a, b), (b, a)]
-                else:
-                    alvos = [(a, b)] if a['aberta_ms'] < b['aberta_ms'] else [(b, a)]
+                # A fonte de uma cola precisa ter localizado antes: só quem
+                # localizou depois (b, na ordem do relógio) pode ser marcado.
+                # No mesmo milissegundo não há ordem, e os dois ficam como b.
+                alvos = [(b, a)] + ([(a, b)] if distancia == 0 else [])
                 for alvo, outro in alvos:
-                    if alvo['participante_id'] not in codigos:
+                    if alvo['aberta_ms'] >= R4_ABERTA_MS or alvo['participante_id'] not in codigos:
                         continue
                     marcas.setdefault((alvo['participante_id'], int(etapa)), []).append(
-                        f"{num(distancia / 1000, 1)} s de {nome(outro['participante_id'])}; "
+                        f"localizou {num(distancia / 1000, 1)} s depois de {nome(outro['participante_id'])}; "
                         f"etapa aberta há {num(alvo['aberta_ms'] / 1000, 1)} s "
                         f"(a do vizinho, há {num(outro['aberta_ms'] / 1000)} s)"
                     )
