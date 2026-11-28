@@ -1,0 +1,11 @@
+item,texto,1,2,3,4,5,não usei,mediana,n com nota
+vis-1,A visualização me ajudou a entender o que o código estava fazendo,0,0,1,3,17,—,"5,0",21
+vis-2,"Encontrei defeitos observando a visualização, e não apenas lendo o código",5,1,1,5,9,—,"4,0",21
+vis-3,Avançar a execução passo a passo foi útil para encontrar o defeito,0,0,0,6,15,—,"5,0",21
+vis-4,"Ver a estrutura desenhada me ajudou a entender melhor vetor, pilha, fila e lista",0,0,2,2,17,—,"5,0",21
+vis-5,Exercícios com um defeito para encontrar me ajudaram a praticar depuração,0,0,1,3,17,—,"5,0",21
+vis-6,Eu usaria esta ferramenta para estudar AEDS,0,0,2,1,18,—,"5,0",21
+rec-1,"Apontar a linha do defeito, clicando no número dela",0,0,0,1,18,2,"5,0",19
+rec-2,Avançar e voltar a execução passo a passo,0,0,0,3,18,0,"5,0",21
+rec-3,O desenho da estrutura de dados,0,0,0,3,18,0,"5,0",21
+rec-4,Os casos de teste,0,0,0,2,19,0,"5,0",21
