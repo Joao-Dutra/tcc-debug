@@ -5693,3 +5693,88 @@ participante, vão para `analise/resultados/`, para entrar no texto do TCC.
 | Regra | Onde |
 |---|---|
 | Recortes, censura, testes, bootstrap, modelo e questionário | `analise/analisar.py` |
+
+## D53 — O filtro de legitimidade das etapas, como análise de robustez
+
+**Contexto.** Na coleta houve sinais de que nem toda etapa registra uma
+tentativa própria e atenta: abas deixadas em segundo plano, etapas
+atravessadas sem mexer em nada, linhas apontadas antes de qualquer
+investigação, e localizações quase simultâneas entre vizinhos de sala
+(D52, análise E). As regras abaixo foram decididas e registradas em
+27/11/2026, **antes** de marcar qualquer etapa e antes de rodar qualquer
+resultado com o filtro.
+
+**A análise principal não muda.** Ela continua com os 21 participantes e
+as 105 etapas (D52). O filtro gera uma **análise de robustez**, reportada
+ao lado da principal numa tabela "todos × filtrado". Se as duas apontarem
+para o mesmo lado, o resultado não depende das etapas duvidosas. Se não
+apontarem, a divergência é o achado, e é reportada como tal.
+
+**Regras do pesquisador.** Valem por etapa de exercício (1 a 5) e são as
+mesmas nas duas condições.
+
+- **R1. Aba em segundo plano:** `duracao_ativa_ms` < 50% de
+  `duracao_total_ms`.
+- **R2. Sem engajamento:** nenhuma execução do estudante (a automática não
+  conta), nenhuma navegação e nenhuma edição.
+- **R3. Resposta pronta:** localização correta a menos de 20 s do início da
+  etapa, sem nenhuma execução do estudante nem navegação antes dela.
+- **R4. Cola entre vizinhos:** dois participantes com localização correta
+  do mesmo exercício a menos de 15 s de distância no relógio, e um deles
+  com a etapa aberta há menos de 60 s naquele momento. É marcada a etapa de
+  quem tinha acabado de abrir.
+- **R5. Palpites de localização atravessando recarga:** é a regra 2 de D52
+  e continua valendo do mesmo jeito, só para a localização.
+- **Participante que perder 3 ou mais das 5 etapas** sai da comparação
+  pareada (análise C) do conjunto filtrado.
+
+**Detalhes de implementação, fixados junto.** Não estavam no pedido, e
+outra pessoa poderia escolher diferente.
+
+- **"Perder" uma etapa** é ser marcada por R1, R2, R3 ou R4. A etapa
+  marcada sai inteira do conjunto filtrado, da correção e da localização.
+  R5 não tira etapa: só restringe a localização às etapas sem recarga, como
+  em D52, e não conta para as 3 de 5.
+- **Tempos.** "Desde o início da etapa" é o tempo acumulado de D51
+  (`tempo_ate_localizacao_ms` e os demais, somando os pedaços anteriores).
+  Antes dela quer dizer `tempo_ate_primeira_execucao_ms` e
+  `tempo_ate_primeira_navegacao_ms` ausentes ou maiores ou iguais ao da
+  localização.
+- **R1** usa a duração ativa de D26 somada nos pedaços (D51). Ela só tira
+  da conta os silêncios de mais de cinco minutos, então R1 só pode
+  disparar numa etapa com um silêncio desses.
+- **R4, a localização que conta** é a primeira localização correta da etapa,
+  a mesma que dá o tempo até localizar. O instante dela no relógio é o
+  `instanteDeInicio` do pedaço em que aconteceu mais o `t` do evento.
+  "Etapa aberta há" é a distância, no relógio, entre esse instante e o
+  início do primeiro pedaço da etapa, com as lacunas de recarga dentro.
+  Mesmo exercício é mesma etapa, porque o plano fixa o exercício de cada
+  etapa nos dois grupos.
+- **R4, quem conta como vizinho.** Qualquer participante da aplicação no
+  registro, inclusive os 4 excluídos em D51: a fonte de uma cola não
+  precisa estar na análise. Só são marcadas etapas dos 21.
+- **R4, quando os dois tinham aberto há menos de 60 s,** é marcada só a
+  etapa de quem abriu por último, ou seja, a de menor tempo de etapa
+  aberta. Com empate exato, as duas.
+- **Comparação pareada filtrada.** A média de cada participante em cada
+  condição é feita sobre as etapas que sobraram. Entra no par quem tem ao
+  menos uma etapa em cada condição, e o número de pares é reportado. Quem
+  sai da análise C por perder 3 ou mais etapas continua, com as etapas não
+  marcadas, nas análises B e D filtradas. Testes, bootstrap (mesma semente)
+  e critério de estabilidade do modelo são os de D52.
+- **Marcar antes de analisar.** O primeiro passo só gera a lista das etapas
+  marcadas (`analise/saida/filtro_marcacoes.md`, fora do git, porque traz
+  ids). As análises filtradas só rodam depois de o pesquisador conferir a
+  lista.
+
+**Respostas abertas no relatório.** As citações mantêm só o conteúdo sobre
+a ferramenta. Saem brincadeiras e declarações pessoais, nomes de terceiros
+viram "[nome]" e a letra de música vira "[resposta fora do tema]". O
+relatório registra, sem citar, que parte das respostas veio em tom de
+brincadeira, como limitação (desejabilidade social). A resposta de P24 é
+reclassificada: não relata falha. A pessoa percebeu a alternância entre as
+condições, já que só com apoio há dica e resultado esperado.
+
+| Regra | Onde |
+|---|---|
+| Marcação R1 a R4 e análises filtradas | `analise/filtro.py` |
