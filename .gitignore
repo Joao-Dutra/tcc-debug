@@ -41,3 +41,7 @@ analise/**/*.csv
 analise/**/*.json
 analise/**/*.md
 !analise/README.md
+# Tabelas agregadas, sem id de participante, que entram no texto do TCC (D52).
+!analise/resultados/
+!analise/resultados/*.csv
+!analise/resultados/*.md
