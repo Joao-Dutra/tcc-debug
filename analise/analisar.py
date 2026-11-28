@@ -468,9 +468,8 @@ def respostas_abertas(p: pd.DataFrame) -> str:
     editadas = json.loads((AQUI / 'dados' / 'respostas_editadas.json').read_text(encoding='utf-8'))
     partes = [
         'Citações editadas (D53): fica só o conteúdo sobre a ferramenta. Trechos retirados aparecem '
-        'como "[…]", nomes de terceiros como "[nome]". Parte das respostas veio em tom de brincadeira '
-        'ou com declarações pessoais dirigidas ao pesquisador, o que é registrado como limitação '
-        '(desejabilidade social) e não é citado.\n',
+        'como "[…]", nomes de terceiros como "[nome]". Parte das respostas veio em tom descontraído, '
+        'e esses trechos não são citados.\n',
     ]
     for campo, pergunta in (('ajudou', 'O que foi mais útil na ferramenta, e por quê?'),
                             ('atrapalhou', 'O que atrapalhou ou faltou?')):
