@@ -45,3 +45,4 @@ analise/**/*.md
 !analise/resultados/
 !analise/resultados/*.csv
 !analise/resultados/*.md
+analise/__pycache__/
