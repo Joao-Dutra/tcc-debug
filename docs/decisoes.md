@@ -5753,9 +5753,17 @@ outra pessoa poderia escolher diferente.
 - **R4, quem conta como vizinho.** Qualquer participante da aplicação no
   registro, inclusive os 4 excluídos em D51: a fonte de uma cola não
   precisa estar na análise. Só são marcadas etapas dos 21.
-- **R4, quando os dois tinham aberto há menos de 60 s,** é marcada só a
-  etapa de quem abriu por último, ou seja, a de menor tempo de etapa
-  aberta. Com empate exato, as duas.
+- **R4, a ordem conta.** Só é marcada a etapa de quem localizou **depois**
+  do vizinho, e só se ela estava aberta há menos de 60 s naquele momento:
+  a fonte de uma cola precisa ter localizado antes. Na mesma fração de
+  milissegundo não há ordem, e as duas etapas são avaliadas.
+
+  *Correção, 27/11/2026, antes de qualquer resultado com o filtro.* A
+  versão original da R4 não considerava a ordem: marcava a etapa de menor
+  tempo aberta no par, mesmo que aquela pessoa tivesse localizado primeiro.
+  Na conferência da primeira lista, isso marcou P10 na etapa 4, que
+  localizou 7 s **antes** do vizinho, e não pode ter colado dele. A regra
+  foi corrigida e a lista refeita antes de rodar as análises filtradas.
 - **Comparação pareada filtrada.** A média de cada participante em cada
   condição é feita sobre as etapas que sobraram. Entra no par quem tem ao
   menos uma etapa em cada condição, e o número de pares é reportado. Quem
@@ -5770,8 +5778,10 @@ outra pessoa poderia escolher diferente.
 **Respostas abertas no relatório.** As citações mantêm só o conteúdo sobre
 a ferramenta. Saem brincadeiras e declarações pessoais, nomes de terceiros
 viram "[nome]" e a letra de música vira "[resposta fora do tema]". O
-relatório registra, sem citar, que parte das respostas veio em tom de
-brincadeira, como limitação (desejabilidade social). A resposta de P24 é
+relatório registra, sem citar, que parte das respostas veio em tom
+descontraído. A turma não conhecia o pesquisador; a desejabilidade social
+entra só como a limitação comum a todo estudo com o pesquisador presente
+na sala, junto do efeito de teto das notas. A resposta de P24 é
 reclassificada: não relata falha. A pessoa percebeu a alternância entre as
 condições, já que só com apoio há dica e resultado esperado.
 
