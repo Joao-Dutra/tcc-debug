@@ -18,10 +18,12 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
+import analisar as a
 import consolidar as c
-from analisar import COM, NOME_DA_CONDICAO, NOME_DO_EXERCICIO, SAIDA, num
+from analisar import COM, NOME_DA_CONDICAO, NOME_DO_EXERCICIO, SAIDA, SEM, num
 
 AQUI = Path(__file__).resolve().parent
 
@@ -236,8 +238,166 @@ def relatorio_marcacoes(etapas: pd.DataFrame, marcadas: pd.DataFrame) -> str:
     return '\n'.join(partes) + '\n'
 
 
+# ---------------------------------------------------------------------------
+# Passo 2: B1, B2, C e D, todos × filtrado
+# ---------------------------------------------------------------------------
+
+def frac(parte: int, total: int) -> str:
+    return f'{parte}/{total} ({num(100 * parte / total)}%)' if total else '—'
+
+
+def mediana(serie: pd.Series) -> str:
+    s = serie.dropna()
+    return f'{num(s.median())} (n={len(s)})' if len(s) else '—'
+
+
+def linhas_b(ex: pd.DataFrame) -> list[dict[str, Any]]:
+    """B1 (desfecho, todas as etapas do conjunto) e B2 (localização, só sem recarga), por exercício × condição."""
+    linhas = []
+    grupos = [(NOME_DO_EXERCICIO[e], ex[ex['exercicio_id'] == e]) for e in a.ordem_dos_exercicios(ex)]
+    for nome, dele in [('Todos os exercícios', ex)] + grupos:
+        for cond in (COM, SEM):
+            df = dele[dele['apoio'] == cond]
+            loc = df[df['sem_recarga']]
+            linhas.append({
+                'exercício': nome, 'condição': NOME_DA_CONDICAO[cond],
+                'B1 corrigidas': frac(int(df['corrigido'].sum()), len(df)),
+                'B1 desistência': frac(int((df['desfecho'] == 'desistencia').sum()), len(df)),
+                'B1 tempo esgotado': frac(int((df['desfecho'] == 'tempo-esgotado').sum()), len(df)),
+                'B1 corrigir, s, mediana': mediana(df.loc[df['corrigido'], 'tempo_ate_correcao_s']),
+                'B2 localizaram (sem recarga)': frac(int(loc['localizou'].sum()), len(loc)),
+                'B2 localizar, s, mediana': mediana(loc['tempo_ate_localizacao_s']),
+                'B2 localizar→corrigir, s, mediana': mediana(loc['intervalo_loc_corr_s']),
+            })
+    return linhas
+
+
+MEDIDAS_C = [
+    ('Proporção de etapas corrigidas', 'corrigido', False, 'proporção'),
+    ('Tempo até corrigir, censurado em 600 s', 'tempo_correcao_censurado_s', False, 's'),
+    ('Tempo até localizar — principal (sem recarga)', 'tempo_ate_localizacao_s', True, 's'),
+    ('Tempo até localizar — sensibilidade (todas)', 'tempo_ate_localizacao_s', False, 's'),
+    ('Proporção com localização explícita — principal (sem recarga)', 'localizou', True, 'proporção'),
+    ('Proporção com localização explícita — sensibilidade (todas)', 'localizou', False, 'proporção'),
+]
+
+
+def resultados_c(ex: pd.DataFrame) -> pd.DataFrame:
+    """A análise C de D52, na mesma ordem de medidas e com a mesma semente."""
+    rng = np.random.default_rng(a.SEMENTE)
+    linhas = []
+    for nome, coluna, so_sem_recarga, unidade in MEDIDAS_C:
+        m = a.medias_por_participante(ex, coluna, ex['sem_recarga'] if so_sem_recarga else None)
+        linhas.append({'medida': nome, 'unidade': unidade,
+                       **a.wilcoxon_pareado(m[COM].to_numpy(float), m[SEM].to_numpy(float), rng)})
+    return pd.DataFrame(linhas)
+
+
+def texto_c(r: Any) -> dict[str, str]:
+    casas = 2 if r.unidade == 'proporção' else 0
+    return {
+        'pares (sem zero)': f'{r.pares} ({r.pares_sem_empate_zero})',
+        'com / sem': f'{num(r.mediana_com, casas)} / {num(r.mediana_sem, casas)}',
+        'dif. [IC 95%]': f'{num(r.diferenca_de_medianas, casas)} [{num(r.ic95_inf, casas)}; {num(r.ic95_sup, casas)}]',
+        'p': num(r.p, 3), 'r': num(r.rank_biserial, 2),
+    }
+
+
+def contagem_d(ex: pd.DataFrame) -> dict[tuple[str, str], str]:
+    saida = {}
+    for e in a.ordem_dos_exercicios(ex):
+        dele = ex[ex['exercicio_id'] == e]
+        for cond in (COM, SEM):
+            df = dele[dele['apoio'] == cond]
+            saida[(NOME_DO_EXERCICIO[e], NOME_DA_CONDICAO[cond])] = f"{int(df['corrigido'].sum())}/{len(df)}"
+    return saida
+
+
+def analisar_filtrado(etapas_todas: pd.DataFrame, marcadas: pd.DataFrame) -> str:
+    ex, _ = a.ler()
+    chave = ex.set_index(['participante_id', 'etapa']).index
+    marcada = chave.isin(marcadas.set_index(['participante_id', 'etapa']).index)
+    filtrado = ex[~marcada].copy()
+    perdas = marcadas.groupby('participante_id').size()
+    saem_de_c = set(perdas[perdas >= PERDAS_PARA_SAIR_DE_C].index)
+    filtrado_c = filtrado[~filtrado['participante_id'].isin(saem_de_c)]
+
+    # B
+    tb_todos, tb_filt = linhas_b(ex), linhas_b(filtrado)
+    colunas_b = [k for k in tb_todos[0] if k not in ('exercício', 'condição')]
+    b = pd.DataFrame([{'exercício': t['exercício'], 'condição': t['condição'],
+                       **{f'{k} — todos': t[k] for k in colunas_b},
+                       **{f'{k} — filtrado': f[k] for k in colunas_b}}
+                      for t, f in zip(tb_todos, tb_filt)])
+    b = b[['exercício', 'condição'] + [f'{k} — {q}' for k in colunas_b for q in ('todos', 'filtrado')]]
+    b.to_csv(a.RESULTADOS / 'R_robustez_B.csv', index=False)
+
+    # C, com conferência de que "todos" reproduz a análise principal
+    c_todos, c_filt = resultados_c(ex), resultados_c(filtrado_c)
+    principal = pd.read_csv(a.RESULTADOS / 'C_comparacao_pareada.csv')
+    if not np.allclose(principal['p'], c_todos['p'], equal_nan=True) or \
+            not np.allclose(principal['ic95_inf'], c_todos['ic95_inf'], equal_nan=True):
+        sys.exit('A coluna "todos" da análise C não reproduz C_comparacao_pareada.csv.')
+    c = pd.DataFrame([{'medida': t.medida,
+                       **{f'{k} — todos': v for k, v in texto_c(t).items()},
+                       **{f'{k} — filtrado': v for k, v in texto_c(f).items()}}
+                      for t, f in zip(c_todos.itertuples(), c_filt.itertuples())])
+    c = c[['medida'] + [f'{k} — {q}' for k in texto_c(c_todos.iloc[0]) for q in ('todos', 'filtrado')]]
+    pd.concat([c_todos.assign(conjunto='todos'), c_filt.assign(conjunto='filtrado')]).to_csv(
+        a.RESULTADOS / 'R_robustez_C.csv', index=False)
+
+    # D
+    d_todos, d_filt = contagem_d(ex), contagem_d(filtrado)
+    m_todos, m_filt = a.modelo_misto(ex), a.modelo_misto(filtrado)
+    d = pd.DataFrame([{'exercício': e, 'condição': cond, 'corrigidas — todos': v, 'corrigidas — filtrado': d_filt[(e, cond)]}
+                      for (e, cond), v in d_todos.items()])
+    d.to_csv(a.RESULTADOS / 'R_robustez_D.csv', index=False)
+
+    def modelo(m: dict[str, Any]) -> str:
+        avisos = '; '.join(sorted(set(m['avisos']))) or 'nenhum'
+        return (f"razão MAP/VB = {num(m['razao'], 2)}; separação: {', '.join(m['separados']) or 'nenhuma'}; "
+                f"avisos: {avisos} → **{'estável' if m['estavel'] else 'não estável, não reportado'}**")
+
+    perdidas_por_cond = marcadas['apoio'].value_counts()
+    partes = [
+        '# Análise de robustez — todos × filtrado (D53)',
+        '',
+        f'**Todos:** as 105 etapas dos 21 participantes (análise principal, D52). '
+        f'**Filtrado:** sem as {len(marcadas)} etapas marcadas por R1 a R4 '
+        f'({perdidas_por_cond.get(COM, 0)} com apoio, {perdidas_por_cond.get(SEM, 0)} sem apoio), '
+        f'ficando {len(filtrado)}. Saem da análise C filtrada: '
+        f'{len(saem_de_c) or "ninguém"} (3 ou mais etapas perdidas). R5 é a regra 2 de D52: a localização '
+        'principal usa só as etapas sem recarga nos dois conjuntos.',
+        '',
+        '## B1 e B2 — descritiva',
+        '',
+        'Tempos em segundos, mediana (n). B1 usa todas as etapas do conjunto; B2, só as sem recarga.',
+        '',
+        a.tabela_md(b),
+        '',
+        '## C — comparação pareada',
+        '',
+        'Mesmos testes, bootstrap e semente de D52. "com / sem" são as medianas das médias por participante; '
+        'dif. é com − sem.',
+        '',
+        a.tabela_md(c),
+        '',
+        '## D — corrigido por exercício × apoio, e o modelo misto',
+        '',
+        a.tabela_md(d),
+        '',
+        f'- Modelo, todos: {modelo(m_todos)}.',
+        f'- Modelo, filtrado: {modelo(m_filt)}.',
+        '',
+    ]
+    return '\n'.join(partes)
+
+
 def main() -> int:
-    argparse.ArgumentParser(description=__doc__.split('\n\n')[0]).parse_args()
+    parser = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
+    parser.add_argument('--analisar', action='store_true',
+                        help='passo 2: roda B1, B2, C e D no conjunto filtrado (depois da conferência da lista)')
+    args = parser.parse_args()
     sys.stdout.reconfigure(encoding='utf-8')
 
     etapas = pd.read_csv(SAIDA / 'consolidado_etapas.csv')
@@ -259,6 +419,9 @@ def main() -> int:
     marcadas = marcar(etapas, r4)
     (SAIDA / 'filtro_marcacoes.md').write_text(relatorio_marcacoes(etapas, marcadas), encoding='utf-8')
     print(f'{len(marcadas)} etapas marcadas. Lista em {SAIDA / "filtro_marcacoes.md"}')
+    if args.analisar:
+        (SAIDA / 'relatorio_robustez.md').write_text(analisar_filtrado(etapas, marcadas), encoding='utf-8')
+        print(f'Robustez em {SAIDA / "relatorio_robustez.md"}; tabelas R_robustez_* em {a.RESULTADOS}')
     return 0
 
 
