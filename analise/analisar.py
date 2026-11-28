@@ -353,9 +353,35 @@ def analise_d(ex: pd.DataFrame) -> str:
     tabela = pd.DataFrame(contagem)
     tabela.to_csv(RESULTADOS / 'D_corrigido_por_exercicio_e_apoio.csv', index=False)
 
+    partes = ['Tabela de corrigido por exercício × apoio (sempre reportada):\n', tabela_md(tabela), '']
+    m = modelo_misto(ex)
+    a, b, ajustes, separados, avisos = m['coef_map'], m['coef_vb'], m['ajustes'], m['separados'], m['avisos']
+
+    linhas_modelo = pd.DataFrame([{
+        'ajuste': k, 'coef. sem apoio (log-odds)': num(v['coef'], 2), 'EP aprox.': num(v['sd'], 2),
+        'OR sem/com': num(np.exp(v['coef']), 2),
+        'OR IC 95% aprox.': f"{num(np.exp(v['coef'] - 1.96 * v['sd']), 2)}–{num(np.exp(v['coef'] + 1.96 * v['sd']), 2)}",
+        'DP do participante': num(v['sd_participante'], 2),
+    } for k, v in ajustes.items()])
+    criterio = (f"Critério de estabilidade (D52): sinal igual e razão MAP/VB entre 0,8 e 1,25 "
+                f"(razão = {num(m['razao'], 2)}); nenhum exercício com desfecho único "
+                f"({', '.join(separados) if separados else 'nenhum'}); avisos do ajuste: "
+                f"{'; '.join(sorted(set(avisos))) if avisos else 'nenhum'}.")
+    if m['estavel']:
+        partes += ['Modelo `corrigido ~ apoio + exercício + (1|participante)`, `BinomialBayesMixedGLM` '
+                   '(statsmodels). Referência: com apoio e Pilha. OR < 1: menos chance de corrigir sem apoio.\n',
+                   tabela_md(linhas_modelo), '', criterio + ' **Estável: reportado.**']
+        linhas_modelo.to_csv(RESULTADOS / 'D_modelo_misto.csv', index=False)
+    else:
+        partes += [criterio + ' **Não estável: o modelo não é reportado como resultado**, e a tabela acima '
+                   'fica no lugar dele. Os ajustes, só para registro:\n', tabela_md(linhas_modelo)]
+    return '\n'.join(partes)
+
+
+def modelo_misto(ex: pd.DataFrame) -> dict[str, Any]:
+    """Os dois ajustes do modelo e o critério de estabilidade de D52, sem gravar nada."""
     separados = [NOME_DO_EXERCICIO[e] for e in ordem_dos_exercicios(ex)
                  if ex.loc[ex['exercicio_id'] == e, 'corrigido'].nunique() < 2]
-    partes = ['Tabela de corrigido por exercício × apoio (sempre reportada):\n', tabela_md(tabela), '']
 
     from statsmodels.genmod.bayes_mixed_glm import BinomialBayesMixedGLM
 
@@ -376,27 +402,9 @@ def analise_d(ex: pd.DataFrame) -> str:
                          'sd_participante': float(np.exp(res.vcp_mean[0]))}
     a, b = ajustes['map']['coef'], ajustes['vb']['coef']
     concorda = np.sign(a) == np.sign(b) and 0.8 <= (a / b if b else np.inf) <= 1.25
-    estavel = concorda and not separados and not avisos
-
-    linhas_modelo = pd.DataFrame([{
-        'ajuste': k, 'coef. sem apoio (log-odds)': num(v['coef'], 2), 'EP aprox.': num(v['sd'], 2),
-        'OR sem/com': num(np.exp(v['coef']), 2),
-        'OR IC 95% aprox.': f"{num(np.exp(v['coef'] - 1.96 * v['sd']), 2)}–{num(np.exp(v['coef'] + 1.96 * v['sd']), 2)}",
-        'DP do participante': num(v['sd_participante'], 2),
-    } for k, v in ajustes.items()])
-    criterio = (f"Critério de estabilidade (D52): sinal igual e razão MAP/VB entre 0,8 e 1,25 "
-                f"(razão = {num(a / b if b else np.nan, 2)}); nenhum exercício com desfecho único "
-                f"({', '.join(separados) if separados else 'nenhum'}); avisos do ajuste: "
-                f"{'; '.join(sorted(set(avisos))) if avisos else 'nenhum'}.")
-    if estavel:
-        partes += ['Modelo `corrigido ~ apoio + exercício + (1|participante)`, `BinomialBayesMixedGLM` '
-                   '(statsmodels). Referência: com apoio e Pilha. OR < 1: menos chance de corrigir sem apoio.\n',
-                   tabela_md(linhas_modelo), '', criterio + ' **Estável: reportado.**']
-        linhas_modelo.to_csv(RESULTADOS / 'D_modelo_misto.csv', index=False)
-    else:
-        partes += [criterio + ' **Não estável: o modelo não é reportado como resultado**, e a tabela acima '
-                   'fica no lugar dele. Os ajustes, só para registro:\n', tabela_md(linhas_modelo)]
-    return '\n'.join(partes)
+    estavel = bool(concorda and not separados and not avisos)
+    return {'ajustes': ajustes, 'coef_map': a, 'coef_vb': b, 'razao': a / b if b else np.nan,
+            'separados': separados, 'avisos': avisos, 'estavel': estavel}
 
 
 # ---------------------------------------------------------------------------
