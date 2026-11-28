@@ -26,6 +26,7 @@ intervalo, e a leitura não vai além deles.
 
 from __future__ import annotations
 
+import json
 import re
 import sys
 import warnings
@@ -458,15 +459,31 @@ def analise_e(p: pd.DataFrame, textos: dict[str, str]) -> tuple[str, pd.Series]:
 
 
 def respostas_abertas(p: pd.DataFrame) -> str:
-    partes = []
+    """
+    As citações editadas de D53, e nunca o texto bruto. A edição vive com os
+    dados (`dados/respostas_editadas.json`, fora do git), porque é texto dos
+    participantes; falta de edição para uma resposta para o script, em vez
+    de deixar o texto bruto vazar para o relatório.
+    """
+    editadas = json.loads((AQUI / 'dados' / 'respostas_editadas.json').read_text(encoding='utf-8'))
+    partes = [
+        'Citações editadas (D53): fica só o conteúdo sobre a ferramenta. Trechos retirados aparecem '
+        'como "[…]", nomes de terceiros como "[nome]". Parte das respostas veio em tom de brincadeira '
+        'ou com declarações pessoais dirigidas ao pesquisador, o que é registrado como limitação '
+        '(desejabilidade social) e não é citado.\n',
+    ]
     for campo, pergunta in (('ajudou', 'O que foi mais útil na ferramenta, e por quê?'),
                             ('atrapalhou', 'O que atrapalhou ou faltou?')):
         dele = p.sort_values('ordem_de_entrada')
         respondidas = dele[dele[campo].notna()]
         partes.append(f'**"{pergunta}"** — {len(respondidas)} de {len(p)} responderam.\n')
         for r in respondidas.itertuples():
-            texto = str(getattr(r, campo)).replace('\n', ' ').strip()
-            partes.append(f'- **P{int(r.ordem_de_entrada):02d}** (grupo {r.grupo}): {texto}')
+            codigo = f'P{int(r.ordem_de_entrada):02d}'
+            texto = editadas.get(codigo, {}).get(campo)
+            if texto is None:
+                sys.exit(f'Falta a citação editada de {codigo} ({campo}) em dados/respostas_editadas.json.')
+            nota = editadas[codigo].get(f'nota_{campo}')
+            partes.append(f'- **{codigo}** (grupo {r.grupo}): {texto}' + (f' *Nota: {nota}*' if nota else ''))
         partes.append('')
     return '\n'.join(partes)
 
